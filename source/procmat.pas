@@ -172,6 +172,7 @@ function IsNumber(number: string): boolean;
 {$IFDEF GUI_B}
 procedure SM(msg: string);
 {$ENDIF}
+
 Implementation
 
 {$IFDEF GUI_B}
