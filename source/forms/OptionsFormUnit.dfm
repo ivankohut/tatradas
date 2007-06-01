@@ -1,0 +1,137 @@
+object OptionsForm: TOptionsForm
+  Left = 387
+  Top = 78
+  BorderStyle = bsDialog
+  Caption = 'Options'
+  ClientHeight = 448
+  ClientWidth = 304
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'MS Sans Serif'
+  Font.Style = []
+  OldCreateOrder = False
+  OnShow = FormShow
+  PixelsPerInch = 96
+  TextHeight = 13
+  object Label1: TLabel
+    Left = 8
+    Top = 8
+    Width = 289
+    Height = 57
+    Alignment = taCenter
+    AutoSize = False
+    Caption = 'Warning: These settings does not affect TatraDAS behavior yet !'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clRed
+    Font.Height = -11
+    Font.Name = 'MS Sans Serif'
+    Font.Style = []
+    ParentFont = False
+    Layout = tlCenter
+    WordWrap = True
+  end
+  object DisassemblerGroupBox: TGroupBox
+    Left = 8
+    Top = 176
+    Width = 289
+    Height = 97
+    Caption = 'Disassembler'
+    TabOrder = 0
+    object DisasmCheckBox: TCheckBox
+      Left = 16
+      Top = 24
+      Width = 217
+      Height = 17
+      Caption = 'Detect PUSH BP, MOV BP SP as code'
+      TabOrder = 0
+    end
+    object DetectStringCheckBox: TCheckBox
+      Left = 16
+      Top = 56
+      Width = 217
+      Height = 17
+      Caption = 'Automatic string detection (experimental)'
+      TabOrder = 1
+    end
+  end
+  object OpeningGroupBox: TGroupBox
+    Left = 8
+    Top = 72
+    Width = 289
+    Height = 97
+    Caption = 'Opening'
+    TabOrder = 1
+    object UserRadioButton: TRadioButton
+      Left = 16
+      Top = 56
+      Width = 225
+      Height = 17
+      Caption = 'Ask user to accept(reject) detected format'
+      TabOrder = 0
+    end
+    object AutomaticRadioButton: TRadioButton
+      Left = 16
+      Top = 24
+      Width = 177
+      Height = 17
+      Caption = 'Automatic file format detection'
+      Checked = True
+      TabOrder = 1
+      TabStop = True
+    end
+  end
+  object ToDataChangeGroupBox: TGroupBox
+    Left = 8
+    Top = 280
+    Width = 289
+    Height = 129
+    Caption = 'Changing code to data'
+    TabOrder = 2
+    object RemoveJumpRefCheckBox: TCheckBox
+      Left = 16
+      Top = 24
+      Width = 225
+      Height = 17
+      Caption = 'Remove JUMP/CALL references'
+      TabOrder = 0
+    end
+    object RemoveImportRefCheckBox: TCheckBox
+      Left = 16
+      Top = 56
+      Width = 225
+      Height = 17
+      Caption = 'Remove Imported functions'#39' references'
+      TabOrder = 1
+    end
+    object RemoveExportRefCheckBox: TCheckBox
+      Left = 16
+      Top = 88
+      Width = 225
+      Height = 17
+      Caption = 'Remove Exported functions'#39' references'
+      TabOrder = 2
+    end
+  end
+  object OKButton: TButton
+    Left = 136
+    Top = 416
+    Width = 75
+    Height = 25
+    Caption = 'OK'
+    Default = True
+    TabOrder = 3
+    OnClick = OKButtonClick
+  end
+  object CancelButton: TButton
+    Left = 222
+    Top = 416
+    Width = 75
+    Height = 25
+    Cancel = True
+    Caption = 'Cancel'
+    TabOrder = 4
+    OnClick = CancelButtonClick
+  end
+end

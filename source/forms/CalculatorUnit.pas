@@ -1,0 +1,233 @@
+{ TODO:
+  - padne pri zapornych cislach v hex, treba sa s tym pohrat
+  - nie kalkulacka, ale konvertor medzi roznymi formatmi
+    - bin, hex, dec
+    - signed & unsigned
+    - byte, word, ... qword, float ...
+}
+
+
+unit CalculatorUnit;
+
+interface
+
+uses
+  Messages, Windows, StringRes, INIFiles,
+  SysUtils, Variants, Classes, Controls, Forms,
+  Dialogs, StdCtrls, myedits, ExtCtrls, Buttons;
+
+type
+
+  TCalcOperation = (coPlus, coMinus, coMul, coDiv, coMod);
+
+  TCalculator = class(TForm)
+    Panel1: TPanel;
+    Panel2: TPanel;
+    Panel3: TPanel;
+    HexadecimalLabel: TLabel;
+    DecimalLabel: TLabel;
+    BinaryLabel: TLabel;
+    OctalLabel: TLabel;
+    Panel4: TPanel;
+    Bevel1: TBevel;
+    PlusButton: TSpeedButton;
+    MinusButton: TSpeedButton;
+    ModButton: TSpeedButton;
+    MulButton: TSpeedButton;
+    DivButton: TSpeedButton;
+    EqualButton: TSpeedButton;
+    procedure FormCreate(Sender: TObject);
+    procedure EqualButtonClick(Sender: TObject);
+    procedure PlusButtonClick(Sender: TObject);
+    procedure MinusButtonClick(Sender: TObject);
+    procedure ModButtonClick(Sender: TObject);
+    procedure MulButtonClick(Sender: TObject);
+    procedure DivButtonClick(Sender: TObject);
+
+    procedure Translate(ini: TMemINIFile; error: string);
+  private
+    Changing: boolean;
+    DataBuffer: Int64;
+    Operation: TCalcOperation;
+
+    CurrentEdit: TMyEdit;
+
+    DecEdit: TMyNumEdit;
+    HexEdit: TMyHexEdit;
+    procedure EditChange(Sender: TObject);
+    procedure EditEnter(Sender: TObject);
+    procedure EditKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+  end;
+
+var
+  Calculator: TCalculator;
+
+implementation
+
+{$R *.dfm}
+
+procedure TCalculator.EditKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+begin
+  case key of
+    Ord('+'),VK_ADD: PlusButtonClick(PlusButton);
+    Ord('-'),VK_SUBTRACT: begin
+      MinusButtonClick(MinusButton);
+      key:=0;
+    end;
+    Ord('*'),VK_MULTIPLY: MulButtonClick(MulButton);
+    Ord('/'),VK_DIVIDE: DivButtonClick(DivButton);
+    Ord('M'): ModButtonClick(ModButton);
+    VK_RETURN: EqualButtonClick(EqualButton);
+    VK_ESCAPE: self.Close;
+  end;
+end;
+
+procedure TCalculator.EditChange(Sender: TObject);
+var ChangedEdit: TMyEdit;
+begin
+  inherited;
+  ChangedEdit:=(Sender as TMyEdit);
+
+  if ChangedEdit.Text='' then exit;
+  if ChangedEdit.Text='$' then exit;
+  if ChangedEdit.Text='-' then exit;
+
+  if Changing then Exit;
+  Changing:=true;
+
+  if DecEdit <> ChangedEdit then DecEdit.AsCardinal:=ChangedEdit.AsCardinal;
+  Application.ProcessMessages;
+  if HexEdit <> ChangedEdit then HexEdit.AsCardinal:=ChangedEdit.AsCardinal;
+  Application.ProcessMessages;
+{
+  if BinEdit <> ChangedEdit then BinEdit.AsInteger:=ChangedEdit.AsInteger;
+  Application.ProcessMessages;
+  if OctEdit <> ChangedEdit then OctEdit.AsInteger:=ChangedEdit.AsInteger;
+  Application.ProcessMessages;
+}
+  Changing:=false;
+end;
+
+procedure TCalculator.FormCreate(Sender: TObject);
+begin
+  DecEdit:= TMyNumEdit.Create(Panel1);
+  DecEdit.Parent:=Panel1;
+  DecEdit.Align:=alClient;
+//  DecEdit.BaseFormat:=Number;
+  DecEdit.OnChange:=EditChange;
+  DecEdit.OnEnter:=EditEnter;
+  DecEdit.OnKeyDown:=EditKeyDown;
+
+  HexEdit:=TMyHexEdit.Create(Panel2);
+  HexEdit.Parent:=Panel2;
+  HexEdit.Align:=alClient;
+//  HexEdit.BaseFormat:=Hexadecimal;
+  HexEdit.OnChange:=EditChange;
+  HexEdit.OnEnter:=EditEnter;
+  HexEdit.OnKeyDown:=EditKeyDown;
+{
+  BinEdit:=TPBBinHexEdit.Create(Panel3);
+  BinEdit.Parent:=Panel3;
+  BinEdit.Align:=alClient;
+  BinEdit.BaseFormat:=Binary;
+  BinEdit.OnChange:=EditChange;
+  BinEdit.OnEnter:=EditEnter;
+  BinEdit.OnKeyDown:=EditKeyDown;
+
+  OctEdit:=TPBBinHexEdit.Create(Panel4);
+  OctEdit.Parent:=Panel4;
+  OctEdit.Align:=alClient;
+  OctEdit.BaseFormat:=Binary;
+  OctEdit.OnChange:=EditChange;
+  OctEdit.OnEnter:=EditEnter;
+  OctEdit.OnKeyDown:=EditKeyDown;
+}
+  DataBuffer:=0;
+  CurrentEdit:=DecEdit;
+end;
+
+procedure TCalculator.EditEnter(Sender: TObject);
+begin
+  CurrentEdit:=Sender as TMyEdit;
+end;
+
+procedure TCalculator.EqualButtonClick(Sender: TObject);
+begin
+{
+  case Operation of
+    coPlus: DecEdit.AsInteger:=DataBuffer + DecEdit.AsInteger;
+    coMinus: DecEdit.AsInteger:=DataBuffer - DecEdit.AsInteger;
+    coMul: DecEdit.AsInteger:=DataBuffer * DecEdit.AsInteger;
+    coDiv:
+      if DecEdit.AsInteger = 0 then MessageDlg(DivisionByZeroStr,mtError,[mbOk],0)
+      else DecEdit.AsInteger:=DataBuffer div DecEdit.AsInteger;
+    coMod:
+      if DecEdit.AsInteger = 0 then MessageDlg(DivisionByZeroStr,mtError,[mbOk],0)
+      else DecEdit.AsInteger:=DataBuffer mod DecEdit.AsInteger;
+  end;
+  DataBuffer:=0;
+  CurrentEdit.SetFocus;
+  CurrentEdit.SelectAll;
+}
+end;
+
+procedure TCalculator.PlusButtonClick(Sender: TObject);
+begin
+{
+  Operation:=coPlus;
+  DataBuffer:=CurrentEdit.AsInteger;
+  CurrentEdit.SetFocus;
+  CurrentEdit.SelectAll;
+}
+end;
+
+procedure TCalculator.MinusButtonClick(Sender: TObject);
+begin
+{
+  if CurrentEdit <> DecEdit then begin
+    Operation:=coMinus;
+    DataBuffer:=CurrentEdit.AsInteger;
+    CurrentEdit.SetFocus;
+    CurrentEdit.SelectAll;
+  end;
+}
+end;
+
+procedure TCalculator.ModButtonClick(Sender: TObject);
+begin
+  Operation:=coMod;
+//  DataBuffer:=CurrentEdit.AsInteger;
+  CurrentEdit.SetFocus;
+  CurrentEdit.SelectAll;
+end;
+
+procedure TCalculator.MulButtonClick(Sender: TObject);
+begin
+  Operation:=coMul;
+//  DataBuffer:=CurrentEdit.AsInteger;
+  CurrentEdit.SetFocus;
+  CurrentEdit.SelectAll;
+end;
+
+procedure TCalculator.DivButtonClick(Sender: TObject);
+begin
+  Operation:=coDiv;
+//  DataBuffer:=CurrentEdit.AsInteger;
+  CurrentEdit.SetFocus;
+  CurrentEdit.SelectAll;
+end;
+
+procedure TCalculator.Translate(ini: TMemINIFile; error: string);
+begin
+  Caption:=ini.ReadString('CalculatorForm','Caption',error);
+  DecimalLabel.Caption:=ini.ReadString('CalculatorForm','DecimalLabel',error);
+  HexadecimalLabel.Caption:=ini.ReadString('CalculatorForm','HexadecimalLabel',error);
+  BinaryLabel.Caption:=ini.ReadString('CalculatorForm','BinaryLabel',error);
+  OctalLabel.Caption:=ini.ReadString('CalculatorForm','OctalLabel',error);
+end;
+
+end.
+
+
+
+

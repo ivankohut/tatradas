@@ -1,0 +1,68 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<HTML>
+<HEAD>
+<meta name="GENERATOR" content="Microsoft&reg; HTML Help Workshop 4.1">
+<!-- Sitemap 1.0 -->
+</HEAD><BODY>
+<UL>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="O TatraDASe">
+		</OBJECT>
+	<UL>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="&Egrave;o je TatraDAS">
+			<param name="Local" value="html/whatis.html">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Hist&oacute;ria">
+			<param name="Local" value="html/history.html">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Kl&aacute;vesov&eacute; skratky">
+			<param name="Local" value="html/shortcuts.html">
+			</OBJECT>
+	</UL>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Pr&aacute;ca s TatraDASom">
+		</OBJECT>
+	<UL>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Otv&aacute;ranie s&uacute;borov">
+			<param name="Local" value="html/opening.html">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="S&uacute;bor nezn&aacute;meho form&aacute;tu">
+			<param name="Local" value="html\unknown.html">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Importovan&eacute; a exportovan&eacute; funkcie">
+			<param name="Local" value="html/imexport.html">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Disassemblovanie">
+			<param name="Local" value="html/disasm.html">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Prezeranie k&oacute;du">
+			<param name="Local" value="html\view.html">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="&Uacute;prava disassemblovan&eacute;ho k&oacute;du">
+			<param name="Local" value="html\edit.html">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Ukladanie do s&uacute;boru a pr&aacute;ca s projektom">
+			<param name="Local" value="html/project.html">
+			</OBJECT>
+	</UL>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="R&ocirc;zne">
+		</OBJECT>
+	<UL>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Lokaliz&aacute;cia">
+			<param name="Local" value="html/localization.html">
+			</OBJECT>
+	</UL>
+</UL>
+</BODY></HTML>

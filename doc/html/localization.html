@@ -1,0 +1,59 @@
+<HTML>
+<HEAD>
+  <META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1250">
+  <TITLE>Lokalizácia</TITLE>
+  <LINK href="tatradas.css" rel="stylesheet" type="text/css">
+<TITLE></TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000">
+
+<OBJECT TYPE="application/x-oleobject" CLASSID="clsid:1e2a7bd0-dab9-11d0-b93a-00c04fc99f9e">
+	<PARAM NAME="Keyword" VALUE="disassemblovanie">
+</OBJECT>
+
+<P><A NAME="iddisassemblefile"></A></P>
+<h2>Lokalizácia</h2>
+<p>TatraDAS nie je obmedzený len na používanie slovenčiny a angličtiny, ale môže byť jednoducho preložený a rožírený o ďalšie jazyky. Stačí vytvoriť príslušný textový súbor. Ako na to ?</p>
+<p><b>Ako to funguje ?</b><br>
+  V adresári, do ktorého ste <span class="tatradas">TatraDAS</span> nainštalovali, sa nachádza adresár "languages", ktorý obsahuje textové súbory sa príponou INI a súbory ikon. 
+  Pri spustení <span class="tatradas">TatraDAS</span> prezrie tento adresár, vyhľadá súbory s príponou INI a ak obsahujú lokalizačné dáta, tak príslušný jazyk zaradí do menu Nastavenia - Jazyk. Ak nájde k jazyku aj príslušnú ikonu, tak ju zobrazí vedľa názvu jazyku v menu <span class="cap">Nastavenia - Jazyk</span>.
+<p><b>Ako vytvoriť súbor pre nový jazyk ?</b><br>
+  Potrebujete hlavne nejaký textový editor alebo program určený práve na prekladanie INI súborov - odporúčam <a href="http://www2.arnes.si/~sopjsimo/translator.html">Translator</a>. Samozrejmosťou je ovládanie jazyka do ktorého chcete <span class="tatradas">TatraDAS</span> preložiť :)
+  Jazykový súbor obsahuje niekoľko sekcií, každá obsahuje textové reťazce vzťahujúce sa k nejakej časti <span class="tatradas">TatraDAS</span>-u, okrem prvej - <b>[General]</b> , ktorá obsahuje tieto položky:</p>
+<p>
+  <table border="1">
+    <tr><td><font face="Courier New">LanguageName=</font></td> <td>názov jazyka, ktorý sa objaví v zozname jazykov v menu <span class="cap">Nastavenia - Jazyk</span></td> <td>povinný</td>
+    <tr><td><font face="Courier New">LanguageHint=</font></td> <td>nápoveda, ktorá sa zobrazí v stavovom paneli, ak sa myš nachádza nad položkou jazyka v menu <span class="cap">Nastavenia - Jazyk</span></td> <td>nepovinný</td>
+    <tr><td><font face="Courier New">LanguageShortCut=</font></td> <td>skratka jazyka podľa normy ISO 639</td> <td>povinný</td>
+    <tr><td><font face="Courier New">LanguageID=</font></td> <td>ID jazyka podľa normy ISO ???</td> <td>povinný</td>
+    <tr><td><font face="Courier New">IconFile=</font></td> <td>názov súboru obsahujúceho ikonu k jazyku, môže byť prázdny</td> <td>nepovinný</td>
+    <tr><td><font face="Courier New">Translator=</font></td> <td>meno prekladateľa</td> <td>nepovinný</td>
+    <tr><td><font face="Courier New">Version=</font></td> <td>číslo verzie <span class="tatradas">TatraDAS</span>-u, v ktorej je tento jazykový súbor platný; ak sa nezhoduje, <span class="tatradas">TatraDAS</span> ho bude ignorovať</td> <td>povinný</td>
+  </table>
+</p>
+<p><span class="tatradas">TatraDAS</span> pri pri kontrolovaní jazykového súboru overí celkový počet sekcií v súbore a povinné položky zo sekcie General. Ďalšie kontroly už <span class="tatradas">TatraDAS</span> nerobí.</p>
+</p><b>Poznámky</b>
+  <ul>
+    <li>Nie je dôležité ako sa jazykový súbor volá, musí mať jedine príponu INI
+    <li>Dajte si pozor na kódovanie v akom vytoríte jazykový súbor
+  </ul>
+</p>
+<p><b>Príklady zo súboru LangSVK.INI</b><br><br>
+<font face="Courier New">
+[General]<br>
+LanguageName=Slovenský<br>
+LanguageShortCut=sk<br>
+LanguageID=1<br>
+IconFile=sk.ico<br>
+Translator=Ivan Kohút<br>
+Version=2.9.6<br>
+<br>
+...<br>
+<br>
+ReturnButton=Návrat skoku<br>
+EntrypointButtonHint=Skočiť na vstupný bod programu<br>
+</font>
+</p>
+</BODY>
+</HTML>

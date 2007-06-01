@@ -1,0 +1,176 @@
+object Calculator: TCalculator
+  Left = 764
+  Top = 151
+  BorderStyle = bsDialog
+  Caption = 'Calculator'
+  ClientHeight = 320
+  ClientWidth = 153
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'MS Sans Serif'
+  Font.Style = []
+  OldCreateOrder = False
+  OnCreate = FormCreate
+  PixelsPerInch = 96
+  TextHeight = 13
+  object HexadecimalLabel: TLabel
+    Left = 8
+    Top = 56
+    Width = 64
+    Height = 13
+    Caption = 'Hexadecimal:'
+  end
+  object DecimalLabel: TLabel
+    Left = 8
+    Top = 8
+    Width = 41
+    Height = 13
+    Caption = 'Decimal:'
+  end
+  object BinaryLabel: TLabel
+    Left = 8
+    Top = 104
+    Width = 32
+    Height = 13
+    Caption = 'Binary:'
+  end
+  object OctalLabel: TLabel
+    Left = 8
+    Top = 152
+    Width = 28
+    Height = 13
+    Caption = 'Octal:'
+    Enabled = False
+    Visible = False
+  end
+  object Bevel1: TBevel
+    Left = 8
+    Top = 208
+    Width = 137
+    Height = 2
+  end
+  object PlusButton: TSpeedButton
+    Left = 8
+    Top = 224
+    Width = 41
+    Height = 41
+    Caption = '+'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -27
+    Font.Name = 'MS Sans Serif'
+    Font.Style = [fsBold]
+    ParentFont = False
+    OnClick = PlusButtonClick
+  end
+  object MinusButton: TSpeedButton
+    Left = 56
+    Top = 224
+    Width = 41
+    Height = 41
+    Caption = '-'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -27
+    Font.Name = 'MS Sans Serif'
+    Font.Style = []
+    ParentFont = False
+    OnClick = MinusButtonClick
+  end
+  object ModButton: TSpeedButton
+    Left = 104
+    Top = 224
+    Width = 41
+    Height = 41
+    Caption = 'mod'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -13
+    Font.Name = 'MS Sans Serif'
+    Font.Style = [fsBold]
+    ParentFont = False
+    OnClick = ModButtonClick
+  end
+  object MulButton: TSpeedButton
+    Left = 8
+    Top = 272
+    Width = 41
+    Height = 41
+    Caption = '*'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -27
+    Font.Name = 'Arial'
+    Font.Style = []
+    ParentFont = False
+    OnClick = MulButtonClick
+  end
+  object DivButton: TSpeedButton
+    Left = 56
+    Top = 272
+    Width = 41
+    Height = 41
+    Caption = 'div'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -13
+    Font.Name = 'MS Sans Serif'
+    Font.Style = [fsBold]
+    ParentFont = False
+    OnClick = DivButtonClick
+  end
+  object EqualButton: TSpeedButton
+    Left = 104
+    Top = 272
+    Width = 41
+    Height = 41
+    Caption = '='
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -27
+    Font.Name = 'MS Sans Serif'
+    Font.Style = [fsBold]
+    ParentFont = False
+    OnClick = EqualButtonClick
+  end
+  object Panel1: TPanel
+    Left = 8
+    Top = 24
+    Width = 137
+    Height = 25
+    BevelOuter = bvNone
+    Caption = 'Panel1'
+    TabOrder = 0
+  end
+  object Panel2: TPanel
+    Left = 8
+    Top = 72
+    Width = 137
+    Height = 25
+    BevelOuter = bvNone
+    Caption = 'Panel2'
+    TabOrder = 1
+  end
+  object Panel3: TPanel
+    Left = 8
+    Top = 120
+    Width = 137
+    Height = 25
+    BevelOuter = bvNone
+    Caption = 'Panel3'
+    TabOrder = 2
+  end
+  object Panel4: TPanel
+    Left = 8
+    Top = 168
+    Width = 137
+    Height = 25
+    BevelOuter = bvNone
+    Caption = 'Panel3'
+    Enabled = False
+    TabOrder = 3
+    Visible = False
+  end
+end

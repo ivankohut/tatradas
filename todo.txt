@@ -1,0 +1,52 @@
+2.9.8 todo list:
+  - refactorovat a opravit 
+      vsetky EXECfiles
+      save & load
+      disassembler 
+        - nahradit konstanty symbolickymi konstantami
+        - 
+      mainform - vo vseobecnosti oddelit gui od zvysku
+      procmat
+      codetab
+  - progress
+  - SSE3
+   
+
+
+-----------------------------
+drag a drop
+ulozenie bookmarkov v projekte
+ulozenie resources v projekte
+classic(2.2) vzhlad
+rozne znakove sady v synedit
+SSE 3
+zdroje v NE
+
+----
+
+
+
+
+- ukoncit disassemblovanie bloku v ktorom sa nachadza nedefinovana instrukcia ?
+- skoky a volania medzi sekciam
+
+- AAS nie je zvyraznena v MEM.jar
+- relocation table v MZ formate
+- SynEdit este treba: oznacovat cely riadok a plynule skrolovanie bez kurzora(podobene ako vo WinDASM, ale s moznostou selktovat text)
+- moznost vzdy si vybrat otvorit subor ako subor neznameho formatu
+- lepsia detekcia volania funkcii
+- spracovanie resources (alebo pridanie Resource Hackera)
+- podpora inych formatov
+- kalkulacka
+- oddelit REPxx ako samostatnu instrukciu (problem v COMMAND.COM na adrese 0x19)
+
+Krajne situacie:
+- importovany modul bez funkcii
+
+
+
+statistika funkcii (po najdeni call pridaj funkciu, velkost pridaj po najdeni jej return-u)
+
+interpretacia call [aaa], kde aaa je v statickych datach
+
+spravit triedu TSections na enkapsulaciu sekcii

@@ -1,0 +1,16 @@
+mainicon ICON ..\..\images\icons\tatradas.ico
+background BITMAP ..\..\images\background.bmp
+open1 BITMAP ..\..\images\buttons\open1.bmp
+open2 BITMAP ..\..\images\buttons\open2.bmp
+disassemble1 BITMAP ..\..\images\buttons\disassemble1.bmp
+disassemble2 BITMAP ..\..\images\buttons\disassemble2.bmp
+stop1 BITMAP ..\..\images\buttons\stop1.bmp
+stop2 BITMAP ..\..\images\buttons\stop2.bmp
+project1 BITMAP ..\..\images\buttons\project1.bmp
+project2 BITMAP ..\..\images\buttons\project2.bmp
+save1 BITMAP ..\..\images\buttons\save1.bmp
+save2 BITMAP ..\..\images\buttons\save2.bmp
+help1 BITMAP ..\..\images\buttons\help1.bmp
+help2 BITMAP ..\..\images\buttons\help2.bmp
+;dir1 ICON ..\..\images\icons\dir1.ico
+;dir2 ICON ..\..\images\icons\dir2.ico

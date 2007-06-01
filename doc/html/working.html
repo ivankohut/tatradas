@@ -1,0 +1,81 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+  <META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1250">
+  <LINK href="tatradas.css" rel="stylesheet" type="text/css">
+<TITLE>Prezeranie zdisassemblovaného kódu</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000">
+
+<OBJECT TYPE="application/x-oleobject" CLASSID="clsid:1e2a7bd0-dab9-11d0-b93a-00c04fc99f9e">
+	<PARAM NAME="Keyword" VALUE="importované funkcie">
+	<PARAM NAME="Keyword" VALUE="exportované funkcie">
+</OBJECT>
+
+<P><A NAME="idimportexport"></A></P>
+
+Po zdisassemblovaní súboru sa objavia karty s názvom Kódová sekcia obsahujúce zdisassemblovaný kód, ktorý v každom riadku môže obsahovať jednu z týchto vecí:
+<UL>
+	<LI>inštrukcia assembleru - adresa, ???, inštrukcia s parametrami, napr. 
+	<p><font face="Courier New">
+	  00000012 89742418 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;MOV dword [ESP+0x18],ESI 
+	</font></p>
+	<li>pseudo-inštrukcia - adresa, ???, pseudo-inštrukcia
+	<p><font face="Courier New">
+    00002F53 C1 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;byte 0xC1 'Á'
+	</font></p>
+	<li>textový reťazec - adresa, počet bajtov reťazca, typ reťazca, reťatec v apostrofoch
+	<p><font face="Courier New">
+	  00000005 bytes: 00000008(hex) &nbsp; &nbsp;pstring 'Boolean'
+	</font></p>
+	<LI>informácia o cieli skoku, loop cyklu alebo cieli volania funkcie alebo procedúry, napr.
+	<p><font face="Courier New">
+    Jump from 0x000004DA
+	</font></p>
+	<LI>informácia o použití importovanej funkcie, napr.
+	<p><font face="Courier New">
+    Imported function 'CreateEventA' from 'KERNEL32.dll' used
+	</font></p>
+	<LI>informácia o zaciatku exportovanej funkcie
+	<p><font face="Courier New">
+   Exported function 'DoubleToStr'
+  </font></p>
+	<LI>informácia o vstupnom bode programu (Entry point)
+	<p><font face="Courier New">
+    Program Entry point
+  </font></p>
+	<LI>komentár, riadok začína znakom ; napr.
+	<p><font face="Courier New">
+     <i>; Moj komentar</i>
+  </font></p>
+	<LI>prázdny riadok
+</UL>
+<p>
+Inštrukcie JMP, Jxx, CALL, LOOPxx usmerňujúce beh programu majú ako parameter adresu.  Ak nastavíte kurzor na riadok s takouto inštrukciou, kliknutím na Nasleduj skok alebo stlačením Ctrl+J sa dostanete na riadok, ktorý je cieľom inštrukcie.
+Naspäť sa dostanete kliknutím na Návrat skoku, resp. stlačením Ctrl+R.
+</p>
+<p>
+V zdisassemblovanom kóde možno vyhľadávať, stlačením Ctrl + F alebo kliknutím na Hľadaj ... v menu Hľadaj sa otvorí štandartné okno, do ktorého môžete napíssať svoju požiadavku, opakované hľadanie slova vyvoláte klávesou F3 alebo kliknitím na Hľadaj znova v menu Hľadaj
+</p>
+<p>
+Na rýchle premiestnenie v disassemblovanom kóde slúži tlačidlo Choď na adresu (Ctrl + G), ktoré otvorí okno slúžiace na zadanie adresy (hexadecimálne). Po stlačení OK sa kurzor premiestni na riadok sa danou(alebo najbližšou) adresou. 
+</p>
+<p>
+Po stlačení tlačidla Vstupný bod sa kurzor premiestni na vstupný bod programu. Túto možnosť máte len vtedy, ak aktuálne zobrazená kódová sekcia obsahuje vstupný bod programu.
+</p>
+Zhrnutie:
+<UL>
+	<LI>Vstupný bod – nastaví na vstupný bod programu<BR><BR></LI>
+
+	<LI>Chod na adresu – nastaví na adresu zadanú užívateľom<BR><BR></LI>
+
+	<LI>Nasleduj skok – skočí na adresu za inštrukciou skoku (J**, CALL) z prvého riadku na aktuálnej strane<BR><BR></LI>
+
+	<LI>Návrat skoku – vráti sa na miesto z ktorého prebehla posledná operácia „Nasleduj skok“<BR><BR></LI>
+</UL>
+
+  
+  
+  </body>
+</html>

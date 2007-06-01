@@ -1,0 +1,142 @@
+<HTML>
+<HEAD>
+  <META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1250">
+  <LINK href="tatradas.css" rel="stylesheet" type="text/css">
+  <TITLE>História TatraDAS-u</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000">
+
+<OBJECT TYPE="application/x-oleobject" CLASSID="clsid:1e2a7bd0-dab9-11d0-b93a-00c04fc99f9e">
+	<PARAM NAME="Keyword" VALUE="história">
+	<PARAM NAME="Keyword" VALUE="verzia">
+</OBJECT>
+
+<P><A NAME="idhistory"></A></P>
+
+<h2>História <span class="tatradas">TatraDAS</span>-u</h2>
+
+<p><b>Verzia 3.0 - XX. YY. 2004</b>
+<ul>
+  <li>takmer celý <span class="tatradas">TatraDAS</span> prepísaný
+  <li>nový spôsob disassemblovania - vyhodnocovanie inštrukcií skokov a volaní funkcií 
+  <li>z toho vyplýva oddelenie dát od kódu v kódových sekciách
+  <li>možnosť úpravy zdisassemblovaného kódu:
+  <ul>
+    <li>zmena dát na kód
+    <li>zmena kódu na dáta
+    <li>zmena dát na dáta
+  </ul>
+  <li>základná podpora NE (New Executable) formátu (disassemblovanie kódových sekcií)
+  <li>importované funkcie(bez detekcie volania), exportované funkcie NE formátu
+  <li>základná podpora ELF (Executable and Linkable Format) formátu (disassemblovanie kódových sekcií)
+  <li>ukladanie do súboru skompilovateľného pomocou NASM (Netwide Assembler), s tým súvisiace zmeny:
+  <ul>
+    <li>segmentové prefixy vnútri zátvoriek
+    <li>špecifikovanie veľkosti operandov inštrukcií
+    <li>informácia o použití prefixu ovplyvňujúceho veľkosť adresovania a operandov
+  </ul>  
+  <li>možnosť pridať vlastný preklad <span class="tatradas">TatraDAS</span>u
+  <li>nový dizajn panelu nástrojov 
+  <li>upravený dizajn všetkých kariet
+  <li>definovanie vstupného bodu pri súbore neznámeho formátu
+  <li>vylepšený hex editor pre <span class="tatradas">TatraDAS</span>-om otvorené súbory
+  <li>možnosť zastaviť ukladanie do súboru a otváranie projektu
+  <li>pomocník vo formáte CHM
+  <li>nová ikona
+  <li>k dispozícií zdrojový kód <span class="tatradas">TatraDAS</span>-u (Delphi)
+  <li>záložky pri prehliadaní kódových sekcií
+  <li>zmenený spôsob výpisu Tabuľky sekcií
+  <li>opravené chyby:
+  <ul>
+    <li>ošetrenie niektorých nedefinovaných opcodov
+    <li>chyby, na ktoré si už ani nespomeniem
+  </ul>  
+</ul>
+</p>
+
+
+<P><B>Verzia 2.2 – 18. 8. 2003</B>
+
+<UL>
+	<LI>podpora inštrukcií sady 3DNow! a Extensions to the 3DNow!</LI>
+	<LI>rozšírené možnosti ukladania zdisassemblovaného súboru</LI>
+	<LI>ak má importovaná funkcia len jeden výskyt, tak po dvojkliku na nu v zozname importovaných funkcií sa zobrazí tento výskyt v príslušnej kódovej sekcií</LI>
+	<LI>zmena usporiadania položiek v menu Súbor a niektorých klávesových skratiek</LI>
+	<LI>opravené chyby:
+    <UL>
+    	<LI>umožňovanie a znemožnovanie niektorých tlačidiel a položiek v menu počas rôznych operácií</LI>
+    	<LI>veľkosti parametrov inštrukcií skupiny 3</LI>
+    	<LI>relatívne skoky so zápornou cielovou adresou mali operandy tvaru <span class="verb">FFFFFFFFxxxxxxxx</span>, opravené na záporné čísla</LI>
+    	<LI>nesprávne spracovaná kódová sekcia s nulovou veľkosťou a nenulovou virtuálnou veľkosťou</LI>
+    </UL>
+  </LI>
+</UL>
+
+<P><B>Verzia 2.1 – 17. 6. 2003</B>
+
+<UL>
+	<LI>nové logo</LI>
+	<LI>drobné úpravy</LI>
+	<LI>opravené chyby:
+    <UL>
+    	<LI>nestabilita pri otváraní projektu</LI>
+    </UL>
+  </LI>
+</UL>
+
+<P><B>Verzia 2.1 beta 1 – 6. 6. 2003</B>
+
+<UL>
+	<LI>použitie komponentu <B>SynEdit</B> - lepšie farebné zvýrazňovanie zdisassemblovaného textu (bez blikania)</LI>
+	<LI>nové klávesové skratky</LI>
+	<LI>referencia o importovanej funkcii je hneď nad skokom na funkciu</LI>
+	<LI>z disassemblovania vynechaný koniec kódovej sekcie obsahujúci len bajty 0x00</LI>
+	<LI>opravené chyby:
+    <UL>
+    	<LI>skok na adresu vo vnútri poslednej inštrukcie</LI>
+    	<LI>pri zadávaní veľkosti kódovej sekcie súboru neznámeho alebo nepodporovaného typu sa nedali použit hexadecimálne cifry A,B,C,D,E a F (a pritom sa to vyžaduje)</LI>
+    	<LI>na tlačidlá Skoč na funkciu v kóde sa niekedy dalo kliknúť, aj keď súbor nebol ešte zdisassemblovaný</LI>
+    	<LI>niekedy chybný preklad  názvu karty Kódová sekcia</LI>
+    	<LI>súbor formátu COM sa nedal disassemblovať</LI>
+    	<LI>hinty na tlačidlách karty Kódová sekcia sa nezobrazili, ak bol <span class="tatradas">TatraDAS</span> spustený v anglickom jazyku</LI>
+    	<LI>otvorený projekt sa dal uložit (<span class="tatradas">TatraDAS</span> pri tej činnosti vyhlásil chybu a ukladanie prerušil)</LI>
+    </UL>
+  </LI>
+</UL>
+
+<P><B>Verzia 2.0 – 19. 5. 2003</B>
+
+<UL>
+	<LI>spracovanie všetkých kódových sekcií</LI>
+	<LI>referencie o exportovaných funkciách vo výstupe</LI>
+	<LI>zobrazovanie priebehu ukladania a načítavania projektu</LI>
+	<LI>zvýrazňovanie vo výstupe</LI>
+	<LI>otvorenie známych ale nepodporovaných formátov ako "neznámy formát"</LI>
+	<LI>oprava chyby:
+    <UL>
+    	<LI>skok na adresu vo vnútri poslednej inštrukcie</LI>
+    	<LI>skok alebo exportovaná funkcia na začiatok sekcie</LI>
+    </UL>
+  </LI>
+</UL>
+
+<P><B>Verzia 1.6 – 21. 2. 2003</B>
+
+<UL>
+	<LI>skrolovanie nebliká</LI>
+	<LI>použitie klávesou "<B>home</B>" a "<B>end</B>" pri skrolovaní</LI>
+</UL>
+
+<P><B>Verzia 1.5 – 22. 11. 2002</B>
+
+<UL>
+	<LI>podpora MMX, SSE, SSE2 inštrukcií</LI>
+	<LI>tvorba projektov = uloženie výstupu na disk a jeho znovuotváranie</LI>
+	<LI>disassemblovanie o 10% rýchlejšie</LI>
+</UL>
+
+<P><B>Verzia 1.0 – 27. 5. 2002</B></P>
+
+</BODY>
+</HTML>

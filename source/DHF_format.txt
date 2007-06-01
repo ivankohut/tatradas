@@ -1,0 +1,24 @@
+Basic Version:
+
+  ExecFileManager Level
+
+    0-3  (dword) : project file version
+    4-7  (enum)  : executable file format
+ 
+  ExecFile Level
+
+    8-11 (dword) : file size
+    12-? (string): file path 
+  
+  Section Level
+  
+    0-3  (dword) : section count
+    sections
+    
+    
+  
+Advanced Version:
+
+0-3   (dword) : project file version
+4-11  (MD5)   : MD5 checksum of bytes 8 to size of DHF file  
+12-15 (enum)  : executable file format

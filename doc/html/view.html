@@ -1,0 +1,83 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+  <META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1250">
+  <LINK href="tatradas.css" rel="stylesheet" type="text/css">
+  <TITLE>Prezeranie zdisassemblovaného kódu</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000">
+
+<OBJECT TYPE="application/x-oleobject" CLASSID="clsid:1e2a7bd0-dab9-11d0-b93a-00c04fc99f9e">
+	<PARAM NAME="Keyword" VALUE="importované funkcie">
+	<PARAM NAME="Keyword" VALUE="exportované funkcie">
+</OBJECT>
+
+<P><A NAME="idimportexport"></A></P>
+
+<h2>Prezeranie zdisassemblovaného kódu</h2>
+<span class="cap"></span>
+Po zdisassemblovaní súboru sa objavia karty s názvom <span class="cap">Kódová sekcia</span> obsahujúce zdisassemblovaný kód, ktorý v každom riadku môže obsahovať jednu z týchto vecí:
+<UL>
+	<LI>inštrukcia assembleru - adresa, bajty inštrukcie, inštrukcia s parametrami, napr. 
+	<p><font face="Courier New">
+	  00000012 89742418 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;MOV dword [ESP+0x18],ESI 
+	</font></p>
+	<li>pseudo-inštrukcia - adresa, bajty inštrukcie, pseudo-inštrukcia
+	<p><font face="Courier New">
+    00002F53 C1 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;byte 0xC1 'Á'
+	</font></p>
+	<li>textový reťazec - adresa, počet bajtov reťazca, typ reťazca, reťatec v apostrofoch
+	<p><font face="Courier New">
+	  00000005 bytes: 00000008(hex) &nbsp; &nbsp;pstring 'Boolean'
+	</font></p>
+	<LI>informácia o cieli skoku, loop cyklu alebo cieli volania funkcie alebo procedúry, napr.
+	<p><font face="Courier New">
+    Jump from 0x000004DA
+	</font></p>
+	<LI>informácia o použití importovanej funkcie, napr.
+	<p><font face="Courier New">
+    Imported function 'CreateEventA' from 'KERNEL32.dll' used
+	</font></p>
+	<LI>informácia o zaciatku exportovanej funkcie
+	<p><font face="Courier New">
+   Exported function 'DoubleToStr'
+  </font></p>
+	<LI>informácia o vstupnom bode programu (Entry point)
+	<p><font face="Courier New">
+    Program Entry point
+  </font></p>
+	<LI>komentár, riadok začína znakom ; napr.
+	<p><font face="Courier New">
+     <i>; Moj komentar</i>
+  </font></p>
+	<LI>prázdny riadok
+</UL>
+<p>
+Inštrukcie JMP, Jxx, CALL, LOOPxx usmerňujúce beh programu majú ako parameter adresu. Ak nastavíte kurzor na riadok s takouto inštrukciou, kliknutím na <span class="cap">Nasleduj skok</span> alebo stlačením <span class="cap">Ctrl+J</span> sa dostanete na riadok, ktorý je cieľom inštrukcie.
+Naspäť sa dostanete kliknutím na <span class="cap">Návrat skoku</span>, resp. stlačením <span class="cap">Ctrl+R</span>.
+</p>
+<p>
+V zdisassemblovanom kóde možno vyhľadávať, stlačením <span class="cap">Ctrl + F</span> alebo kliknutím na <span class="cap">Hľadaj ...</span> v menu <span class="cap">Hľadaj</span> sa otvorí štandardné okno, do ktorého môžete napíssať svoju požiadavku, opakované hľadanie slova vyvoláte klávesou <span class="cap">F3</span> alebo kliknitím na <span class="cap">Hľadaj znova</span> v menu <span class="cap">Hľadaj</span>.
+</p>
+<p>
+Na rýchle premiestnenie v disassemblovanom kóde slúži tlačidlo <span class="cap">Choď na adresu (Ctrl + G)</span>, ktoré otvorí okno slúžiace na zadanie adresy (hexadecimálne). Po stlačení OK sa kurzor premiestni na riadok sa danou(alebo najbližšou) adresou. 
+</p>
+<p>
+Po stlačení tlačidla <span class="cap">Vstupný bod</span> sa kurzor premiestni na vstupný bod programu. Túto možnosť máte len vtedy, ak aktuálne zobrazená kódová sekcia obsahuje vstupný bod programu.
+</p>
+Zhrnutie:
+<UL>
+	<LI><span class="cap">Vstupný bod</span> – nastaví na vstupný bod programu<BR><BR></LI>
+
+	<LI><span class="cap">Choď na adresu...</span> – nastaví na adresu zadanú užívateľom<BR><BR></LI>
+
+	<LI><span class="cap">Nasleduj skok</span> – skočí na adresu za inštrukciou skoku (J**, CALL) z prvého riadku na aktuálnej strane<BR><BR></LI>
+
+	<LI><span class="cap">Návrat skoku</span> – vráti sa na miesto, z ktorého prebehla posledná operácia <span class="cap">„Nasleduj skok“</span><BR><BR></LI>
+</UL>
+
+  
+  
+  </body>
+</html>

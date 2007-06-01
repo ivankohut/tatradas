@@ -1,0 +1,28 @@
+[OPTIONS]
+Compatibility=1.1 or later
+Compiled file=TatraDAS.chm
+Contents file=tatradas.hhc
+Default topic=html\whatis.html
+Display compile progress=No
+Index file=TatraDAS.hhk
+Language=0x41b Slovak
+Title=TatraDAS
+
+
+[FILES]
+html\hint_disasm.html
+html\opening.html
+html\disasm.html
+html\history.html
+html\imexport.html
+html\project.html
+html\shortcuts.html
+html\whatis.html
+html\author.html
+html\view.html
+html\edit.html
+html\localization.html
+html\unknown.html
+
+[INFOTYPES]
+

@@ -1,0 +1,55 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+  <META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1250">
+  <TITLE>Ukladanie do súboru a práca s projektom</TITLE>
+  <LINK href="tatradas.css" rel="stylesheet" type="text/css">
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000">
+
+<OBJECT TYPE="application/x-oleobject" CLASSID="clsid:1e2a7bd0-dab9-11d0-b93a-00c04fc99f9e">
+	<PARAM NAME="Keyword" VALUE="projekt">
+	<PARAM NAME="Keyword" VALUE="uložit">
+	<PARAM NAME="Keyword" VALUE="DAS súbor">
+	<PARAM NAME="Keyword" VALUE="DHF súbor">
+	<PARAM NAME="Keyword" VALUE="otvorit projekt">
+</OBJECT>
+
+<P><A NAME="idproject"></A></P>
+
+<h2>Ukladanie do súboru a práca s projektom</h2>
+<span class="cap"></span>
+<P>V prípade, že otvorený súbor je aj zdisassemblovaný, je možné uložiť jeho zdisassemblované kódové sekcie (alebo ich časti) na disk vo forme textového súboru, alebo spolu s informáciami o importovaných a exportovaných funkciách ako projektový súbor.</P>
+
+<P>Kliknite na <span class="cap">Uložiť...</span> v menu <span class="cap">Súbor</span> alebo na paneli s tlačidlami (alebo stlačte <span class="cap">Ctrl + S</span>). Zobrazí sa okno, v ktorom si môžete vybrať zo štyroch možností:</P>
+
+<UL>
+	<LI><span class="cap">Projekt</span>
+	<LI><span class="cap">Disassemblované inštrukcie</span>
+	<LI><span class="cap">Voliteľné</span>
+	<LI><span class="cap">Kompilovateľný s NASM</span>
+</UL>
+
+<P><B>Projekt:</B></P>
+
+<P>Budú vytvorené dva súbory, jeden binárny s príponou DHF, ktorý obsahuje informácie o pôvodnom súbore ako meno, veľkosť, formát, tabuľku sekcií, zoznam importovaných, príp. exportovaných funkcií. Druhý súbor je textový s príponou DAS a obsahuje zdisassemblované kódové sekcie (to čo si môžete prehliadať na kartách <span class="cap">Kódová sekcia #N</span>) a informáciu ich čísle a počte riadkov. Tento súbor si môžete prezerať v každom textovom editore.</P>
+
+<P>Pomocou <span class="cap">Otvoriť projekt...</span> v menu <span class="cap">Súbor</span> alebo na paneli s tlačidlami (alebo stlačením <span class="cap">Ctrl + P</span>) potom môžete takúto dvojicu súborov znovu otvoriť v <span class="tatradas">TatraDAS</span>-e a pracovať ako s práve zdisassemblovaným pôvodným súborom bez nutnosti jeho opätovného disassemblovania.</P>
+
+<P><B>Upozornenie</B>: Tieto dva súbory žiadnym spôsobom nemodifikujte a neupravujte, aby ich <span class="tatradas">TatraDAS</span> vedel správne otvoriť.</P>
+
+<P><B>Disassemblované inštrukcie:</B></P>
+
+<P>Ide v podstate o ten druhý súbor (textový s príponou DAS, ktorý vznikne pri ukladaní ako projekt) v predchádzajúcom prípade.</P>
+
+<P><B>Voliteľné:</B></P>
+
+<P>V tomto prípade bude vytvorený jeden textový súbor, o ktorého obsahu rozhodujete Vy. Zaškrtávacími políčkami určíte, ktoré časti zdisassemblovaných kódových sekcií budú v tomto súbore obsiahnuté. Ak označíte všetky, bude sa súbor takmer zhodovať so súborom vytvoreným v predchádzajúcom prípade. Príponu súboru si musíte zvoliť sami.</P>
+
+<P><B>Kompilovateľný s NASM:</B></P>
+
+<p>Uloženie do textového súboru s príponou ASM, ktorý je možné skompilovať programom NASM</p>
+
+</BODY>
+</HTML>

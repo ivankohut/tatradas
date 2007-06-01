@@ -1,0 +1,133 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+  <META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1250">
+  <TITLE>Úprava disassemblovaného kódu</TITLE>
+  <LINK href="tatradas.css" rel="stylesheet" type="text/css">
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000">
+
+<OBJECT TYPE="application/x-oleobject" CLASSID="clsid:1e2a7bd0-dab9-11d0-b93a-00c04fc99f9e">
+	<PARAM NAME="Keyword" VALUE="disassemblovanie">
+	<PARAM NAME="Keyword" VALUE="vstupný bod">
+	<PARAM NAME="Keyword" VALUE="chod na adresu">
+	<PARAM NAME="Keyword" VALUE="farba písma">
+	<PARAM NAME="Keyword" VALUE="farba pozadia">
+</OBJECT>
+
+<P><A NAME="iddisassemblefile"></A></P>
+
+<h2>Úprava disassemblovaného kódu</h2>
+
+Zdisassemblovaný kód sa dá upravovať, avšak len obmedzeným (ale dostatočným) spôsobmi. Možné úpravy menia len interpretáciu obsahu kódových sekcií, t.j. nedá sa nimi pridať ani ubrať kód a dáta. Zdisassemblovaný kód sa dá transformať nasledovne:
+<ul>
+<li>dáta na dáta
+<li>dáta na kód
+<li>kód na dáta
+</ul>
+Do(Z) zdisassemblovaného kódu sa dajú pridávať(odoberať)
+<ul>
+<li>Komentáre
+<li>Prázdne riadky
+</ul>
+<b>Poznámka.</b> Ak chcete meniť kód na kód, treba najprv zmeniť kód na dáta a potom tieto naspäť na kód.
+
+<h2>Dáta na dáta a dáta na kód</h2>
+Nastavte kurzor na riadok zdisassemblovaného kódu, počnúc ktorým chcete transformovať dáta. V menu <span class="cap">Úpravy</span> zvoľte jednu z možností:
+<ol>
+<li><span class="cap">Zmeň na bezznamienkový</span>
+<li><span class="cap">Zmeň na znamienkový</span>
+<li><span class="cap">Zmeň na desatinný</span>
+<li><span class="cap">Zmeň na reťazec</span>
+<li><span class="cap">Rozšírené možnosti zmien ...</span>
+</ol>
+a potom vyberte požadovaný dátový typ.<br> 
+<span class="tatradas">TatraDAS</span> zoberie potrebný počet bajtov a zobrazí ich ako požadovaný dátový typ. V prípade, že inštrukcia či nejaké dáta na danom riadku zaberajú menej bajtov ako treba na zvolený typ, uberie sa s nasledujúceho riadku až kým nie je dosť. Tieto pôvodné riadky sa nahradia novým obsahujúcim zvolené dáta. Nepoužité bajty s posledného pôvodného riadku sú transformované na typ bezznamienkový bajt. Výsledný riadok obsahuje adresu, výpis použitých bajtov, názov dátového typu a samotná hodnota.
+
+<p><font face="Courier New">
+00005978 FF742418 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;PUSH dword [ESP+0x18]<br>
+0000597C 50 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;PUSH EAX<br>
+0000597D E8C7FFFFFF &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;CALL 0x00005949<br>
+00005982 85C0 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;TEST EAX,EAX<br>
+</font></p>
+ &nbsp; &nbsp; ||<br>
+ &nbsp; &nbsp; \/<br>
+<p><font face="Courier New">
+00005978 FF742418 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;PUSH dword [ESP+0x18]<br>
+0000597C 50E8C7FF &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;dword 0xFFC7E850<br>
+00005980 FF &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;byte 0xFF '˙'<br>
+00005981 FF &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;byte 0xFF '˙'<br>
+00005982 85C0 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;TEST EAX,EAX<br>
+</font></p>
+
+<h3>Zmeň na bezznamienkový a Zmeň na znamienkový</h3>
+Tieto dve možnosti umožňujú zobraziť bajty kódovej sekcie v najbežnejšie používaných dátových typoch
+<ul>
+<li>BYTE
+<li>WORD
+<li>DWORD
+<li>QWORD
+</ul>
+a to v beznamienkovom alebo znamienkovom formáte, napr.
+<p><font face="Courier New">
+00000025 16F8 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;word -0x07EA<br>
+00000027 BF0C16F8 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;dword -0x07E9F341<br>
+0000002B BF00000000FFFFFF &nbsp; &nbsp; &nbsp; &nbsp;qword -0x000000FFFFFFFF41<br>
+00000033 FFC75BF9 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;dword 0xF95BC7FF<br>
+</font></p>
+<h3>Zmeň na desatinný</h3>
+umožňuje reprezentáciu bajtov kódovej sekcie v troch formátoch čísel s plávajúcov desatinnou čiarkou
+<ul>
+<li>SINGLE - 32 bitový
+<li>DOUBLE - 64 bitový
+<li>EXTENDED - 80 bitový
+</ul>
+ktoré sa štandardne používajú na reprezentáciu desatinných čísel v počítači, hlavne pri práci s FPU (Floating Point Unit), napr.
+<p><font face="Courier New">
+00005978 FF74241850E8C7FF &nbsp; &nbsp; &nbsp; &nbsp;double -3.35767957357889E307
+</font></p>
+V prípade typu EXTENDED sa môže stať, že riadok bude obsahovať nie číslo ale napr.
+<p><font face="Courier New">
+00000021 FFFFFF0616F8BF0C16F8 &nbsp; &nbsp;unsupported extended real number
+</font></p>
+čo znamená, že tých desať bajtov na adrese <font face="Courier New">0x00000021</font> nereprezentuje žiadne číslo podľa IEEE Standard 754.
+
+<h3>Zmeň na reťazec </h3>
+Možnosť Zmeň na reťazec ponúkne dva typy reťazcov, a to charakteristické pre programovacie jazyky 
+<ul>
+<li><b>Pascal</b> - začína jedným bajtom udávajúcim dĺžku reťazca, nasledujú jednotlivé znaky reťazca, každý charakterizovaný jedným bajtom
+<li><b>C</b> - reťazec jednobajtových znakov, na jeho konci je bajt s hodnotou 0.
+</ul>
+Po zvolení transformácie na jeden z dvoch typov reťazcov, sa tento zobrazí v jednom riadku, ktorý obsahuje adresu, počet bajtov, ktoré reťazec zaberá(spolu s bajtom na začiatku(<b>Pascal</b>), resp. na konci (<b>C</b>)). Za tým sa nachádza označenie typu reťazca: 
+<ul>
+<li><font face="Courier New">pstring</font> - v prípade typu <b>Pascal</b>
+<li><font face="Courier New">cstring</font> - v prípade typu <b>C</b>
+</ul>
+Potom nasleduje samotný text reťazca uzavretý medzi dvoma apostrofmi, napr.
+<p><font face="Courier New">
+000000A0 bytes: 00000032(hex) &nbsp; &nbsp;cstring 'Software\Microsoft\Windows\CurrentVersion\TaskMon'
+</font></p>
+
+<h3>Rozšírené možnosti zmien ...</h3>
+Táto možnosť slúži na hromadnú transformáciu na dáta typou s pevnou dĺžkou(všetko okrem reťazcov).
+Po výbere tejto možnosti sa otvorí okno, v ktorého ľavej hornej časti si môžete nastaviť požadovaný dátový typ, vľavo dole jeho (bez)znamienkovosť (ak to má zmysel) a vpravo samotnú podmienku hromadnej transformácie:
+<ul>
+<li><span class="cap">Počet inštrukcií</span> - výsledkom bude zadaný počet(decimálne) riadkou obsahujúcich zvolený dátový typ
+<li><span class="cap">Počet bajtov</span> - výsledkom budú, ktoré reprezentujú najviac zadaný počet(decimálne) bajtov kódovej sekcie
+<li><span class="cap">Maximálna adresa</span> - transformácia bude prebiehať až po riadok so zadanou adresou(hexadecimálne)
+<li><span class="cap">Koniec sekcie</span> - až po koniec kódovej sekcie
+<li><span class="cap">Po začiatok kódu</span> - hovorí samo za seba
+</ul>
+<h2>Dáta na kód</h2>
+Z pohľadu užívateľa jednoduchšou (s pohľadu programátora naopak) operáciou je zmena dát na kód. Stačí si vybrať riadok, počnúc ktorým chceme disassemblovať dáta a menu Úpravy klknúť na Disassembluj.<br>
+Prebehne podobný proces ako pri úvodnom disassemblovaní súboru avšak s tým, že kód sa už nemení, len dáta. To znamená, že ak proces disassemblovania narazí na kód, ďalej nepokračuje. Netreba však zabudnúť, že novonájdené inštrukcie skov a im podobné TatraDAS vyhodnotí a pokúsi sa disassemblovať aj na miestach, na ktoré tieto inštrukcie odkazujú.
+</BODY>
+
+<h2>Komentáre a prázdne riadky</h2>
+<h3>Pridávanie</h3>
+Po kliknutí na <span class="cap">Vlož</span> a potom <span class="cap">Komentár ...</span> sa zobrazí malé okno, do ktorého môžete napísať text komentáru. Ten bude vložený nad riadok, ktorý práve obsahuje kurzor. Vložený komentár bude automaticky začínať znakom ';'. <br>
+Podobne sa dajú vkladať prázdne riadky cez <span class="cap">Vlož</span> a <span class="cap">Prázdny riadok</span>.
+<h3>Odoberanie</h3>
+Keď sa kurzor nachádza na riadku s komentárom alebo prádnym riadkom, tak je k dispozícií možnosť <span class="cap">Odstráň riadok</span> v menu <span class="cap">Úpravy</span>(v kontextovom menu).
+</HTML>

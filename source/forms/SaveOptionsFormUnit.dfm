@@ -1,0 +1,165 @@
+object SaveOptionsForm: TSaveOptionsForm
+  Left = 169
+  Top = 100
+  BorderIcons = [biSystemMenu, biMinimize]
+  BorderStyle = bsSingle
+  Caption = 'Save Options'
+  ClientHeight = 268
+  ClientWidth = 489
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'MS Sans Serif'
+  Font.Style = []
+  OldCreateOrder = False
+  OnShow = FormShow
+  PixelsPerInch = 96
+  TextHeight = 13
+  object OKButton: TButton
+    Left = 322
+    Top = 234
+    Width = 75
+    Height = 25
+    Caption = 'OK'
+    Default = True
+    TabOrder = 0
+    OnClick = OKButtonClick
+  end
+  object CancelButton: TButton
+    Left = 406
+    Top = 234
+    Width = 75
+    Height = 25
+    Cancel = True
+    Caption = 'Cancel'
+    TabOrder = 1
+    OnClick = CancelButtonClick
+  end
+  object ReferencesGroupBox: TGroupBox
+    Left = 288
+    Top = 8
+    Width = 193
+    Height = 217
+    Caption = 'References'
+    TabOrder = 2
+    object JumpCheckBox: TCheckBox
+      Left = 16
+      Top = 24
+      Width = 153
+      Height = 17
+      Caption = 'JUMP from ...'
+      TabOrder = 0
+    end
+    object CallCheckBox: TCheckBox
+      Left = 16
+      Top = 56
+      Width = 153
+      Height = 17
+      Caption = 'CALL from ...'
+      TabOrder = 1
+    end
+    object ExportCheckBox: TCheckBox
+      Left = 16
+      Top = 88
+      Width = 153
+      Height = 17
+      Caption = 'Exported function ... '
+      TabOrder = 2
+    end
+    object ImportCheckBox: TCheckBox
+      Left = 16
+      Top = 120
+      Width = 153
+      Height = 17
+      Caption = 'Imported function ...'
+      TabOrder = 3
+    end
+    object EntryPointCheckBox: TCheckBox
+      Left = 16
+      Top = 152
+      Width = 153
+      Height = 17
+      Caption = 'Program Entry point'
+      TabOrder = 4
+    end
+  end
+  object InstructionGroupBox: TGroupBox
+    Left = 8
+    Top = 136
+    Width = 265
+    Height = 121
+    Caption = 'Instruction'
+    TabOrder = 3
+    object AddressCheckBox: TCheckBox
+      Left = 16
+      Top = 24
+      Width = 97
+      Height = 17
+      Caption = 'Address'
+      TabOrder = 0
+    end
+    object ParsedCheckBox: TCheckBox
+      Left = 16
+      Top = 56
+      Width = 177
+      Height = 17
+      Caption = 'Hexadecimal representation'
+      TabOrder = 1
+    end
+    object DisassembledCheckBox: TCheckBox
+      Left = 16
+      Top = 88
+      Width = 145
+      Height = 17
+      Caption = 'Disassembled instruction'
+      TabOrder = 2
+    end
+  end
+  object MainGroupBox: TGroupBox
+    Left = 8
+    Top = 8
+    Width = 265
+    Height = 113
+    Caption = 'Save options'
+    TabOrder = 4
+    object ProjectRadioButton: TRadioButton
+      Left = 16
+      Top = 16
+      Width = 233
+      Height = 17
+      Caption = 'Project (*.DAS and *.DHF files)'
+      Checked = True
+      TabOrder = 0
+      TabStop = True
+      OnClick = ProjectRadioButtonClick
+    end
+    object CustomRadioButton: TRadioButton
+      Left = 16
+      Top = 40
+      Width = 241
+      Height = 17
+      Caption = 'Custom (custom extension, without *.DHF file)'
+      TabOrder = 1
+      OnClick = CustomRadioButtonClick
+    end
+    object DisassemblyRadioButton: TRadioButton
+      Left = 16
+      Top = 64
+      Width = 233
+      Height = 17
+      Caption = 'Disassembly only (*.DAS, without *.DHF file)'
+      TabOrder = 2
+      OnClick = ProjectRadioButtonClick
+    end
+    object NASMRadioButton: TRadioButton
+      Left = 16
+      Top = 88
+      Width = 233
+      Height = 17
+      Caption = 'NASM compilable'
+      TabOrder = 3
+      OnClick = ProjectRadioButtonClick
+    end
+  end
+end

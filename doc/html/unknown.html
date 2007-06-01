@@ -1,0 +1,49 @@
+<!-- ########################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################## --> 
+<HTML>
+<HEAD>
+  <META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1250">
+  <LINK href="tatradas.css" rel="stylesheet" type="text/css">
+  <TITLE>Súbor neznámeho formátu</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000">
+
+<OBJECT TYPE="application/x-oleobject" CLASSID="clsid:1e2a7bd0-dab9-11d0-b93a-00c04fc99f9e">
+	<PARAM NAME="Keyword" VALUE="disassemblovanie">
+	<PARAM NAME="Keyword" VALUE="vstupnı bod">
+	<PARAM NAME="Keyword" VALUE="chod na adresu">
+	<PARAM NAME="Keyword" VALUE="farba písma">
+	<PARAM NAME="Keyword" VALUE="farba pozadia">
+</OBJECT>
+
+<P><A NAME="iddisassemblefile"></A></P>
+<h2>Súbor neznámeho formátu</h2>
+<p><span class="tatradas">TatraDAS</span> umoòuje pracova aj so súbormi, ktorıch formát nepozná, resp. ktoré nie sú vykonávate¾nımi súbormi. Ak pri otváraní <span class="tatradas">TatraDAS</span> zistí, e ide takıto súbor, ponúkne Vám nastavi potrebné údaje, aby ho mohol disassemblova.</p>
+<p>
+Dialógové okno obsahuje dve informatívne poloky:
+<ul>
+  <li><span class="cap">Názov súboru</span>
+  <li><span class="cap">Ve¾kos súboru</span> v bajtoch
+</ul>
+Tri textové polia:
+<ul>
+  <li><span class="cap">Zaèiatok kódovej sekcie v súbore</span> - adresa zaèiarku kódovej sekcie
+  <li><span class="cap">Vstupnı bod</span> - adresa v súbore, na ktorej má zaèa disassemblovanie
+  <li><span class="cap">Ve¾kos kódovej sekcie</span> - interpretácia tejto hodnoty závisí od nastavenia prepínacieho tlaèidla pod textovım po¾om. Ak je nastavené  
+    <ul>
+      <li><span class="cap">Ve¾kos</span> - hodnota v textovom poli sa interpretuje ako ve¾kos kódovej sekcie. Teda sekcia sa v súbore nachádza na bajtoch <span class="cap">Zaèiatok kód...</span> a (<span class="cap">Zaèiatok kód...</span> + <span class="cap">Ve¾kos kód...</span>). 
+      <li><span class="cap">Koniec</span> - hodnota v textovom poli sa interpretuje ako adresa posledného bajtu kódovej sekcie v súbore. Teda sekcia sa v súbore nachádza na bajtoch <span class="cap">Zaèiatok kód...</span> a <span class="cap">Ve¾kos kód...</span>.
+    </ul>  
+</ul>
+</p>
+Dve prepínacie tlaèidlá:
+<ul>
+  <li><span class="cap">16/32 bitovı mód</span> - spôsob interpretácie inštrukcií a ich parametrov, t.j. èi ide o 16 alebo 32 bitovı kód(program)
+  <li><span class="cap">Ve¾kos/koniec kódovej sekcie</span> - vysvetlené vyššie
+</ul>  
+Všetky èíselné hodnoty zadávajte ako hexadecimálne.
+<p>
+<b>Poznámka.</b> <span class="tatradas">TatraDAS</span> umoòuje pri súbore neznámeho formátu pracova len s jednou kódovou sekciou. Ak chcete pracova so súborom, ktorı má viac ako jednu kódovú sekciu, musite ho otvori pre kadú kódovú sekcie zvláš.
+</p>
+</BODY>
+</HTML>

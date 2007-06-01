@@ -1,0 +1,125 @@
+2.9.7
+CodeSectionUnit:
+  - 17.12.2004 - pridanie skakania z referencii
+  - obcas padlo pri zastaveni disasm = doplnene 'nieco:=nil' (CancelDesasemblying)      (22.10.04)
+  - zmena na data po zaciatok kodu
+  - zmena na data do konca sekcie nejde az do konca sekcie (az na male detaily)
+  - chvilka cakania po zdisassemblovani = uvolnenie Decodera(34%) + skopirovanie Dissasembled do plocha.lines(62%) + uvolnenie Disassembled(4%)
+  - zmena na data -> spojene 3 funkcie do 1 (ChangeToData)
+  - single a double NAN osetrene (MyIsNAN)
+?  - UNICODE strings
+Disassembler:
+  - spracovanie prefixov prerobene
+  - 18.12.2004 - opravene velkosti operandov FPU $DD instrukcii FLD,FST,FSTP
+
+
+2.9.6
+Prelozeny dialog "File changed. Save ?"
+Pridane hinty na niektore polozky menu.(aj na jazyky)
+NE - Exportovane funkcie
+NE - Zoznam importovanych funkci bez detekcie vyskytu
+HexEditor - pridane "Go to address", vypis dat na kurzore, preklad
+klav. skratky na Goto bookmarks XY (Alt + XY) v menu
+zjednoteny preklad v StringRes.pas
+Kalkulacka (este nedokoncena), Options formular
+  - opravena chyba: spracovanie nedefinovanej 3DNow! instrukcie
+  - opravena chyba: exportovane funkcie, ktorych RVA sa nenachadza v ziadnej sekcii (cygwin1.dll)
+  - opravena chyba: kod. sekcia s vacsim memsize ako filesize prekroci koniec suboru -> stream read error
+
+  - SYSCALL a SYSRET instrukcie pridane (AMD)
+  - osetrenie nedefinovanej OBO instrukcie
+
+  - KERNEL32.DLL - kodova sekcia 1 je disassemblovana aj zo zaciatku (co nie je EntryPoint) bez dovodu
+  - disassemblovanie rozdelene na dve metody - DisassembleAll a DisassemblePart
+  - Advanced Disassemble okrem Instruction Count a (ne)Recursive
+
+  - retazec "nebolo najdene" doplneny
+
+
+2.9.5
+INTERNA HISTORIA
+
+- opravena chyba v disassembleri: osetrenie nedefinovanych opcodov u GroupOBOInstruction_set
+- opravena chyba v disassembleri: osetrenie nedefinovanych opcodov u FPUInstruction_set
+
+- dynamicky disassembled -> zmena disassemblovaneho na data - faza I
+
+- pridanie BookMark-ov, treba ich este ukladat do *.DHF
+
+- odstranenie PosIndex-u, zistovanie adresy instrukcie z textu
+
+- segment override prefix vo vnutri []
+
+- zmena disasm strategie - algoritmus disassemblovania podla skokovych referencii
+=>  - vyhladavanie skokov priamo pri disassemblovani => cast "Hladanie skokov" zrusena,
+    - funkcia TDisassembler.SpracujRelative ciastocne prepisana do assembleru
+    - funkcia TDisassembler.SpracujImmediate ciastocne prepisana do assembleru
+    - procedura TDisassembler.ReadFourBytes prepisana
+
+ROCNIKOVY PROJEKT
+
+================================================================================
+
+Verzia 2.2
+- upravene polozky v menu Subor a zmenene niektore klav. skratky
+- mala chyba s nazvom suboru pri ulozeni volitelneho suboru
+- znemoznenie prislusnych ToolButton-ov a MenuItem-ov pri disassemblovani, otvarani a ukladani projektu a nasledne umoznenie
+
+Verzia 2.1.3
+- sekcia v nulovou velkostou(a nenulovou virt. velkostou - tatradas.exe skomprimovany s upx)
+- procedura TFileEx.CancelDisassemblying
+- funkcie TDisassembler.SpracujRelative upravena
+- ak ma import. funkcia len 1 vyskyt, tak dvojklikom na nu sa da praimo premiestni do kodovej sekcie
+- opravena chyba:
+  'Hladaj' a 'Goto' sa neznemoznili pri opatovnom disassemblovani a neumoznili pri zmene na Kodovu sekciu klikom na GotoEx(Im)portFunctionButton
+    (treba zmenit PageControl.ActivePage a zavolat PageControlChange)
+
+Verzia 2.1.2
+- 3DNow! instrukcie
+- Advanced Saving
+- group3 instrukcie (F7) mali nespravny parameter MODb, ma byt MODv
+- relativne skoky so zapornym cielom, s vyslednou zapornou adresou mali operandy FFFFFFFFxxxxxxxx atd, opravene na zaporne cisla
+
+Verzia 2.1.1
+- po znovuzdisassemblovani je enabled Search aj ked si na karte Subor
+
+Verzia 2.1 – 17. 6. 2003
+- nové logo
+- drobné úpravy
+- opravené chyby:
+  nestabilita pri otváraní projektu
+
+Verzia 2.1 beta 1 – 6. 6. 2003
+
+- pouitie komponentu SynEdit - lepšie farebné zvırazòovanie zdisassemblovaného textu(bez blikania)
+- nové klávesové skratky
+- referencia o importovanej funkcii je hneï nad skokom na funkciu
+- z disassemblovania vynechanı koniec kódovej sekcie obsahujúci len bajty 0x00
+- preklad do jazyka si kazdy formular zabezpecuje sam
+- opravené chyby:
+  skok na adresu vo vnútri poslednej inštrukcie
+  pri zadávaní ve¾kosti kódovej sekcie súboru neznámeho alebo nepodporovaného typu sa nedali poui hexadecimálne cifry A,B,C,D,E a F (a pritom sa to vyaduje)
+  na tlaèidlá Skoè na funkciu v kóde sa niekedy dalo kliknú, aj keï súbor nebol ešte zdisassemblovanı
+  niekedy chybnı preklad  názvu karty Kódová sekcia
+  súbor formátu COM sa nedal disassemblova
+  hinty na tlaèidlách karty Kódová sekcia sa nezobrazili, ak bol TatraDAS spustenı v anglickom jazyku
+  otvorenı projekt sa dal uloi (TatraDAS pri tej èinnosti vyhlásil chybu a ukladanie prerušil)
+
+Verzia 2.0
+- spracovanie všetkıch kódovıch sekcií
+- referencie o exportovanıch funkciách vo vıstupe
+- zobrazovanie priebehu ukladania a naèítavania projektu
+- zvırazòovanie vo vıstupe
+- otvorenie známych ale nepodporovanıch formátov ako "neznámy formát"
+- oprava chyby:
+  skok na adresu vo vnutri poslednej instrukcie
+  skok alebo exportovama funkcia na zaciatok sekcie
+
+Verzia 1.6
+- skrolovanie nebliká
+- pouitie klávesou "home" a "end" pri skrolovaní
+
+Verzia 1.5
+- podpora MMX, SSE, SSE2 inštrukcií
+- tvorba projektov = uloenie vıstupu na disk a jeho znovuotváranie
+- disassemblovanie o 10% rıchlejšie

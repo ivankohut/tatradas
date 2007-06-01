@@ -1,0 +1,11 @@
+File        Place             Type
+
+totalcmd    resourcesection   Range Check Error   UPX
+di.exe      asi resource         become frozen
+elpi.exe    asi resource         become frozen
+
+tieto problemy sposobuju komprimovane subory (UPX, ASPack atd)
+
+
+
+chyba nazov suboru pri otvaranie neznameho formatu
