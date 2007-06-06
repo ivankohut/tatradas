@@ -1,3 +1,6 @@
+2.9.9
+ - porozmyslat na rozdelenim SaveToFile na dve metody (DAS a DHF)
+
 2.9.8 todo list:
   - refactorovat a opravit 
       vsetky EXECfiles

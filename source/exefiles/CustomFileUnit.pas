@@ -30,8 +30,9 @@ type
     constructor Create(a: TStream; aFileName: TFileName; Parameters: TCustomFileParameters); overload;
     destructor Destroy(); override;
 
-    function SaveToFile(var f: TextFile; a:TMemoryStream; SaveOptions: TSaveOptions):boolean; override;
-    function LoadFromFile(var f:TextFile; a:TMemoryStream):boolean; override;
+    function SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
+    function LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; override;
+//    function LoadFromFile(var f:TextFile; a:TMemoryStream):boolean; override;
 
 //    function GetAdvancedInfo: TExecFileAdvancedInfo; override;
   end;
@@ -61,16 +62,16 @@ end;
 
 
 
-function TCustomFile.SaveToFile(var f: TextFile; a:TMemoryStream; SaveOptions: TSaveOptions):boolean;
+function TCustomFile.SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; 
 begin
-  result:=inherited SaveToFile(f,a,SaveOptions);
+  result:=inherited SaveToFile(DHF, DAS, SaveOptions);
 end;
 
 
 
-function TCustomFile.LoadFromFile(var f:TextFile; a:TMemoryStream):boolean;
+function TCustomFile.LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; 
 begin
-  result:=inherited LoadFromFile(f,a);
+  result:=inherited LoadFromFile(DHF, DAS);
 end;
 
 

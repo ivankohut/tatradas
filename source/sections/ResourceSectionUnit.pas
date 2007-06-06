@@ -143,7 +143,7 @@ type
     destructor Destroy; override;
     function LoadFromFile(DHF: TFileStream; DAS: TTextFileStream):boolean; overload; override;
     function LoadFromFile(var f: TextFile; a: TStream):boolean; overload; override;
-    function SaveToFile(var f:TextFile; m:TStream; SaveOptions: TSaveOptions):boolean; override;
+    function SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
 ///    procedure Translate(ini: TMemINIFile; error:string); override;
   end;
 
@@ -363,7 +363,7 @@ begin
   result:=true;
 end;
 
-function TResourceSection.SaveToFile(var f:TextFile; m:TStream; SaveOptions: TSaveOptions):boolean;
+function TResourceSection.SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean;
 begin
   result:=true;
 end;

@@ -164,8 +164,9 @@ type
 //    function GetSectionFromOffset(Offset: cardinal): string; override;
 //    function GetSectionNumberFromOffset(Offset: cardinal): integer; override;
 //    function GetSectionOffsetFromOffset(Offset: cardinal): cardinal; override;
-    function SaveToFile(var f: TextFile; a:TMemoryStream; SaveOptions: TSaveOptions):boolean; override;
-    function LoadFromFile(var f:TextFile; a:TMemoryStream):boolean; override;
+    function SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
+//    function LoadFromFile(var f:TextFile; a:TMemoryStream):boolean; override;
+    function LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; override;
 
 //    destructor Destroy; virtual;
 
@@ -281,32 +282,34 @@ begin
 end;
 }
 
-function TELFFile.SaveToFile(var f: TextFile; a:TMemoryStream; SaveOptions: TSaveOptions):boolean;
+function TELFFile.SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean;
+
 var i:integer;
 begin
   if soProject in SaveOptions then begin
-    a.Write(header,SizeOf(TELFHeader));                                        // PE hlavicka
-//    a.Write(header.e_shnum,2);                                                // pocet sekcii
+    DHF.Write(header,SizeOf(TELFHeader));                                        // PE hlavicka
+//    DHF.Write(header.e_shnum,2);                                                // pocet sekcii
     for i:=0 to header.e_shnum-1 do begin
-      a.Write(SectionHeaders[i],SizeOf(TSectionHeaderTableEntry));
-      a.Write(pchar(SectionHeaders[i].name)^,Length(SectionHeaders[i].name)+1);
+      DHF.Write(SectionHeaders[i],SizeOf(TSectionHeaderTableEntry));
+      DHF.Write(pchar(SectionHeaders[i].name)^,Length(SectionHeaders[i].name)+1);
     end;  
   end;
-  result:=inherited SaveToFile(f,a,SaveOptions);
+  result:=inherited SaveToFile(DHF, DAS, SaveOptions);
 end;
 
-function TELFFile.LoadFromFile(var f:TextFile; a:TMemoryStream):boolean;
+
+function TELFFile.LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; 
 var i: integer;
     SectionType: TSectionType;
 begin
-  a.Read(header,SizeOf(TELFHeader));
-//  a.Read(objectcount,4);
+  DHF.Read(header,SizeOf(TELFHeader));
+//  DHF.Read(objectcount,4);
   SetLength(SectionHeaders,header.e_shnum);
   for i:=0 to header.e_shnum-1 do begin
-    a.Read(SectionHeaders[i],SizeOf(TSectionHeaderTableEntry));
-    ReadStringFromStream(a,a.Position,SectionHeaders[i].name);
+    DHF.Read(SectionHeaders[i],SizeOf(TSectionHeaderTableEntry));
+    ReadStringFromStream(DHF, DHF.Position, SectionHeaders[i].name);
   end;
-  result:=inherited LoadFromFile(f,a);
+  result:=inherited LoadFromFile(DHF, DAS);
 end;
 
 

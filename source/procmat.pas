@@ -6,11 +6,11 @@ unit procmat;
 
 interface
 
-uses 
+uses
   SysUtils,
-  Classes,  
+  Classes,
   Math,
-  
+
   {$IFDEF GUI_B}
     SynEditTextBuffer
   {$ELSE}
@@ -41,7 +41,7 @@ const CodeArrayReserve=20;
 type
 
   TTatraDASStringList = TSynEditStringList;
-  
+
 
   TProgressFunction = Function(a,b: cardinal; c: string): boolean;
 
@@ -68,7 +68,7 @@ type
     autoformat: boolean;          // automatic file format selection
     procdetect: boolean;          // procedure detection
     stringdetect: boolean;        // string detection
-    removejump: boolean;          
+    removejump: boolean;
     removeimport: boolean;
     removeexport: boolean;
   end;
@@ -91,7 +91,7 @@ type
 
   TLineType = (ltInstruction, ltComment, ltJumpRef, ltCallRef, ltLoopRef, ltImportRef, ltExportRef, ltEntryPointRef, ltEmpty);
 
-  TExecFileFormat = (PE, MZ, COM, NE, LE, LX, ELF, ffError, ffCustom, ffUnknown);
+  TExecFileFormat = (ffError, ffUnknown, ffCustom, ffPE, MZ, COM, NE, LE, LX, ELF);
 
   TCpuType = (_80386,_80486,Pentium);
 
@@ -145,12 +145,16 @@ var ProcessText: TProcessText;
 
 
     ProgressPosition: cardinal;
+    ProgressMaximum: cardinal;
     ProgressFinished: boolean;
     ProgressName: string;
 
     Modified: boolean; // stav otvoreneho zdisassemblovane suboru resp. projektu
 
 procedure ReadStringFromStream(a:TStream; pos:cardinal; var retazec:string);
+function StreamReadAnsiString (AStream: TStream): string;
+Procedure StreamWriteAnsiString (AStream: TStream; AString: String);
+
 function Nezaporne(cislo:integer):cardinal;
 function GetTargetAddress(s:string; var address:cardinal):boolean;
 
@@ -210,6 +214,45 @@ begin
   end;
   retazec:=r;
 end;
+{
+procedure WriteStringToStream(AStream: TStream; Position: cardinal; var AString: string);
+var TheLength: cardinal;
+begin
+//  for i:=1 to Length(AString) do
+  TheLength:= Length
+  AStream.Write
+  AStream.WriteBuffer(AString - 4, Length(AString));
+end;
+}
+
+  Function StreamReadAnsiString(AStream: TStream): String;
+  Type
+    PByte = ^Byte;
+  Var
+    TheSize : Longint;
+    P : PByte ;
+  begin
+    AStream.ReadBuffer (TheSize, SizeOf(TheSize));
+    SetLength(Result, TheSize);
+    if TheSize > 0 then
+     begin
+       AStream.ReadBuffer (Pointer(Result)^,TheSize);
+       P:=Ptr(LongInt(Pointer(Result)) + TheSize);
+       p^:=0;
+     end;
+   end;
+
+  Procedure StreamWriteAnsiString (AStream: TStream; AString: String);
+
+  Var L : Longint;
+
+  begin
+    L:=Length(AString);
+    AStream.WriteBuffer (L,SizeOf(L));
+    AStream.WriteBuffer (Pointer(AString)^,L);
+  end;
+
+
 {
 procedure TExecutableFile.Init;
 begin

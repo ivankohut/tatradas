@@ -82,7 +82,6 @@ type
 
   TPeFile = class(TExecutableFile)
   private
-
     Header: TPEHeader;
     InterRVA: TInterestingRVA;
     ObjectTable: array of TObjectTableEntry;
@@ -100,16 +99,19 @@ type
     constructor Create(a: TStream; aFileName: TFileName); overload; override;
     destructor Destroy; override;
 
-    function SaveToFile(var f: TextFile; a:TMemoryStream; SaveOptions: TSaveOptions):boolean; override;
-    function LoadFromFile(var f:TextFile; a:TMemoryStream):boolean; overload; override;
-    function LoadFromFile(DHF: TFileStream; DAS: TTextFileStream): boolean; overload; override;
+//    function SaveToFile(var f: TextFile; a:TMemoryStream; SaveOptions: TSaveOptions): boolean; overload; override;
+    function SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
+
+//    function LoadFromFile(var f:TextFile; a:TMemoryStream):boolean; overload; override;
+//    function LoadFromFile(DHF: TFileStream; DAS: TTextFileStream): boolean; overload; override;
+    function LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; override;
 
     function GetSectionNumberFromRVA(RVA: cardinal): integer;
 
   end;
 
 
-  
+
 implementation
 
 
@@ -143,7 +145,7 @@ begin
   // Seek and read PE header
   a.Seek(60, 0);
   a.Read(PEHeaderOffset, 4);
-  a.Seek(PEHeaderOffset, 0);                               
+  a.Seek(PEHeaderOffset, 0);
   a.Read(header, SizeOf(TPEHeader));
 
   // Read Interesting RVA/Sizes table
@@ -209,7 +211,7 @@ begin
 
   EntryPoint:=header.entrypoint;
   fFormatDescription:='PE - Portable Executable (32-bit)';
-  fExecFormat:=PE;
+  fExecFormat:=ffPE;
 end;
 
 
@@ -237,7 +239,20 @@ begin
 end;
 
 
+function TPEFile.SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean;
+var
+  i: integer;
+begin
+  if soProject in SaveOptions then begin
+    DHF.Write(Header, SizeOf(Header));                                        // PE hlavicka
+    for i:=0 to Header.ObjectCount - 1 do
+      DHF.Write(ObjectTable[i], sizeof(TObjectTableEntry));
+  end;
+  result:=inherited SaveToFile(DHF, DAS, SaveOptions);
+end;
 
+
+{
 function TPEFile.SaveToFile(var f: TextFile; a:TMemoryStream; SaveOptions: TSaveOptions):boolean;
 var
   i: integer;
@@ -273,7 +288,17 @@ begin
     DHF.Read(ObjectTable[i], sizeof(TObjectTableEntry));
   result:=inherited LoadFromFile(DHF, DAS);
 end;
+}
 
+function TPEFile.LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; 
+var i: integer;
+begin
+  DHF.Read(header, SizeOf(header));
+  SetLength(ObjectTable, header.objectcount);
+  for i:=0 to header.objectcount-1 do                                // Object Table
+    DHF.Read(ObjectTable[i], sizeof(TObjectTableEntry));
+  result:=inherited LoadFromFile(DHF, DAS);
+end;
 
 {
 function TPEFile.GetObjectTableEntry(Index: integer): TObjectTableEntry;

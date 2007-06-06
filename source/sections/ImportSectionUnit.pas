@@ -50,7 +50,8 @@ type
     constructor CreateFromNEFile(a:TStream; ModuleTableOffset, ImportTableOffset, ModuleCount, ImportTableSize: cardinal; efile:TObject);
 //    constructor CreateFromELFFile(a:TStream; Offset,Size,StrTabOffset,StrTabSize: cardinal; efile:TObject);
     destructor Destroy; override;
-    function SaveToFile(var f:TextFile; a:TStream; SaveOptions: TSaveOptions):boolean; override;
+    function SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
+
     function LoadFromFile(var f: TextFile; a: TStream):boolean; overload; override;
     function LoadFromFile(DHF: TFileStream; DAS: TTextFileStream):boolean; overload; override;
     
@@ -271,20 +272,20 @@ end;
 
 
 
-function TImportSection.SaveToFile(var f:TextFile; a:TStream; SaveOptions: TSaveOptions):boolean;
+function TImportSection.SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions):boolean;
 var i,j,k,pocetvyskytov: integer;
 begin
-  a.Write(TotalFunctionCount,4);
-  a.Write(modulcount,4);
+  DHF.Write(TotalFunctionCount,4);
+  DHF.Write(modulcount,4);
   for i:=0 to modulcount-1 do begin
-    a.Write(pchar(moduls[i].name)^,length(moduls[i].name)+1);
-    a.Write(moduls[i].functioncount,4);
+    DHF.Write(pchar(moduls[i].name)^,length(moduls[i].name)+1);
+    DHF.Write(moduls[i].functioncount,4);
     for j:=0 to moduls[i].functioncount-1 do begin
-      a.write(moduls[i].functions[j],sizeof(TImportFunction)-8);
-      a.write(pchar(moduls[i].functions[j].name)^,length(moduls[i].functions[j].name)+1);
+      DHF.write(moduls[i].functions[j],sizeof(TImportFunction)-8);
+      DHF.write(pchar(moduls[i].functions[j].name)^,length(moduls[i].functions[j].name)+1);
       pocetvyskytov:=length(moduls[i].functions[j].vyskyty);
-      a.Write(pocetvyskytov,4);
-      for k:=0 to pocetvyskytov-1 do a.Write(moduls[i].functions[j].vyskyty[k],4);
+      DHF.Write(pocetvyskytov,4);
+      for k:=0 to pocetvyskytov-1 do DHF.Write(moduls[i].functions[j].vyskyty[k],4);
     end;
   end;
   result:=true;

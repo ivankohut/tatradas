@@ -47,7 +47,7 @@ type
 {$IFDEF GUI_B}
     procedure GotoFunction(index: integer); virtual; abstract;
 {$ENDIF}
-    function SaveToFile(var f:TextFile; a:TStream; SaveOptions: TSaveOptions):boolean; override;
+    function SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
     function LoadFromFile(var f: TextFile; a: TStream):boolean; override;
 ///    procedure Translate(ini: TMemINIFile; error:string); override;
   end;
@@ -87,13 +87,13 @@ begin
   inherited;
 end;
 
-function TExportSection.SaveToFile(var f:TextFile; a:TStream; SaveOptions: TSaveOptions):boolean;
+function TExportSection.SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean;
 var i: integer;
 begin
-  a.Write(FunctionCount,4);
+  DHF.Write(FunctionCount, 4);
   for i:=0 to functioncount do begin
-    a.Write(functions[i],sizeof(TExportFunction)-4);
-    a.Write(pchar(functions[i].name)^,length(functions[i].name)+1);
+    DHF.Write(functions[i], sizeof(TExportFunction)-4);
+    DHF.Write(pchar(functions[i].name)^, Length(functions[i].name)+1);
   end;
   result:=true;
 end;

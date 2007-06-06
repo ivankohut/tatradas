@@ -7,7 +7,7 @@ unit MZFileUnit;
 
 interface
 
-uses Classes, SysUtils, 
+uses Classes, SysUtils,
      procmat,
      StringRes,
      ExecFileUnit,
@@ -25,7 +25,7 @@ type
     relocs: array of TRelocEntry;
     constructor Create(a: TStream; offset: cardinal; count: cardinal);
     function LoadFromFile(var f:TextFile; a:TStream):boolean; override;
-    function SaveToFile(var f:TextFile; m:TStream; SaveOptions: TSaveOptions):boolean; override;
+    function SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
   end;
 
   TMZFile = class(TExecutableFile)
@@ -35,8 +35,9 @@ type
     header:TMZHeader;
     constructor Create(InputStream: TStream; aFileName: TFileName); overload; override;
     destructor Destroy(); override;
-    function SaveToFile(var f: TextFile; a:TMemoryStream;  SaveOptions: TSaveOptions):boolean; override;
-    function LoadFromFile(var f:TextFile; a:TMemoryStream):boolean; override;
+    function SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
+    function LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; override;
+//    function LoadFromFile(var f:TextFile; a:TMemoryStream):boolean; override;
 //    function GetAdvancedInfo: TExecFileAdvancedInfo; override;
   end;
 
@@ -84,18 +85,20 @@ end;
 
 
 
-function TMZFile.SaveToFile(var f: TextFile; a:TMemoryStream; SaveOptions: TSaveOptions):boolean;
+function TMZFile.SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; 
 begin
-  if soProject in SaveOptions then a.Write(header,sizeof(header));
-  result:=inherited SaveToFile(f,a,SaveOptions);
+  if soProject in SaveOptions then
+    DHF.Write(header,sizeof(header));
+  result:=inherited SaveToFile(DHF, DAS, SaveOptions);
 end;
 
 
 
-function TMZFile.LoadFromFile(var f:TextFile; a:TMemoryStream):boolean;
+function TMZFile.LoadFromFile(DHF: TStream; var DAS: TextFile): boolean;
+
 begin
-  a.Read(header,sizeof(header));
-  result:=inherited LoadFromFile(f,a);
+  DHF.Read(header,sizeof(Header));
+  result:=inherited LoadFromFile(DHF, DAS);
 end;
 
 
@@ -139,7 +142,7 @@ end;
 
 
 
-function TRelocationSection.SaveToFile(var f:TextFile; m:TStream; SaveOptions: TSaveOptions):boolean;
+function TRelocationSection.SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean;
 begin
   ;
 end;

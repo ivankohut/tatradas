@@ -20,13 +20,13 @@ uses
   {$IFDEF GUI_B}
     Forms,
     SynEdit,
-  {$ENDIF}  
+  {$ENDIF}
 {$ENDIF}
 {$IFDEF LINUX}
   {$IFDEF GUI_B}
     QForms,
     SynEdit,
-  {$ENDIF}  
+  {$ENDIF}
 {$ENDIF}
 {$IFNDEF DELPHI}
   Crt,
@@ -41,7 +41,7 @@ uses
   SectionUnit in 'SectionUnit.pas',
 
   UProgressThread in 'UProgressThread.pas',
-  
+
 {$IFDEF MSWINDOWS}
 
 // Misc. units
@@ -189,7 +189,7 @@ var
 
 procedure CloseProgram;
 begin
-  if ExecFile <> nil then 
+  if ExecFile <> nil then
     ExecFile.Destroy;
 end;
 
@@ -216,7 +216,7 @@ begin
     if c<>'' then begin
       Writeln;
       Write(c,':');
-    end;  
+    end;
     ProgressPosition:=0;
     result:=true;
     exit;
@@ -231,14 +231,14 @@ begin
   while (50*a) div b > ProgressPosition do begin
     Inc(ProgressPosition);
     Write('.');
-  end;  
+  end;
   result:=true;
 end;
 
 
 
 procedure RunDisassembler(InputFileName, OutputFileName:string);
-var 
+var
   SaveOptions: TSaveOptions;
   ProgressFunctionVar: TProgressFunction;
 begin
@@ -248,7 +248,7 @@ begin
 
   ExecFile:=ExecFileManager.CreateNewExecFile(ExpandFilename(InputFileName));
   if ExecFileManager.Error <> errNone then begin
-    case ExecFileManager.Error of 
+    case ExecFileManager.Error of
       errOpen: Writeln('Unable to open file '''+ExpandFilename(InputFileName)+'''.');
       else
         Writeln('Unknown error !');
@@ -256,7 +256,16 @@ begin
     ExecFile.Free;
     Exit;
   end;
-  
+
+
+  WriteLn('Format: ', Integer(ExecFile.ExeFormat));
+  if ExecFile.ExeFormat <> ffPE then begin
+    writeln('Skipping non-PE file.');
+    ExecFile.Free;
+    ExecFileManager.Free;
+    halt;
+  end;
+
   Writeln;
   Writeln('CSn = Code Section No.');
   Writeln;

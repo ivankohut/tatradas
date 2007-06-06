@@ -31,9 +31,15 @@ type
 
     constructor Create(aName: string; aFileOffset, aFileSize, aMemOffset, aMemSize: cardinal; aSectionIndex: integer; aExecFile: TObject); virtual;
 
+    // prefered
+    function SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; overload; virtual; abstract;
+
+    // deprecated
     function LoadFromFile(DHF: TFileStream; DAS: TTextFileStream):boolean; overload; virtual; abstract;
     function LoadFromFile(var f: TextFile; a: TStream):boolean; overload; virtual; abstract;
-    function SaveToFile(var f:TextFile; m:TStream; SaveOptions: TSaveOptions):boolean; virtual; abstract;
+    // preferred
+    function LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; overload; virtual; abstract;
+
 
     property Typ: TSectionType read fTyp;
     property SectionIndex: integer read fSectionIndex;

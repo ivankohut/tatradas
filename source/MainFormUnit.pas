@@ -344,7 +344,7 @@ begin
     if not SaveDialog1.Execute then Exit;
 // Osetrit nejakou spravou v pripade zlyhania ukladania, napr. disk full
     BeforeProgress;
-//    ExecFile.SaveToFile(SaveDialog1.FileName, SaveOptionsForm.SaveOptions);
+    ExecFileManager.SaveExecFileToFile(ExecFile, SaveDialog1.FileName, SaveOptionsForm.SaveOptions);
     AfterProgress;
 
     Modified:=false;
@@ -387,7 +387,7 @@ begin
   vlakno.Free;
 }
 //  ExecFile:=ExecFileManager.LoadExecFileFromFile(OpenDialog1.FileName);
-  ExecFile:=ExecFileManager.NewLoadExecFileFromFile(OpenDialog1.FileName);
+  ExecFile:=ExecFileManager.LoadExecFileFromFile(OpenDialog1.FileName);
 {
   if not Success then begin
     MessageDlg(CouldNotOpenProjectStr,mtError,[mbOK],0);

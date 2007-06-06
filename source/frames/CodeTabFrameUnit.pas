@@ -279,7 +279,7 @@ begin
     // temporary
     // count disassembled code size
 //    showmessage('Disassembled code size: ' + IntToStr(CountCodeSize) + '         Functions count: ' + IntToStr(CountFunctions));
-    showmessage('Bytes per function: ' + IntToStr(CountCodeSize div CountFunctions));
+//    showmessage('Bytes per function: ' + IntToStr(CountCodeSize div CountFunctions));
     // end temporary
 
 end;

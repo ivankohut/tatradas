@@ -34,7 +34,7 @@ type
      M32, M64, M128,                                   // prave adresa urcena ModRM (r/m)
      R32, R64, R128,                                   // prave register urceny ModRM (r/m)
      ax,bx,cx,dx,si,di,bp,sp,                          // general registre - dynamicke (menia sa na Exx v priprade 32 bit)
-     statDX,                                          // staticky register (neovplyvnuje ho 16/32 bit oper ani adresy) 
+     statDX,                                          // staticky register (neovplyvnuje ho 16/32 bit oper ani adresy)
      al,bl,cl,dl,ah,bh,ch,dh,                          // casti gen. registrov
      DS,ES,SS,CS,FS,GS,                                // segment registre
      mm0,mm1,mm2,mm3,mm4,mm5,mm6,mm7,                  // MMX registre
@@ -84,11 +84,6 @@ type
        loaded:boolean;
      end;
 
-     TCASEntry = record
-       start, finish: cardinal;
-     end;
-
-     TCAS = array of TCASEntry;
 
      TStatistics = record
        Instructions: cardinal;     // pocet instrukcii
@@ -103,35 +98,35 @@ type
      end;
 
   TDisassembleOptions = record
-     address: cardinal;
-     size: cardinal;
-     bit32: boolean;
-     recursive: boolean;
-     typ: (doSize,doCount);
-   end;
-
-   TDisassembledBlock = record
-     Address: cardinal;
-     Size: cardinal;
-   end;
+    address: cardinal;
+    size: cardinal;
+    bit32: boolean;
+    recursive: boolean;
+    typ: (doSize,doCount);
+  end;
 
 
+  TDisassembledBlock = record
+    Address: cardinal;
+    Size: cardinal;
+  end;
 
-   TDisassembledBlocks = class
-   private
-     fCount: integer;
-     fCapacity: integer;
-     fBlocks: array of TDisassembledBlock;
-     function GetBlock(Index: integer): TDisassembledBlock;
-     function GetBlockCount: integer;
-   public
-     procedure Clear;
-     function Add(Address, Size: cardinal): integer;
-     property Items[Index: integer]: TDisassembledBlock read GetBlock; default;
-     property Count: integer read GetBlockCount;
-   end;
 
-   
+  TDisassembledBlocks = class
+  private
+    fCount: integer;
+    fCapacity: integer;
+    fBlocks: array of TDisassembledBlock;
+    function GetBlock(Index: integer): TDisassembledBlock;
+    function GetBlockCount: integer;
+  public
+    procedure Clear;
+    function Add(Address, Size: cardinal): integer;
+    property Items[Index: integer]: TDisassembledBlock read GetBlock; default;
+    property Count: integer read GetBlockCount;
+  end;
+
+
 
      TSize = (szEmpty, szByte, szWord, szDword, szQword, szTword, szDQword);
 
@@ -173,12 +168,6 @@ type
 
        function ReadFourBytes:string;
 
-//       procedure PridajDoCAS(adresa: cardinal);
-//       function SpracujCAS:integer;
-
-//       procedure MergeSortCAS(zac,kon:cardinal);
-//       procedure MergeCAS(a1,a2,b1,b2:cardinal);
-
        function DisassembleBlock(start, finish: cardinal; bit32: boolean):boolean;
 
        function GetDisassembledBlock(Index: integer): TDisassembledBlock;
@@ -186,8 +175,6 @@ type
 
      public
        CAJ: TCallsAndJumps;
-
-       IsDisassembled: boolean;  // vyzera to byt zbytocne
 
        Disassembled: array of TDisassembledItem;  // Vystup disassemblovania
        Imported: array of cardinal;
@@ -298,7 +285,7 @@ const
 // Other opcodes - OneByte Opcode Instruction
 
 
-       Group12: TGroupInstruction_set = (              
+       Group12: TGroupInstruction_set = (
                                (name: ''; opcode: $0; ),
                                (name: ''; opcode: $0; ),
                                (name: 'mmx'; opcode: $60; mmx1:243; mmx2:244),
@@ -2589,7 +2576,7 @@ var
       group1,group2,group3,group4: boolean;
     end;
     asmbyte: byte;
-    c: cardinal;                                
+    c: cardinal;
     _3DNow_Instruction: boolean;
     k: cardinal;
     UndefinedOpcode: boolean;
@@ -2962,7 +2949,7 @@ XADD, and XCHG.
     end;
     if disassembled[InstrAddress].name='' then ;
 
-// -- Kvoli testovanie intrukcii je obcas vypnute ukoncovanie bloku:    
+// -- Kvoli testovanie intrukcii je obcas vypnute ukoncovanie bloku:
 
     case disassembled[InstrAddress].name[1] of                                 //  Instrukcie ukoncujuce blok
       'J': if disassembled[InstrAddress].name[2]='M' then KoniecBloku:=true;     // JMP, JMPx

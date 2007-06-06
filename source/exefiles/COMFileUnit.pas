@@ -19,8 +19,9 @@ type
   TCOMFile = class(TExecutableFile)
     constructor Create(InputFile: TStream; aFileName: TFileName); overload; override;
     destructor Destroy(); override;
-    function SaveToFile(var f: TextFile; a:TMemoryStream; SaveOptions: TSaveOptions):boolean; override;
-    function LoadFromFile(var f:TextFile; a:TMemoryStream):boolean; override;
+    function SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
+//    function LoadFromFile(var f:TextFile; a:TMemoryStream):boolean; override;
+    function LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; override;
 //    function GetAdvancedInfo: TExecFileAdvancedInfo; override;
   end;
 
@@ -43,16 +44,16 @@ end;
 
 
 
-function TCOMFile.SaveToFile(var f: TextFile; a:TMemoryStream; SaveOptions: TSaveOptions):boolean;
+function TCOMFile.SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean;
 begin
-  result:=inherited SaveToFile(f,a,SaveOptions);
+  result:=inherited SaveToFile(DHF, DAS, SaveOptions);
 end;
 
 
 
-function TCOMFile.LoadFromFile(var f:TextFile; a:TMemoryStream):boolean;
+function TCOMFile.LoadFromFile(DHF: TStream; var DAS: TextFile): boolean;
 begin
-  result:=inherited LoadFromFile(f,a);
+  result:=inherited LoadFromFile(DHF, DAS);
 end;
 
 

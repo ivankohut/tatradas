@@ -41,7 +41,7 @@ MaxStackSize=1048576
 ImageBase=4194304
 ExeDescription=
 [Directories]
-OutputDir=../build
+OutputDir=../
 UnitOutputDir=
 PackageDLLOutputDir=
 PackageDCPOutputDir=
@@ -89,5 +89,6 @@ Count=2
 Item0=../third/synedit;../third/mphexeditor
 Item1=../third/synedit
 [HistoryLists\hlOutputDirectorry]
-Count=1
-Item0=../build
+Count=2
+Item0=../
+Item1=../build

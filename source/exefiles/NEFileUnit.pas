@@ -113,8 +113,9 @@ type
     constructor Create(a: TStream; aFileName: TFileName); overload; override;
     constructor Create; overload;
     destructor Destroy; override;
-    function SaveToFile(var f: TextFile; a:TMemoryStream; SaveOptions: TSaveOptions):boolean; override;
-    function LoadFromFile(var f: TextFile; a:TMemoryStream):boolean; override;
+    function SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
+    function LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; override;
+//    function LoadFromFile(var f: TextFile; a:TMemoryStream):boolean; override;
 
 //    function GetAdvancedInfo: TExecFileAdvancedInfo; override;
 
@@ -127,7 +128,7 @@ implementation
 const
   c_NEFileAdvancedInfoCount = 3;
 
-  
+
 constructor TNEFile.Create(a: TStream; aFileName: TFileName);
 var
 // NEoffset: cardinal;
@@ -201,7 +202,7 @@ begin
           fSections[i]:= TImportSection.CreateFromNEFile(a, NEOffset + header.ModuleReferenceTableRO, NEOffset + header.ImportedNameTableRO, header.ModuleReferenceTableEntryNumber, header.EntryTableRO-header.ImportedNameTableRO, self);
         end;
 }
-      end;  
+      end;
 
       stExport: begin
         a.Position:=NEOffset + header.ResidentNameTableRO;
@@ -223,7 +224,7 @@ begin
   for i:=0 to Sections.Count-1 do
     if Sections[i].typ = stCode then begin
       (Sections[i] as TCodeSection).Exportt:=ExportSection;
-    end;  
+    end;
 
 
 //  CodeSectionsCount:=SectionCount;
@@ -264,6 +265,7 @@ begin
   end;
 }
   fFormatDescription:='NE - New Executable (16-bit)';
+  fExecFormat := NE;
 end;
 
 constructor TNEFile.Create;
@@ -273,24 +275,27 @@ end;
 
 
 
-function TNEFile.SaveToFile(var f: TextFile; a:TMemoryStream; SaveOptions: TSaveOptions):boolean;
-var i:integer;
+function TNEFile.SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean;
+var
+  i:integer;
 begin
   if soProject in SaveOptions then begin
-    a.Write(header,SizeOf(Header));
-    for i:=0 to header.SegmentTableEntryNumber-1 do a.Write(SegmentTable[i],sizeof(TSegmentTableEntry));
-  end;  
-  result:=inherited SaveToFile(f,a,SaveOptions);
+    DHF.Write(header, SizeOf(Header));
+    for i:=0 to header.SegmentTableEntryNumber-1 do DHF.Write(SegmentTable[i], SizeOf(TSegmentTableEntry));
+  end;
+  result:=inherited SaveToFile(DHF, DAS, SaveOptions);
 end;
 
-function TNEFile.LoadFromFile(var f: TextFile; a:TMemoryStream):boolean;
+
+
+function TNEFile.LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; 
 var i: integer;
 begin
-  a.Read(header,SizeOf(header));
-  SetLength(SegmentTable,header.SegmentTableEntryNumber);
+  DHF.Read(header,SizeOf(header));
+  SetLength(SegmentTable, header.SegmentTableEntryNumber);
   for i:=0 to header.SegmentTableEntryNumber-1 do                                // Object Table
-    a.Read(SegmentTable[i],sizeof(TSegmentTableEntry));
-  result:=inherited LoadFromFile(f,a);
+    DHF.Read(SegmentTable[i], sizeof(TSegmentTableEntry));
+  result:=inherited LoadFromFile(DHF, DAS);
 end;
 
 destructor TNEFile.Destroy;
@@ -321,13 +326,13 @@ begin
   end;
 
   // Import
-  if header.ModuleReferenceTableEntryNumber > 0 then 
+  if header.ModuleReferenceTableEntryNumber > 0 then
     if (SegmentTable[Index].Offset <= header.ModuleReferenceTableRO+NEOffset) and (header.ModuleReferenceTableRO+NEOffset <= SegmentTable[Index].Offset + SegmentTable[Index].Size) then begin
       result:=stImport;
       Exit;
     end;
 
-    
+
   result:= stDummy;
 end;
 
