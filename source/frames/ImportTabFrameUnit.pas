@@ -31,19 +31,14 @@ type
     OccurLabel: TLabel;
     constructor Create(AOwner: TComponent; ASection: TSection); overload; override;
     procedure ModulComboBoxChange(Sender: TObject);
-    procedure FunctionListViewSelectItem(Sender: TObject; Item: TListItem;
-      Selected: Boolean);
+    procedure FunctionListViewSelectItem(Sender: TObject; Item: TListItem; Selected: Boolean);
     procedure AddressListBoxDblClick(Sender: TObject);
-    procedure AddressListBoxMouseDown(Sender: TObject;
-      Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
     procedure FunctionListViewDblClick(Sender: TObject);
-    procedure Translate(ini:TMemINIFile; error:string);
+    procedure Translate(ini:TMemINIFile; error:string); 
   private
     fSection: TImportSection;
   protected
     function GetSection: TSection; override;
-  public
-    GotoEnabled: boolean;
   end;
 
 var
@@ -62,9 +57,8 @@ constructor TImportTabFrame.Create(AOwner: TComponent; ASection: TSection);
 var i: integer;
 begin
   inherited;
-  fSection:=ASection as TImportSection;
-  Caption:='Import';
-  GotoEnabled:=false;
+  fSection:= ASection as TImportSection;
+  Caption:= 'Import';
   for i:=0 to fSection.ModulCount-1 do
     ModulComboBox.Items.Add(fSection.Moduls[i].name);
 end;
@@ -79,14 +73,20 @@ begin
   FunctionListview.Clear;
   AddressListBox.Clear;
 
-  with fSection.moduls[ModulCombobox.ItemIndex] do 
-   for FunctionIndex:=0 to integer(FunctionCount)-1 do begin
-     ListItem:=FunctionListView.Items.Add;
-     ListItem.Caption:=IntToStr(FunctionIndex + 1) + '.';
-     ListItem.SubItems.Add(functions[FunctionIndex].name);
-     ListItem.SubItems.Add(IntToHex(functions[FunctionIndex].addressRVA,8));
-     ListItem.SubItems.Add(IntToHex(functions[FunctionIndex].ordinal,8));
-     ListItem.SubItems.Add(IntToHex(functions[FunctionIndex].hint,4));
+  with fSection.moduls[ModulCombobox.ItemIndex] do
+    for FunctionIndex:=0 to integer(FunctionCount) - 1 do begin
+      ListItem:=FunctionListView.Items.Add;
+      ListItem.Caption:=IntToStr(FunctionIndex + 1) + '.';
+      ListItem.SubItems.Add(functions[FunctionIndex].Name);
+      ListItem.SubItems.Add(IntToHex(functions[FunctionIndex].MemAddress, 8));
+      if functions[FunctionIndex].ByOrdinal then begin
+        ListItem.SubItems.Add(IntToHex(functions[FunctionIndex].Ordinal, 8));
+        ListItem.SubItems.Add('');
+      end
+      else begin
+        ListItem.SubItems.Add('');
+        ListItem.SubItems.Add(IntToHex(functions[FunctionIndex].Hint, 4));
+      end;
     end;
 end;
 
@@ -120,8 +120,6 @@ var
   Address: cardinal;
   Tab: TTabSheetTemplate;
 begin
-  if not GotoEnabled then Exit;
-
   ModulIndex:= ModulComboBox.ItemIndex;
   FunctionIndex:= FunctionListView.ItemIndex;
   OccurenceIndex:= AddressListBox.ItemIndex;
@@ -137,17 +135,6 @@ end;
 
 
 
-procedure TImportTabFrame.AddressListBoxMouseDown(Sender: TObject;
-  Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
-begin
-  if AddressListBox.ItemAtPos(point(x,y),true) = -1 then
-    Exit
-  else
-    GotoEnabled:=true;
-end;
-
-
-
 procedure TImportTabFrame.FunctionListViewDblClick(Sender: TObject);
 var
   ModulIndex, FunctionIndex, OccurenceIndex, SectionIndex: integer;
@@ -155,11 +142,10 @@ var
   Tab: TTabSheetTemplate;
 begin
   if (AddressListBox.Items.Count <> 1) then Exit;
-  if not GotoEnabled then Exit;
 
   ModulIndex:= ModulComboBox.ItemIndex;
   FunctionIndex:= FunctionListView.ItemIndex;
-  OccurenceIndex:= AddressListBox.ItemIndex;
+  OccurenceIndex:= 0;
   Address:= fSection.Moduls[ModulIndex].Functions[FunctionIndex].vyskyty[OccurenceIndex];
   SectionIndex:= MainForm.ExecFile.Sections.GetSectionIndexFromMemOffset(Address);
 

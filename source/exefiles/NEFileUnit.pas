@@ -208,7 +208,7 @@ begin
         a.Position:=NEOffset + header.ResidentNameTableRO;
         a.Read(temp8,1);
         if temp8 <> 0 then begin
-          ExportSection:=TNEExportSection.Create(a,NEOffset + header.ResidentNameTableRO, header.NonResidentNameTableOffset, header.NonResidentNameTableSize, self);
+          ExportSection:=TExportSection.CreateFromNEFile(a,NEOffset + header.ResidentNameTableRO, header.NonResidentNameTableOffset, header.NonResidentNameTableSize, self);
      //     fSections[i]:=ExportSection;
         end;
       end;

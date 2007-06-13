@@ -1,18 +1,18 @@
-{
-}
-
 unit MZFileUnit;
 
 {$INCLUDE 'delver.inc'}
 
 interface
 
-uses Classes, SysUtils,
-     procmat,
-     StringRes,
-     ExecFileUnit,
-     SectionUnit,
-     CodeSectionUnit;
+uses
+  Classes,
+  SysUtils,
+
+  procmat,
+  StringRes,
+  ExecFileUnit,
+  SectionUnit,
+  CodeSectionUnit;
 
 type
   TRelocEntry = record
@@ -24,7 +24,7 @@ type
     count: cardinal;
     relocs: array of TRelocEntry;
     constructor Create(a: TStream; offset: cardinal; count: cardinal);
-    function LoadFromFile(var f:TextFile; a:TStream):boolean; override;
+    function LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; override;
     function SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
   end;
 
@@ -32,12 +32,12 @@ type
   private
     RelocationSectionNumber: integer;
   public
-    header:TMZHeader;
-    constructor Create(InputStream: TStream; aFileName: TFileName); overload; override;
+    Header: TMZHeader;
+    constructor Create; overload; override; 
+    constructor Create(InputFile: TStream; aFileName: TFileName); overload; override;
     destructor Destroy(); override;
     function SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
     function LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; override;
-//    function LoadFromFile(var f:TextFile; a:TMemoryStream):boolean; override;
 //    function GetAdvancedInfo: TExecFileAdvancedInfo; override;
   end;
 
@@ -52,24 +52,33 @@ const
 //******************************************************************************
 
 
-constructor TMZFile.Create(InputStream: TStream; aFileName: TFileName);
+constructor TMZFile.Create;
+begin
+  inherited;
+  fExecFormat:= ffMZ;
+  fFormatDescription:= 'MZ - DOS executable (16-bit)';
+end;
+
+
+
+constructor TMZFile.Create(InputFile: TStream; aFileName: TFileName);
 var
 //  rs: TRelocationSection;
   CodeSection: TCodeSection;
   CodeSize:cardinal;
 begin
   inherited;
-  fExecFormat:=MZ;
-  fFormatDescription:='MZ - DOS executable (16-bit)';
+  fExecFormat:= ffMZ;
+  fFormatDescription:= 'MZ - DOS executable (16-bit)';
 
-  InputStream.Seek(0,0);
-  InputStream.Read(header,40);
-  CodeSize:=(header.pagecount-1)*512 + HEADER.pageremainder - header.headersize*16;
+  InputFile.Seek(0, 0);
+  InputFile.Read(header, 40);
+  CodeSize:= (header.pagecount-1)*512 + HEADER.pageremainder - header.headersize*16;
 
   // Code section
   if CodeSize > 0 then begin
-    CodeSection:=TCodeSection.Create(InputStream, false, 'N/A', header.headersize*16, CodeSize, header.headersize*16, CodeSize, 0, self);
-    CodeSection.EntryPointAddress:={CodeSection.LogOffset}word(header.reloCS*16 + header.EXEIP);
+    CodeSection:= TCodeSection.Create(InputFile, false, 'N/A', header.headersize*16, CodeSize, header.headersize*16, CodeSize, 0, self);
+    CodeSection.EntryPointAddress:= {CodeSection.LogOffset}word(header.reloCS*16 + header.EXEIP);
     Sections.Add(CodeSection);
   end;
 {
@@ -85,10 +94,10 @@ end;
 
 
 
-function TMZFile.SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; 
+function TMZFile.SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean;
 begin
   if soProject in SaveOptions then
-    DHF.Write(header,sizeof(header));
+    DHF.Write(header, SizeOf(Header));
   result:=inherited SaveToFile(DHF, DAS, SaveOptions);
 end;
 
@@ -97,7 +106,7 @@ end;
 function TMZFile.LoadFromFile(DHF: TStream; var DAS: TextFile): boolean;
 
 begin
-  DHF.Read(header,sizeof(Header));
+  DHF.Read(Header, SizeOf(Header));
   result:=inherited LoadFromFile(DHF, DAS);
 end;
 
@@ -149,7 +158,7 @@ end;
 
 
 
-function TRelocationSection.LoadFromFile(var f:TextFile; a:TStream):boolean;
+function TRelocationSection.LoadFromFile(DHF: TStream; var DAS: TextFile):boolean;
 begin
    ;
 end;

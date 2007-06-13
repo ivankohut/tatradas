@@ -98,7 +98,7 @@ type
     name: WideString;
     ID: cardinal;
     typ: TResourceType;
-    Data: array of TResourceData;              
+    Data: array of TResourceData;
     Dir: array of PTResourceDirectory;
   end;
 {
@@ -141,10 +141,8 @@ type
     constructor Create(InputStream: TStream; aName: string; aFileOffset, aFileSize, aMemOffset, aMemSize: cardinal; aSectionIndex: integer; ResourceTableRVA: cardinal; aExecFile:TObject); overload;
     constructor Create(efile:TObject); overload;
     destructor Destroy; override;
-    function LoadFromFile(DHF: TFileStream; DAS: TTextFileStream):boolean; overload; override;
-    function LoadFromFile(var f: TextFile; a: TStream):boolean; overload; override;
-    function SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
-///    procedure Translate(ini: TMemINIFile; error:string); override;
+    function SaveToFile  (DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
+    function LoadFromFile(DHF: TStream; var DAS: TextFile):boolean; overload; override;
   end;
 
 {$IFDEF GUI_B}
@@ -315,7 +313,8 @@ begin
 end;
 
 begin
-  inherited Create(aName, aFileOffset, aFileSize, aMemOffset, aMemSize, aSectionIndex, aExecFile);
+{
+  inherited Create(aName, aSectionIndex, aExecFile);
   fTyp:=stResource;
 
   b:=TMemoryStream.Create;
@@ -350,26 +349,24 @@ begin
       TypeDir.Dir[i]^.NamePresent:=true;
     end;
   b.Free;
+}
 end;
 
 constructor TResourceSection.Create(efile:TObject);
 begin
   fTyp:=stResource;
-  execfile:=efile;
-end;
-
-function TResourceSection.LoadFromFile(var f: TextFile; a: TStream):boolean;
-begin
-  result:=true;
+  fExecFile:=efile;
 end;
 
 function TResourceSection.SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean;
 begin
+  inherited SaveToFile(DHF, DAS, SaveOptions);
   result:=true;
 end;
 
-function TResourceSection.LoadFromFile(DHF: TFileStream; DAS: TTextFileStream): boolean;
+function TResourceSection.LoadFromFile(DHF: TStream; var DAS: TextFile): boolean;
 begin
+  inherited LoadFromFile(DHF, DAS);
   result:=true;
 end;
 

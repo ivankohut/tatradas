@@ -87,7 +87,6 @@ inherited ImportTabFrame: TImportTabFrame
       ScrollWidth = 1
       TabOrder = 2
       OnDblClick = AddressListBoxDblClick
-      OnMouseDown = AddressListBoxMouseDown
     end
   end
 end

@@ -2570,12 +2570,12 @@ end;
 function TDisassembler.DisassembleBlock(start, finish: cardinal; bit32: boolean):boolean;
 var
     Vparam: TParam;                         // Parametre aktualnej instrukcie
-    o,p:byte;                               // Interval pri FPU instrukciach
-    prefixstr:string;
-    prefixflags: record
+    o,p: byte;                               // Interval pri FPU instrukciach
+    PrefixStr:string;
+    PrefixFlags: record
       group1,group2,group3,group4: boolean;
     end;
-    asmbyte: byte;
+    AsmByte: byte;
     c: cardinal;
     _3DNow_Instruction: boolean;
     k: cardinal;
@@ -2637,7 +2637,7 @@ XADD, and XCHG.
 }
 
     while (code[i] in prefix) do begin
-      disassembled[InstrAddress].parsed:=disassembled[InstrAddress].parsed+inttohex(code[i],2);
+      disassembled[InstrAddress].parsed:=disassembled[InstrAddress].parsed + IntToHex(code[i], 2);
       case code[i] of
 // Group 1
         $F0,$F2,$F3: begin

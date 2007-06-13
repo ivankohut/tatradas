@@ -59,7 +59,7 @@ implementation
 
 {$R *.dfm}
 
-uses MainFormUnit, GotoAddressFormUnit;
+uses MainFormUnit, GotoAddressFormUnit, ExecFileUnit;
 
 procedure THexEditForm.SaveAsButtonClick(Sender: TObject);
 begin
@@ -70,8 +70,10 @@ begin
 end;
 
 procedure THexEditForm.HexEditChangePosition(Sender: TObject);
-var SectionOffset: cardinal;
-    Buffer: cardinal;
+var
+  RegionIndex: integer;
+  RegionOffset: cardinal;
+  Buffer: cardinal;
 begin
   Buffer:=0;
   HexEdit.ReadBuffer(Buffer,HexEdit.GetCursorPos,4);
@@ -82,16 +84,17 @@ begin
   SignedWordDataLabel.Caption:=IntToSignedHex(smallint(Buffer),4);
   SignedDwordDataLabel.Caption:=IntToSignedHex(integer(Buffer),8);
   StatusBar1.Panels[0].Text:=FileOffsetStr + ': '+HexEdit.GetOffsetString(HexEdit.GetCursorPos);
-  if MainForm.ExecFile<>nil then
-    If MainForm.ExecFile.fullpath=HexEdit.FileName then begin
-       SectionOffset:=MainForm.ExecFile.Sections.GetSectionOffsetFromFileOffset(HexEdit.GetCursorPos);
-       if SectionOffset<>$FFFFFFFF then begin
-         StatusBar1.Panels[1].Text:=SectionStr + ': '+MainForm.ExecFile.Sections.GetSectionNameFromFileOffset(HexEdit.GetCursorPos);
-         StatusBar1.Panels[2].Text:=SectionOffsetStr + ': '+IntToHex(SectionOffset,8);
-       end
+  if MainForm.ExecFile <> nil then
+    if MainForm.ExecFile.FullPath = HexEdit.FileName then begin
+       RegionIndex:= MainForm.ExecFile.Regions.GetIndexFromOffset(HexEdit.GetCursorPos);
+       if RegionIndex <> -1 then begin
+         RegionOffset:= HexEdit.GetCursorPos - MainForm.ExecFile.Regions[RegionIndex].Offset;
+         StatusBar1.Panels[1].Text:=SectionStr + ': ' + MainForm.ExecFile.Regions[RegionIndex].Name;
+         StatusBar1.Panels[2].Text:=SectionOffsetStr + ': '+IntToHex(RegionOffset, 8);
+       end  
        else begin
-         StatusBar1.Panels[1].Text:=SectionStr + ':';
-         StatusBar1.Panels[2].Text:=SectionOffsetStr + ':';
+         StatusBar1.Panels[1].Text:=SectionStr + ': ' + 'unused space';
+         StatusBar1.Panels[2].Text:=SectionOffsetStr + ': ';
        end;
     end;
 end;

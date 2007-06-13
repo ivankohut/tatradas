@@ -17,39 +17,24 @@ type
   TSection = class
    private
     fName: string;
-    fFileOffset: cardinal;
-    fFileSize: cardinal;
-    fMemOffset: cardinal;
-    fMemSize: cardinal;
+
    protected
+    fExecFile: TObject; // TExecutableFile;
     fTyp: TSectionType;
     fSectionIndex: integer;  // index in ExecFile's 'Sections' array
 
-//     Status: TSectionStatus;
    public
-    ExecFile: TObject; // TExecutableFile;
+    constructor Create(aName: string; aSectionIndex: integer; aExecFile: TObject); overload; virtual;
 
-    constructor Create(aName: string; aFileOffset, aFileSize, aMemOffset, aMemSize: cardinal; aSectionIndex: integer; aExecFile: TObject); virtual;
-
-    // prefered
-    function SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; overload; virtual; abstract;
-
-    // deprecated
-    function LoadFromFile(DHF: TFileStream; DAS: TTextFileStream):boolean; overload; virtual; abstract;
-    function LoadFromFile(var f: TextFile; a: TStream):boolean; overload; virtual; abstract;
-    // preferred
-    function LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; overload; virtual; abstract;
-
-
-    property Typ: TSectionType read fTyp;
-    property SectionIndex: integer read fSectionIndex;
+    function SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; virtual;
+    function LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; virtual;
 
     property Name: string read fName;
-    property FileOffset: cardinal read fFileOffset;
-    property FileSize: cardinal read fFileSize;
-    property MemOffset: cardinal read fMemOffset;
-    property MemSize: cardinal read fMemSize;
+    property Typ: TSectionType read fTyp;
+    property SectionIndex: integer read fSectionIndex;
+    property ExecFile: TObject read fExecFile;
   end;
+
 
 
   TSections = class
@@ -58,18 +43,20 @@ type
     fReadOnly: boolean;
     fCount: integer;
 
-    function GetSection(Index: integer): TSection; 
+    function GetSection(Index: integer): TSection;
    public
     constructor Create;
     destructor Destroy; override;
 
     procedure Add(ASection: TSection);
     procedure MakeReadOnly;
-
+{
     function GetSectionNameFromFileOffset(Offset: cardinal): string; virtual;          // Nazov sekcie (ak nejaky ma)
     function GetSectionIndexFromFileOffset(Offset: cardinal): integer; virtual;  // Index sekcie v poli Sections
-    function GetSectionIndexFromMemOffset(Offset: cardinal): integer; virtual;  // Index sekcie v poli Sections
     function GetSectionOffsetFromFileOffset(Offset: cardinal): cardinal; virtual;  // Offset v danej sekcii
+}
+
+    function GetSectionIndexFromMemOffset(Offset: cardinal): integer; virtual;  // Index (kodovej) sekcie v poli Sections
 
     property Count: integer read fCount;
     property Items[Index: integer]: TSection read GetSection; default;
@@ -78,17 +65,33 @@ type
 
 implementation
 
+uses CodeSectionUnit;
+
 { TSection }
 
-constructor TSection.Create(aName: string; aFileOffset, aFileSize, aMemOffset, aMemSize: cardinal; aSectionIndex: integer; aExecFile: TObject);
+constructor TSection.Create(aName: string; aSectionIndex: integer; aExecFile: TObject);
 begin
   fName:=aName;
-  fFileOffset:=aFileOffset;
-  fFileSize:=aFileSize;
-  fMemOffset:=aMemOffset;
-  fMemSize:=aMemSize;
   fSectionIndex:=aSectionIndex;
-  ExecFile:=aExecFile;
+  fExecFile:=aExecFile;
+end;
+
+
+
+function TSection.SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean;
+begin
+  if soProject in SaveOptions then begin
+    StreamWriteAnsiString(DHF, fName);
+    DHF.Write(fSectionIndex, 4);
+  end;
+end;
+
+
+
+function TSection.LoadFromFile(DHF: TStream; var DAS: TextFile): boolean;
+begin
+  fName:= StreamReadAnsiString(DHF);
+  DHF.Read(fSectionIndex, 4);
 end;
 
 { TSections }
@@ -113,7 +116,7 @@ end;
 
 
 
-
+{
 function TSections.GetSectionNameFromFileOffset(
   Offset: cardinal): string;
 var i:integer;
@@ -122,10 +125,10 @@ begin
     if (Offset >= fSections[i].FileOffset) and (Offset < fSections[i].FileOffset + fSections[i].FileSize) then begin
       result:= fSections[i].name;
       Exit;
-{ toto spravim neskor
-      for j:=CodeSectionNumber to CodeSectionNumber+CodeSectionsCount-1 do
-        if (Sections[j] as TCodeSection).InSection(ObjectTable[i].rva) then result:=result+' - '+CodeSectionStr+IntToStr((Sections[j] as TCodeSection).SectionNumber);
-}
+// toto spravim neskor
+//      for j:=CodeSectionNumber to CodeSectionNumber+CodeSectionsCount-1 do
+//        if (Sections[j] as TCodeSection).InSection(ObjectTable[i].rva) then result:=result+' - '+CodeSectionStr+IntToStr((Sections[j] as TCodeSection).SectionNumber);
+
     end;
   end;
   result:='not section';
@@ -155,6 +158,7 @@ begin
     end;
   result:=-1;
 end;
+}
 
 
 
@@ -162,10 +166,12 @@ function TSections.GetSectionIndexFromMemOffset(Offset: cardinal): integer;
 var i: integer;
 begin
   for i:=0 to Count - 1 do
-    if (Offset >= fSections[i].MemOffset) and (Offset < fSections[i].MemOffset + fSections[i].MemSize) then begin
-      result:=i;
-      Exit;
-    end;
+    if fSections[i].Typ = stCode then
+      with fSections[i] as TCodeSection do
+        if (Offset >= MemOffset) and (Offset < MemOffset + MemSize) then begin
+          result:= i;
+          Exit;
+        end;
   result:=-1;
 end;
 

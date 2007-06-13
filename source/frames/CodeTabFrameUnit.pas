@@ -831,13 +831,13 @@ var
   dk: cardinal;
   riadky: TStrings;
 begin
-  if (Address < Section.MemOffset) or (Address > Section.MemOffset + Section.MemSize - 1) then begin
+  if (Address < fSection.MemOffset) or (Address > fSection.MemOffset + fSection.MemSize - 1) then begin
     result:=cardinal(-1);
     Exit;
   end;
 
   // Docasne, nutne prerobit vo final
-  Address:= Address - Section.MemOffset;
+  Address:= Address - fSection.MemOffset;
   //*********
 
   riadky:=plocha.Lines;
@@ -926,7 +926,7 @@ begin
   LineDataLabel.Caption:='1';
   FollowButton.Enabled:=false;
   ReturnButton.Enabled:=false;
-  if fSection.FileSize = 0 then GotoAddressButton.Enabled:=false;
+  if fSection.MemSize = 0 then GotoAddressButton.Enabled:=false;
 end;
 
 

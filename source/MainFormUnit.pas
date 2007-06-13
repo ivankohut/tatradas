@@ -38,10 +38,10 @@ uses
   CodeTabFrameUnit,
   ExecFileManagerUnit,
   ExecFileUnit,
-  HexEditFormUnit,
+  HexEditFormUnit;
 //  jpeg,
-  ProgressFormUnit,
-  UProgressThread;
+//  ProgressFormUnit,
+//  UProgressThread;
 
 
 type
@@ -250,7 +250,7 @@ implementation
 uses
   AboutBoxUnit, GotoAddressFormUnit, UnknownFileFormUnit, SaveOptionsFormUnit,
   AdvancedDisassembleFormUnit, AdvancedChangingToDataFormUnit, CalculatorUnit,
-  OptionsFormUnit, CodeSectionUnit, InsertCommentFormUnit;
+  OptionsFormUnit, CodeSectionUnit, InsertCommentFormUnit, ProgressFormUnit;
 
 {$R *.DFM}
 
@@ -312,7 +312,7 @@ end;
 
 procedure TMainForm.DisassembleClick(Sender: TObject);    // Spustenie disassemblovania
 begin
-  ProgressForm.Show;
+//  ProgressForm.Show;
   BeforeProgress;
   if not ExecFile.Disassemble() then begin
   // hodila by sa nejaka sprava o pricine neuspechu Disassembluj
@@ -338,9 +338,13 @@ begin
   if SaveOptionsForm.ShowModal = mrOK then begin
     SaveDialog1.FileName:='';
     SaveDialog1.InitialDir:=SaveProjectPath;
-    if soProject in SaveOptionsForm.SaveOptions then SaveDialog1.Filter:=ProjectFilterStr + '(*.DHF)|*.DHF'
-    else if soDisassembly in SaveOptionsForm.SaveOptions then SaveDialog1.Filter:=SaveDisassemblyFilterStr + '(*.DAS)|*.DAS'
-    else SaveDialog1.Filter:='';
+    if soProject in SaveOptionsForm.SaveOptions then
+      SaveDialog1.Filter:=ProjectFilterStr + '(*.DHF)|*.DHF'
+    else
+      if soDisassembly in SaveOptionsForm.SaveOptions then
+        SaveDialog1.Filter:= SaveDisassemblyFilterStr + '(*.DAS)|*.DAS'
+      else
+        SaveDialog1.Filter:= '';
     if not SaveDialog1.Execute then Exit;
 // Osetrit nejakou spravou v pripade zlyhania ukladania, napr. disk full
     BeforeProgress;
@@ -361,24 +365,21 @@ end;
 
 
 procedure TMainForm.ProjectClick(Sender: TObject);     // Otvorenie projektu
-var DHF,DAS:string;
-    Success:boolean;
-    vlakno: TExecFileManager_LoadExecFileFromFile;
+var
+  ErrorMessage: string;
+//    vlakno: TExecFileManager_LoadExecFileFromFile;
 begin
-  OpenDialog1.Filter:=ProjectFilterStr + ' (*.dhf)|*.DHF';
-  OpenDialog1.Filename:='';
+  OpenDialog1.Filter:= ProjectFilterStr + ' (*.dhf)|*.DHF';
+  OpenDialog1.Filename:= '';
   OpenDialog1.InitialDir:=OpenProjectPath;
   if not OpenDialog1.Execute then Exit;
   OpenProjectPath:=ExtractFilePath(OpenDialog1.FileName);
 
-
-
-  if ExecFile<>nil then CloseFileClick(nil);                                // Odstranenie MainFile a vycistenie MainForm
+  if ExecFile <> nil then CloseFileClick(nil);                                // Odstranenie MainFile a vycistenie MainForm
 
   BeforeProgress;
 //  ctrls.INIFile:=Langs.INI;
 
-  //  MainFile:=TFileEx.Create(Success,DHF,DAS,ctrls);                          // Vyvorenie MainFile
 {
   ProgressFinished:=false;
   vlakno:=TExecFileManager_LoadExecFileFromFile.Create(OpenDialog1.FileName);
@@ -386,8 +387,33 @@ begin
   ExecFile:=vlakno.TheResult;
   vlakno.Free;
 }
-//  ExecFile:=ExecFileManager.LoadExecFileFromFile(OpenDialog1.FileName);
+
   ExecFile:=ExecFileManager.LoadExecFileFromFile(OpenDialog1.FileName);
+
+  if ExecFileManager.Error <> ErrNone then begin
+    ExecFile.Free;
+    case ExecFileManager.Error of
+      errCanceled: begin
+        Exit;
+      end;
+
+      errDASNotFound:
+        ErrorMessage:=CouldNotFindDASFileStr;
+      errBadProjectVersion:
+        ErrorMessage:= InCompatibleProjectVersion + '.' + #13 + CurrentVersion + ' ' + IntToHex(TatraDASProjectVersion,8) + '.';
+      errOpen: begin
+        ErrorMessage:=CouldNotOpenFileStr;
+      end;
+      errBadFormat: begin
+        ErrorMessage:='File is corrupted: ';
+      end;
+    end;
+    MessageDlg(ErrorMessage + '"' + Opendialog1.FileName + '"', mtError, [mbOK], 0);
+    Exit;
+  end;
+
+
+
 {
   if not Success then begin
     MessageDlg(CouldNotOpenProjectStr,mtError,[mbOK],0);
@@ -410,14 +436,8 @@ begin
   SaveMyButton.Enabled:=true;
   Save1.Enabled:=true;
   CloseFile1.Enabled:=true;
-{
-   Nasledujuce riadky by mali byt v konkretnych execfiloch
-}
 
-// - vytvorit file tabsheet
-//  FileNameEdit.Text:=Mainfile.Filename;
-//  FileSizeEdit.Text:=IntToStr(MainFile.size);
-  Caption:=TatraDASFullNameVersion+' - '+ExecFile.FileName;
+  Caption:= TatraDASFullNameVersion + ' - ' + ExecFile.FileName;
 end;
 
 

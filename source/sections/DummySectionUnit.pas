@@ -6,19 +6,19 @@ interface
 
 uses
   SectionUnit;
-  
+
 type
 
   TDummySection = class(TSection)
-    constructor Create(aName: string; aFileOffset, aFileSize, aMemOffset, aMemSize: cardinal; aSectionIndex: integer; aExecFile: TObject); override;
+    constructor Create(aName: string; aFileOffset, aFileSize, aMemOffset, aMemSize: cardinal; aSectionIndex: integer; aExecFile: TObject);
   end;
 
 implementation
 
 constructor TDummySection.Create(aName: string; aFileOffset, aFileSize, aMemOffset, aMemSize: cardinal; aSectionIndex: integer; aExecFile: TObject);
 begin
-  inherited Create(aName, aFileOffset, aFileSize, aMemOffset, aMemSize, aSectionIndex, aExecFile);
+  inherited Create(aName, aSectionIndex, aExecFile);
   fTyp:=stDummy;
-end;  
+end;
 
 end.

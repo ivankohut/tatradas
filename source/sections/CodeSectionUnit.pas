@@ -1,7 +1,7 @@
 { TODO:
   - dtCUniCodeStr:    v ChangeToStringData
   - osetrit code section nulovej velkosti
-  - zjednodusit moynosti ukladanie disassembled 
+  - zjednodusit moynosti ukladanie disassembled
 }
 
 {
@@ -29,8 +29,9 @@ uses
   Math,
 
   {$IFDEF DELPHI}
-    StrUtils,//UProgressThread,ProgressFormUnit,
+//    StrUtils,//UProgressThread,ProgressFormUnit,
   {$ENDIF}
+  StrUtils,
 
   //TatraDAS_SynEditStringList,
   //SynEditTextBuffer,
@@ -60,11 +61,16 @@ type
 
        Decoder: TDisassembler;
 
+       fFileOffset: cardinal;
+       fFileSize: cardinal;
+       fMemOffset: cardinal;
+       fMemSize: cardinal;
+
        procedure SetEntryPointAddress(Address: cardinal);
 
      public
 // Staticke data
-       CodeSectionIndex: cardinal;             // Cislo sekcie v ramci kodovych sekcii
+       fCodeSectionIndex: integer;             // Cislo sekcie v ramci kodovych sekcii
 
 // Dynamicke data
        InstructionLineCount, DataLineCount, ReferenceLineCount, BlankLineCount: cardinal;
@@ -92,15 +98,10 @@ type
        function DisassembleAll(Options: TDisassembleOptions):boolean;
        function DisassemblePart(Options: TDisassembleOptions):boolean;
 
-//       function SaveToFile(var f:TextFile; a:TStream; SaveOptions: TSaveOptions):boolean; override;
-       // preferred
-       function SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions):boolean; override;
 
-       // preferred
-       function LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; overload; override;
+       function SaveToFile  (DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
+       function LoadFromFile(DHF: TStream; var DAS: TextFile):boolean; overload; override;
 
-       function LoadFromFile(var f:TextFile; a:TStream):boolean; overload; override;
-       function LoadFromFile(DHF: TFileStream; DAS: TTextFileStream):boolean; overload; override;
 
        function InSection(MemAddress: cardinal): boolean;
 
@@ -112,6 +113,10 @@ type
        property IsDisassembled: boolean read fIsDisassembled;
 //       property Disassembled: TSynEditStringList read fDisassembled;
        property Disassembled: TTatraDASStringList read fDisassembled;
+
+       property MemOffset: cardinal read fMemOffset;
+       property MemSize: cardinal read fMemSize;
+       property CodeSectionIndex: integer read fCodeSectionIndex;
 
        property EntryPointAddress: cardinal read fEntryPointAddress write SetEntryPointAddress;
        property HasEntryPoint: boolean read EntryPointPresent;
@@ -140,13 +145,21 @@ constructor TCodeSection.Create(InputStream: TStream; bb:boolean; aName: string;
 var position: cardinal;
     i: integer;
 begin
-  inherited Create(aName, aFileOffset, aFileSize, aMemOffset, aMemSize, aSectionIndex, aExecFile);
+  inherited Create(aName, aSectionIndex, aExecFile);
+
   fTyp:=stCode;
   fBit32:=bb;
 
+  fFileOffset:= aFileOffset;
+  fFileSize:= aFileSize;
+  fMemOffset:= aMemOffset;
+  fMemSize:= aMemSize;
+
+
+
   // Set CodeSize
-  if FileSize <> 0 then
-    fCodeSize:=MemSize
+  if aFileSize <> 0 then
+    fCodeSize:=aMemSize
   else
     fCodeSize:=0;
 
@@ -155,11 +168,11 @@ begin
   CodeStream:=TMyMemoryStream.Create;
   CodeStream.SetMemory(Pointer(CodeArray), CodeSize+CodeArrayReserve);
   position:= InputStream.Position;
-  InputStream.Position:=FileOffset;
+  InputStream.Position:=aFileOffset;
   CodeStream.CopyFrom(InputStream, Min(InputStream.Size - InputStream.Position, CodeSize)); //+CodeArrayReserve
 //  CodeStream.CopyFrom(InputStream, FileSize); //+CodeArrayReserve
   InputStream.Position:=position;
-  for i:=FileSize to CodeSize+CodeArrayReserve-1 do
+  for i:=aFileSize to CodeSize+CodeArrayReserve-1 do
     CodeArray[i]:=0;  // vynulovanie pola nad byty precitane zo suboru
 
   // Set DisassemblerMap
@@ -172,7 +185,7 @@ end;
 
 constructor TCodeSection.Create(efile: TObject);
 begin
-  ExecFile:=efile;
+  fExecFile:=efile;
 end;
 
 
@@ -482,20 +495,12 @@ end;
 
 function TCodeSection.InSection(MemAddress: cardinal): boolean;
 begin
-  result:= (MemAddress >= MemOffset) and (MemAddress < (MemOffset + MemSize));
+  result:= (MemAddress >= fMemOffset) and (MemAddress < (fMemOffset + fMemSize));
 end;
 
 
 
-
-
-
-
-//******************************************************************************
-// Load and Save .... :)
-
-// function TCodeSection.SaveToFile(var f:TextFile; a:TStream; SaveOptions: TSaveOptions):boolean;
-function TCodeSection.SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; 
+function TCodeSection.SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean;
 type TSaveInstruction = (siNone, siAddr, siPar, siDis, siAddr_Par, siPar_Dis, siAddr_Dis, siAll);
 var si: TSaveInstruction;
     i,j,counter:cardinal;
@@ -505,7 +510,8 @@ var si: TSaveInstruction;
     reladresa: integer;
 
 begin
-  result:=false;
+  inherited SaveToFile(DHF, DAS, SaveOptions);
+
   if (soProject in SaveOptions) or (soDisassembly in SaveOptions) then begin
   // Zapis do suboru "*.das"
     Writeln(DAS,'------------------------------');
@@ -526,28 +532,30 @@ begin
   if soProject in SaveOptions then begin
 
 // Staticke data
-    DHF.Write(fSectionIndex,4);
-    DHF.Write(CodeSectionIndex,4);
-    DHF.Write(Bit32,4);
-    DHF.Write(FileOffset,4);
-    DHF.Write(FileSize,4);
-    DHF.Write(MemOffset,4);
-    DHF.Write(MemSize,4);
-    DHF.Write(CodeSize,4);
+    DHF.Write(fCodeSectionIndex, 4);
+    DHF.Write(fBit32, 4);
+    DHF.Write(fFileOffset, 4);
+    DHF.Write(fFileSize, 4);
+    DHF.Write(fMemOffset, 4);
+    DHF.Write(fMemSize, 4);
+    DHF.Write(fCodeSize, 4);
 
-    DHF.Write(EntryPointPresent,1);
+    DHF.Write(EntryPointPresent, 1);
 //    DHF.Write(EntryPointPosition,4);
-    DHF.Write(EntryPointAddress,4);
+    DHF.Write(EntryPointAddress, 4);
 // Dynamicke data
-    DHF.Write(InstructionLineCount,16);  // ulozi aj: DataLineCount, ReferenceLineCount, BlankLineCount
+    DHF.Write(InstructionLineCount, 4);
+    DHF.Write(DataLineCount, 4);
+    DHF.Write(ReferenceLineCount, 4);
+    DHF.Write(BlankLineCount, 4);
     DHF.Write(Statistics,sizeof(TStatistics));
-    DHF.Write(MaxAddress,4);
-    DHF.Write(IsDisassembled, sizeof(boolean));
-    DHF.Write(LinesCount,4);
-    DHF.Write(InstructionsCount,4);
+    DHF.Write(MaxAddress, 4);
+    DHF.Write(IsDisassembled, 1);
+    DHF.Write(LinesCount, 4);
+    DHF.Write(InstructionsCount, 4);
 // Polia
-    DHF.Write(CodeArray[0],codesize);
-    DHF.Write(DisassemblerMap[0],codesize);
+    DHF.Write(CodeArray[0], CodeSize);
+    DHF.Write(DisassemblerMap[0], CodeSize);
   end;
 
   if not (soProject in SaveOptions) and not (soDisassembly in SaveOptions) and not (soNASM in SaveOptions) then begin
@@ -701,189 +709,58 @@ begin
     end;
     Writeln(DAS);
   end;
-//  Ctrls.ProgressFunction(0,0,'');
   result:=true;
 end;
 
-function TCodeSection.LoadFromFile(var f:TextFile; a:TStream):boolean;
-var i,counter:cardinal;
-    temp: string;
-    line: string;
-    TempInt: integer;
-//    vlakno: TProgressThread;
 
+
+function TCodeSection.LoadFromFile(DHF: TStream; var DAS: TextFile): boolean;
+var
+  line: string;
 begin
-  result:=false;
-// DHF subor:
-// Staticke data
-  a.Read(fSectionIndex,4);
-  a.Read(fBit32,4);
-  a.Read(fCodeSize,4);
-
-  a.Read(EntryPointPresent,1);
-//  a.Read(EntryPointPosition,4);
-  a.Read(fEntryPointAddress,4);
-// Dynamicke data
-  a.Read(InstructionLineCount,16);  // ulozi aj: DataLineCount, ReferenceLineCount, BlankLineCount
-  a.Read(Statistics,sizeof(TStatistics));
-  a.Read(MaxAddress,4);
-
-  // fIsDisassembled
-  a.Read(fIsDisassembled, SizeOf(IsDisassembled)); // byvaly Status, mozny zdroj chybneho citania (nespravna velkost)
-
-  a.Read(LinesCount,4);
-  a.Read(InstructionsCount,4);
-// Polia
-  SetLength(DisassemblerMap,CodeSize);
-  SetLength(CodeArray,CodeSize);
-  a.Read(CodeArray[0],codesize);
-  a.Read(DisassemblerMap[0],codesize);
-  CodeStream:=TMyMemoryStream.Create;
-  CodeStream.SetMemory(Pointer(CodeArray),CodeSize);
-
-// Nacitanie DAS suboru
-//  Ctrls.ProgressFunction(0,LinesCount,ProcessText.LoadingDAS + IntToStr(SectionNumber));
-
-  Readln(f,temp);
-  Readln(f,temp);
-  Readln(f,temp);
-
-//  fDisassembled:=TSynEditStringList.Create;
-  fDisassembled:=TTatraDASStringList.Create;
-
-  fDisassembled.Add('');
-  ProgressPosition:=0;
-  while not EOF(f) do begin
-    Inc(ProgressPosition);
-    ReadLn(f,line);
-    Disassembled.Add(line);
-  end;
-  ProgressPosition:=0;
-
-{
-  vlakno:=TLoadFromFileThread.Create('testik_b',LinesCount);
-  (vlakno as TLoadFromFileThread).DASFile:=@f;
-  (vlakno as TLoadFromFileThread).Disassembled:=Disassembled;
-  vlakno.Resume;
-
-  while not vlakno.Finished do begin
-    Sleep(100);
-    ProgressForm.ProgressBar1.Position:=vlakno.ProgressPosition;
-    Application.ProcessMessages;
-
-  end;
-
-  vlakno.Free;
-  ProgressForm.Hide;
-}
-
-  Readln(f);
-///  Ctrls.ProgressFunction(0,0,'');
-  result:=true;
-end;
-
-//
-// Testovaci LoadFromFile
-//
-
-function TCodeSection.LoadFromFile(DHF: TFileStream; DAS: TTextFileStream):boolean;
-var TempInt: integer;
-begin
-  result:=false;
+  inherited LoadFromFile(DHF, DAS);
   // DHF subor:
   // Staticke data
-  DHF.Read(CodeSectionIndex,4);
-  DHF.Read(fBit32,4);
-  DHF.Read(fCodeSize,4);
+  DHF.Read(fCodeSectionIndex, 4);
+  DHF.Read(fBit32, 4);
+  DHF.Read(fFileOffset, 4);
+  DHF.Read(fFileSize, 4);
+  DHF.Read(fMemOffset, 4);
+  DHF.Read(fMemSize, 4);
+  DHF.Read(fCodeSize, 4);
 
-  DHF.Read(EntryPointPresent,1);
+  DHF.Read(EntryPointPresent, 1);
 //  DHF.Read(EntryPointPosition,4);
   DHF.Read(fEntryPointAddress,4);
   // Dynamicke data
-  DHF.Read(InstructionLineCount,16);  // ulozi aj: DataLineCount, ReferenceLineCount, BlankLineCount
-  DHF.Read(Statistics,sizeof(TStatistics));
-  DHF.Read(MaxAddress,4);
-  DHF.Read(TempInt, sizeof(boolean)); // byvaly status
-  DHF.Read(LinesCount,4);
-  DHF.Read(InstructionsCount,4);
-  DHF.Read(TempInt, 4);  //DHF.Read(FarbaPisma,4);
-  DHF.Read(TempInt, 4);  //DHF.Read(FarbaPozadia,4);
-
+  DHF.Read(InstructionLineCount, 4);
+  DHF.Read(DataLineCount, 4);
+  DHF.Read(ReferenceLineCount, 4);
+  DHF.Read(BlankLineCount, 4);
+  DHF.Read(Statistics, SizeOf(TStatistics));
+  DHF.Read(MaxAddress, 4);
+  DHF.Read(fIsDisassembled, 1);
+  DHF.Read(LinesCount, 4);
+  DHF.Read(InstructionsCount, 4);
 
   // Polia
-  SetLength(DisassemblerMap,CodeSize);
-  SetLength(CodeArray,CodeSize);
-  DHF.Read(CodeArray[0],codesize);
-  DHF.Read(DisassemblerMap[0],codesize);
+  SetLength(CodeArray, CodeSize);
+  DHF.Read(CodeArray[0], CodeSize);
+
+  SetLength(DisassemblerMap, CodeSize);
+  DHF.Read(DisassemblerMap[0], CodeSize);
+
   CodeStream:=TMyMemoryStream.Create;
-  CodeStream.SetMemory(Pointer(CodeArray),CodeSize);
+  CodeStream.SetMemory(Pointer(CodeArray), CodeSize);
 
   // Nacitanie DAS suboru
 
-  DAS.ReadLine;
-  DAS.ReadLine;
-  DAS.ReadLine;
+  Readln(DAS, line);
+  Readln(DAS, line);
+  Readln(DAS, line);
 
 //  fDisassembled:=TSynEditStringList.Create;
-  fDisassembled:=TTatraDASStringList.Create;
-
-  Disassembled.Add('');
-{$IFDEF TATRADAS_FAST}
-  Disassembled.LoadFromStream(DAS);
-  Disassembled.DeleteLines(0,c_DASHeaderLinesCount);
-{$ELSE}
-  ProgressPosition:=0;
-  while DAS.Position < DAS.Size do begin
-    Inc(ProgressPosition);
-    Disassembled.Add(DAS.ReadLine);
-  end;
-  ProgressPosition:=0;
-{$ENDIF}
-  result:=true;
-end;
-
-
-function TCodeSection.LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; 
-var TempInt: integer;
-  temp, line: string;
-begin
-  result:=false;
-  // DHF subor:
-  // Staticke data
-  DHF.Read(CodeSectionIndex,4);
-  DHF.Read(fBit32,4);
-  DHF.Read(fCodeSize,4);
-
-  DHF.Read(EntryPointPresent,1);
-//  DHF.Read(EntryPointPosition,4);
-  DHF.Read(fEntryPointAddress,4);
-  // Dynamicke data
-  DHF.Read(InstructionLineCount,16);  // ulozi aj: DataLineCount, ReferenceLineCount, BlankLineCount
-  DHF.Read(Statistics,sizeof(TStatistics));
-  DHF.Read(MaxAddress,4);
-  DHF.Read(TempInt, sizeof(boolean)); // byvaly status
-  DHF.Read(LinesCount,4);
-  DHF.Read(InstructionsCount,4);
-  DHF.Read(TempInt, 4);  //DHF.Read(FarbaPisma,4);
-  DHF.Read(TempInt, 4);  //DHF.Read(FarbaPozadia,4);
-
-
-  // Polia
-  SetLength(DisassemblerMap,CodeSize);
-  SetLength(CodeArray,CodeSize);
-  DHF.Read(CodeArray[0],codesize);
-  DHF.Read(DisassemblerMap[0],codesize);
-  CodeStream:=TMyMemoryStream.Create;
-  CodeStream.SetMemory(Pointer(CodeArray),CodeSize);
-
-  // Nacitanie DAS suboru
-
-  Readln(DAS, temp);
-  Readln(DAS, temp);
-  Readln(DAS, temp);
-
-//  fDisassembled:=TSynEditStringList.Create;
-  fDisassembled:=TTatraDASStringList.Create;
+  fDisassembled:= TTatraDASStringList.Create;
 
   fDisassembled.Add('');
   ProgressPosition:=0;
@@ -899,43 +776,52 @@ end;
 
 
 
-
-
-
-
-
-function GetLineType(line: string):TLineType;
+function GetLineType(line: string): TLineType;
 begin
   if length(line) = 0 then begin
-    result:=ltEmpty;
+    result:= ltEmpty;
     Exit;
   end;
   case line[1] of
     ';': result:=ltComment;
-    'C': if line[3]='l' then result:=ltCallRef;
+    'C': if line[3]='l' then
+           result:=ltCallRef
+         else
+           result:=ltInstruction;
+
     'J': result:=ltJumpRef;
     'L': result:=ltLoopRef;
     'I': result:=ltImportRef;
-    'E': if line[2]='x' then result:=ltExportRef;
+    'E': if line[2]='x' then
+           result:=ltExportRef
+         else
+           result:=ltInstruction;
+
     'P': result:=ltEntryPointRef;
-    else result:=ltInstruction;
+
+    else
+      result:=ltInstruction;
   end;
 end;
 
+
+
 function GetLineAddress(line: string):cardinal;
 begin
-  result:=cardinal(StrToIntDef('$'+LeftStr(line,8),-1));
+  result:=cardinal(StrToIntDef('$' + LeftStr(line, 8), -1));
 end;
+
+
 
 function GetLineBytes(line: string): cardinal;
 var i:cardinal;
 begin
-  if line[10]='b' then
-    result:=StrToInt('$'+Copy(line,17,8))
+  if line[10] = 'b' then
+    result:= StrToInt('$' + Copy(line, 17, 8))
   else begin
     i:=11;
-    while line[i]<>' ' do inc(i,2);
-    result:=(i-11) div 2;
+    while line[i] <> ' ' do inc(i, 2);
+    result:= (i-11) div 2;
   end;
 end;
 
@@ -946,7 +832,7 @@ var tip,dk:cardinal;
     riadky:TStrings;
 begin
   riadky:=Disassembled;
-  tip:=Min(Round(Address/(MemSize/LinesCount)), Disassembled.Count);
+  tip:=Min(Round(Address/(fMemSize/LinesCount)), Disassembled.Count);
   result:=tip;
   while (GetLineAddress(riadky[result])=$FFFFFFFF) and (result>0) do begin
     dec(result);

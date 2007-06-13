@@ -91,7 +91,7 @@ type
 
   TLineType = (ltInstruction, ltComment, ltJumpRef, ltCallRef, ltLoopRef, ltImportRef, ltExportRef, ltEntryPointRef, ltEmpty);
 
-  TExecFileFormat = (ffError, ffUnknown, ffCustom, ffPE, MZ, COM, NE, LE, LX, ELF);
+  TExecFileFormat = (ffError, ffUnknown, ffCustom, ffPE, ffMZ, ffCOM, NE, LE, LX, ELF);
 
   TCpuType = (_80386,_80486,Pentium);
 
@@ -133,10 +133,9 @@ type
 
 
 const
-  NewTatraDASProjectVersion = $00040000;
   TatraDASVersion:cardinal=$00029700;
   TatraDASDate:cardinal=$23122004;
-  TatraDASProjectVersion=$00030001;
+  TatraDASProjectVersion=$00030002;
   ShortTatraDASVersion:string='2.9.7';
   TatraDASFullName:string='TatraDAS disassembler';
   TatraDASFullNameVersion:string='TatraDAS disassembler 2.9.8 alpha';
@@ -200,19 +199,43 @@ begin
   if cislo<0 then result:=0 else result:=cislo;
 end;
 
-procedure ReadStringFromStream(a:TStream; pos:cardinal; var retazec:string);
+procedure ReadStringFromStream(a: TStream; pos:cardinal; var retazec:string);
+{
 var znak:char;
     r:string[255];
 begin
+
+}
+var
+  StartPosition, StrLen: cardinal;
+  TheChar: Char;
+begin
+
+  a.Seek(Pos, 0);
+  StartPosition:= a.Position;
+  try
+    repeat
+      a.Read(TheChar, 1);
+    until TheChar = #0;
+  except
+  end;
+  StrLen:= a.Position - StartPosition - 1; // minus #0 char.
+  SetLength(retazec, StrLen);
+  a.Seek(Pos, 0);
+  a.Read(retazec[1], StrLen);
+{
+
+
   r:='';
-  a.Seek(pos,0);
-  a.Read(znak,1);
+  a.Seek(pos, 0);
+  a.Read(znak, 1);
   // befunguje to tak ako ma, position a siye su stale 0
   while (znak<>#0) and (not (a.Position > a.size)) do begin
     r:=r + znak;
     a.read(znak,1);
   end;
   retazec:=r;
+}
 end;
 {
 procedure WriteStringToStream(AStream: TStream; Position: cardinal; var AString: string);
@@ -237,7 +260,11 @@ end;
     if TheSize > 0 then
      begin
        AStream.ReadBuffer (Pointer(Result)^,TheSize);
+       {$IFDEF FPC}
+       P:=Pointer(Result) + TheSize;
+       {$ELSE}
        P:=Ptr(LongInt(Pointer(Result)) + TheSize);
+       {$ENDIF}
        p^:=0;
      end;
    end;

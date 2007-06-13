@@ -15,6 +15,7 @@ var
   CouldNotOpenFileStr: string = 'Could not open file ';
   CouldNotOpenProjectStr: string ='Could not open project !';
   CouldNotOpenReadWriteFileStr: string = 'Could not open file for write access';
+  CouldNotFindDASFileStr: string = 'Could not find project DAS file';
   ProjectFilterStr: string = 'Disassembled file ';
   SaveDisassemblyFilterStr: string = 'Disassembled file ';
   FileModifiedStr: string = 'File has been modified. Do you want to save changes ?';

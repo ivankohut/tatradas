@@ -37,10 +37,11 @@ uses
   CallsAndJumpsTableUnit in 'CallsAndJumpsTableUnit.pas',
   disassembler in 'disassembler.pas',
   ExecFileManagerUnit in 'ExecFileManagerUnit.pas',
+  RegionsUnit in 'RegionsUnit.pas',
   ExecFileUnit in 'ExecFileUnit.pas',
   SectionUnit in 'SectionUnit.pas',
 
-  UProgressThread in 'UProgressThread.pas',
+//  UProgressThread in 'UProgressThread.pas',
 
 {$IFDEF MSWINDOWS}
 

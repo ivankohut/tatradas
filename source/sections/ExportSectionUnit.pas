@@ -15,207 +15,146 @@ uses
 type
 
   TPEExportDirectoryTable = record
-    flags,timedate:cardinal;
-    major,minor:word;
-    namerva:cardinal;
-    ordinalbase:cardinal;
-    eatentriescount:cardinal;
-    namepointerscount:cardinal;
-    addresstableRVA:cardinal;
-    namepointertableRVA:cardinal;
-    ordinaltablerva:cardinal;
+    Flags, TimeDateStamp: cardinal;
+    MajorVersion, MinorVersion: word;
+    NameRVA: cardinal;
+    OrdinalBase: cardinal;
+    EATentriesCount: cardinal;
+    NamePointersCount: cardinal;
+    AddressTableRVA: cardinal;
+    NamePointerTableRVA: cardinal;
+    OrdinalTableRVA: cardinal;
   end;
 
   TExportFunction = record
-//    EntryPointVA: cardinal;   // VirtualAddress
-
-//    EntryPointRVA:cardinal;  // Relative Virtual Address
-    
-    MemOffset: cardinal;  // 
-    CodeSectionOffset: cardinal;   // Offset relative to function's code section  
-    Ordinal: cardinal;
-    
-    Section: integer; // kodova sekcie obsahujuca exp. funkciu
-    name: string;
+    MemOffset: cardinal; // function's entry point memory offset
+    CodeSectionOffset: cardinal; // Offset relative to function's code section
+    Ordinal: cardinal; // ordinal number of function
+    Section: integer; // index of (code) section containing this function
+    Name: string;
   end;
 
   TExportSection = class(TSection)
     functioncount: integer;
     functions:array of TExportFunction;
-    constructor Create(efile:TObject); overload;
+    constructor Create(EFile:TObject); overload;
+    constructor CreateFromPEFile(InputFile: TStream; FileOffset, ExportRVA, ExportDataSize, ImageBase: cardinal; aName: string; aSectionIndex: integer; aExecFile: TObject);
+    constructor CreateFromNEFile(a:TStream; ResidentTableOffset, NonResidentTableOffset, NonResidentTableSize: cardinal; efile:TObject); overload;
+
     destructor Destroy; override;
-{$IFDEF GUI_B}
-    procedure GotoFunction(index: integer); virtual; abstract;
-{$ENDIF}
-    function SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
-    function LoadFromFile(var f: TextFile; a: TStream):boolean; override;
-///    procedure Translate(ini: TMemINIFile; error:string); override;
-  end;
-
-
-  TPEExportSection = class(TExportSection)
-    constructor Create(InputFile: TStream; ExportTableRVA, ImageBase: cardinal; aName: string; aFileOffset, aFileSize, aMemOffset, aMemSize: cardinal; aSectionIndex: integer; aExecFile: TObject);
-//    constructor Create(InputFile: TStream; ExportRVA, FileOffset, FileSize, ExportTableRVA:cardinal; ImageBase: cardinal; efile:TObject); overload;
-{$IFDEF GUI_B}
-    procedure GotoFunction(index: integer); override;
-{$ENDIF}
-  end;
-
-  TNEExportSection = class(TExportSection)
-    constructor Create(a:TStream; ResidentTableOffset, NonResidentTableOffset, NonResidentTableSize: cardinal; efile:TObject); overload;
-{$IFDEF GUI_B}
-    procedure GotoFunction(index: integer); override;
-{$ENDIF}
+    function SaveToFile  (DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
+    function LoadFromFile(DHF: TStream; var DAS: TextFile):boolean; overload; override;
   end;
 
 
 
 implementation
 
-uses ExecFileUnit,CodeSectionUnit,
-//NEFileUnit,
-PEFileUnit;
+uses
+  ExecFileUnit,
+  CodeSectionUnit,
+//  NEFileUnit,
+  PEFileUnit;
 
 constructor TExportSection.Create(efile:TObject);
 begin
   fTyp:=stExport;
-  execfile:=efile;
+  fExecFile:=efile;
 end;
+
+
 
 destructor TExportSection.Destroy;
 begin
   inherited;
 end;
 
-function TExportSection.SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean;
-var i: integer;
-begin
-  DHF.Write(FunctionCount, 4);
-  for i:=0 to functioncount do begin
-    DHF.Write(functions[i], sizeof(TExportFunction)-4);
-    DHF.Write(pchar(functions[i].name)^, Length(functions[i].name)+1);
-  end;
-  result:=true;
-end;
-
-function TExportSection.LoadFromFile(var f: TextFile; a: TStream):boolean;
-var i:integer;
-begin
-  a.Read(FunctionCount,4);
-  setlength(functions,FunctionCount);
-  for i:=0 to FunctionCount-1 do begin
-    a.Read(functions[i],sizeof(TExportFunction)-4);
-    ReadStringFromStream(a,a.Position,functions[i].name);
-  end;
-{$IFDEF GUI_B}
-{
-  tab:=TExportTabSheet.Create(Ctrls.PageControl,self);
-  TabSheet:=tab;
-}
-{$ENDIF}
-  result:=true;
-end;
 
 
-//============================================================================================================
-// TPEExportSection class
-//============================================================================================================
-
-constructor TPEExportSection.Create(InputFile: TStream; ExportTableRVA, ImageBase: cardinal; aName: string; aFileOffset, aFileSize, aMemOffset, aMemSize: cardinal; aSectionIndex: integer; aExecFile: TObject);
+constructor TExportSection.CreateFromPEFile(InputFile: TStream; FileOffset, ExportRVA, ExportDataSize, ImageBase: cardinal; aName: string; aSectionIndex: integer; aExecFile: TObject);
 var
   ExportStream: TMemorystream;
-  DirTable:TPEExportDirectoryTable;
+  ExportDirTable: TPEExportDirectoryTable;
   FunctionRVA: cardinal;
-  ExportRVA: cardinal;
 
-  i:integer;
-  e:cardinal;
-  ordinal:word;
-  pefile: TPEFile;
+  i: integer;
+  PEFile: TPEFile;
+  ForwardFunction: string;
+  StreamPosition: cardinal;
+
+  OrdinalTable: array of word;
+  NamePointersTable: array of cardinal;
+  
 begin
-  inherited Create(aName, aFileOffset, aFileSize, aMemOffset, aMemSize, aSectionIndex, aExecFile);
-  fTyp:=stExport;
-  ExportRVA:=MemOffset - ImageBase;
+  inherited Create(aName, aSectionIndex, aExecFile);
+  fTyp:= stExport;
 
-  pefile:=ExecFile as TPEFile;
-  // Nacitanie export section casti vstupneho suboru (InputFile) do streamu (ExportStream) 
+  pefile:= ExecFile as TPEFile;
+
+  // Read Export section from file to temporary stream
+  ExportStream:= TMemoryStream.Create;
   InputFile.Seek(FileOffset, 0);
-  ExportStream:=TMemoryStream.Create;
-  ExportStream.CopyFrom(InputFile, FileSize);
+  ExportStream.CopyFrom(InputFile, ExportDataSize);
+  ExportStream.Position:= 0;
 
-//  a:=LoadDataFromFile(subor,objecttable.objecttables[objecttable.exportobjectnumber].size,objecttable.objecttables[objecttable.exportobjectnumber].offset);
+  ExportStream.Read(ExportDirTable, 40);
+  FunctionCount:= ExportDirTable.EATentriesCount;
+  SetLength(Functions, FunctionCount);
 
-  ExportStream.Seek(ExportTableRVA - ExportRVA, 0);
-  ExportStream.Read(DirTable, 40);
-  SetLength(functions, DirTable.eatentriescount);
-  ExportStream.Seek(DirTable.addresstableRVA-ExportRVA, 0);
-  FunctionCount:=DirTable.eatentriescount;
+  // Read names of named functions
+  // Read Ordinal table
+  SetLength(OrdinalTable, ExportDirTable.NamePointersCount);
+  ExportStream.Seek(ExportDirTable.OrdinalTableRVA - ExportRVA, 0);
+  ExportStream.Read(OrdinalTable[0], 2*ExportDirTable.NamePointersCount);
 
-  for i:=0 to integer(DirTable.eatentriescount)-1 do begin
-//    ExportStream.Read(functions[i].EntryPointRVA, 4);
+  // Read Name pointers table
+  SetLength(NamePointersTable, ExportDirTable.NamePointersCount);
+  ExportStream.Seek(ExportDirTable.NamePointerTableRVA - ExportRVA, 0);
+  ExportStream.Read(NamePointersTable[0], 4*ExportDirTable.NamePointersCount);
+
+  // Read functions' names
+  for i:= 0 to integer(ExportDirTable.NamePointersCount) - 1 do
+    ReadStringFromStream(ExportStream, NamePointersTable[i] - ExportRVA, functions[OrdinalTable[i]].name);
+    // this should be correct according to PE specification !
+    // ReadStringFromStream(ExportStream, NamePointersTable[i] - ExportRVA, functions[OrdinalTable[i] - DirTable.OrdinalBase].name);
+
+
+  // Read addresses of all function
+  // Read functions' mem. addresses from Export Address Table
+  ExportStream.Seek(ExportDirTable.AddressTableRVA - ExportRVA, 0);
+  for i:= 0 to FunctionCount - 1 do begin
     ExportStream.Read(FunctionRVA, 4);
-    functions[i].MemOffset:=FunctionRVA + ImageBase;
-    functions[i].ordinal:=i + DirTable.OrdinalBase;
-    if FunctionRVA <> 0 then begin
-      functions[i].section:=pefile.GetSectionNumberFromRVA(FunctionRVA);
-      if functions[i].section = -1 then Continue;
-      functions[i].CodeSectionOffset:= functions[i].MemOffset - pefile.Sections[functions[i].section].MemOffset;
+    functions[i].Ordinal:= i + ExportDirTable.OrdinalBase;
+
+    // FunctionRVA is really RVA of symbol in code/data(?) section
+    if (FunctionRVA < ExportRVA) or (FunctionRVA >= ExportRVA + ExportDataSize) then begin
+      functions[i].MemOffset:= FunctionRVA + ImageBase;
+      functions[i].Section:= PEFile.GetSectionNumberFromRVA(FunctionRVA);
+      if functions[i].Section = -1 then
+        functions[i].CodeSectionOffset:= 0
+      else
+        functions[i].CodeSectionOffset:= functions[i].MemOffset - (PEFile.Sections[functions[i].section] as TCodeSection).MemOffset;
     end
+
+    // FunctionRVA is ForwardRVA
     else begin
-      functions[i].section:=0;
-      functions[i].CodeSectionOffset:=0;
-    end;
-{
-    if functions[i].entrypointRVA < objecttable.objecttables[GetObjectNumberFromRVA(exportt.functions[1].entrypointRVA)].rva then
-      functions[i].name:='! INVALID RVA !';
-}
-  end;
-//  exportRVA:=objecttable.objecttables[GetObjectNumberFromRVA(functions[1].entrypointRVA)].rva;
-  for i:=0 to integer(DirTable.namepointerscount) - 1 do begin
-    ExportStream.Seek(DirTable.ordinaltablerva-ExportRVA+2*i, 0);
-    ExportStream.Read(ordinal, 2);
-    ExportStream.Seek(DirTable.namepointertableRVA-ExportRVA+4*i, 0);
-    ExportStream.Read(e,4);
-    ReadStringFromStream(ExportStream, e-ExportRVA, functions[ordinal].name);
-    if functions[i].MemOffset <> ImageBase then begin
-      functions[i].section:=pefile.Sections.GetSectionIndexFromMemOffset(functions[i].MemOffset);
-      if functions[i].section = -1 then continue;
-      functions[i].CodeSectionOffset:= functions[i].MemOffset - PEFile.Sections[functions[i].section].MemOffset;
-    end
-    else begin
-      functions[i].section:=0;
-      functions[i].CodeSectionOffset:=0;
+      StreamPosition:= ExportStream.Position;
+      ReadStringFromStream(ExportStream, FunctionRVA - ExportRVA, ForwardFunction);
+      ExportStream.Position:= StreamPosition;
+      functions[i].Name:= functions[i].Name + ' (forwarded to ' + ForwardFunction + ')';
+      functions[i].Section:= -1;
+      functions[i].CodeSectionOffset:= 0;
     end;
   end;
+
+
   ExportStream.Free;
 end;
 
 
 
-{$IFDEF GUI_B}
 
-procedure TPEExportSection.GotoFunction(index: integer);
-var i:integer;
-begin
-{
-  i:=functions[index].section;
-  if i = -1 then Exit;
-  with ExecFile as TExecutableFile do begin
-    (Sections[i] as TCodeSection).tab.GotoPosition(
-      (Sections[i] as TCodeSection).tab.GetPosition(functions[index].offset)-1,0);
-  end;
-  Ctrls.PageControl.ActivePage:=((ExecFile as TExecutableFile).Sections[i] as TCodeSection).tab;
-  Ctrls.PageControl.OnChange(nil);
-}
-end;
-{$ENDIF}
-
-//============================================================================================================
-// TNEExportTabSheet class
-//============================================================================================================
-
-
-constructor TNEExportSection.Create(a:TStream; ResidentTableOffset, NonResidentTableOffset, NonResidentTableSize: cardinal; efile:TObject);
+constructor TExportSection.CreateFromNEFile(a:TStream; ResidentTableOffset, NonResidentTableOffset, NonResidentTableSize: cardinal; efile:TObject);
 var i: integer;
     dlzka: byte;
     ModuleName1,ModuleName2: string;
@@ -296,21 +235,35 @@ begin
 {$ENDIF}
 end;
 
-{$IFDEF GUI_B}
-procedure TNEExportSection.GotoFunction(index: integer);
-var i:integer;
+
+
+function TExportSection.SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean;
+var i: integer;
 begin
-{
-  i:=functions[index].section;
-  if i = -1 then Exit;
-  with ExecFile as TExecutableFile do begin
-    (Sections[i] as TCodeSection).tab.GotoPosition(
-      (Sections[i] as TCodeSection).tab.GetPosition(functions[index].offset)-1,0);
+  inherited SaveToFile(DHF, DAS, SaveOptions);
+  DHF.Write(FunctionCount, 4);
+  for i:=0 to FunctionCount do begin
+    DHF.Write(functions[i], SizeOf(TExportFunction)-4);
+    StreamWriteAnsiString(DHF, functions[i].name);
   end;
-  Ctrls.PageControl.ActivePage:=((ExecFile as TExecutableFile).Sections[i] as TCodeSection).tab;
-  Ctrls.PageControl.OnChange(nil);
-}
+  result:= true;
 end;
-{$ENDIF}
+
+
+
+function TExportSection.LoadFromFile(DHF: TStream; var DAS: TextFile):boolean;
+var i: integer;
+begin
+  inherited LoadFromFile(DHF, DAS);
+  DHF.Read(FunctionCount, 4);
+  SetLength(functions, FunctionCount);
+  for i:=0 to FunctionCount - 1 do begin
+    DHF.Read(functions[i], SizeOf(TExportFunction) - 4);
+    functions[i].name:= StreamReadAnsiString(DHF);
+  end;
+  result:= true;
+end;
+
+
 
 end.
