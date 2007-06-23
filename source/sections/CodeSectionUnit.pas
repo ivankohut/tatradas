@@ -56,7 +56,7 @@ type
 //       fDisassembled: TSynEditStringList;
        fDisassembled: TTatraDASStringList;
 
-       EntryPointPresent: boolean;
+       fHasEntryPoint: boolean;
        fEntryPointAddress: cardinal;
 
        Decoder: TDisassembler;
@@ -89,7 +89,8 @@ type
        Exportt: TExportSection;
        Import: TImportSection;
 
-       constructor Create(InputStream: TStream; bb:boolean; aName: string; aFileOffset, aFileSize, aMemOffset, aMemSize: cardinal; aSectionIndex: integer; aExecFile: TObject); overload;
+       //constructor Create(InputStream: TStream; bb:boolean; aName: string; aFileOffset, aFileSize, aMemOffset, aMemSize: cardinal; aSectionIndex: integer; aExecFile: TObject); overload;
+       constructor Create(InputStream: TStream; bb:boolean; aFileOffset, aFileSize, aMemOffset, aMemSize: cardinal; aCodeSectionIndex: integer; aName: string; aExecFile: TObject); overload;
        constructor Create(efile: TObject); overload;
        destructor Destroy; override;
        procedure ClearDisassembled;
@@ -118,8 +119,8 @@ type
        property MemSize: cardinal read fMemSize;
        property CodeSectionIndex: integer read fCodeSectionIndex;
 
-       property EntryPointAddress: cardinal read fEntryPointAddress write SetEntryPointAddress;
-       property HasEntryPoint: boolean read EntryPointPresent;
+       property EntryPointAddress: cardinal read fEntryPointAddress write SetEntryPointAddress; // currently relative to code section
+       property HasEntryPoint: boolean read fHasEntryPoint;
      end;
 
 
@@ -141,11 +142,11 @@ uses
 //******************************************************************************
 
 
-constructor TCodeSection.Create(InputStream: TStream; bb:boolean; aName: string; aFileOffset, aFileSize, aMemOffset, aMemSize: cardinal; aSectionIndex: integer; aExecFile: TObject);
+constructor TCodeSection.Create(InputStream: TStream; bb:boolean; aFileOffset, aFileSize, aMemOffset, aMemSize: cardinal; aCodeSectionIndex: integer; aName: string; aExecFile: TObject);
 var position: cardinal;
     i: integer;
 begin
-  inherited Create(aName, aSectionIndex, aExecFile);
+  inherited Create(aName, aExecFile);
 
   fTyp:=stCode;
   fBit32:=bb;
@@ -154,6 +155,8 @@ begin
   fFileSize:= aFileSize;
   fMemOffset:= aMemOffset;
   fMemSize:= aMemSize;
+
+  fCodeSectionIndex:= aCodeSectionIndex; 
 
 
 
@@ -201,7 +204,7 @@ end;
 procedure TCodeSection.SetEntryPointAddress(Address: cardinal);
 begin
   fEntryPointAddress:= Address;
-  EntryPointPresent:= true;
+  fHasEntryPoint:= true;
 end;
 
 
@@ -362,7 +365,7 @@ begin
         Decoder.CAJ.Add(Exportt.functions[i].CodeSectionOffset);
   end;
   // Add program's entry point to Decoder.CAJ if present
-  if EntryPointPresent then
+  if fHasEntryPoint then
     Decoder.CAJ.Add(EntryPointAddress);
 
   Decoder.CAJ.Process(CodeSize);
@@ -377,7 +380,7 @@ begin
 
 
   // Vyhladanie EntryPoint-u a jeho zapisanie do pola Decoder.Disassembled
-  if EntryPointPresent then begin
+  if fHasEntryPoint then begin
     with Decoder.Disassembled[EntryPointAddress] do begin
       Inc(ReferCount, 3);
       SetLength(refer, ReferCount);
@@ -473,7 +476,7 @@ begin
     }
 
     // Create intruction line of Disassembled from particles
-    Line:= (IntToHex(Decoder.Disassembled[i].Address, 8) + ' ' + Decoder.Disassembled[i].parsed);
+    Line:= (IntToHex(Decoder.Disassembled[i].Address + fMemOffset, 8) + ' ' + Decoder.Disassembled[i].parsed);
     SpaceCount:= Nezaporne(c_MaxSpaceCount - Length(Decoder.Disassembled[i].parsed));
     for j:=1 to SpaceCount do
       Line:=Line + ' ';
@@ -540,7 +543,7 @@ begin
     DHF.Write(fMemSize, 4);
     DHF.Write(fCodeSize, 4);
 
-    DHF.Write(EntryPointPresent, 1);
+    DHF.Write(fHasEntryPoint, 1);
 //    DHF.Write(EntryPointPosition,4);
     DHF.Write(EntryPointAddress, 4);
 // Dynamicke data
@@ -729,7 +732,7 @@ begin
   DHF.Read(fMemSize, 4);
   DHF.Read(fCodeSize, 4);
 
-  DHF.Read(EntryPointPresent, 1);
+  DHF.Read(fHasEntryPoint, 1);
 //  DHF.Read(EntryPointPosition,4);
   DHF.Read(fEntryPointAddress,4);
   // Dynamicke data

@@ -24,7 +24,7 @@ type
     fSectionIndex: integer;  // index in ExecFile's 'Sections' array
 
    public
-    constructor Create(aName: string; aSectionIndex: integer; aExecFile: TObject); overload; virtual;
+    constructor Create(aName: string; aExecFile: TObject); overload; virtual;
 
     function SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; virtual;
     function LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; virtual;
@@ -69,10 +69,9 @@ uses CodeSectionUnit;
 
 { TSection }
 
-constructor TSection.Create(aName: string; aSectionIndex: integer; aExecFile: TObject);
+constructor TSection.Create(aName: string; aExecFile: TObject);
 begin
   fName:=aName;
-  fSectionIndex:=aSectionIndex;
   fExecFile:=aExecFile;
 end;
 

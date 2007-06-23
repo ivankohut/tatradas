@@ -140,7 +140,6 @@ var
   i: integer;
   PEHeaderOffset: cardinal;
   CodeSection: TCodeSection;
-  CodeSectionsCount: integer;
   ObjectIndex: integer;
 begin
   inherited;
@@ -172,14 +171,13 @@ begin
   end;
 
   // Create code sections
-  CodeSectionsCount:=0;
   for i:=0 to header.objectcount-1 do begin
     if IsObjectExecutable(i) then begin
-      Inc(CodeSectionsCount);
-      CodeSection:= TCodeSection.Create(InputFile, true, ObjectTable[i].name, ObjectTable[i].offset, ObjectTable[i].size, ObjectTable[i].rva + header.ImageBase, ObjectTable[i].virtualsize, i, self);
+      CodeSection:= TCodeSection.Create(InputFile, true, ObjectTable[i].offset, ObjectTable[i].size, ObjectTable[i].rva + header.ImageBase, ObjectTable[i].virtualsize, fCodeSectionsCount, ObjectTable[i].Name, self);
+      Inc(fCodeSectionsCount);
 // treba pridat do constructora
 //      CodeSection.CodeSectionIndex:=CodeSectionsCount-1;
-      if CodeSection.InSection(header.entrypoint + header.ImageBase) then
+      if CodeSection.InSection(Header.EntryPoint + Header.ImageBase) then
         CodeSection.EntryPointAddress:=header.EntryPoint + header.ImageBase - (ObjectTable[i].rva + header.ImageBase);
 
       Sections.Add(CodeSection);
@@ -187,10 +185,9 @@ begin
   end;
 
   // Create Import section
-  if interrva.ImportTableRVA <> 0 then begin
-    ImportSectionIndex:= Sections.Count;
+  if InterRVA.ImportTableRVA <> 0 then begin
     i:=GetObjectNumberFromRVA(interrva.ImportTableRVA);
-    ImportSection:=TImportSection.CreateFromPEFile(InputFile, interrva.ImportTableRVA, header.ImageBase, ObjectTable[i].name, ObjectTable[i].offset, ObjectTable[i].size, ObjectTable[i].rva + header.ImageBase, ObjectTable[i].virtualsize, self);
+    fImportSection:= TImportSection.CreateFromPEFile(InputFile, InterRVA.ImportTableRVA, header.ImageBase, ObjectTable[i].offset, ObjectTable[i].size, ObjectTable[i].rva + header.ImageBase, ObjectTable[i].virtualsize, ObjectTable[i].name, self);
 
     if Assigned(OnExecFileCreateSection) then
       OnExecFileCreateSection(ImportSection);
@@ -203,10 +200,9 @@ begin
   end;
 
   // Create Export section
-  if interrva.ExportTableRVA <> 0 then begin                // Spracovanie Exportu
-    ExportSectionIndex:= Sections.Count;;
-    i:=GetObjectNumberFromRVA(interrva.ExportTableRVA);
-    ExportSection:=TExportSection.CreateFromPEFile(InputFile, ObjectTable[i].Offset + (InterRVA.ExportTableRVA - ObjectTable[i].RVA), InterRVA.ExportTableRVA, interrva.ExportDataSize, header.ImageBase, ObjectTable[i].name, i, self);
+  if InterRVA.ExportTableRVA <> 0 then begin                // Spracovanie Exportu
+    i:=GetObjectNumberFromRVA(InterRVA.ExportTableRVA);
+    fExportSection:= TExportSection.CreateFromPEFile(InputFile, ObjectTable[i].Offset + (InterRVA.ExportTableRVA - ObjectTable[i].RVA), InterRVA.ExportTableRVA, InterRVA.ExportDataSize, header.ImageBase, ObjectTable[i].name, self);
 
     if Assigned(OnExecFileCreateSection) then
       OnExecFileCreateSection(ExportSection);

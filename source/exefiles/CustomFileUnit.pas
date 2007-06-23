@@ -55,7 +55,7 @@ begin
   fFormatDescription:= 'Unknown or not executable file format!';
 
   a.Seek(0, 0);
-  CodeSection:= TCodeSection.Create(a, Parameters.bit32, '0', Parameters.StartOffset, Parameters.Size, Parameters.StartOffset, Parameters.Size, 0, self);
+  CodeSection:= TCodeSection.Create(a, Parameters.bit32, Parameters.StartOffset, Parameters.Size, Parameters.StartOffset, Parameters.Size, 0, 'N/A', self);
   CodeSection.EntryPointAddress:= Parameters.Entrypoint - Parameters.StartOffset;
   Sections.Add(CodeSection);
 end;

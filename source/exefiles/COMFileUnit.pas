@@ -36,7 +36,7 @@ begin
   fExecFormat:= ffCOM;
   fFormatDescription:='COM (16-bit)';
 
-  CodeSection:= TCodeSection.Create(InputFile, false, '', 0, InputFile.Size, 0, InputFile.Size, 0, self);
+  CodeSection:= TCodeSection.Create(InputFile, false, 0, InputFile.Size, $100, InputFile.Size, 0, 'N/A', self);
   CodeSection.EntryPointAddress:= 0;
   Sections.Add(CodeSection);
   EntryPoint:=0;

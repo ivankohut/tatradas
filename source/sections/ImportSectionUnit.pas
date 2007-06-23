@@ -47,11 +47,10 @@ type
     TotalFunctionCount: integer;
     Moduls: array of TImportModul;
     constructor Create(efile:TObject); overload;
-//    constructor Create(a:TStream; RVA,Offset,size,ImTableRVA: cardinal; efile:TObject); overload;
-//    constructor CreateFromPEFile(a:TStream; RVA,Offset,size,ImTableRVA: cardinal; efile:TObject); overload;
-    constructor CreateFromPEFile(InputFile: TStream; ImTableRVA: cardinal; ImageBase: cardinal; aName: string; aFileOffset, aFileSize, aMemOffset, aMemSize: cardinal; aExecFile: TObject); virtual;
+    constructor CreateFromPEFile(InputFile: TStream; ImTableRVA, ImageBase: cardinal; aFileOffset, aFileSize, aMemOffset, aMemSize: cardinal; aName: string; aExecFile: TObject);
     constructor CreateFromNEFile(a:TStream; ModuleTableOffset, ImportTableOffset, ModuleCount, ImportTableSize: cardinal; efile:TObject);
 //    constructor CreateFromELFFile(a:TStream; Offset,Size,StrTabOffset,StrTabSize: cardinal; efile:TObject);
+    constructor CreateFromELFFile(InputFile: TStream; Offset, Size, StringTableOffset, StringTableSize: cardinal; aName: string; aExecFile: TObject);
     destructor Destroy; override;
 
     function SaveToFile  (DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
@@ -70,6 +69,12 @@ type
     st_shndx: word;
   end;
 
+const
+
+//  ELF32_ST_TYPE:
+  STT_FUNC = 2;
+
+{
   TSymbol = record
     name: string;
   end;
@@ -80,7 +85,7 @@ type
     SymbolTable: array of TSymbolTableEntry;
     constructor Create(a:TStream; Offset,Size,StrTabOffset,StrTabSize: cardinal; efile:TObject); overload;
   end;
-
+}
 implementation
 
 uses
@@ -141,8 +146,7 @@ end;
 
 
 
-constructor TImportSection.CreateFromPEFile(InputFile: TStream; ImTableRVA, ImageBase: cardinal; aName: string; aFileOffset, aFileSize, aMemOffset, aMemSize: cardinal; aExecFile: TObject);
-//constructor TImportSection.CreateFromPEFile(a:TStream; RVA,Offset,size,ImTableRVA: cardinal; efile:TObject);
+constructor TImportSection.CreateFromPEFile(InputFile: TStream; ImTableRVA, ImageBase: cardinal; aFileOffset, aFileSize, aMemOffset, aMemSize: cardinal; aName: string; aExecFile: TObject);
 var
   InputStream: TMemoryStream;
   RVA: cardinal;
@@ -156,7 +160,7 @@ var
   NameRVA_or_Ordinal: cardinal;
 
 begin
-  inherited Create(aName, MaxInt, aExecFile);
+  inherited Create(aName, aExecFile);
   fTyp:= stImport;
 
   TotalFunctionCount:= 0;
@@ -216,7 +220,7 @@ begin
     Inc(ModulIndex);
     InputStream.Seek(ImTableRVA - RVA + ModulIndex*SizeOf(DirEntry), 0);
     InputStream.Read(DirEntry, 20);
-  end;                                                                    
+  end;
 
   ModulCount:= ModulIndex;
   InputStream.Free;
@@ -224,28 +228,39 @@ end;
 
 
 
-constructor TELFImportSection.Create(a:TStream; Offset,Size,StrTabOffset,StrTabSize: cardinal; efile:TObject);
+constructor TImportSection.CreateFromELFFile(InputFile: TStream; Offset, Size, StringTableOffset, StringTableSize: cardinal; aName: string; aExecFile: TObject);
 var
-    i:integer;           // loop variable
-begin
-  fTyp:=stImport;
-  fExecFile:=efile;
+  SymbolCount: cardinal;
+  SymbolTable: array of TSymbolTableEntry;
 
-  SymbolCount:=Size div SizeOf(TSymbolTableEntry);
-  SetLength(SymbolTable,SymbolCount);
-  a.Position:=Offset;
-  a.Read(SymbolTable[0],SymbolCount * SizeOf(TSymbolTableEntry));
-  SetLength(Symbols,SymbolCount);
-  SetLength(moduls,1);
-  modulcount:=1;
-  moduls[0].name:='modul1';
-  SetLength(moduls[0].functions,SymbolCount);
-  moduls[0].functioncount:=SymbolCount;
-  for i:=0 to SymbolCount-1 do begin
-    ReadStringFromStream(a,SymbolTable[i].st_name + StrTabOffset,Symbols[i].name);
-    moduls[0].functions[i].name:=Symbols[i].name;
-    moduls[0].functions[i].addressRVA:=SymbolTable[i].st_value;
-  end;
+  SymbolIndex, FunctionIndex: integer;
+begin
+  inherited Create(aName, aExecFile);
+  fTyp:= stImport;
+  fExecFile:= aExecFile;
+
+  // Read Symbol table
+  SymbolCount:= Size div SizeOf(TSymbolTableEntry);
+  SetLength(SymbolTable, SymbolCount);
+  InputFile.Position:= Offset;
+  InputFile.Read(SymbolTable[0], SymbolCount * SizeOf(TSymbolTableEntry));
+
+  // Set up first (and last :) ) modul
+  SetLength(moduls, 1);
+  ModulCount:= 1;
+  Moduls[0].Name:= 'modul1';
+  SetLength(Moduls[0].Functions, SymbolCount);
+
+  // Extract functions from symbols
+  FunctionIndex:= 0;
+  for SymbolIndex:= 0 to SymbolCount - 1 do
+    if ((SymbolTable[SymbolIndex].st_info and $0F) = STT_FUNC) then begin
+      ReadStringFromStream(InputFile, SymbolTable[SymbolIndex].st_name + StringTableOffset, Moduls[0].Functions[FunctionIndex].Name);
+      Moduls[0].Functions[FunctionIndex].AddressRVA:= SymbolTable[SymbolIndex].st_value;
+      Inc(FunctionIndex);
+    end;
+  Moduls[0].FunctionCount:= FunctionIndex;
+  SetLength(Moduls[0].Functions, FunctionIndex);
 end;
 
 

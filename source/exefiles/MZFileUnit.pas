@@ -9,31 +9,22 @@ uses
   SysUtils,
 
   procmat,
-  StringRes,
   ExecFileUnit,
-  SectionUnit,
   CodeSectionUnit;
 
 type
-  TRelocEntry = record
-    offset,segment: word;
-  end;
 
-  TRelocationSection = class(TSection)
-    offset: cardinal;
-    count: cardinal;
-    relocs: array of TRelocEntry;
-    constructor Create(a: TStream; offset: cardinal; count: cardinal);
-    function LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; override;
-    function SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
+  TRelocationEntry = record
+    Offset: word;
+    Segment: word;
   end;
 
   TMZFile = class(TExecutableFile)
   private
-    RelocationSectionNumber: integer;
+    fHeader: TMZHeader;
+    fRelocations: array of TRelocationEntry;
   public
-    Header: TMZHeader;
-    constructor Create; overload; override; 
+    constructor Create; overload; override;
     constructor Create(InputFile: TStream; aFileName: TFileName); overload; override;
     destructor Destroy(); override;
     function SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
@@ -63,51 +54,52 @@ end;
 
 constructor TMZFile.Create(InputFile: TStream; aFileName: TFileName);
 var
-//  rs: TRelocationSection;
   CodeSection: TCodeSection;
-  CodeSize:cardinal;
+  CodeSize: cardinal;
 begin
   inherited;
   fExecFormat:= ffMZ;
   fFormatDescription:= 'MZ - DOS executable (16-bit)';
 
   InputFile.Seek(0, 0);
-  InputFile.Read(header, 40);
-  CodeSize:= (header.pagecount-1)*512 + HEADER.pageremainder - header.headersize*16;
+  InputFile.Read(fHeader, 40);
+  CodeSize:= (fHeader.PageCount-1)*512 + fHeader.PageRemainder - fHeader.HeaderSize*16;
 
   // Code section
   if CodeSize > 0 then begin
-    CodeSection:= TCodeSection.Create(InputFile, false, 'N/A', header.headersize*16, CodeSize, header.headersize*16, CodeSize, 0, self);
-    CodeSection.EntryPointAddress:= {CodeSection.LogOffset}word(header.reloCS*16 + header.EXEIP);
+    CodeSection:= TCodeSection.Create(InputFile, false, fHeader.HeaderSize*16, CodeSize, fHeader.HeaderSize*16, CodeSize, 0, 'N/A', self);
+    CodeSection.EntryPointAddress:= word(fHeader.ReloCS*16 + fHeader.EXEIP);
     Sections.Add(CodeSection);
   end;
-{
-  // Relocation sections
-  if header.RelocCount > 0 then begin
-    RelocationSectionNumber:=length(Sections);
-    setlength(Sections,RelocationSectionNumber+1);
-    rs:=TRelocationSection.Create(a,header.RelocTableOffset,header.RelocCount);
-    Sections[RelocationSectionNumber]:=rs;
+
+  // Read relocations
+  if fHeader.RelocCount > 0 then begin
+    SetLength(fRelocations, fHeader.RelocCount);
+    InputFile.Seek(fHeader.RelocTableOffset, 0);
+    InputFile.Read(fRelocations[0], fHeader.RelocCount * SizeOf(TRelocationEntry));
   end;
-}
+
 end;
 
 
 
 function TMZFile.SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean;
 begin
-  if soProject in SaveOptions then
-    DHF.Write(header, SizeOf(Header));
-  result:=inherited SaveToFile(DHF, DAS, SaveOptions);
+  result:= inherited SaveToFile(DHF, DAS, SaveOptions);
+  if soProject in SaveOptions then begin
+    DHF.Write(fHeader, SizeOf(TMZHeader));
+    DHF.Write(fRelocations[0], fHeader.RelocCount * SizeOf(TRelocationEntry));
+  end;
 end;
 
 
 
 function TMZFile.LoadFromFile(DHF: TStream; var DAS: TextFile): boolean;
-
 begin
-  DHF.Read(Header, SizeOf(Header));
-  result:=inherited LoadFromFile(DHF, DAS);
+  result:= inherited LoadFromFile(DHF, DAS);
+  DHF.Read(fHeader, SizeOf(TMZHeader));
+  SetLength(fRelocations, fHeader.RelocCount);
+  DHF.Read(fRelocations[0], fHeader.RelocCount * SizeOf(TRelocationEntry));
 end;
 
 
@@ -135,32 +127,5 @@ begin
 end;
 }
 
-//******************************************************************************
-// TRelocationSection class
-//******************************************************************************
-
-
-constructor TRelocationSection.Create(a: TStream; offset: cardinal; count: cardinal);
-begin
-  self.count:=count;
-  setlength(Relocs,count);
-  self.offset:=offset;
-  a.Seek(Offset,0);
-  a.Read(Relocs[0],Count * 4);
-end;
-
-
-
-function TRelocationSection.SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean;
-begin
-  ;
-end;
-
-
-
-function TRelocationSection.LoadFromFile(DHF: TStream; var DAS: TextFile):boolean;
-begin
-   ;
-end;
 
 end.

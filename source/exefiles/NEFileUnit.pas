@@ -188,7 +188,7 @@ begin
       stCode: begin
     // vecny problem: velkost segmentu v subore a pamati, obcas je pamat vacsia, ale aj kod v nej, ale subor je mensi, t.j. treba asi doplnit nulami
     //      neviem, ci subor hoci je mensi, predsa obsahuje chybajuce data (niekedy ano)
-        cs:=TCodeSection.Create(a, false, 'N/A - code', SegmentTable[i].offset*16, SegmentTable[i].Size, SegmentTable[i].offset*16, SegmentTable[i].AllocationSize, i, self);
+        cs:=TCodeSection.Create(a, false, SegmentTable[i].offset*16, SegmentTable[i].Size, SegmentTable[i].offset*16, SegmentTable[i].AllocationSize, i, 'N/A - code', self);
         if i=header._CS-1 then
           cs.EntryPointAddress:=header._IP;
     ////      cs.CodeSectionNumber:=High(Sections);
@@ -208,7 +208,7 @@ begin
         a.Position:=NEOffset + header.ResidentNameTableRO;
         a.Read(temp8,1);
         if temp8 <> 0 then begin
-          ExportSection:=TExportSection.CreateFromNEFile(a,NEOffset + header.ResidentNameTableRO, header.NonResidentNameTableOffset, header.NonResidentNameTableSize, self);
+          fExportSection:= TExportSection.CreateFromNEFile(a,NEOffset + header.ResidentNameTableRO, header.NonResidentNameTableOffset, header.NonResidentNameTableSize, self);
      //     fSections[i]:=ExportSection;
         end;
       end;

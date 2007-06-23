@@ -91,7 +91,7 @@ type
 
   TLineType = (ltInstruction, ltComment, ltJumpRef, ltCallRef, ltLoopRef, ltImportRef, ltExportRef, ltEntryPointRef, ltEmpty);
 
-  TExecFileFormat = (ffError, ffUnknown, ffCustom, ffPE, ffMZ, ffCOM, NE, LE, LX, ELF);
+  TExecFileFormat = (ffError, ffUnknown, ffCustom, ffPE, ffMZ, ffCOM, NE, LE, LX, ffELF);
 
   TCpuType = (_80386,_80486,Pentium);
 
@@ -220,9 +220,12 @@ begin
   except
   end;
   StrLen:= a.Position - StartPosition - 1; // minus #0 char.
-  SetLength(retazec, StrLen);
-  a.Seek(Pos, 0);
-  a.Read(retazec[1], StrLen);
+  if StrLen > 0 then begin
+    SetLength(retazec, StrLen);
+    a.Seek(Pos, 0);
+    a.Read(retazec[1], StrLen);
+  end;
+
 {
 
 

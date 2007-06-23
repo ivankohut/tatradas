@@ -84,7 +84,7 @@ begin
     ffCOM: result:=TCOMFile.Create(InputFile, aFileName);
     ffMZ:  result:=TMZFile.Create(InputFile, aFileName);
     NE:  result:=TNEFile.Create(InputFile, aFileName);
-    // ELF: result:=TELFFile.Create(InputFile, aFileName);
+    ffELF: result:=TELFFile.Create(InputFile, aFileName);
     // LE: result:=TLEFile.Create(InputFile, aFileName)
     // LX: result:=TLXFile.Create(InputFile, aFileName)
 
@@ -134,10 +134,10 @@ begin
           FileStream.Seek(header.reserved[9],0);
           FileStream.Read(header.Sign,2);
           case header.sign of
-            c_PESign: result:=ffPE;                     // Portable Executable 32-bit
-            c_NESign: result:=NE;                     // New Executable 16-bit
-            c_LESign: result:=ffUnknown; //LE;                     // Linear Executable
-            c_LXSign: result:=ffUnknown; //LX;                     // Linear Executable 32 - bit
+            c_PESign: result:= ffPE;                     // Portable Executable 32-bit
+            c_NESign: result:= NE;                     // New Executable 16-bit
+            c_LESign: result:= ffUnknown; //LE;                     // Linear Executable
+            c_LXSign: result:= ffUnknown; //LX;                     // Linear Executable 32 - bit
             else
               result:=ffUnknown;
           end;
@@ -150,9 +150,9 @@ begin
       // ELF class of executable file formats
       c_ELFLowID:
         if HighID = c_ELFHighID then
-          result:=ELF
+          result:= ffELF
         else
-          result:=ffUnknown;
+          result:= ffUnknown;
 
       // other executable file formats
       else

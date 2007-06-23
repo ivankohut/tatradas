@@ -17,7 +17,7 @@ implementation
 
 constructor TDummySection.Create(aName: string; aFileOffset, aFileSize, aMemOffset, aMemSize: cardinal; aSectionIndex: integer; aExecFile: TObject);
 begin
-  inherited Create(aName, aSectionIndex, aExecFile);
+  inherited Create(aName, aExecFile);
   fTyp:=stDummy;
 end;
 

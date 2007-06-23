@@ -38,7 +38,7 @@ type
     functioncount: integer;
     functions:array of TExportFunction;
     constructor Create(EFile:TObject); overload;
-    constructor CreateFromPEFile(InputFile: TStream; FileOffset, ExportRVA, ExportDataSize, ImageBase: cardinal; aName: string; aSectionIndex: integer; aExecFile: TObject);
+    constructor CreateFromPEFile(InputFile: TStream; FileOffset, ExportRVA, ExportDataSize, ImageBase: cardinal; aName: string; aExecFile: TObject);
     constructor CreateFromNEFile(a:TStream; ResidentTableOffset, NonResidentTableOffset, NonResidentTableSize: cardinal; efile:TObject); overload;
 
     destructor Destroy; override;
@@ -71,7 +71,7 @@ end;
 
 
 
-constructor TExportSection.CreateFromPEFile(InputFile: TStream; FileOffset, ExportRVA, ExportDataSize, ImageBase: cardinal; aName: string; aSectionIndex: integer; aExecFile: TObject);
+constructor TExportSection.CreateFromPEFile(InputFile: TStream; FileOffset, ExportRVA, ExportDataSize, ImageBase: cardinal; aName: string; aExecFile: TObject);
 var
   ExportStream: TMemorystream;
   ExportDirTable: TPEExportDirectoryTable;
@@ -86,7 +86,7 @@ var
   NamePointersTable: array of cardinal;
   
 begin
-  inherited Create(aName, aSectionIndex, aExecFile);
+  inherited Create(aName, aExecFile);
   fTyp:= stExport;
 
   pefile:= ExecFile as TPEFile;

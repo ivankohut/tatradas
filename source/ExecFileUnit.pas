@@ -1,5 +1,6 @@
 { TODO:
-  vymysliet vhodny sposob prace s konstatnymi udajmi v ExecFile-och - format a descrition
+  - vymysliet vhodny sposob prace s konstatnymi udajmi v ExecFile-och - format a description
+  - zracionalizovat premenne ImportSection, ExportSection, ImportSectionIndex a ExportSectionIndex
 }
 
 unit ExecFileUnit;
@@ -30,20 +31,20 @@ var
 
 type
   TMZHeader = record
-    Sign:word;
-    PageRemainder:word;      // page = 512B
-    PageCount:word;
-    RelocCount:word;
-    HeaderSize:word;
-    MinMem, MaxMem:word;
-    reloSS:word;
-    EXESP:word;
-    ChkSum:word;
-    EXEIP:word;
-    reloCS:word;
-    RelocTableOffset:word;
-    Overlay:word;
-    reserved:array [1..9] of cardinal;
+    Sign: word;               // "MZ"
+    PageRemainder: word;      // FileSize mod PageSize <=> FileSize mod 512
+    PageCount: word;          // Ceil( FileSize/PageSize )
+    RelocCount: word;         // Number of Relocations
+    HeaderSize: word;
+    MinMem, MaxMem: word;
+    reloSS: word;
+    EXESP: word;
+    ChkSum: word;
+    EXEIP: word;
+    reloCS: word;
+    RelocTableOffset: word;
+    Overlay: word;
+    reserved: array [1..9] of cardinal;
   end;
 
 
@@ -59,19 +60,19 @@ type
     fSections: TSections;
     fFormatDescription: string;
     fExecFormat: TExecFileFormat;
+    fCodeSectionsCount: integer;
+
+    fImportSection: TImportSection;
+    fExportSection: TExportSection;
 
    public
     EntryPoint: cardinal;                                    // adresa Entry Pointu z hlavicky suboru
     EntryPointOffset: cardinal;                              // adresa Entry Pointu v subore
     EntryPointCodeAddress: cardinal;                         // adresa Entry Pointu v kode
 
-    ImportSectionIndex: integer;
-    ExportSectionIndex: integer;
-    ImportSection: TImportSection;
-    ExportSection: TExportSection;
 
     constructor Create; overload; virtual;
-    constructor Create(InputFile: TStream; aFileName: TFileName); overload; virtual;       // otvaranie suboru
+    constructor Create(InputFile: TStream; aFileName: TFileName); overload; virtual;      
     destructor Destroy; override;
 
     function Disassemble():boolean; virtual;
@@ -82,11 +83,14 @@ type
     property FileName: TFileName read fFileName;
     property FullPath: TFileName read fFullPath;
     property FileSize: cardinal read fFileSize;
+
     property FormatDescription: string read fFormatDescription;
     property ExeFormat: TExecFileFormat read fExecFormat;
-
     property Regions: TRegions read fRegions;
     property Sections: TSections read fSections;
+
+    property ImportSection: TImportSection read fImportSection;
+    property ExportSection: TExportSection read fExportSection;
     property IsDisassembled: boolean read fIsDisassembled;
   end;
 
@@ -139,16 +143,15 @@ begin
     for i:=0 to Sections.Count-1 do
       if Sections[i].Typ = stCode then
         (Sections[i] as TCodeSection).ClearDisassembled;
-
   fIsDisassembled:=false;
-//  Status:=tsOpened;
+
   // Nastavime parametre a disassemblujme
   for i:=0 to Sections.Count-1 do
     if Sections[i].Typ = stCode then
       with Sections[i] as TCodeSection do begin
-        Options.address:=EntryPointAddress;
-        Options.size:=CodeSize;
-        Options.bit32:=Bit32;
+        Options.Address:= EntryPointAddress;
+        Options.Size:= CodeSize;
+        Options.Bit32:= Bit32;
         if not DisassembleAll(Options) then begin
           for j:=0 to i do
             if Sections[j] is TCodeSection then (Sections[j] as TCodeSection).ClearDisassembled;
@@ -158,7 +161,6 @@ begin
           OnExecFileCreateSection(Sections[i]);
       end;
   fIsDisassembled:=true;
-//  Status:=tsDisassembled;
   result:=true;
 end;
 
@@ -225,11 +227,11 @@ begin
       end;
       stImport: begin
         Section:=TImportSection.Create(self);
-        ImportSection:=Section as TImportSection;
+        fImportSection:=Section as TImportSection;
       end;
       stExport: begin
         Section:=TExportSection.Create(self);
-        ExportSection:=Sections[i] as TExportSection;
+        fExportSection:=Sections[i] as TExportSection;
       end;
       stResource: begin
         Section:=TResourceSection.Create(self);

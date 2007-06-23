@@ -98,21 +98,28 @@ const
      STT_FILE = 4;
 
 
+     EI_CLASS = 4;
+     EI_DATA = 5;
+
+     ELFCLASS32 = 1;
+
+     ELFDATA2LSB = 1;
+
 type
   TELFHeader = record
-    e_ident: array [0..15] of char;
+    e_ident: array [0..15] of char; // ELF Identification
     e_type: word;
     e_machine: word;
     e_version: cardinal;
     e_entry: cardinal;
     e_phoff: cardinal;
-    e_shoff: cardinal;
+    e_shoff: cardinal; // File offset of Section Header Table
     e_flags: cardinal;
     e_ehsize: word;
     e_phentsize: word;
     e_phnum: word;
     e_shentsize: word;
-    e_shnum: word;
+    e_shnum: word; // number of sections (section headers)
     e_shstrndx: word;
   end;
 
@@ -156,78 +163,83 @@ type
   end;
 
   TELFFile = class(TExecutableFile)
-    header: TELFHeader;
+  private
+    Header: TELFHeader;
     SectionHeaders: array of TSectionHeader;
     ProgramHeaders: array of TProgramHeader;
-    constructor Create(a: TStream; aFileName: TFileName); overload; virtual;       // otvaranie suboru
+  public
+    constructor Create(InputFile: TStream; aFileName: TFileName); overload; override;
 
-//    function GetSectionFromOffset(Offset: cardinal): string; override;
-//    function GetSectionNumberFromOffset(Offset: cardinal): integer; override;
-//    function GetSectionOffsetFromOffset(Offset: cardinal): cardinal; override;
     function SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
-//    function LoadFromFile(var f:TextFile; a:TMemoryStream):boolean; override;
     function LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; override;
-
-//    destructor Destroy; virtual;
-
   end;
+
 
 implementation
 
-constructor TELFFile.Create(a: TStream; aFileName: TFileName);       // otvaranie suboru
-var i,StrTabIndex:integer;
-    section: TCodeSection;
-    imsection: TSection;
+
+constructor TELFFile.Create(InputFile: TStream; aFileName: TFileName);
+var
+  i: integer;
+  CodeSection: TCodeSection;
 begin
   inherited;
-  a.Position:=0;
-  a.Read(header,SizeOf(TELFHeader));
+  InputFile.Position:= 0;
+  InputFile.Read(Header, SizeOf(TELFHeader));
 
-  SetLength(ProgramHeaders,header.e_phnum);
-  a.Position:=header.e_phoff;
-  a.Read(ProgramHeaders[0],SizeOf(TProgramHeader)*header.e_phnum);
+  // check if file is 32
+  if Ord(Header.e_ident[EI_CLASS]) <> ELFCLASS32 then
+    raise Exception.Create('Format error');
+
+  // check if file is Little Endian
+  if Ord(Header.e_ident[EI_DATA]) <> ELFDATA2LSB then
+    raise Exception.Create('Format error');
+
+
+  // Read Program header table
+  SetLength(ProgramHeaders, Header.e_phnum);
+  InputFile.Position:= header.e_phoff;
+  InputFile.Read(ProgramHeaders[0], SizeOf(TProgramHeader)*header.e_phnum);
 {  for i:=0 to header.e_phnum-1 do
     if ProgramHeaders[i].p_type = PT_INTERP then
       showmessage(inttostr(ProgramHeaders[i].p_filesz));
 }
-  SetLength(SectionHeaders,header.e_shnum);
-  a.Position:=header.e_shoff;
-  for i:=0 to header.e_shnum do a.Read(SectionHeaders[i],SizeOf(TSectionHeaderTableEntry));
 
-  for i:=0 to header.e_shnum-1 do begin
-// najdeme kodove sekcie
+  // Read Section header table
+  SetLength(SectionHeaders, header.e_shnum);
+  InputFile.Position:= header.e_shoff;
+  for i:= 0 to header.e_shnum - 1 do
+    InputFile.Read(SectionHeaders[i], SizeOf(TSectionHeaderTableEntry));
+
+  for i:= 0 to header.e_shnum - 1 do begin
+    ReadStringFromStream(InputFile, SectionHeaders[header.e_shstrndx].sh_offset + SectionHeaders[i].sh_name, SectionHeaders[i].name);
+
+    // Create code sections
     if (SectionHeaders[i].sh_type = SHT_PROGBITS) then
       if SectionHeaders[i].sh_flags = (SHF_ALLOC or SHF_EXECINSTR) then begin
-//        Inc(CodeSectionsCount);
-////        SetLength(fSections,SectionCou+1);
-////        section:= TCodeSection.Create(a,SectionHeaders[i].sh_offset,SectionHeaders[i].sh_size,SectionHeaders[i].sh_addr,SectionHeaders[i].sh_size,true,self);
-////        section.SectionNumber:=CodeSectionsCount-1;
-        if section.InSection(header.e_entry) then begin
-          section.EntryPointAddress:=header.e_entry-Section.MemOffset;
+        CodeSection:= TCodeSection.Create(InputFile, true, SectionHeaders[i].sh_offset, SectionHeaders[i].sh_size, SectionHeaders[i].sh_addr, SectionHeaders[i].sh_size, fCodeSectionsCount, SectionHeaders[i].Name, self);
+        Inc(fCodeSectionsCount);
+        if CodeSection.InSection(Header.e_entry) then begin
+          CodeSection.EntryPointAddress:= Header.e_entry - CodeSection.MemOffset;
         end;
-//        fSections[i]:=section;
+        Sections.Add(CodeSection);
       end;
 
-// najdeme sekciu dynamicky linkovanych symbolov
-{
-    if (SectionHeaders[i].sh_type = SHT_DYNSYM) then
-      if SectionHeaders[i].sh_flags = SHF_ALLOC then begin
-        SetLength(Sections,Length(Sections)+1);
-        Sections[High(Sections)]:= TELFImportSection.Create(a,SectionHeaders[i].sh_offset,SectionHeaders[i].sh_size,SectionHeaders[SectionHeaders[i].sh_link].sh_offset,SectionHeaders[SectionHeaders[i].sh_link].sh_size,self,ctrls);
-      end;
-}      
-  end;
-// najdeme mena sekcii
-  for i:=0 to header.e_shnum-1 do begin
-//    SectionHeaders[e_shstrndx].sh_offset
-    ReadStringFromStream(a, SectionHeaders[header.e_shstrndx].sh_offset + SectionHeaders[i].sh_name,SectionHeaders[i].name);
+    // Create Import section
+    if (SectionHeaders[i].sh_type = SHT_DYNSYM) and (SectionHeaders[i].sh_flags = SHF_ALLOC) then begin
+      fImportSection:= TImportSection.CreateFromELFFile(InputFile, SectionHeaders[i].sh_offset, SectionHeaders[i].sh_size, SectionHeaders[SectionHeaders[i].sh_link].sh_offset, SectionHeaders[SectionHeaders[i].sh_link].sh_size, SectionHeaders[i].name, self);
+      Sections.Add(ImportSection);
+      if Assigned(OnExecFileCreateSection) then
+        OnExecFileCreateSection(ImportSection);
+    end;
+
   end;
 
 
 
-  EntryPoint:=header.e_entry;
+  EntryPoint:= header.e_entry;
   fFormatDescription:='ELF - Executable and Linkable Format';
-  fExecFormat:=ELF;
+  fExecFormat:= ffELF;
 end;
 
 
@@ -245,72 +257,36 @@ end;
   end;
 }
 
-{
-function TELFFile.GetSectionFromOffset(Offset: cardinal): string;
-var i,j:integer;
-begin
-  for i:=0 to header.e_shnum-1 do
-    if (Offset >= SectionHeaders[i].sh_offset) and (Offset < SectionHeaders[i].sh_offset + SectionHeaders[i].sh_size) then begin
-      result:= Trim(SectionHeaders[i].name);
-
-      for j:=0 to SectionCount-1 do
-        if Sections[j] is TCodeSection then
-          if (Sections[j] as TCodeSection).InSection(SectionHeaders[i].sh_addr) then result:=result+' - '+CodeSectionStr+IntToStr((Sections[j] as TCodeSection).SectionNumber);
-      Exit;
-    end;
-  result:='not section';
-end;
-
-function TELFFile.GetSectionNumberFromOffset(Offset: cardinal): integer;
-var i:integer;
-begin
-// dorobit kompatibilitu s definiciou tejto funkcie v ExecFileUnit
-  result:=-1;
-  for i:=0 to header.e_shnum-1 do
-    if (Offset >= SectionHeaders[i].sh_offset) and (Offset < SectionHeaders[i].sh_offset + SectionHeaders[i].sh_size) then begin
-      result:=i;
-      break;
-    end;
-end;
-
-function TELFFile.GetSectionOffsetFromOffset(Offset: cardinal): cardinal;
-var index: integer;
-begin
-  Index:=GetSectionNumberFromOffset(Offset);
-  if Index <> -1 then Result:=Offset - SectionHeaders[Index].sh_offset
-  else result:=$FFFFFFFF;
-end;
-}
 
 function TELFFile.SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean;
-
-var i:integer;
+var
+  i: integer;
 begin
-  if soProject in SaveOptions then begin
-    DHF.Write(header,SizeOf(TELFHeader));                                        // PE hlavicka
-//    DHF.Write(header.e_shnum,2);                                                // pocet sekcii
-    for i:=0 to header.e_shnum-1 do begin
-      DHF.Write(SectionHeaders[i],SizeOf(TSectionHeaderTableEntry));
-      DHF.Write(pchar(SectionHeaders[i].name)^,Length(SectionHeaders[i].name)+1);
-    end;  
-  end;
   result:=inherited SaveToFile(DHF, DAS, SaveOptions);
-end;
-
-
-function TELFFile.LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; 
-var i: integer;
-    SectionType: TSectionType;
-begin
-  DHF.Read(header,SizeOf(TELFHeader));
-//  DHF.Read(objectcount,4);
-  SetLength(SectionHeaders,header.e_shnum);
-  for i:=0 to header.e_shnum-1 do begin
-    DHF.Read(SectionHeaders[i],SizeOf(TSectionHeaderTableEntry));
-    ReadStringFromStream(DHF, DHF.Position, SectionHeaders[i].name);
+  if soProject in SaveOptions then begin
+    DHF.Write(Header, SizeOf(TELFHeader));
+    for i:= 0 to header.e_shnum - 1 do begin
+      DHF.Write(SectionHeaders[i], SizeOf(TSectionHeaderTableEntry));
+      StreamWriteAnsiString(DHF, SectionHeaders[i].name)
+    end;
   end;
-  result:=inherited LoadFromFile(DHF, DAS);
 end;
+
+
+
+function TELFFile.LoadFromFile(DHF: TStream; var DAS: TextFile): boolean;
+var
+  i: integer;
+begin
+  result:=inherited LoadFromFile(DHF, DAS);
+  DHF.Read(header, SizeOf(TELFHeader));
+  SetLength(SectionHeaders, header.e_shnum);
+  for i:= 0 to header.e_shnum - 1 do begin
+    DHF.Read(SectionHeaders[i], SizeOf(TSectionHeaderTableEntry));
+    SectionHeaders[i].name:= StreamReadAnsiString(DHF);
+  end;
+end;
+
 
 
 end.

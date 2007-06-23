@@ -2651,7 +2651,7 @@ XADD, and XCHG.
          end;
 // Group 2
         $2E,$36,$3E,$26,$64,$65: begin
-          if prefixflags.group2 then begin UndefinedOpcode:=true; break; end;
+          if PrefixFlags.group2 then begin UndefinedOpcode:=true; break; end;
           prefixflags.group2:=true;
           case code[i] of
             $2E: SegmentOverride:='CS:';
@@ -2664,7 +2664,7 @@ XADD, and XCHG.
         end;
 // Group 3
         $66: begin
-          if prefixflags.group3 then begin UndefinedOpcode:=true; break; end;
+          if PrefixFlags.group3 then begin UndefinedOpcode:=true; break; end;
           prefixflags.group3:=true;
           operand32:=not operand32;
 //          if bit32 then prefixstr:=prefixstr + 'o16 '
@@ -2675,7 +2675,7 @@ XADD, and XCHG.
         end;
 // Group 4
         $67: begin
-          if prefixflags.group4 then begin UndefinedOpcode:=true; break; end;
+          if PrefixFlags.group4 then begin UndefinedOpcode:=true; break; end;
           prefixflags.group4:=true;
           address32:=not address32;
 //          if bit32 then prefixstr:=prefixstr + 'a16 '
