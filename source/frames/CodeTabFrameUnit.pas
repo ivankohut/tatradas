@@ -810,64 +810,24 @@ end;
 
 procedure TCodeTabFrame.GotoEntrypointButtonClick(Sender: TObject);     // Premiestnenie na Entrypoint
 begin
-  GotoPosition(GetPosition(fSection.EntryPointAddress)-2, soBeginning);
+  GotoPosition(GetPosition(fSection.EntryPointAddress + fSection.MemOffset)-2, soBeginning);
   plocha.SetFocus;
 end;
 
 procedure TCodeTabFrame.GotoAddressButtonClick(Sender: TObject);    // Premiestnenie na zadanu adresu
 begin
   GotoAddressForm.GotoAddressEdit.Text:='';
-  GotoAddressForm.MaxAddress:=fSection.MaxAddress;
-  if GotoAddressForm.ShowModal = mrOK then GotoPosition(Getposition(GotoAddressForm.address), soBeginning);
+  GotoAddressForm.MaxAddress:= fSection.MaxAddress;
+  if GotoAddressForm.ShowModal = mrOK then
+    GotoPosition(Getposition(GotoAddressForm.address), soBeginning);
   plocha.SetFocus;
 end;
 
 
 
 function TCodeTabFrame.GetPosition(Address: cardinal): cardinal;      // Ziskanie pozicie v disasm z adresy
-var
-//  AddressEstimate: cardinal; // position estimate
-  tip: cardinal;
-  dk: cardinal;
-  riadky: TStrings;
 begin
-  if (Address < fSection.MemOffset) or (Address > fSection.MemOffset + fSection.MemSize - 1) then begin
-    result:=cardinal(-1);
-    Exit;
-  end;
-
-  // Docasne, nutne prerobit vo final
-  Address:= Address - fSection.MemOffset;
-  //*********
-
-  riadky:=plocha.Lines;
-  result:=Min(Round(Address/(fSection.MemSize/fSection.LinesCount)), Plocha.Lines.Count);
-  result:=tip;
-  while (GetLineAddress(riadky[result])=$FFFFFFFF) and (result>0) do begin
-    Dec(result);
-  end;
-  if result = 0 then
-    while (GetLineAddress(riadky[result])=$FFFFFFFF) do begin
-      inc(result);
-    end;
-
-
-  if address > GetLineAddress(riadky[result]) then begin
-    dk:=result;
-    result:=tip;
-    while GetLineAddress(riadky[result])=$FFFFFFFF do begin
-      inc(result);
-    end;
-    if address < GetLineAddress(riadky[result]) then begin
-      result:=dk;
-      exit;
-    end;
-  end;
-
-  if (address < GetLineAddress(riadky[result])) then
-    while (Address<GetLineAddress(riadky[result])) or (GetLineAddress(riadky[result])=$FFFFFFFF) do dec(result)
-  else
-    while (Address>GetLineAddress(riadky[result])) or (GetLineAddress(riadky[result])=$FFFFFFFF) do inc(result);
+  result:= fSection.GetPosition(Address);
 end;
 
 
@@ -882,7 +842,7 @@ begin
     case GetLineType(Plocha.Lines.Strings[plocha.CaretY - 1]) of
       ltInstruction: begin
         if GetTargetAddress(Plocha.Lines.Strings[plocha.CaretY - 1], adresa) then begin
-          if adresa < fSection.CodeSize then begin // osetrenie jumpov za koniec sekcie
+          if (adresa >= fSection.MemOffset) and (adresa <= fSection.MaxAddress) then begin // osetrenie jumpov za koniec sekcie
             FollowButton.Enabled:=true;
             JumpPosition:=GetPosition(adresa);
           end;

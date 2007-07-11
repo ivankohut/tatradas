@@ -1,5 +1,6 @@
 { TODO:
   - odstranit FunctionTableSRVA v PEImport...
+  - osetrit aj ine RelocationAddressTypes ako 32bit pointer
 }
 
 unit ImportSectionUnit;
@@ -18,6 +19,11 @@ uses
 
 type
 
+  TImportFunctionOccurence = record
+    Address: cardinal;
+    SectionIndex: integer;
+  end;
+
   TImportFunction = record
     AddressRVA: cardinal;
 //    RVAtoname: cardinal;
@@ -26,7 +32,7 @@ type
     Ordinal: cardinal;
     MemAddress: cardinal; // added in 2.9.8 alpha
     Name: string;
-    vyskyty: array of cardinal; // Memory addresses
+    Occurs: array of TImportFunctionOccurence;  // Memory addresses
   end;
 
   TImportModul = record
@@ -42,13 +48,19 @@ type
     AddressTableRVA: cardinal;
   end;
 
+  TNESectionImports = record
+    Offset: cardinal;
+    SectionIndex: integer;
+    SectionFileOffset: cardinal;
+  end;
+
   TImportSection = class(TSection)
     ModulCount: integer;
     TotalFunctionCount: integer;
     Moduls: array of TImportModul;
     constructor Create(efile:TObject); overload;
     constructor CreateFromPEFile(InputFile: TStream; ImTableRVA, ImageBase: cardinal; aFileOffset, aFileSize, aMemOffset, aMemSize: cardinal; aName: string; aExecFile: TObject);
-    constructor CreateFromNEFile(a:TStream; ModuleTableOffset, ImportTableOffset, ModuleCount, ImportTableSize: cardinal; efile:TObject);
+    constructor CreateFromNEFile(InputFile: TStream; ModuleTableOffset, ImportTableOffset, aModulCount, ImportTableSize: cardinal; SegmentImports: array of TNESectionImports; aName: string; aExecFile: TObject);
 //    constructor CreateFromELFFile(a:TStream; Offset,Size,StrTabOffset,StrTabSize: cardinal; efile:TObject);
     constructor CreateFromELFFile(InputFile: TStream; Offset, Size, StringTableOffset, StringTableSize: cardinal; aName: string; aExecFile: TObject);
     destructor Destroy; override;
@@ -56,7 +68,7 @@ type
     function SaveToFile  (DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
     function LoadFromFile(DHF: TStream; var DAS: TextFile):boolean; overload; override;
 
-    function AddFunctionOccurence(IndexAddress: cardinal; CallInstrAddress: cardinal): string;
+    function AddFunctionOccurence(IndexAddress: cardinal; CallInstrAddress: cardinal; aSectionIndex: integer): string;
 //    procedure AddFunctionOccurence(ModulIndex, FunctionIndex: integer; Address: cardinal);
   end;
 
@@ -69,6 +81,7 @@ type
     st_shndx: word;
   end;
 
+  
 const
 
 //  ELF32_ST_TYPE:
@@ -108,7 +121,7 @@ end;
 
 
 
-function TImportSection.AddFunctionOccurence(IndexAddress: cardinal; CallInstrAddress: cardinal): string;
+function TImportSection.AddFunctionOccurence(IndexAddress: cardinal; CallInstrAddress: cardinal; aSectionIndex: integer): string;
 var
   ModIndex, FunIndex: integer;
   ModulIndex, FunctionIndex: integer;
@@ -132,8 +145,9 @@ FOUND:
   if FunctionFound then begin
     // Add function's occurence into its 'vyskyty' array
     with moduls[ModulIndex].functions[FunctionIndex] do begin
-      SetLength(vyskyty, Length(vyskyty) + 1);
-      vyskyty[high(vyskyty)]:=CallInstrAddress;
+      SetLength(Occurs, Length(Occurs) + 1);
+      Occurs[High(Occurs)].Address:=CallInstrAddress;
+      Occurs[High(Occurs)].SectionIndex:= aSectionIndex;
 
       if ByOrdinal then
         result:=IntToHex(Ordinal, 8) + '''(Ordinal)' + ' from ''' + moduls[ModulIndex].name
@@ -265,42 +279,136 @@ end;
 
 
 
-constructor TImportSection.CreateFromNEFile(a:TStream; ModuleTableOffset, ImportTableOffset, ModuleCount, ImportTableSize: cardinal; efile:TObject);
+constructor TImportSection.CreateFromNEFile(InputFile: TStream; ModuleTableOffset, ImportTableOffset, aModulCount, ImportTableSize: cardinal; SegmentImports: array of TNESectionImports; aName: string; aExecFile: TObject);
+
+const
+  RelocAddrType_32bPointer = 3;
+
+  RelocType_InternalReference = 0;
+  RelocType_ImportedOrdinal = 1;
+  RelocType_ImportedName = 2;
+  RelocType_OSFixup = 3;
+
+type
+  TRelocationItem = record
+    RelocAddressType: byte;
+    RelocType: byte;
+    Offset: word;
+    Data1: word; // meaning depeds on RelocType
+    Data2: word; // meaning depeds on RelocType
+  end;
+
 var
-    i,j:integer;           // loop variable
-    adresa: word;
-    dlzka: byte;
-    indexy: array of word;
+  i,j,k: integer;
+  FunctionNameLength: Byte;
+  FunctionName: ShortString;
+  ModulNameLength: byte;
+  indexy: array of word;
+  RelocationCount: word;
+  RelocationItem: TRelocationItem;
+  RelocationOffset: word;
+
 begin
-  fTyp:=stImport;
-  fExecFile:=efile;
+  inherited Create(aName, aExecFile);
+  fTyp:= stImport;
 
-  TotalFunctionCount:=0;
-  modulcount:= ModuleCount;
-  SetLength(moduls,modulcount);
-  SetLength(indexy,modulcount+1);
-  a.Position:= ModuleTableOffset;
-  a.Read(indexy[0],modulcount*2);
-  indexy[modulcount]:=ImportTableSize+1;
+  TotalFunctionCount:= 0;
+  ModulCount:= aModulCount;
+  SetLength(Moduls, ModulCount);
+  SetLength(indexy, ModulCount + 1);
+  InputFile.Position:= ModuleTableOffset;
+  InputFile.Read(indexy[0], ModulCount*2);
+  indexy[ModulCount]:= ImportTableSize + 1;
 
-  for i:=0 to modulcount-1 do begin
-    a.Position:=ImportTableOffset + indexy[i];
-    a.Read(dlzka,1);
-    SetLength(moduls[i].name,dlzka);
-    a.Read(moduls[i].name[1],dlzka);
-    j:=0;
-    a.Read(dlzka,1);
-    while (dlzka > 0) and (a.Position < ImportTableOffset + indexy[i+1]) do begin
-      SetLength(moduls[i].functions,j+1);
-      SetLength(moduls[i].functions[j].name,dlzka);
-      a.Read(moduls[i].functions[j].name[1],dlzka);
-      a.Read(dlzka,1);
-      inc(j);
-    end;
-    moduls[i].functioncount:=j;
-    inc(TotalFunctionCount,j);
+  // Read names of moduls
+  for i:=0 to ModulCount - 1 do begin
+    InputFile.Position:= ImportTableOffset + indexy[i];
+    InputFile.Read(ModulNameLength, 1);
+    SetLength(Moduls[i].Name, ModulNameLength);
+    InputFile.Read(Moduls[i].Name[1], ModulNameLength);
   end;
   indexy:=nil;
+
+  // Process relocation data of segments
+  for i:=0 to Length(SegmentImports) - 1 do begin
+    InputFile.Position:= SegmentImports[i].Offset;
+    InputFile.Read(RelocationCount, 2);
+    for j:=0 to integer(RelocationCount) - 1 do begin
+      InputFile.Position:= SegmentImports[i].Offset + 2 + j*SizeOf(TRelocationItem);
+      InputFile.Read(RelocationItem, SizeOf(TRelocationItem));
+
+      if RelocationItem.RelocAddressType <> RelocAddrType_32bPointer then 
+        Continue;
+
+
+      k:= 0;
+      case RelocationItem.RelocType of
+
+        RelocType_ImportedOrdinal: begin
+          with Moduls[RelocationItem.Data1-1] do begin
+
+            // Check if we already have the function  
+            while k < FunctionCount do begin
+              if Functions[k].Ordinal = RelocationItem.Data2 then
+                Break;
+              inc(k);
+            end;
+
+            // Add function if we do not have it
+            if k = FunctionCount then begin
+              Inc(FunctionCount);
+              SetLength(Functions, FunctionCount);
+              Functions[k].ByOrdinal:= true;
+              Functions[k].Ordinal:= RelocationItem.Data2;
+            end;
+          end;
+        end;
+
+        RelocType_ImportedName: begin
+          with Moduls[RelocationItem.Data1-1] do begin
+
+            // Read function name from Import Name Table
+            InputFile.Position:= ImportTableOffset + RelocationItem.Data2;
+            InputFile.Read(FunctionNameLength, 1);
+            SetLength(FunctionName, FunctionNameLength);
+            InputFile.Read(FunctionName[1], FunctionNameLength);
+
+            // Check if we already have the function  
+            while k < FunctionCount do begin
+              if Functions[k].Name = FunctionName  then
+                Break;
+              Inc(k);
+            end;
+
+            // Add function if we do not have it
+            if k = FunctionCount then begin
+              Inc(FunctionCount);
+              SetLength(Functions, FunctionCount);
+              Functions[k].ByOrdinal:= false;
+              Functions[k].Name:= FunctionName;
+            end;
+          end;
+        end;
+
+        else
+          Continue;
+      end;
+
+      // Process relocation chain
+      RelocationOffset:= RelocationItem.Offset;
+      with Moduls[RelocationItem.Data1-1].Functions[k] do
+        repeat
+          SetLength(Occurs, Length(Occurs) + 1);
+          Occurs[High(Occurs)].Address:= RelocationOffset - 1;
+          Occurs[High(Occurs)].SectionIndex:= SegmentImports[i].SectionIndex;
+
+          InputFile.Position:= SegmentImports[i].SectionFileOffset + RelocationOffset;
+          InputFile.Read(RelocationOffset, 2);
+        until RelocationOffset = $FFFF;
+
+    end;
+  end;
+
 end;
 
 
@@ -321,10 +429,10 @@ begin
         DHF.Write(functions[FunctionIndex], SizeOf(TImportFunction) - 8);
         with functions[FunctionIndex] do begin
           StreamWriteAnsiString(DHF, name);
-          OccurenceCount:= Length(vyskyty);
+          OccurenceCount:= Length(Occurs);
           DHF.Write(OccurenceCount, 4);
           for OccurIndex:= 0 to OccurenceCount - 1 do
-            DHF.Write(vyskyty[OccurIndex], 4);
+            DHF.Write(Occurs[OccurIndex], SizeOf(TImportFunctionOccurence));
         end;
       end;
     end;
@@ -353,9 +461,9 @@ begin
         with functions[FunctionIndex] do begin
           Name:= StreamReadAnsiString(DHF);
           DHF.Read(OccurenceCount, 4);
-          SetLength(vyskyty, OccurenceCount);
+          SetLength(Occurs, OccurenceCount);
           for OccurIndex:= 0 to OccurenceCount - 1 do
-            DHF.Read(vyskyty[OccurIndex], 4);
+            DHF.Read(Occurs[OccurIndex], SizeOf(TImportFunctionOccurence));
         end;
       end;
     end;

@@ -105,9 +105,9 @@ begin
   AddressListBox.Clear;
   ModulIndex:=ModulComboBox.ItemIndex;
   FunctionIndex:=FunctionListView.ItemIndex;
-  PocetVyskytov:=Length(fSection.moduls[ModulIndex].functions[FunctionIndex].vyskyty);
+  PocetVyskytov:=Length(fSection.moduls[ModulIndex].functions[FunctionIndex].Occurs);
   for OccurIndex:=0 to PocetVyskytov - 1 do begin
-    Address:=fSection.moduls[ModulIndex].functions[FunctionIndex].vyskyty[OccurIndex];
+    Address:=fSection.moduls[ModulIndex].functions[FunctionIndex].Occurs[OccurIndex].Address;
     AddressListbox.Items.Add(IntToHex(Address, 8));
   end;
 end;
@@ -123,8 +123,10 @@ begin
   ModulIndex:= ModulComboBox.ItemIndex;
   FunctionIndex:= FunctionListView.ItemIndex;
   OccurenceIndex:= AddressListBox.ItemIndex;
-  Address:= fSection.Moduls[ModulIndex].Functions[FunctionIndex].vyskyty[OccurenceIndex];
-  SectionIndex:= MainForm.ExecFile.Sections.GetSectionIndexFromMemOffset(Address);
+  Address:= fSection.Moduls[ModulIndex].Functions[FunctionIndex].Occurs[OccurenceIndex].Address;
+
+//  SectionIndex:= MainForm.ExecFile.Sections.GetSectionIndexFromMemOffset(Address);
+  SectionIndex:= fSection.Moduls[ModulIndex].Functions[FunctionIndex].Occurs[OccurenceIndex].SectionIndex;
 
   Tab:=MainForm.GetSectionsTabSheet(MainForm.ExecFile.Sections[SectionIndex]);
   with (Tab.Frame as TCodeTabFrame) do begin
@@ -146,8 +148,10 @@ begin
   ModulIndex:= ModulComboBox.ItemIndex;
   FunctionIndex:= FunctionListView.ItemIndex;
   OccurenceIndex:= 0;
-  Address:= fSection.Moduls[ModulIndex].Functions[FunctionIndex].vyskyty[OccurenceIndex];
-  SectionIndex:= MainForm.ExecFile.Sections.GetSectionIndexFromMemOffset(Address);
+  Address:= fSection.Moduls[ModulIndex].Functions[FunctionIndex].Occurs[OccurenceIndex].Address;
+
+//  SectionIndex:= MainForm.ExecFile.Sections.GetSectionIndexFromMemOffset(Address);
+  SectionIndex:= fSection.Moduls[ModulIndex].Functions[FunctionIndex].Occurs[OccurenceIndex].SectionIndex;
 
   Tab:=MainForm.GetSectionsTabSheet(MainForm.ExecFile.Sections[SectionIndex]);
   with (Tab.Frame as TCodeTabFrame) do begin

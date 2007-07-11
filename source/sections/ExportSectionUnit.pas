@@ -35,11 +35,11 @@ type
   end;
 
   TExportSection = class(TSection)
-    functioncount: integer;
-    functions:array of TExportFunction;
+    FunctionCount: integer;
+    Functions: array of TExportFunction;
     constructor Create(EFile:TObject); overload;
     constructor CreateFromPEFile(InputFile: TStream; FileOffset, ExportRVA, ExportDataSize, ImageBase: cardinal; aName: string; aExecFile: TObject);
-    constructor CreateFromNEFile(a:TStream; ResidentTableOffset, NonResidentTableOffset, NonResidentTableSize: cardinal; efile:TObject); overload;
+    constructor CreateFromNEFile(InputFile: TStream; ResidentTableOffset, NonResidentTableOffset, NonResidentTableSize: cardinal; aName: string; aExecFile: TObject); overload;
 
     destructor Destroy; override;
     function SaveToFile  (DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
@@ -53,7 +53,7 @@ implementation
 uses
   ExecFileUnit,
   CodeSectionUnit,
-//  NEFileUnit,
+  NEFileUnit,
   PEFileUnit;
 
 constructor TExportSection.Create(efile:TObject);
@@ -154,17 +154,14 @@ end;
 
 
 
-constructor TExportSection.CreateFromNEFile(a:TStream; ResidentTableOffset, NonResidentTableOffset, NonResidentTableSize: cardinal; efile:TObject);
-var i: integer;
-    dlzka: byte;
-    ModuleName1,ModuleName2: string;
-{
-  procedure FindEntryPoint(ordinal: cardinal; var segment: integer; var address: cardinal);
+constructor TExportSection.CreateFromNEFile(InputFile: TStream; ResidentTableOffset, NonResidentTableOffset, NonResidentTableSize: cardinal; aName: string; aExecFile: TObject);
+
+  procedure FindEntryPoint(Ordinal: cardinal; var segment: integer; var address: cardinal);
   var i: integer;
   begin
     i:=0;
     with (ExecFile as TNEFile) do
-      while true do begin
+      while i < Length(EntryTable) do begin
         if ordinal <= EntryTable[i].count then begin
           case EntryTable[i].typ of
             etFixed: begin
@@ -182,57 +179,46 @@ var i: integer;
         inc(i);
       end;
   end;
-}
+
+
+  procedure ReadNameTable(const TableOffset: cardinal; var FirstName: string);
+  var
+    FunIndex: integer;
+    FirstNameLength: byte;
+    FunNameLength: byte;
+  begin
+    FunIndex:= FunctionCount;
+    InputFile.Position:= TableOffset;
+    InputFile.Read(FirstNameLength, 1);
+    SetLength(FirstName, FirstNameLength);
+    InputFile.Read(FirstName[1], FirstNameLength);
+    InputFile.Seek(2, soCurrent);
+
+    InputFile.Read(FunNameLength, 1);
+    while FunNameLength > 1 do begin
+      SetLength(Functions, FunIndex+1);
+      SetLength(Functions[FunIndex].Name, FunNameLength);
+      InputFile.Read(Functions[FunIndex].Name[1], FunNameLength);
+      InputFile.Read(Functions[FunIndex].Ordinal, 2);
+      FindEntryPoint(Functions[FunIndex].Ordinal, Functions[FunIndex].Section, Functions[FunIndex].CodeSectionOffset);
+      InputFile.Read(FunNameLength, 1);
+      Inc(FunIndex);
+    end;
+    FunctionCount:= FunIndex;
+  end;
+
+var
+  ModuleName, ModuleDescription: string;
+
 begin
-{
-  typ:=stExport;
-  execfile:=efile;
-  self.Ctrls:=Ctrls;
-// Resident:
-  a.position:=ResidentTableOffset;
-  a.Read(dlzka,1);
-  SetLength(ModuleName1,dlzka);
-  a.Read(ModuleName1[1],dlzka);
-  a.Seek(2,1);
+  inherited Create(aName, aExecFile);
+  fTyp:= stExport;
 
-  i:=0;
-  a.Read(dlzka,1);
-  while dlzka > 1 do begin
-    SetLength(functions,i+1);
-    SetLength(functions[i].name,dlzka);
-    a.Read(functions[i].name[1],dlzka);
-    a.Read(functions[i].ordinal,2);
-    FindEntryPoint(functions[i].ordinal,functions[i].section,functions[i].offset);
-    inc(i);
-    a.Read(dlzka,1);
-  end;
-  functioncount:=i;
-// Non-Resident:
-  a.position:=NonResidentTableOffset;
-  a.Read(dlzka,1);
-  SetLength(ModuleName2,dlzka);
-  a.Read(ModuleName2[1],dlzka);
-  a.Seek(2,1);
+  // Read names from Resident-Name Table:
+  ReadNameTable(ResidentTableOffset, ModuleName);
 
-  a.Read(dlzka,1);
-  while dlzka > 1 do begin
-    SetLength(functions,i+1);
-    SetLength(functions[i].name,dlzka);
-    a.Read(functions[i].name[1],dlzka);
-    a.Read(functions[i].ordinal,2);
-    FindEntryPoint(functions[i].ordinal,functions[i].section,functions[i].offset);
-    inc(i);
-    a.Read(dlzka,1);
-  end;
-  functioncount:=i;
-
-}
-{$IFDEF GUI_B}
-{
-  tab:=TExportTabSheet.Create(Ctrls.PageControl,self);
-  TabSheet:=tab;
-}
-{$ENDIF}
+  // Read names from Non-Resident-Name Table:
+  ReadNameTable(NonResidentTableOffset, ModuleDescription);
 end;
 
 

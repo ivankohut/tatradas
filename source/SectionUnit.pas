@@ -83,6 +83,7 @@ begin
     StreamWriteAnsiString(DHF, fName);
     DHF.Write(fSectionIndex, 4);
   end;
+  result:= true;
 end;
 
 
@@ -91,6 +92,7 @@ function TSection.LoadFromFile(DHF: TStream; var DAS: TextFile): boolean;
 begin
   fName:= StreamReadAnsiString(DHF);
   DHF.Read(fSectionIndex, 4);
+  result:= true;
 end;
 
 { TSections }

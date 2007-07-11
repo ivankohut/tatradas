@@ -105,7 +105,7 @@ begin
 {$IFDEF GUI_B}
   Synchronize(SetUpUI);
 {$ELSE}
-  
+
 {$ENDIF}
 
 
@@ -149,7 +149,7 @@ end;
 
 procedure TExecFileManager_LoadExecFileFromFile.Execute;
 begin
-// upravit 
+// upravit
 //  fResult:=ExecFileManager.LoadExecFileFromFile(fParams_FileName);
   ProgressFinished:=true;
 end;
@@ -165,7 +165,7 @@ end;
 
 procedure TSection_LoadFromFile.Execute;
 begin
-  fResult:= fSection.LoadFromFile(fParams_DHFStream,fParams_DASStream);
+//  fResult:= fSection.LoadFromFile(fParams_DHFStream, fParams_DASStream);
   ProgressFinished:=true;
 end;
 

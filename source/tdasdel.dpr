@@ -52,7 +52,6 @@ uses
   FileSectionUnit in 'FileSectionUnit.pas',
   ImportTabFrameUnit in 'frames\ImportTabFrameUnit.pas' {ImportTabFrame: TFrame},
   ResourceTabFrameUnit in 'frames\ResourceTabFrameUnit.pas' {ResourceTabFrame: TFrame},
-  DummySectionUnit in 'sections\DummySectionUnit.pas',
   ExportTabFrameUnit in 'frames\ExportTabFrameUnit.pas' {ExportTabFrame: TFrame};
 
 begin

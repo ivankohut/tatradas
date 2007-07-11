@@ -83,7 +83,7 @@ begin
     ffPE:  result:=TPEFile.Create(InputFile, aFileName);
     ffCOM: result:=TCOMFile.Create(InputFile, aFileName);
     ffMZ:  result:=TMZFile.Create(InputFile, aFileName);
-    NE:  result:=TNEFile.Create(InputFile, aFileName);
+    ffNE:  result:=TNEFile.Create(InputFile, aFileName);
     ffELF: result:=TELFFile.Create(InputFile, aFileName);
     // LE: result:=TLEFile.Create(InputFile, aFileName)
     // LX: result:=TLXFile.Create(InputFile, aFileName)
@@ -135,7 +135,7 @@ begin
           FileStream.Read(header.Sign,2);
           case header.sign of
             c_PESign: result:= ffPE;                     // Portable Executable 32-bit
-            c_NESign: result:= NE;                     // New Executable 16-bit
+            c_NESign: result:= ffNE;                     // New Executable 16-bit
             c_LESign: result:= ffUnknown; //LE;                     // Linear Executable
             c_LXSign: result:= ffUnknown; //LX;                     // Linear Executable 32 - bit
             else

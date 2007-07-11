@@ -219,7 +219,7 @@ begin
       if SectionHeaders[i].sh_flags = (SHF_ALLOC or SHF_EXECINSTR) then begin
         CodeSection:= TCodeSection.Create(InputFile, true, SectionHeaders[i].sh_offset, SectionHeaders[i].sh_size, SectionHeaders[i].sh_addr, SectionHeaders[i].sh_size, fCodeSectionsCount, SectionHeaders[i].Name, self);
         Inc(fCodeSectionsCount);
-        if CodeSection.InSection(Header.e_entry) then begin
+        if CodeSection.IsInSection(Header.e_entry) then begin
           CodeSection.EntryPointAddress:= Header.e_entry - CodeSection.MemOffset;
         end;
         Sections.Add(CodeSection);

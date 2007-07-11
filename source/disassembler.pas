@@ -1,4 +1,7 @@
 { TODO:
+  pridat moznost ukoncenia bloku v 16 bit. mode v pripade instrukcii
+    MOV AH,byte 0x09
+    INT byte 0x21
 
  INFO - PUNPCKLBW operandy (druhy), pozri Intel manual, 19.12.2004 zmeneny na MODq, asi by to chcelo vyriesit nejako inac (spolu s MOVZX atd)
 }
@@ -153,6 +156,7 @@ type
        ProgressPosition: cardinal;
        InstrAddress: cardinal;
     Vpc: Byte;                              // Pocet parametrov aktualnej instrukcie
+       fMemOffset: cardinal;
 
        fBlocks: TDisassembledBlocks;
 
@@ -178,7 +182,8 @@ type
 
        Disassembled: array of TDisassembledItem;  // Vystup disassemblovania
        Imported: array of cardinal;
-       constructor Create(SectionCode:TByteDynamicArray; var DisassemblerMap: TByteDynamicArray);
+
+       constructor Create(SectionCode: TByteDynamicArray; var DisassemblerMap: TByteDynamicArray; MemOffset: cardinal);
 
        function DisassembleAll(bit32: boolean): boolean;
 
@@ -2368,18 +2373,18 @@ asm
 
   disassembled[InstrAddress].parsed:=disassembled[InstrAddress].parsed+inttohex(parsed,parsedcount);
 
-  if address < 0 then result:='-0x' + IntToHex(Abs(address),8)            // skok na zapornu adresu
+  if address < 0 then result:='-0x' + IntToHex(Abs(address),8)            // skok na zapornu adresu (treba este zohladnit MemOffset !!!)
   else begin
-    result:='0x'+IntToHex(address,8);
+    result:='0x' + IntToHex(address + fMemOffset, 8);
     if address > CodeSize-1 then Exit                             // skok za koniec kodovej sekcie
     else begin
       CAJ.Add(address);
       Inc(Disassembled[address].refercount);
       SetLength(Disassembled[address].refer,Disassembled[address].refercount);
       case Disassembled[InstrAddress].name[1] of
-        'J': Disassembled[address].refer[Disassembled[address].refercount-1]:='Jump from 0x'+IntToHex(InstrAddress,8);
-        'C': Disassembled[address].refer[Disassembled[address].refercount-1]:='Call from 0x'+IntToHex(InstrAddress,8);
-        'L': Disassembled[address].refer[Disassembled[address].refercount-1]:='Loop from 0x'+IntToHex(InstrAddress,8);
+        'J': Disassembled[address].refer[Disassembled[address].refercount-1]:='Jump from 0x'+IntToHex(InstrAddress + fMemOffset, 8);
+        'C': Disassembled[address].refer[Disassembled[address].refercount-1]:='Call from 0x'+IntToHex(InstrAddress + fMemOffset, 8);
+        'L': Disassembled[address].refer[Disassembled[address].refercount-1]:='Loop from 0x'+IntToHex(InstrAddress + fMemOffset, 8);
       end;
       Inc(fStatistics.References);
     end;
@@ -2428,7 +2433,7 @@ begin
   b:=fpupole[(c mod 8)+1].pZ;
 end;
 
-constructor TDisassembler.Create(SectionCode: TByteDynamicArray; var DisassemblerMap: TByteDynamicArray);
+constructor TDisassembler.Create(SectionCode: TByteDynamicArray; var DisassemblerMap: TByteDynamicArray; MemOffset: cardinal);
 begin
   code:= SectionCode;
   CodeSize:=Length(code)-CodeArrayReserve;
@@ -2437,6 +2442,7 @@ begin
 //  ProgressFunction:=prog;
   CAJ:=TCallsAndJumps.Create(DisasmMap);
   fBlocks:= TDisassembledBlocks.Create;
+  fMemOffset:= MemOffset;
 end;
 
 
@@ -2889,6 +2895,8 @@ XADD, and XCHG.
 //    if InstrAddress= $15D1 then showmessage('a');
 // end temporary - only for testing
 
+  try
+
     OperandSize:=szEmpty;
     case Vpc of                             // Spracovanie parametrov podla ich poctu
       1: begin
@@ -2927,6 +2935,12 @@ XADD, and XCHG.
            disassembled[InstrAddress].operandy:=disassembled[InstrAddress].operandy+SpracujParameter(Vparam.p3);
          end;
     end;
+
+  except
+    raise Exception.Create(IntToStr(i));
+//      sm(IntToStr(i));
+  end;
+
     if _3DNow_Instruction then begin
       j:=1;
       inc(i);

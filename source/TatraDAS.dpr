@@ -93,7 +93,6 @@ uses
   ELFFileUnit in 'exefiles\ELFFileUnit.pas',
 
 // Sections' units
-  DummySectionUnit in  'sections\DummySectionUnit.pas',
   CodeSectionUnit in 'sections\CodeSectionUnit.pas',
   ExportSectionUnit in 'sections\ExportSectionUnit.pas',
   ImportSectionUnit in 'sections\ImportSectionUnit.pas',
@@ -133,7 +132,6 @@ uses
   ExportSectionUnit in 'sections/ExportSectionUnit.pas',
   ImportSectionUnit in 'sections/ImportSectionUnit.pas',
   ResourceSectionUnit in 'sections/ResourceSectionUnit.pas',
-  DummySectionUnit in  'sections/DummySectionUnit.pas',
 
 // Executable formats' units
   CustomFileUnit in 'exefiles/CustomFileUnit.pas',

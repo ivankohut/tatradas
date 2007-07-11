@@ -35,7 +35,7 @@ const HEX_CIFRY : set of char = ['0'..'9','A'..'F'];
       DataTypesCount = 11;
       DataTypeSizes:array [0..DataTypesCount-1] of Byte = ( (1),(2),(4),(8),(4),(8),(10),(1),(1),(1),(1) );
 
-const CodeArrayReserve=20;
+const CodeArrayReserve = 20;
       MaxCardinal = $FFFFFFFF;
 
 type
@@ -91,7 +91,7 @@ type
 
   TLineType = (ltInstruction, ltComment, ltJumpRef, ltCallRef, ltLoopRef, ltImportRef, ltExportRef, ltEntryPointRef, ltEmpty);
 
-  TExecFileFormat = (ffError, ffUnknown, ffCustom, ffPE, ffMZ, ffCOM, NE, LE, LX, ffELF);
+  TExecFileFormat = (ffError, ffUnknown, ffCustom, ffPE, ffMZ, ffCOM, ffNE, LE, LX, ffELF);
 
   TCpuType = (_80386,_80486,Pentium);
 
@@ -103,28 +103,11 @@ type
     bit32:boolean;
   end;
 
-  TStatus = (opened,finished);
-
   TSectionInfo = array of TSectionInfoEntry;
 
   TMyMemoryStream = class(TMemoryStream)
-    procedure SetMemory(Ptr:pointer; Size: LongInt);
+    procedure SetMemory(Ptr: pointer; Size: LongInt);
   end;
-
-(*
-  TCtrls = record
-{$IFDEF GUI_B}
-    PageControl: TPageControl;
-    INIFile: TMemINIFile;
-    InfoMemo: TMemo;
-    InfoGrid: TStringGrid;
-    InfoListView: TListView;
-    InfoFormatEdit: TEdit;
-{$ENDIF}
-    ProgressFunction: TProgressFunction;
-  end;
-*)
-
 
   TTextFileStream = class(TFileStream)
     function ReadLine: string;

@@ -32,7 +32,7 @@ uses
   ImportTabFrameUnit in 'frames\ImportTabFrameUnit.pas',
   ExportTabFrameUnit in 'frames\ExportTabFrameUnit.pas',
   ResourceTabFrameUnit in 'frames\ResourceTabFrameUnit.pas',
-  
+
 // Executable formats' units
   UnknownFileUnit in 'exefiles\UnknownFileUnit.pas',
   MZFileUnit in 'exefiles\MZFileUnit.pas',
@@ -44,12 +44,11 @@ uses
   ELFFileUnit in 'exefiles\ELFFileUnit.pas',
 
 // Sections' units
-  DummySectionUnit in  'sections\DummySectionUnit.pas',
   CodeSectionUnit in 'sections\CodeSectionUnit.pas',
   ExportSectionUnit in 'sections\ExportSectionUnit.pas',
   ImportSectionUnit in 'sections\ImportSectionUnit.pas',
   ResourceSectionUnit in 'sections\ResourceSectionUnit.pas';
-  
+
 //{$R *.res}
 
 begin

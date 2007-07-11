@@ -15,7 +15,6 @@ uses
   CodeSectionUnit,
   ImportSectionUnit,
   ExportSectionUnit,
-  DummySectionUnit,
   ResourceSectionUnit;
 
 const
@@ -177,7 +176,7 @@ begin
       Inc(fCodeSectionsCount);
 // treba pridat do constructora
 //      CodeSection.CodeSectionIndex:=CodeSectionsCount-1;
-      if CodeSection.InSection(Header.EntryPoint + Header.ImageBase) then
+      if CodeSection.IsInSection(Header.EntryPoint + Header.ImageBase) then
         CodeSection.EntryPointAddress:=header.EntryPoint + header.ImageBase - (ObjectTable[i].rva + header.ImageBase);
 
       Sections.Add(CodeSection);
