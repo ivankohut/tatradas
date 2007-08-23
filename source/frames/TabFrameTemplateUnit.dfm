@@ -11,8 +11,8 @@ object TabFrameTemplate: TTabFrameTemplate
     Width = 443
     Height = 277
     Align = alClient
-    BevelInner = bvRaised
-    BevelOuter = bvLowered
+    BevelOuter = bvNone
+    BorderWidth = 8
     TabOrder = 0
   end
 end

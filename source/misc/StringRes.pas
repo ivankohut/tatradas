@@ -5,9 +5,12 @@ unit StringRes;
 
 interface
 
-uses INIFiles;
+uses
+  IniFiles,
 
-procedure TranslateStrings(ini: TMemINIFile; error: string);
+  procmat;
+
+procedure TranslateStrings(ini: TMemINIFile);
 
 var
 // Files
@@ -43,32 +46,32 @@ var
 
 implementation
 
-procedure TranslateStrings(ini: TMemINIFile; error: string);
+procedure TranslateStrings(ini: TMemINIFile);
 begin
 
-  FileNotFoundStr:=ini.ReadString('Texty','FileNotFound',error);
-  CouldNotOpenFileStr:=ini.ReadString('Texty','CouldNotOpenFile',error);
-  CouldNotOpenProjectStr:=ini.ReadString('Texty','CouldNotOpenProject',error);
-  CouldNotOpenReadWriteFileStr:=ini.ReadString('Texty','CouldNotOpenReadWrite',error);
-  ProjectFilterStr:=ini.ReadString('Texty','ProjectFilter',error);
-  SaveDisassemblyFilterStr:=ini.ReadString('Texty','SaveDisassemblyFilter',error);
-  FileModifiedStr:=ini.ReadString('Texty','FileModified',error);
+  FileNotFoundStr:=ini.ReadString('Texty','FileNotFound',TranslateErrorStr);
+  CouldNotOpenFileStr:=ini.ReadString('Texty','CouldNotOpenFile',TranslateErrorStr);
+  CouldNotOpenProjectStr:=ini.ReadString('Texty','CouldNotOpenProject',TranslateErrorStr);
+  CouldNotOpenReadWriteFileStr:=ini.ReadString('Texty','CouldNotOpenReadWrite',TranslateErrorStr);
+  ProjectFilterStr:=ini.ReadString('Texty','ProjectFilter',TranslateErrorStr);
+  SaveDisassemblyFilterStr:=ini.ReadString('Texty','SaveDisassemblyFilter',TranslateErrorStr);
+  FileModifiedStr:=ini.ReadString('Texty','FileModified',TranslateErrorStr);
 
-  InvalidAddressStr:=ini.ReadString('Texty','InvalidAddress',error);
-  InvalidStartOffsetStr:=ini.ReadString('Texty','InvalidStartOffset',error);
-  InvalidSizeStr:=ini.ReadString('Texty','InvalidSize',error);
-  InvalidEntrypointStr:=ini.ReadString('Texty','InvalidEntryPoint',error);
-  FileOffsetStr:=ini.ReadString('Texty','FileOffset',error);
-  SectionOffsetStr:=ini.ReadString('Texty','SectionOffset',error);
+  InvalidAddressStr:=ini.ReadString('Texty','InvalidAddress',TranslateErrorStr);
+  InvalidStartOffsetStr:=ini.ReadString('Texty','InvalidStartOffset',TranslateErrorStr);
+  InvalidSizeStr:=ini.ReadString('Texty','InvalidSize',TranslateErrorStr);
+  InvalidEntrypointStr:=ini.ReadString('Texty','InvalidEntryPoint',TranslateErrorStr);
+  FileOffsetStr:=ini.ReadString('Texty','FileOffset',TranslateErrorStr);
+  SectionOffsetStr:=ini.ReadString('Texty','SectionOffset',TranslateErrorStr);
 
-  CodeSectionStr:=ini.ReadString('Texty','CodeSection',error);
-  SectionStr:=ini.ReadString('Texty','Section',error);
+  CodeSectionStr:=ini.ReadString('Texty','CodeSection',TranslateErrorStr);
+  SectionStr:=ini.ReadString('Texty','Section',TranslateErrorStr);
 
-  InCompatibleProjectVersion:=ini.ReadString('Texty','InCompatibleProjectVersion',error);
-  CurrentVersion:=ini.ReadString('Texty','CurrentVersion',error);
+  InCompatibleProjectVersion:=ini.ReadString('Texty','InCompatibleProjectVersion',TranslateErrorStr);
+  CurrentVersion:=ini.ReadString('Texty','CurrentVersion',TranslateErrorStr);
 
-  DivisionByZeroStr:=ini.ReadString('Texty','DivisionByZero',error);
-  NotFoundStr:=ini.ReadString('Texty','NotFound',error);
+  DivisionByZeroStr:=ini.ReadString('Texty','DivisionByZero',TranslateErrorStr);
+  NotFoundStr:=ini.ReadString('Texty','NotFound',TranslateErrorStr);
 end;
 
 end.

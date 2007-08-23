@@ -1,9 +1,9 @@
 inherited ImportTabFrame: TImportTabFrame
-  Width = 664
-  Height = 517
+  Width = 531
+  Height = 378
   inherited Panel: TPanel
-    Width = 664
-    Height = 517
+    Width = 531
+    Height = 378
     object ModulLabel: TLabel
       Left = 16
       Top = 16
@@ -20,14 +20,14 @@ inherited ImportTabFrame: TImportTabFrame
     end
     object OccurHintLabel: TLabel
       Left = 16
-      Top = 500
+      Top = 350
       Width = 74
       Height = 13
       Anchors = [akLeft, akBottom]
       Caption = 'OccurHintLabel'
     end
     object OccurLabel: TLabel
-      Left = 533
+      Left = 400
       Top = 56
       Width = 55
       Height = 13
@@ -35,7 +35,7 @@ inherited ImportTabFrame: TImportTabFrame
       Caption = 'OccurLabel'
     end
     object ModulComboBox: TComboBox
-      Left = 56
+      Left = 104
       Top = 16
       Width = 145
       Height = 21
@@ -46,8 +46,8 @@ inherited ImportTabFrame: TImportTabFrame
     object FunctionListView: TListView
       Left = 16
       Top = 80
-      Width = 506
-      Height = 417
+      Width = 367
+      Height = 265
       Anchors = [akLeft, akTop, akRight, akBottom]
       Columns = <
         item
@@ -73,14 +73,15 @@ inherited ImportTabFrame: TImportTabFrame
       RowSelect = True
       TabOrder = 1
       ViewStyle = vsReport
+      OnColumnClick = FunctionListViewColumnClick
       OnDblClick = FunctionListViewDblClick
       OnSelectItem = FunctionListViewSelectItem
     end
     object AddressListBox: TListBox
-      Left = 533
+      Left = 400
       Top = 80
       Width = 117
-      Height = 417
+      Height = 265
       Anchors = [akTop, akRight, akBottom]
       BevelEdges = [beTop, beRight, beBottom]
       ItemHeight = 13

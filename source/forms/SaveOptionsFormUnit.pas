@@ -9,11 +9,15 @@ uses
 {$IFDEF LINUX}
   QControls, QForms, QStdCtrls, 
 {$ENDIF}
-  SysUtils, Classes, IniFiles,
-  procmat;
+  SysUtils,
+  Classes,
+  IniFiles,
+
+  procmat,
+  TatraDASFormUnit;
 
 type
-  TSaveOptionsForm = class(TForm)
+  TSaveOptionsForm = class(TTatraDASForm)
     OKButton: TButton;
     CancelButton: TButton;
     ReferencesGroupBox: TGroupBox;
@@ -40,7 +44,7 @@ type
     { Private declarations }
   public
     SaveOptions: TSaveOptions;
-    procedure Translate(ini: TMemINIFile; error: string);
+    procedure Translate(ini: TMemINIFile); override;
     { Public declarations }
   end;
 
@@ -109,28 +113,28 @@ begin
   ModalResult:=mrCancel;
 end;
 
-procedure TSaveOptionsForm.Translate(ini: TMemINIFile; error: string);
+procedure TSaveOptionsForm.Translate(ini: TMemINIFile);
 begin
-  Caption:=ini.ReadString('SaveOptionsForm','Caption',error);
+  Caption:=ini.ReadString('SaveOptionsForm','Caption',TranslateErrorStr);
 
-  MainGroupBox.Caption:=ini.ReadString('SaveOptionsForm','MainGroupBox',error);
-  ReferencesGroupBox.Caption:=ini.ReadString('SaveOptionsForm','ReferencesGroupBox',error);
-  InstructionGroupBox.Caption:=ini.ReadString('SaveOptionsForm','InstructionGroupBox',error);
+  MainGroupBox.Caption:=ini.ReadString('SaveOptionsForm','MainGroupBox',TranslateErrorStr);
+  ReferencesGroupBox.Caption:=ini.ReadString('SaveOptionsForm','ReferencesGroupBox',TranslateErrorStr);
+  InstructionGroupBox.Caption:=ini.ReadString('SaveOptionsForm','InstructionGroupBox',TranslateErrorStr);
 
-  ProjectRadioButton.Caption:=ini.ReadString('SaveOptionsForm','ProjectRadioButton',error);
-  DisassemblyRadioButton.Caption:= ini.ReadString('SaveOptionsForm','DisassemblyRadioButton',error);
-  CustomRadioButton.Caption:=ini.ReadString('SaveOptionsForm','CustomRadioButton',error);
-  NASMRadioButton.Caption:=ini.ReadString('SaveOptionsForm','NASMRadioButton',error);
-  AddressCheckBox.Caption:=ini.ReadString('SaveOptionsForm','AddressCheckBox',error);
-  ParsedCheckBox.Caption:=ini.ReadString('SaveOptionsForm','ParsedCheckBox',error);
-  DisassembledCheckBox.Caption:=ini.ReadString('SaveOptionsForm','DisassembledCheckBox',error);
-  JumpCheckBox.Caption:=ini.ReadString('SaveOptionsForm','JumpCheckBox',error);
-  CallCheckBox.Caption:=ini.ReadString('SaveOptionsForm','CallCheckBox',error);
-  ExportCheckBox.Caption:=ini.ReadString('SaveOptionsForm','ExportCheckBox',error);
-  ImportCheckBox.Caption:=ini.ReadString('SaveOptionsForm','ImportCheckBox',error);
-  EntryPointCheckBox.Caption:=ini.ReadString('SaveOptionsForm','EntryPointCheckBox',error);
+  ProjectRadioButton.Caption:=ini.ReadString('SaveOptionsForm','ProjectRadioButton',TranslateErrorStr);
+  DisassemblyRadioButton.Caption:= ini.ReadString('SaveOptionsForm','DisassemblyRadioButton',TranslateErrorStr);
+  CustomRadioButton.Caption:=ini.ReadString('SaveOptionsForm','CustomRadioButton',TranslateErrorStr);
+  NASMRadioButton.Caption:=ini.ReadString('SaveOptionsForm','NASMRadioButton',TranslateErrorStr);
+  AddressCheckBox.Caption:=ini.ReadString('SaveOptionsForm','AddressCheckBox',TranslateErrorStr);
+  ParsedCheckBox.Caption:=ini.ReadString('SaveOptionsForm','ParsedCheckBox',TranslateErrorStr);
+  DisassembledCheckBox.Caption:=ini.ReadString('SaveOptionsForm','DisassembledCheckBox',TranslateErrorStr);
+  JumpCheckBox.Caption:=ini.ReadString('SaveOptionsForm','JumpCheckBox',TranslateErrorStr);
+  CallCheckBox.Caption:=ini.ReadString('SaveOptionsForm','CallCheckBox',TranslateErrorStr);
+  ExportCheckBox.Caption:=ini.ReadString('SaveOptionsForm','ExportCheckBox',TranslateErrorStr);
+  ImportCheckBox.Caption:=ini.ReadString('SaveOptionsForm','ImportCheckBox',TranslateErrorStr);
+  EntryPointCheckBox.Caption:=ini.ReadString('SaveOptionsForm','EntryPointCheckBox',TranslateErrorStr);
 
-  CancelButton.Caption:=ini.ReadString('Common','CancelButton',error);
+  CancelButton.Caption:=ini.ReadString('Common','CancelButton',TranslateErrorStr);
 end;
 
 

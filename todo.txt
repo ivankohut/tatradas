@@ -14,7 +14,12 @@
   - progress
   - SSE3
    
-
+  - problemy:
+      pe import lookup table NULL error
+      usporiadanie GUI prvkov na FileTabFrame
+      parametre konstruktora TCodeSection a veci okolo (EntryPointy)
+      translation
+      errory a vynimky
 
 -----------------------------
 drag a drop
@@ -24,7 +29,7 @@ classic(2.2) vzhlad
 rozne znakove sady v synedit
 SSE 3
 zdroje v NE
-
+system na spravu GUI dat (hodnoty formularov) & ich ukladanie do projektoveho suboru
 ----
 
 
@@ -52,4 +57,3 @@ statistika funkcii (po najdeni call pridaj funkciu, velkost pridaj po najdeni je
 
 interpretacia call [aaa], kde aaa je v statickych datach
 
-spravit triedu TSections na enkapsulaciu sekcii

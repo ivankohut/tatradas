@@ -1,2 +1,4 @@
 ~ memory addresses in code sections
 + imported functions in NE files 
+- advanced disassemble - instruction count
++ sorting of columns in Import and Export 

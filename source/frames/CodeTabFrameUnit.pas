@@ -1,3 +1,6 @@
+{ TODO:
+}
+
 unit CodeTabFrameUnit;
 
 interface
@@ -22,6 +25,7 @@ uses
   SynEditTextBuffer,
   TatraDASHighlighter,
 
+  Languages,
   TabFrameTemplateUnit,
   GotoAddressFormUnit,
   AdvancedChangingToDataFormUnit,
@@ -33,12 +37,11 @@ uses
   CodeSectionUnit,
   SectionUnit;
 
-//type
-//  TSeekOrigin = (soFromBeginning, so
-
 
 type
   TCodeTabFrame = class(TTabFrameTemplate)
+  published
+    plocha: TSynEdit;
     GotoEntryPointButton: TButton;
     GotoAddressButton: TButton;
     Bevel1: TBevel;
@@ -99,67 +102,54 @@ type
     WORD16bits2: TMenuItem;
     DWORD32bits2: TMenuItem;
     QWORD64bits2: TMenuItem;
-  private
-    fSection: TCodeSection;
-    fOnClick: TNotifyEvent;
-    fOnKeyDown: TKeyEvent;
-  public
-    plocha: TSynEdit;
-
-    function NewLinesCount(Options:TDataChangeOptions; Address, Index: cardinal):integer;
 
   public
-    CursorLine: cardinal;
-
     constructor Create(AOwner: TComponent; ASection: TSection); overload; override;
     destructor Destroy; override;
-// Udalosti:
+
   published
     procedure PlochaStatusChange(Sender: TObject; Changes: TSynStatusChanges);
+    procedure PlochaMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+
+    // Navigation events
     procedure GotoEntryPointButtonClick(Sender: TObject);
     procedure GotoAddressButtonClick(Sender: TObject);
     procedure FollowButtonClick(Sender: TObject);
     procedure ReturnButtonClick(Sender: TObject);
     procedure ToggleBookmarkClick(Sender: TObject);
     procedure GotoBookmarkClick(Sender: TObject);
-    procedure PlochaMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
-    procedure DisassembleClick(Sender: TObject);
 
-    procedure CodePopupMenuPopup(Sender: TObject);
+    // Editing events
+    procedure ChangeToUnsignedDataClick(Sender: TObject);
+    procedure ChangeToSignedDataClick(Sender: TObject);
+    procedure ChangeToFloatDataClick(Sender: TObject);
+    procedure ChangeToStringDataClick(Sender: TObject);
+    procedure AdvancedChangeToDataClick(Sender: TObject);
+
+    procedure NormalDisassembleClick(Sender: TObject);
+    procedure AdvancedDisassembleClick(Sender: TObject);
 
     procedure InsertCommentClick(Sender: TObject);
     procedure InsertEmptyLineClick(Sender: TObject);
     procedure RemoveLineClick(Sender: TObject);
 
-    procedure Advancedchanging1Click(Sender: TObject);
-    procedure AdvancedDisassemble1Click(Sender: TObject);
-    procedure ChangeStringClick(Sender: TObject);
-    procedure NormalDisassembleClick(Sender: TObject);
-    procedure ChangeUDataClick(Sender: TObject);
-    procedure ChangeSDataClick(Sender: TObject);
-    procedure ChangeFDataClick(Sender: TObject);
+  private
+    fSection: TCodeSection;
 
-  public
+    fTargetAddress: cardinal; // jumpable address referenced by CALL, JMP, Call from, Jump from etc.
+    JumpStack: TStack; // stack of made jumps
 
-    JumpPosition: cardinal; // Pozicia mozneho skoku
-    Zasobnik: TStack; // zosobnik vykonanych skokov
-
+    // Conversion routines
     procedure ChangeToData(Options: TDataChangeOptions);
     procedure ChangeToStringData(Options: TDataChangeOptions);
-
     procedure Disassemble(Options: TDisassembleFormOptions);
-    procedure ReplaceLines(NewLines: TStrings; index: Cardinal; bytes: cardinal; address:cardinal);
 
-
-
-// Ostatne:
-    procedure Init;
-
-    function GetPosition(Address:cardinal):cardinal;
+  public
+    procedure FindString(SearchText: string; options: TFindOptions);
+    function GetPosition(Address: cardinal): cardinal; // Get position in Disassembled from Address (memory address)
     procedure GotoPosition(Offset: LongInt; Origin: TSeekOrigin); // Offset zacina od 0
 
-    procedure FindString(SearchText:string; options: TFindOptions);
-    procedure Translate(ini:TMemINIFile; error:string);
+    procedure Translate(Translator: TTatraDASLanguages); override;
 
   protected
     function GetSection: TSection; override;
@@ -169,724 +159,110 @@ type
 var
   CodeTabFrame: TCodeTabFrame;
 
+
 implementation
 
-uses ExecFileUnit,ExportSectionUnit,PEFileUnit;
 
-{
-constructor TCodeTabFrame.Create(MainFile: TFileEx; Number: integer);
-var I:cardinal;
-    MI: TMenuItem;
-begin
-  inherited;
-  fSection:=MainFile.ExecFile.Sections[Number] as TCodeSection;
+uses
+  ExecFileUnit,
+  ExportSectionUnit,
+  PEFileUnit,
+  MainFormUnit;
 
-// Vytvorenie Textovej plochy SynEdit
-  plocha:=TSynEdit.Create(Panel);
-  plocha.Parent:=Panel;
-  plocha.SetSubComponent(true);
-  plocha.TabOrder:=0;
-  plocha.Width:=Panel.Width - 124;
-  plocha.Height:=Panel.Height - 16;
-  plocha.Left:=8;
-  plocha.Top:=8;
-  plocha.Anchors:=[akLeft,akRight,akTop,akBottom];
-  plocha.ReadOnly:=true;
-  plocha.Font.Name:='Courier New';
-  plocha.Font.Size:=8;
-  plocha.HideSelection:=true;
-  plocha.ScrollBars:=ssVertical;
-//  Nova verzia syeditu neberie
-//  plocha.MaxLeftChar:=80;
-
-//  plocha.Options:=plocha.Options + [eoScrollPastEol];
-
-  plocha.Highlighter:=TSynTatraDASSyn.Create(plocha);
-  plocha.OnStatusChange:=PlochaStatusChange;
-  plocha.OnMouseDown:=PlochaMouseDown;
-
-
-  GotoEntrypointButton.Enabled:=fSection.EntryPointPresent;
-  Plocha.PopupMenu:=CodePopupMenu;
-end;
-}
 
 constructor TCodeTabFrame.Create(AOwner: TComponent; ASection: TSection);
-
-  function CountCodeSize(): cardinal;
-  var i: integer;
-  begin
-    result:=0;
-    for i:=0 to fSection.CodeSize - 1 do
-      if (fSection.DisassemblerMap[i] and dfPart) <> 0 then
-        Inc(result);
-  end;
-
-  function CountFunctions: integer;
-  var i: integer;
-  begin
-    result:=0;
-    i:=0;
-    while i < fSection.Disassembled.Count do begin
-      if LeftStr(fSection.Disassembled[i],9) = 'Call from' then begin
-        Inc(result);
-        while i < fSection.Disassembled.Count do begin
-          if Copy(fSection.Disassembled[i],6,4) <> 'from' then
-            break
-          else
-            Inc(i);
-        end;
-      end;
-      Inc(i);
-    end;
-  end;    
-
-//var MI: TMenuItem;
 begin
   inherited Create(AOwner);
-  fSection:=aSection as TCodeSection;
-  Zasobnik:=TStack.Create;
-  Caption:='Code section #' + IntToStr(fSection.CodeSectionIndex);
+  fSection:= aSection as TCodeSection;
+  JumpStack:= TStack.Create;
+  Caption:= 'Code section #' + IntToStr(fSection.CodeSectionIndex);
 
 // Vytvorenie Textovej plochy SynEdit
-  plocha:=TSynEdit.Create(Panel);
-  plocha.Parent:=Panel;
+  plocha:= TSynEdit.Create(Panel);
+  plocha.Parent:= Panel;
   plocha.SetSubComponent(true);
-  plocha.TabOrder:=0;
-  plocha.Width:=Panel.Width - 124;
-  plocha.Height:=Panel.Height - 16;
-  plocha.Left:=8;
-  plocha.Top:=8;
-  plocha.Anchors:=[akLeft,akRight,akTop,akBottom];
-  plocha.ReadOnly:=true;
-  plocha.Font.Name:='Courier New';
-  plocha.Font.Size:=8;
-  plocha.HideSelection:=true;
-  plocha.ScrollBars:=ssVertical;
+  plocha.TabOrder:= 0;
+  plocha.Width:= Panel.Width - 124;
+  plocha.Height:= Panel.Height - 16;
+  plocha.Left:= 8;
+  plocha.Top:= 8;
+  plocha.Anchors:= [akLeft, akRight, akTop, akBottom];
+  plocha.ReadOnly:= true;
+  plocha.Font.Name:= 'Courier New';
+  plocha.Font.Size:= 8;
+  plocha.HideSelection:= true;
+  plocha.ScrollBars:= ssVertical;
 //  Nova verzia syeditu neberie
 //  plocha.MaxLeftChar:=80;
 
 //  plocha.Options:=plocha.Options + [eoScrollPastEol];
 
-  plocha.Highlighter:=TSynTatraDASSyn.Create(plocha);
-  plocha.OnStatusChange:=PlochaStatusChange;
-  plocha.OnMouseDown:=PlochaMouseDown;
-  plocha.HookTextBuffer(fSection.Disassembled,plocha.UndoList,plocha.RedoList);
+  plocha.Highlighter:= TSynTatraDASSyn.Create(plocha);
+  plocha.OnStatusChange:= PlochaStatusChange;
+  plocha.OnMouseDown:= PlochaMouseDown;
+  plocha.HookTextBuffer(fSection.Disassembled, plocha.UndoList, plocha.RedoList);
 
-  GotoEntrypointButton.Enabled:=fSection.HasEntryPoint;
-  Plocha.PopupMenu:=CodePopupMenu;
+  GotoEntrypointButton.Enabled:= fSection.HasEntryPoint;
+  GotoAddressButton.Enabled:= (fSection.CodeSize <> 0);
+  FollowButton.Enabled:= false;
+  ReturnButton.Enabled:= false;
+  LineDataLabel.Caption:='1';
 
-    // temporary
-    // count disassembled code size
-//    showmessage('Disassembled code size: ' + IntToStr(CountCodeSize) + '         Functions count: ' + IntToStr(CountFunctions));
-//    showmessage('Bytes per function: ' + IntToStr(CountCodeSize div CountFunctions));
-    // end temporary
-
+  plocha.CaretY:= 1;
+  plocha.PopupMenu:= CodePopupMenu;
 end;
 
 
-
-procedure ChangeToUnSignedDataClick(Sender: TObject);
-begin
-    ;;
-end;
-
-function TCodeTabFrame.NewLinesCount(Options:TDataChangeOptions; Address, Index: cardinal):integer;
-var DataTypeSize: byte;
-    i:cardinal;
-begin
-  DataTypeSize:=DataTypeSizes[Options.datatype];
-  case Options.option of
-    dcItems: result:=Min(Options.value,(fSection.MemSize - Address) div DataTypeSize);
-    dcBytes: result:=Min(Options.value+Address,fSection.MemSize) div DataTypeSize; //dcBytes: result:= Options.value shr Options.datatype
-    dcMaxAddress: result:=(Options.value - Address) div DataTypeSize;
-    dcEndSection: result:=(fSection.MemSize - Address) div  DataTypeSize;
-    dcCode: begin
-      i:=Index;
-      for i:=Index to plocha.Lines.Count do begin
-        if (GetLineType(plocha.lines[i]) <> ltInstruction) then continue;
-        if plocha.lines[i][34] <> UpCase(plocha.lines[i][34]) then continue;
-        result:=(GetLineAddress(plocha.lines[i]) - Address) div DataTypeSize;
-        break;
-      end;
-    end;
-  end;
-end;
-
-procedure TCodeTabFrame.ChangeToData(Options: TDataChangeOptions);
-var i,j,itemsize,count,address,Index:cardinal;
-    data: Int64;
-    TryStr,line,byteChar:string;
-    NewLines: TStrings;
-    temp8:byte;
-    data8: shortint;
-    data16: smallint;
-    data32: integer;
-    data64: Int64;
-    floatdata32: single;
-    floatdata64: double;
-    floatdata80: extended;
-    znamienko: string;
-begin
-  itemsize:=DataTypeSizes[Options.datatype];
-  Index:=plocha.CaretY-1;
-  while GetLineType(plocha.lines[Index]) <> ltInstruction do inc(Index);
-  address:=GetLineAddress(plocha.Lines.Strings[Index]);
-  count:=NewLinesCount(Options,address,Index);
-  if count = 0 then exit;
-
-  for i:=address to address+count*itemsize-1 do
-    fSection.DisassemblerMap[i]:=byte(fSection.DisassemblerMap[i] and (maxByte-dfInstruction-dfPart));
-
-  fSection.CodeStream.Position:=address;
-  NewLines:=TStringList.Create;
-  NewLines.Capacity:=count;
-{$R-}
-  case Options.signed of
-    false:
-      case Options.datatype of
-        dtByte,dtWord,dtDword,dtQword: begin
-          for i:=0 to count-1 do begin
-            line:='';
-            data:=0;
-            fSection.CodeStream.Read(data,itemSize);
-            for j:=0 to itemsize-1 do line:=line + IntToHex(fSection.CodeArray[Address+i*itemsize+j],2);
-            line:=IntToHex(address+i*itemsize,8)+' '+ line;
-            for j:=length(line)+1 to 33 do line:=line+' ';
-            case Options.datatype of
-              dtByte: begin
-                        if (byte(data)=$00) or (byte(data)=$0A) or (byte(data)=$0D) then byteChar:=''
-                        else byteChar:=Chr(byte(data));
-                        line:=line + 'byte 0x' + IntToHex(data,2)+' '''+byteChar+'''';
-                      end;
-              dtWord: line:=line + 'word 0x' + IntToHex(data,4);
-              dtDword: line:=line + 'dword 0x' + IntToHex(data,8);
-              dtQword: line:=line + 'qword 0x' + IntToHex(data,16);
-            end;
-            NewLines.Add(line);
-          end;
-        end;
-        dtSingle: begin
-          for i:=0 to count-1 do begin
-            fSection.CodeStream.Read(floatdata32,4);
-            line:='';
-            for j:=0 to 3 do line:=line + IntToHex(fSection.CodeArray[Address+i*4+j],2);
-            line:=IntToHex(address+i*4,8)+' '+ line;
-            for j:=length(line)+1 to 33 do line:=line+' ';
-            if MyIsNan(floatdata32) then TryStr:='NAN' else TryStr:=FirstCommaToPoint(FloatToStrF(floatdata32,ffGeneral,7,4));
-            NewLines.Add(line + 'single ' +TryStr);
-          end;
-        end;
-        dtDouble: begin
-          for i:=0 to count-1 do begin
-            fSection.CodeStream.Read(floatdata64,8);
-            line:='';
-            for j:=0 to 7 do line:=line + IntToHex(fSection.CodeArray[Address+i*8+j],2);
-            line:=IntToHex(address+i*8,8)+' '+ line;
-            for j:=length(line)+1 to 33 do line:=line+' ';
-            if MyIsNan(floatdata64) then TryStr:='NAN' else TryStr:=FirstCommaToPoint(FloatToStrF(floatdata64,ffGeneral,15,4));
-            NewLines.Add(line + 'double ' + TryStr);
-          end;
-        end;
-        dtDoubleEx: begin
-          for i:=0 to count-1 do begin
-            fSection.CodeStream.Read(floatdata80,10);
-            line:='';
-            for j:=0 to 9 do line:=line + IntToHex(fSection.CodeArray[Address+i*10+j],2);
-            line:=IntToHex(address+i*10,8)+' '+ line;
-            for j:=length(line)+1 to 33 do line:=line+' ';
-            TryStr:='extended ';
-            try
-              TryStr:=TryStr + FirstCommaToPoint(FloatToStr(floatdata80));
-            except
-              TryStr:='unsupported extended real number';
-            end;
-            NewLines.Add(line + TryStr);
-          end;
-        end;
-      end;
-
-    true: begin
-      case Options.datatype of
-        // BYTE
-        dtByte:
-          for i:=0 to count-1 do begin
-            line:='';
-            fSection.CodeStream.Read(data8,1);
-            temp8:=byte(data8);
-            if Abs(data8) <> data8 then begin
-              znamienko:='-';
-              data8:=Abs(Data8);
-            end
-            else znamienko:='';
-            for j:=0 to 0 do line:=line + IntToHex(fSection.CodeArray[Address+i+j],2);
-            line:=IntToHex(address+i,8)+' '+ line;
-            for j:=length(line)+1 to 33 do line:=line+' ';
-            if (temp8=$00) or (temp8=$0A) or (temp8=$0D) then byteChar:=''
-            else byteChar:=Chr(temp8);
-            line:=line + 'byte ' + znamienko + '0x'+IntToHex(data8,2)+' '''+byteChar+'''';
-            NewLines.Add(line);
-          end;
-         // WORD
-        dtWord:
-          for i:=0 to count-1 do begin
-            fSection.CodeStream.Read(data16,2);
-            if Abs(data16) <> data16 then begin
-              znamienko:='-';
-              data16:=Abs(data16);
-            end
-            else znamienko:='';
-            line:='';
-            for j:=0 to 1 do line:=line + IntToHex(fSection.CodeArray[Address+i*2+j],2);
-            line:=IntToHex(address+i*2,8)+' '+ line;
-            for j:=length(line)+1 to 33 do line:=line+' ';
-            NewLines.Add(line + 'word ' + znamienko +'0x'+ IntToHex(data16,4));
-          end;
-          // DWORD
-        dtDword:
-          for i:=0 to count-1 do begin
-            fSection.CodeStream.Read(data32,4);
-            if Abs(data32) <> data32 then begin
-              znamienko:='-';
-              data32:=Abs(data32);
-            end
-            else znamienko:='';
-            line:='';
-            for j:=0 to 3 do line:=line + IntToHex(fSection.CodeArray[Address+i*4+j],2);
-            line:=IntToHex(address+i*4,8)+' '+ line;
-            for j:=length(line)+1 to 33 do line:=line+' ';
-            NewLines.Add(line + 'dword ' + znamienko +'0x'+ IntToHex(data32,8));
-          end;
-          // QWORD
-        dtQword:
-          for i:=0 to count-1 do begin
-            fSection.CodeStream.Read(data64,8);
-            if Abs(data64) <> data64 then begin
-              znamienko:='-';
-              data64:=Abs(data64);
-            end
-            else znamienko:='';
-            line:='';
-            for j:=0 to 7 do line:=line + IntToHex(fSection.CodeArray[Address+i*8+j],2);
-            line:=IntToHex(address+i*8,8)+' '+ line;
-            for j:=length(line)+1 to 33 do line:=line+' ';
-            NewLines.Add(line + 'qword ' + znamienko +'0x'+ IntToHex(data64,16));
-          end;
-      end;
-  end;end;
-{$IFDEF RangeChecking}
-  {$R+}
-{$ENDIF}
-  ReplaceLines(NewLines,Index,itemsize*count,address);
-end;
-
-
-procedure TCodeTabFrame.ChangeToStringData(Options: TDataChangeOptions);
-var i,index,address:cardinal;
-    line:string;
-    WLine: WideString;
-    StrLength8: byte;
-    StrLength16: word;
-    NewLines: TStrings;
-    Bytes: cardinal;
-    sign: string;
-    Char16: WideChar;
-begin
-// zistime index riadku s adresou
-  index:=plocha.CaretY-1;
-  while GetLineType(plocha.lines[index]) <> ltInstruction do inc(index);
-// adresa tohto riadku
-  address:=GetLineAddress(plocha.Lines.Strings[index]);
-
-  fSection.CodeStream.Position:=address;
-  NewLines:=TStringList.Create;
-  Bytes:=0; StrLength8:=0; StrLength16:=0;
-    case Options.datatype of
-      dtPascalStr: begin
-        fSection.CodeStream.Read(StrLength8,1);
-        SetLength(line,StrLength8);
-        fSection.CodeStream.Read(line[1],StrLength8);
-        wLine:=line;
-        sign:='p';
-        Bytes:=Strlength8+1;
-      end;
-      dtCStr: begin
-        ReadStringFromStream(fSection.CodeStream,fSection.CodeStream.Position,line);
-        StrLength8:=Length(line);
-        wLine:=line;
-        sign:='c';
-        Bytes:=Strlength8+1;
-      end;
-      dtPascalUniCodeStr: begin
-        fSection.CodeStream.Read(StrLength16,2);
-        SetLength(WLine,StrLength16);
-        fSection.CodeStream.Read(Wline[1],StrLength16*2);
-        sign:='pu';
-        Bytes:=Strlength16+2;
-      end;
-      dtCUniCodeStr: begin //nedokoncene
-        StrLength8:=0;
-        WLine:='';
-        fSection.CodeStream.Read(Char16,2);
-        while Char16 = #0 do begin
-          inc(StrLength8);
-          WLine:=WLine+Char16;
-          fSection.CodeStream.Read(Char16,2);
-        end;
-        sign:='cu';
-        Bytes:=Strlength8*2+2;
-      end;
-    end;
-//  inc(Bytes,Strlength+1);
-  NewLines.Add(IntToHex(address,8) + ' bytes: '+IntToHex(Bytes,8)+'(hex)'+'    '+sign+'string '''+ wLine + '''');
-  for i:=address to address+Bytes-1 do fSection.DisassemblerMap[i]:=byte(fSection.DisassemblerMap[i] and (maxByte-dfInstruction-dfPart));
-  ReplaceLines(NewLines,index,bytes,address);
-end;
-
-procedure TCodeTabFrame.Disassemble(Options: TDisassembleFormOptions);
-var index: cardinal;
-    Opt: TDisassembleOptions;
-begin
-// zistime index riadku s adresou
-  index:=plocha.CaretY-1;
-  while GetLineType(plocha.lines[index]) <> ltInstruction do inc(index);
-// adresa tohto riadku
-  Opt.address:=GetLineAddress(plocha.Lines.Strings[index]);
-  Opt.typ:=doSize;
-  case Options.option of
-    dcItems:  Opt.size:=Options.value;
-    dcBytes: begin Opt.size:=Options.value; Opt.typ:=doCount; end;
-    dcMaxAddress: Opt.size:= Max(Opt.address - Options.value,0);
-    dcCode: Opt.size:= fSection.CodeSize;
-    dcNormal: Opt.size:=fSection.CodeSize-Opt.address;
-  end;
-  Opt.bit32:= Options.bit32;
-  fSection.DisassemblePart(Opt);
-  GotoPosition(GetPosition(Opt.address), soBeginning);
-///  fSection.Ctrls.ProgressFunction(0,0,'');
-end;
-
-procedure TCodeTabFrame.ReplaceLines(NewLines: TStrings; index: Cardinal; bytes: cardinal; address:cardinal);
-var
-  NewStrings: TStrings;
-  i,j: cardinal;
-  nlIndex: cardinal; // NewLines index
-  lastaddress,
-  lastbytes: cardinal;
-  nonInstruction: boolean;
-  startIndex: cardinal;
-  curaddress: cardinal;
-  byteChar: string;
-begin
-// Jednoduche zistenie kolko riadkov nahradime, bezadresne riadky sa vyhodia
-  startIndex:=index;
-  curaddress:=address;
-  while address+bytes > curaddress do begin
-    if GetLineType(plocha.Lines[index]) = ltInstruction then begin
-      inc(curaddress,GetLineBytes(plocha.Lines[index]));
-    end;
-    inc(index);
-  end;
-
-
-
-{
-  NewStrings:=TStringList.Create;
-  repeat
-    inc(j); inc(i);
-    NewStrings.Add(NewLines[j]);
-  until GetLineType(NewLines[j]) = ltInstruction;
-  na:=GetLineBytes(NewLines[j]);
-
-  while
-
-  nestaddress
-
-}
-// Stale je to chybne, asi by to chcelo cele prepisat
-{
-  startIndex:=index;
-  lastaddress:=address;
-  nlIndex:=0;
-// Pridame pomocny riadok
-  NewLines.Add(IntToHex(GetLineAddress(NewLines[NewLines.Count-1])+GetLineBytes(NewLines[NewLines.Count-1]),8));
-  repeat
-    case GetLineType(plocha.Lines[index]) of
-      ltInstruction: begin
-        lastaddress:=GetLineAddress(plocha.Lines[index]);
-        lastbytes:= GetLineBytes(plocha.Lines[index]);
-        if lastaddress < address + bytes then begin
-          inc(index);
-          continue;
-        end
-         else break;
-      end;
-      ltJumpRef: begin
-        nonInstruction:=true;
-      end;
-      ltCallRef: begin
-        nonInstruction:=true;
-      end;
-      ltImportRef: begin
-        nonInstruction:=true;
-      end;
-      ltExportRef: begin
-        nonInstruction:=true;
-      end;
-      ltEntryPointRef: begin
-        nonInstruction:=true;
-      end;
-      ltComment: nonInstruction:=true;
-      ltEmpty: begin
-        nonInstruction:=true;
-      end;
-    end;
-    if nonInstruction then begin
-//      inc(NonInstrCount);
-      repeat
-        if GetLineType(NewLines[nlIndex])=ltInstruction then
-          if lastAddress + lastBytes <= GetLineAddress(NewLines[nlIndex]) then begin
-            NewLines.Insert(nlIndex,plocha.Lines[index]);
-            inc(nlIndex);
-            break;
-          end;
-        inc(nlIndex);
-      until false;
-
-    end;
-    inc(index);
-    nonInstruction:=false;
-  until false;
-
-// Odstranime pomocny riadok
-  NewLines.Delete(NewLines.Count-1);
-}
-
-// Konverzia zvysnych bytov na datovy typ "byte"
-  for i:=1 to curaddress - (address + bytes) do begin
-    if (fSection.codearray[address+bytes+i-1]=$00) or (fSection.codearray[address+bytes+i-1]=$0A) or (fSection.codearray[address+bytes+i-1]=$0D)
-      then  byteChar:=''
-    else byteChar:=Chr(fSection.codearray[address+bytes+i-1]);
-    NewLines.Add(IntToHex(address + bytes + i - 1,8)+
-      ' '+IntToHex(fSection.codearray[address+bytes+i-1],2)+
-      '                      '+
-      'byte 0x'+IntToHex(fSection.codearray[address+bytes+i-1],2)+
-      ' '''+ byteChar+'''');
-    fSection.DisassemblerMap[curaddress-i]:=0;
-  end;
-
-// novy sposob - testovaci:
-  (plocha.Lines as TSynEditStringList).DeleteLines(startindex,Index-startindex);
-  (plocha.Lines as TSynEditStringList).InsertStrings(startIndex,NewLines);
-  PlochaStatusChange(plocha,[scModified]);
-//  (fSection.ExecFile as TExecutableFile).Modified:=true;
-  exit;
-
-
-
-// Nahradenie a pridanie (alebo ubratie) riadkov v "plocha.lines" z "NewLines"
-  j:=0;
-  // Novych riadkov je menej ako nahradzovanych
-  if NewLines.Count < Index - startIndex then begin
-    plocha.Lines.BeginUpdate;
-    for i:=startIndex to startIndex + NewLines.Count - 1 do begin
-      plocha.Lines[i]:= NewLines[j];
-      inc(j);
-    end;
-    // Pomoze to ? (bude to tak rychlejsie ?)
-    for i:=startIndex + NewLines.Count to index-1 do begin
-      plocha.Lines[i]:= '';
-    end;
-    //
-    plocha.Lines.EndUpdate;
-    for i:=startIndex + NewLines.Count to index-1 do begin
-      plocha.Lines.Delete(startIndex+NewLines.Count);
-    end;
-  end
-  // Novych riadkov je rovno-viac ako nahradzovanych
-  else begin
-    plocha.Lines.BeginUpdate;
-    for i:=startIndex to index-1 do begin
-      plocha.Lines[i]:= NewLines[j];
-      inc(j);
-    end;
-    plocha.Lines.EndUpdate;
-    for i:=j to NewLines.Count-1 do begin
-      plocha.Lines.Insert(index,NewLines[i]);
-      inc(index);
-    end;
-  end;
-end;
-
-procedure TCodeTabFrame.InsertCommentClick(Sender: TObject);
-begin
-  if InsertCommentForm.ShowModal = mrOK then begin
-    plocha.Lines.Insert(plocha.CaretY - 1, '; ' + InsertCommentForm.InsertCommentEdit.Text);
-    PlochaStatusChange(self,[scCaretY]);
-  end;
-end;
-
-procedure TCodeTabFrame.InsertEmptyLineClick(Sender: TObject);
-begin
-  plocha.Lines.Insert(plocha.CaretY - 1, '');
-  PlochaStatusChange(self, [scCaretY, scModified]);
-end;
-
-procedure TCodeTabFrame.RemoveLineClick(Sender: TObject);
-begin
-  plocha.Lines.Delete(plocha.CaretY - 1);
-  PlochaStatusChange(self,[scCaretY,scModified]);
-end;
-
-procedure TCodeTabFrame.DisassembleClick(Sender: TObject);
-begin
-  ;;;
-end;
-
-procedure TCodeTabFrame.PlochaMouseDown(Sender: TObject;
-  Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
-begin
-  plocha.CaretXY:=TBufferCoord(plocha.PixelsToRowColumn(X,Y));
-end;
-
-procedure TCodeTabFrame.GotoBookmarkClick(Sender: TObject);
-begin
-  Plocha.GotoBookMark((Sender as TMenuItem).MenuIndex);
-end;
-
-procedure TCodeTabFrame.ToggleBookMarkClick(Sender: TObject);
-var X,Y,BookNum: integer;
-begin
-  BookNum:=(Sender as TMenuItem).MenuIndex;
-  plocha.GetBookMark(BookNum,X,Y);
-  if plocha.CaretY = Y then begin
-    plocha.ClearBookMark(BookNum);
-//    MainForm.ToggleBookmarks.Items[BookNum].Checked:=true;
-//    MainForm.GotoBookmarks.Items[BookNum].Checked:=true;
-    (Sender as TMenuItem).Checked:=false;
-    CodePopupMenu.Items[1].Items[BookNum].Checked:=false;
-  end
-  else begin
-    Plocha.SetBookMark(BookNum,plocha.CaretX,plocha.CaretY);
-//    MainForm.ToggleBookmarks.Items[BookNum].Checked:=true;
-//    MainForm.GotoBookmarks.Items[BookNum].Checked:=true;
-    (Sender as TMenuItem).Checked:=true;
-    CodePopupMenu.Items[1].Items[BookNum].Checked:=true;
-  end;
-end;
-
-procedure TCodeTabFrame.CodePopupMenuPopup(Sender: TObject);
-begin
-  if GetLineType(plocha.Lines.Strings[plocha.CaretY]) = ltComment then begin
-    CodePopupMenu.Items[4].Enabled:=true;
-//    MainForm.RemoveComment.Enabled:=true;
-  end
-  else begin
-    CodePopupMenu.Items[4].Enabled:=false;
-//    MainForm.RemoveComment.Enabled:=false;
-  end;
-end;
 
 destructor TCodeTabFrame.Destroy;
 begin
   plocha.Free;
-  GotoEntrypointButton.Free;
-  GotoAddressButton.Free;
-  FollowButton.Free;
-  ReturnButton.Free;
-{
-  BytesPerInstructionLabel.Free;
-  BytesPerInstructionDataLabel.Free;
-  InstructionCountLabel.Free;
-  InstructionCountDataLabel.Free;
-}
-  LineLabel.Free;
-  LineDataLabel.Free;
-  Bevel1.Free;
-  Bevel2.Free;
-
+  JumpStack.Free;
   inherited;
 end;
 
-procedure TCodeTabFrame.GotoEntrypointButtonClick(Sender: TObject);     // Premiestnenie na Entrypoint
+
+
+procedure TCodeTabFrame.PlochaMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 begin
-  GotoPosition(GetPosition(fSection.EntryPointAddress + fSection.MemOffset)-2, soBeginning);
-  plocha.SetFocus;
-end;
-
-procedure TCodeTabFrame.GotoAddressButtonClick(Sender: TObject);    // Premiestnenie na zadanu adresu
-begin
-  GotoAddressForm.GotoAddressEdit.Text:='';
-  GotoAddressForm.MaxAddress:= fSection.MaxAddress;
-  if GotoAddressForm.ShowModal = mrOK then
-    GotoPosition(Getposition(GotoAddressForm.address), soBeginning);
-  plocha.SetFocus;
-end;
-
-
-
-function TCodeTabFrame.GetPosition(Address: cardinal): cardinal;      // Ziskanie pozicie v disasm z adresy
-begin
-  result:= fSection.GetPosition(Address);
+  plocha.CaretXY:= TBufferCoord(plocha.PixelsToRowColumn(X,Y));
 end;
 
 
 
 procedure TCodeTabFrame.PlochaStatusChange(Sender: TObject; Changes: TSynStatusChanges);
-var adresa:cardinal;
+var
+  LineType: TLineType;
 begin
   if scCaretY in Changes then begin
-    FollowButton.Enabled:=false;
-//    MainForm.RemoveComment.Enabled:=false;
-    RemoveLineMenuItem.Enabled:=false;
-    case GetLineType(Plocha.Lines.Strings[plocha.CaretY - 1]) of
-      ltInstruction: begin
-        if GetTargetAddress(Plocha.Lines.Strings[plocha.CaretY - 1], adresa) then begin
-          if (adresa >= fSection.MemOffset) and (adresa <= fSection.MaxAddress) then begin // osetrenie jumpov za koniec sekcie
-            FollowButton.Enabled:=true;
-            JumpPosition:=GetPosition(adresa);
-          end;
+    LineType:= GetLineType(Plocha.Lines.Strings[plocha.CaretY - 1]);
+
+    if LineType in [ltComment, ltEmpty] then begin
+      MainForm.RemoveLine.Enabled:= true;
+      RemoveLineMenuItem.Enabled:= true;
+      FollowButton.Enabled:= false;
+    end
+    else begin
+      MainForm.RemoveLine.Enabled:= false;
+      RemoveLineMenuItem.Enabled:= false;
+
+      case LineType of
+        ltJumpRef, ltCallRef, ltLoopRef: begin
+          fTargetAddress:= StrToInt64('$' + Copy(Plocha.Lines.Strings[plocha.CaretY - 1], 13, 8));
+          FollowButton.Enabled:= true;
         end;
-      end;
-      ltComment: begin
-//        MainForm.RemoveComment.Enabled:=true;
-        RemoveLineMenuItem.Enabled:=true;
-      end;
-      ltEmpty: begin
-//        MainForm.RemoveComment.Enabled:=true;
-        RemoveLineMenuItem.Enabled:=true;
-      end;
-      ltJumpRef, ltCallRef, ltLoopRef: begin
-        FollowButton.Enabled:=true;
-        JumpPosition:=GetPosition(StrToInt64('$'+Copy(Plocha.Lines.Strings[plocha.CaretY - 1],13,8)));
+        ltInstruction:
+          if GetTargetAddress(Plocha.Lines.Strings[plocha.CaretY - 1], fTargetAddress) then
+            FollowButton.Enabled:= (fTargetAddress >= fSection.MemOffset) and (fTargetAddress <= fSection.MaxAddress)
+          else
+            FollowButton.Enabled:= false;
+        else
+          FollowButton.Enabled:= false;
       end;
     end;
-    LineDataLabel.Caption:=IntToStr(plocha.CaretY ); 
+
+    LineDataLabel.Caption:= IntToStr(plocha.CaretY);
   end;
-  if scModified in Changes then begin
-    fSection.LinesCount:=Plocha.Lines.Count;
-  end;
-end;
-
-//=============================================================================
-//=============================================================================
-
-
-procedure TCodeTabFrame.Init;
-begin
-  plocha.CaretY:= 1;
-  //pozn. nasledujuca operacia pouziva takmer vsetok cas po disassemblovani, ked je progressbar na 100%
-//  Plocha.Lines:=fSection.Disassembled;           // -> skopirovanie obsahu,
-//  fSection.Disassembled.Free;                    //
-//  fSection.Disassembled:=Plocha.Lines;
-
-//  if fSection.Statistics.Instructions > 0 then BytesPerInstructionDataLabel.Caption:=FloatToStrf(fSection.Statistics.InstructionBytes/fSection.Statistics.Instructions,ffGeneral,5,7)
-//  else BytesPerInstructionDataLabel.Caption:='0';
-//  InstructionCountDataLabel.Caption:=IntToStr(fSection.Statistics.Instructions);
-  LineDataLabel.Caption:='1';
-  FollowButton.Enabled:=false;
-  ReturnButton.Enabled:=false;
-  if fSection.MemSize = 0 then GotoAddressButton.Enabled:=false;
 end;
 
 
@@ -897,234 +273,527 @@ begin
   case Origin of
     soBeginning: Position:= Nezaporne(Offset);
     soCurrent: Position:= Nezaporne(Plocha.CaretY - 1 + Offset);
+    else
+      raise Exception.Create('This should not happened.');
   end;
-  Plocha.CaretY:= Min(Position, fSection.LinesCount-1) + 1;
+  Plocha.CaretY:= Min(Position, plocha.Lines.Count - 1) + 1;
   Plocha.TopLine:= Plocha.CaretY;
 end;
 
 
 
-procedure TCodeTabFrame.FollowButtonClick(Sender: TObject);         // Nasledovanie skoku
-var Ukaz:^cardinal;
+procedure TCodeTabFrame.FindString(SearchText: string; Options: TFindOptions);
+var
+  LineIndex: Integer;
+  IsFound: boolean;
+  UpCasedSearchText: string;
+
 begin
-  new(ukaz);
-  ukaz^:= Plocha.CaretY - 1;
-  Zasobnik.Push(ukaz);
-  ReturnButton.Enabled:=true;
-  GotoPosition(JumpPosition, soBeginning);
+  LineIndex:= Plocha.CaretY - 1;
+  IsFound:= false;
+  UpCasedSearchText:= UpperCase(SearchText);
+
+  // Forward search
+  if frDown in Options then begin
+    Inc(LineIndex);
+    // Case sensitive search
+    if frMatchCase in Options then
+      while (not IsFound) and (LineIndex < plocha.Lines.Count) do
+        if Pos(SearchText, plocha.Lines[LineIndex]) <> 0 then
+          IsFound:= true
+        else
+          Inc(LineIndex)
+    // Case insensitive search
+    else
+      while (not IsFound) and (LineIndex < plocha.Lines.Count) do
+        if Pos(UpCasedSearchText, UpperCase(plocha.Lines[LineIndex])) <> 0 then
+          IsFound:= true
+        else
+          Inc(LineIndex);
+  end
+
+  // Backward search
+  else begin
+    Dec(LineIndex);
+    // Case sensitive search
+    if frMatchCase in Options then
+      while (not IsFound) and (LineIndex >= 0) do
+        if Pos(SearchText, plocha.Lines[LineIndex]) <> 0 then
+          IsFound:= true
+        else
+          Dec(LineIndex)
+    // Case insensitive search
+    else
+      while (not IsFound) and (LineIndex >= 0) do
+        if Pos(UpCasedSearchText, UpperCase(plocha.Lines[LineIndex])) <> 0 then
+          IsFound:= true
+        else
+          Dec(LineIndex);
+  end;
+
+  if IsFound then
+    GotoPosition(LineIndex, soBeginning)
+  else
+    MessageDlg('"' + SearchText + '" ' + NotFoundStr, mtWarning, [mbOK], 0);
+end;
+
+
+
+function TCodeTabFrame.GetPosition(Address: cardinal): cardinal; // Get position in Disassembled from Address (memory address)
+begin
+  result:= fSection.GetPosition(Address);
+end;
+
+
+
+procedure TCodeTabFrame.Translate(Translator: TTatraDASLanguages);
+var
+  i: integer;
+begin
+  (Parent as TTabSheet).Caption:= Translator.TranslateControl('Code','Caption') + IntToStr(fSection.CodeSectionIndex);
+// Popisky tlacidiel
+  GotoEntrypointButton.Caption:=Translator.TranslateControl('Code','EntrypointButton');
+  GotoAddressButton.Caption:=Translator.TranslateControl('Code','GotoAddressButton');
+  FollowButton.Caption:=Translator.TranslateControl('Code','FollowButton');
+  ReturnButton.Caption:=Translator.TranslateControl('Code','ReturnButton');
+
+// Popisky Label
+{
+  BytesperInstructionLabel.Caption:=Translator.TranslateControl('Code','BytesperInstructionLabel');
+  InstructionCountLabel.Caption:=Translator.TranslateControl('Code','InstructionCountLabel');
+}
+  LineLabel.Caption:=Translator.TranslateControl('Code','LineLabel');
+
+// Hinty
+  GotoEntrypointButton.Hint:=Translator.TranslateControl('Code','GotoEntrypointButtonHint');
+  GotoAddressButton.Hint:=Translator.TranslateControl('Code','GotoAddressButtonHint');
+  FollowButton.Hint:=Translator.TranslateControl('Code','FollowButtonHint');
+  ReturnButton.Hint:=Translator.TranslateControl('Code','ReturnButtonHint');
+
+// Popup menu
+  CodePopupMenu.Items[0].Caption:=Translator.TranslateControl('Code','ToggleBookmark');
+  CodePopupMenu.Items[0].Hint:=Translator.TranslateControl('Code','MainToggleBookmarkHint');
+  for i:=0 to 9 do begin
+    CodePopupMenu.Items[0].Items[i].Caption:=Translator.TranslateControl('Code','Bookmark')+' '+IntToStr(i);
+    CodePopupMenu.Items[0].Items[i].Hint:=Translator.TranslateControl('Code','ToggleBookmarkHint')+' '+IntToStr(i);
+  end;
+  CodePopupMenu.Items[1].Caption:=Translator.TranslateControl('Code','GotoBookmark');
+  CodePopupMenu.Items[1].Hint:=Translator.TranslateControl('Code','MainGotoBookmarkHint');
+  for i:=0 to 9 do begin
+    CodePopupMenu.Items[1].Items[i].Caption:=Translator.TranslateControl('Code','Bookmark')+' '+IntToStr(i);
+    CodePopupMenu.Items[1].Items[i].Hint:=Translator.TranslateControl('Code','GotoBookmarkHint')+' '+IntToStr(i);
+  end;
+  CodePopupMenu.Items[3].Caption:=Translator.TranslateControl('Code','ChangeToUnsigned');
+  CodePopupMenu.Items[3].Items[0].Caption:=Translator.TranslateControl('Code','ChangeByte');
+  CodePopupMenu.Items[3].Items[1].Caption:=Translator.TranslateControl('Code','ChangeWord');
+  CodePopupMenu.Items[3].Items[2].Caption:=Translator.TranslateControl('Code','ChangeDword');
+  CodePopupMenu.Items[3].Items[3].Caption:=Translator.TranslateControl('Code','ChangeQword');
+  CodePopupMenu.Items[4].Caption:=Translator.TranslateControl('Code','ChangeToSigned');
+  CodePopupMenu.Items[4].Items[0].Caption:=Translator.TranslateControl('Code','ChangeByte');
+  CodePopupMenu.Items[4].Items[1].Caption:=Translator.TranslateControl('Code','ChangeWord');
+  CodePopupMenu.Items[4].Items[2].Caption:=Translator.TranslateControl('Code','ChangeDword');
+  CodePopupMenu.Items[4].Items[3].Caption:=Translator.TranslateControl('Code','ChangeQword');
+  CodePopupMenu.Items[5].Caption:=Translator.TranslateControl('Code','ChangeToFloat');
+  CodePopupMenu.Items[5].Items[0].Caption:=Translator.TranslateControl('Code','ChangeSingle');
+  CodePopupMenu.Items[5].Items[1].Caption:=Translator.TranslateControl('Code','ChangeDouble');
+  CodePopupMenu.Items[5].Items[2].Caption:=Translator.TranslateControl('Code','ChangeExtended');
+  CodePopupMenu.Items[6].Caption:=Translator.TranslateControl('Code','ChangeToString');
+  CodePopupMenu.Items[6].Items[0].Caption:=Translator.TranslateControl('Code','ChangePascal');
+  CodePopupMenu.Items[6].Items[1].Caption:=Translator.TranslateControl('Code','ChangeC');
+  CodePopupMenu.Items[7].Caption:=Translator.TranslateControl('Code','AdvancedDataChange');
+  CodePopupMenu.Items[9].Caption:=Translator.TranslateControl('Code','Disassemble');
+  CodePopupMenu.Items[10].Caption:=Translator.TranslateControl('Code','AdvancedDisassemble');
+  CodePopupMenu.Items[12].Caption:=Translator.TranslateControl('Code','Insert');
+  CodePopupMenu.Items[12].Items[0].Caption:=Translator.TranslateControl('Code','InsertComment');
+  CodePopupMenu.Items[12].Items[1].Caption:=Translator.TranslateControl('Code','InsertEmpty');
+  CodePopupMenu.Items[13].Caption:=Translator.TranslateControl('Code','Remove');
+
+end;
+
+
+// Navigation events
+
+
+procedure TCodeTabFrame.GotoEntrypointButtonClick(Sender: TObject);     // Premiestnenie na Entrypoint
+begin
+  GotoPosition(fSection.GetPosition(fSection.EntryPointAddress + fSection.MemOffset)-2, soBeginning);
+  plocha.SetFocus;
+end;
+
+
+
+procedure TCodeTabFrame.GotoAddressButtonClick(Sender: TObject);    // Premiestnenie na zadanu adresu
+begin
+  GotoAddressForm.GotoAddressEdit.Text:= '';
+  GotoAddressForm.MaxAddress:= fSection.MaxAddress;
+  if GotoAddressForm.ShowModal = mrOK then
+    GotoPosition(fSection.GetPosition(GotoAddressForm.Address), soBeginning);
+  plocha.SetFocus;
+end;
+
+
+
+procedure TCodeTabFrame.FollowButtonClick(Sender: TObject);         // Nasledovanie skoku
+var
+  SourceAddressPtr: ^cardinal;
+begin
+  New(SourceAddressPtr);
+  SourceAddressPtr^:= GetLineAddress(plocha.Lines[fSection.FindAddressableLine(Plocha.CaretY - 1)]);
+  JumpStack.Push(SourceAddressPtr);
+  ReturnButton.Enabled:= true;
+  GotoPosition(fSection.GetPosition(fTargetAddress), soBeginning);
   plocha.SetFocus;
 end;
 
 
 
 procedure TCodeTabFrame.ReturnButtonClick(Sender: TObject);         // Navrat skoku
-var ukaz:^cardinal;
+var
+  SourceAddressPtr: ^cardinal;
 begin
-  ukaz:=Zasobnik.Pop;
-  if Zasobnik.Count=0 then ReturnButton.Enabled:=false;
-  GotoPosition(ukaz^, soBeginning);
+  SourceAddressPtr:= JumpStack.Pop;
+  if JumpStack.Count = 0 then
+    ReturnButton.Enabled:= false;
+  GotoPosition(fSection.GetPosition(SourceAddressPtr^), soBeginning);
   plocha.SetFocus;
 end;
 
 
 
-// treba prerobit na pouzitie bez fSection.Disassembled ale s Plocha.Lines
-procedure TCodeTabFrame.FindString(SearchText:string; options: TFindOptions);
-var i:cardinal;
-    nasiel:boolean;
-    UpSearchText:string;
-//    sso:TSynSearchOptions;
+procedure TCodeTabFrame.GotoBookmarkClick(Sender: TObject);
 begin
-{
-  if frMatchCase in Options then sso:=[ssoMatchCase];
-  if plocha.SearchReplace(SearchText,'',[ssoMatchCase])=0 then begin
-    MessageDlg('"'+SearchText+'" '+NotFound,mtWarning,[mbOK],0);
-//    plocha.SelEnd:=0;
-  end;
-  exit;
-}
-  i:=Plocha.CaretY - 1;
-  nasiel:=false;
-  UpSearchText:=UpperCase(SearchText);
-  if frdown in Options then begin
-    if frMatchCase in Options then
-      repeat
-        inc(i);
-        if pos(searchtext,fSection.Disassembled[i])<>0 then nasiel:=true
-      until (nasiel or (i>(fSection.LinesCount-2)))
-    else
-      repeat
-        inc(i);
-        if pos(upsearchtext,UpperCase(fSection.Disassembled[i]))<>0 then nasiel:=true
-      until (nasiel or (i>(fSection.LinesCount-2)));
+  Plocha.GotoBookMark((Sender as TMenuItem).MenuIndex);
+end;
+
+
+
+procedure TCodeTabFrame.ToggleBookMarkClick(Sender: TObject);
+var
+  Column, Row: integer;
+  BookmarkIndex: integer;
+begin
+  BookmarkIndex:= (Sender as TMenuItem).MenuIndex;
+  plocha.GetBookMark(BookmarkIndex, Column, Row);
+
+  // Clear bookmark
+  if plocha.CaretY = Row then begin
+    plocha.ClearBookMark(BookmarkIndex);
+    MainForm.ToggleBookmarks.Items[BookmarkIndex].Checked:= false;
+    MainForm.GotoBookmarks.Items[BookmarkIndex].Checked:= false;
+    CodePopupMenu.Items[0].Items[BookmarkIndex].Checked:=false;
+    CodePopupMenu.Items[1].Items[BookmarkIndex].Checked:=false;
   end
+
+  // Set bookmark
   else begin
-    if frMatchCase in Options then
-      repeat
-        dec(i);
-        if pos(searchtext,fSection.Disassembled[i])<>0 then nasiel:=true;
-      until (nasiel or (i=0))
-    else
-      repeat
-        dec(i);
-        if pos(Upsearchtext,UpperCase(fSection.Disassembled[i]))<>0 then nasiel:=true;
-      until (nasiel or (i=0));
+    Plocha.SetBookMark(BookmarkIndex, plocha.CaretX, plocha.CaretY);
+    MainForm.ToggleBookmarks.Items[BookmarkIndex].Checked:=true;
+    MainForm.GotoBookmarks.Items[BookmarkIndex].Checked:=true;
+    CodePopupMenu.Items[0].Items[BookmarkIndex].Checked:=true;
+    CodePopupMenu.Items[1].Items[BookmarkIndex].Checked:=true;
   end;
-  if nasiel then GotoPosition(i, soBeginning) else MessageDlg('"'+searchtext+'" '+NotFoundStr, mtWarning,[mbOK],0);
-
 end;
 
 
-procedure TCodeTabFrame.Translate(ini:TMemINIFile; error:string);
-var i:integer;
-begin
-  (Parent as TTabSheet).Caption:=ini.ReadString('Code','Caption',error) + IntToStr(fSection.CodeSectionIndex);
-// Popisky tlacidiel
-  GotoEntrypointButton.Caption:=ini.ReadString('Code','GotoEntrypointButton',error);
-  GotoAddressButton.Caption:=ini.ReadString('Code','GotoAddressButton',error);
-  FollowButton.Caption:=ini.ReadString('Code','FollowButton',error);
-  ReturnButton.Caption:=ini.ReadString('Code','ReturnButton',error);
+// Editing events
 
-// Popisky Label
-{
-  BytesperInstructionLabel.Caption:=ini.ReadString('Code','BytesperInstructionLabel',error);
-  InstructionCountLabel.Caption:=ini.ReadString('Code','InstructionCountLabel',error);
-}
-  LineLabel.Caption:=ini.ReadString('Code','LineLabel',error);
 
-// Hinty
-  GotoEntrypointButton.Hint:=ini.ReadString('Code','GotoEntrypointButtonHint',error);
-  GotoAddressButton.Hint:=ini.ReadString('Code','GotoAddressButtonHint',error);
-  FollowButton.Hint:=ini.ReadString('Code','FollowButtonHint',error);
-  ReturnButton.Hint:=ini.ReadString('Code','ReturnButtonHint',error);
-
-// Popup menu
-  CodePopupMenu.Items[0].Caption:=ini.ReadString('Code','ToggleBookmark',error);
-  CodePopupMenu.Items[0].Hint:=ini.ReadString('Code','MainToggleBookmarkHint',error);
-  for i:=0 to 9 do begin
-    CodePopupMenu.Items[0].Items[i].Caption:=ini.ReadString('Code','Bookmark',error)+' '+IntToStr(i);
-    CodePopupMenu.Items[0].Items[i].Hint:=ini.ReadString('Code','ToggleBookmarkHint',error)+' '+IntToStr(i);
-  end;
-  CodePopupMenu.Items[1].Caption:=ini.ReadString('Code','GotoBookmark',error);
-  CodePopupMenu.Items[1].Hint:=ini.ReadString('Code','MainGotoBookmarkHint',error);
-  for i:=0 to 9 do begin
-    CodePopupMenu.Items[1].Items[i].Caption:=ini.ReadString('Code','Bookmark',error)+' '+IntToStr(i);
-    CodePopupMenu.Items[1].Items[i].Hint:=ini.ReadString('Code','GotoBookmarkHint',error)+' '+IntToStr(i);
-  end;
-  CodePopupMenu.Items[3].Caption:=ini.ReadString('Code','ChangeToUnsigned',error);
-  CodePopupMenu.Items[3].Items[0].Caption:=ini.ReadString('Code','ChangeByte',error);
-  CodePopupMenu.Items[3].Items[1].Caption:=ini.ReadString('Code','ChangeWord',error);
-  CodePopupMenu.Items[3].Items[2].Caption:=ini.ReadString('Code','ChangeDword',error);
-  CodePopupMenu.Items[3].Items[3].Caption:=ini.ReadString('Code','ChangeQword',error);
-  CodePopupMenu.Items[4].Caption:=ini.ReadString('Code','ChangeToSigned',error);
-  CodePopupMenu.Items[4].Items[0].Caption:=ini.ReadString('Code','ChangeByte',error);
-  CodePopupMenu.Items[4].Items[1].Caption:=ini.ReadString('Code','ChangeWord',error);
-  CodePopupMenu.Items[4].Items[2].Caption:=ini.ReadString('Code','ChangeDword',error);
-  CodePopupMenu.Items[4].Items[3].Caption:=ini.ReadString('Code','ChangeQword',error);
-  CodePopupMenu.Items[5].Caption:=ini.ReadString('Code','ChangeToFloat',error);
-  CodePopupMenu.Items[5].Items[0].Caption:=ini.ReadString('Code','ChangeSingle',error);
-  CodePopupMenu.Items[5].Items[1].Caption:=ini.ReadString('Code','ChangeDouble',error);
-  CodePopupMenu.Items[5].Items[2].Caption:=ini.ReadString('Code','ChangeExtended',error);
-  CodePopupMenu.Items[6].Caption:=ini.ReadString('Code','ChangeToString',error);
-  CodePopupMenu.Items[6].Items[0].Caption:=ini.ReadString('Code','ChangePascal',error);
-  CodePopupMenu.Items[6].Items[1].Caption:=ini.ReadString('Code','ChangeC',error);
-  CodePopupMenu.Items[7].Caption:=ini.ReadString('Code','AdvancedDataChange',error);
-  CodePopupMenu.Items[9].Caption:=ini.ReadString('Code','Disassemble',error);
-  CodePopupMenu.Items[10].Caption:=ini.ReadString('Code','AdvancedDisassemble',error);
-  CodePopupMenu.Items[12].Caption:=ini.ReadString('Code','Insert',error);
-  CodePopupMenu.Items[12].Items[0].Caption:=ini.ReadString('Code','InsertComment',error);
-  CodePopupMenu.Items[12].Items[1].Caption:=ini.ReadString('Code','InsertEmpty',error);
-  CodePopupMenu.Items[13].Caption:=ini.ReadString('Code','Remove',error);
-
-end;
-
-procedure TCodeTabFrame.ChangeUDataClick(Sender: TObject);
+procedure TCodeTabFrame.ChangeToUnsignedDataClick(Sender: TObject);
 var Options: TDataChangeOptions;
 begin
-  Options.signed:=false;
-  Options.option:=dcItems;
-  Options.value:=1;
+  Options.Signed:= false;
+  Options.Option:= dcItems;
+  Options.Value:= 1;
   case (Sender as TMenuItem).MenuIndex of
-    0: Options.datatype:=dtByte;
-    1: Options.datatype:=dtWord;
-    2: Options.datatype:=dtDword;
-    3: Options.datatype:=dtQword;
+    0: Options.DataType:= dtByte;
+    1: Options.DataType:= dtWord;
+    2: Options.DataType:= dtDword;
+    3: Options.DataType:= dtQword;
   end;
   ChangeToData(Options);
 end;
 
-procedure TCodeTabFrame.ChangeSDataClick(Sender: TObject);
+
+
+procedure TCodeTabFrame.ChangeToSignedDataClick(Sender: TObject);
 var Options: TDataChangeOptions;
 begin
-  Options.signed:=true;
-  Options.option:=dcItems;
-  Options.value:=1;
+  Options.Signed:= true;
+  Options.Option:= dcItems;
+  Options.Value:= 1;
   case (Sender as TMenuItem).MenuIndex of
-    0: Options.datatype:=dtByte;
-    1: Options.datatype:=dtWord;
-    2: Options.datatype:=dtDword;
-    3: Options.datatype:=dtQword;
+    0: Options.DataType:= dtByte;
+    1: Options.DataType:= dtWord;
+    2: Options.DataType:= dtDword;
+    3: Options.DataType:= dtQword;
   end;
   ChangeToData(Options);
 end;
 
-procedure TCodeTabFrame.ChangeFDataClick(Sender: TObject);
+
+
+procedure TCodeTabFrame.ChangeToFloatDataClick(Sender: TObject);
 var Options: TDataChangeOptions;
 begin
-  Options.signed:=false;
-  Options.option:=dcItems;
-  Options.value:=1;
+  Options.Signed:= false;
+  Options.Option:= dcItems;
+  Options.Value:= 1;
   case (Sender as TMenuItem).MenuIndex of
-    0: Options.datatype:=dtSingle;
-    1: Options.datatype:=dtDouble;
-    2: Options.datatype:=dtDoubleEx;
+    0: Options.DataType:= dtSingle;
+    1: Options.DataType:= dtDouble;
+    2: Options.DataType:= dtDoubleEx;
   end;
   ChangeToData(Options);
 end;
 
-procedure TCodeTabFrame.ChangeStringClick(Sender: TObject);
+
+
+procedure TCodeTabFrame.ChangeToStringDataClick(Sender: TObject);
 var Options: TDataChangeOptions;
 begin
-  Options.signed:=false;
-  Options.option:=dcItems;
-  Options.value:=1;
+  Options.Signed:= false;
+  Options.Option:= dcItems;
+  Options.Value:= 1;
   case (Sender as TMenuItem).MenuIndex of
-    0: Options.datatype:=dtPascalStr;
-    1: Options.datatype:=dtCStr;
-    2: Options.datatype:=dtPascalUniCodeStr;
-    3: Options.datatype:=dtCUniCodeStr;
+    0: Options.DataType:= dtPascalStr;
+    1: Options.DataType:= dtCStr;
+    2: Options.DataType:= dtPascalUniCodeStr;
+    3: Options.DataType:= dtCUniCodeStr;
   end;
   ChangeToStringData(Options);
 end;
 
-procedure TCodeTabFrame.NormalDisassembleClick(Sender: TObject);
-var Options: TDisassembleFormOptions;
-begin
-  Options.option:=dcCode;
-  Options.value:=0;
-  Options.bit32:=fSection.Bit32;
-  Disassemble(Options);
-end;
 
-procedure TCodeTabFrame.AdvancedChanging1Click(Sender: TObject);
+
+procedure TCodeTabFrame.AdvancedChangeToDataClick(Sender: TObject);
 begin
   AdvancedChangingToDataForm.MaxAddressHexEdit.MaxValue:=fSection.MaxAddress;
   if AdvancedChangingToDataForm.ShowModal=mrOK then ChangeToData(AdvancedChangingToDataForm.Options);
 end;
 
-procedure TCodeTabFrame.AdvancedDisassemble1Click(Sender: TObject);
+
+
+procedure TCodeTabFrame.NormalDisassembleClick(Sender: TObject);
+var Options: TDisassembleFormOptions;
 begin
-  AdvancedDisassembleForm.MaxAddressBinHexEdit.MaxValue:=fSection.MaxAddress; // podobne by sa zislo nastavit MaxValue aj pre ostatne edity
-  if AdvancedDisassembleForm.ShowModal=mrOK then Disassemble(AdvancedDisassembleForm.Options);
+  Options.Option:= dtNormal;
+  Options.Value:= 0;
+  Options.Bit32:= fSection.Bit32;
+  Options.Recursive:= true;
+
+  Disassemble(Options);
 end;
 
 
 
-{$R *.dfm}
+procedure TCodeTabFrame.AdvancedDisassembleClick(Sender: TObject);
+begin
+  AdvancedDisassembleForm.MaxAddressBinHexEdit.MaxValue:=fSection.MaxAddress; // podobne by sa zislo nastavit MaxValue aj pre ostatne edity
+  if AdvancedDisassembleForm.ShowModal = mrOK then
+    Disassemble(AdvancedDisassembleForm.Options);
+end;
+
+
+
+procedure TCodeTabFrame.InsertCommentClick(Sender: TObject);
+begin
+  if InsertCommentForm.ShowModal = mrOK then begin
+    plocha.Lines.Insert(plocha.CaretY - 1, '; ' + InsertCommentForm.InsertCommentEdit.Text);
+    PlochaStatusChange(self,[scCaretY]);
+  end;
+end;
+
+
+
+procedure TCodeTabFrame.InsertEmptyLineClick(Sender: TObject);
+begin
+  plocha.Lines.Insert(plocha.CaretY - 1, '');
+  PlochaStatusChange(self, [scCaretY, scModified]);
+end;
+
+
+
+procedure TCodeTabFrame.RemoveLineClick(Sender: TObject);
+begin
+  plocha.Lines.Delete(plocha.CaretY - 1);
+  PlochaStatusChange(self, [scCaretY, scModified]);
+end;
+
+
+// Conversion routines
+
+
+procedure TCodeTabFrame.ChangeToData(Options: TDataChangeOptions);
+
+  function GetNewLinesCount(Options: TDataChangeOptions; Address, Index: cardinal):integer;
+  var
+    DataTypeSize: byte;
+    i: cardinal;
+  begin
+    DataTypeSize:= DataTypeSizes[Options.datatype];
+    case Options.Option of
+      dcItems: result:= Min(Options.value,(fSection.MemSize - Address) div DataTypeSize);
+      dcBytes: result:= Min(Options.value+Address,fSection.MemSize) div DataTypeSize; //dcBytes: result:= Options.value shr Options.datatype
+      dcMaxAddress: result:= (Options.value - Address) div DataTypeSize;
+      dcEndSection: result:= (fSection.MemSize - Address) div DataTypeSize;
+      dcCode: begin
+        i:=Index;
+        for i:=Index to plocha.Lines.Count do begin
+          if (GetLineType(plocha.lines[i]) <> ltInstruction) then continue;
+          if plocha.lines[i][34] <> UpCase(plocha.lines[i][34]) then continue;
+          result:=(GetLineAddress(plocha.lines[i]) - Address) div DataTypeSize;
+          break;
+        end;
+      end;
+    end;
+  end;
+
+var
+  i: integer;
+  ItemSize: cardinal;
+  LineIndex: cardinal;
+  StartAddress: cardinal; // memory address
+  StartOffset: cardinal;
+  NewLinesCount: cardinal;
+
+begin
+  ItemSize:= DataTypeSizes[Options.datatype];
+
+  LineIndex:= fSection.FindAddressableLine(plocha.CaretY - 1);
+  if LineIndex = $FFFFFFFF then
+    Exit;
+
+  StartAddress:= GetLineAddress(plocha.Lines.Strings[LineIndex]);
+  StartOffset:= StartAddress - fSection.MemOffset;
+  NewLinesCount:= GetNewLinesCount(Options, StartOffset, LineIndex);
+  if NewLinesCount = 0 then
+    Exit;
+
+  // Clear relevant parts of DisassemblerMap
+  for i:= StartOffset to StartOffset + NewLinesCount*ItemSize - 1 do
+    fSection.DisassemblerMap[i]:= byte(fSection.DisassemblerMap[i] and (maxByte - dfInstruction - dfPart));
+
+  fSection.ReplaceLines(
+    LineIndex,
+    StartOffset,
+    ItemSize*NewLinesCount,
+    fSection.GetLineFromDataEx(Addr(fSection.CodeArray[StartOffset]), Options.DataType, Options.Signed, StartAddress, NewLinesCount)
+  );
+end;
+
+
+
+procedure TCodeTabFrame.ChangeToStringData(Options: TDataChangeOptions);
+var
+  i:cardinal;
+  Line: string;
+  StrLength8: byte;
+  StrLength16: word;
+  NewLines: TStrings;
+  Sign: string;
+  TheWideChar: WideChar;
+  LineIndex: cardinal;
+  StartAddress, StartOffset: cardinal;
+  TheString: WideString;
+  StringSize: cardinal;
+begin
+  // zistime index riadku s adresou
+  LineIndex:= fSection.FindAddressableLine(plocha.CaretY - 1);
+  if LineIndex = $FFFFFFFF then
+    Exit;
+
+  StartAddress:= GetLineAddress(plocha.Lines.Strings[LineIndex]);
+  StartOffset:= StartAddress - fSection.MemOffset;
+
+  fSection.CodeStream.Position:= StartOffset;
+  StrLength8:= 0;
+  StrLength16:= 0;
+  case Options.DataType of
+    dtPascalStr: begin
+      Sign:='p';
+      fSection.CodeStream.Read(StrLength8, 1);
+      SetLength(line, StrLength8);
+      fSection.CodeStream.Read(line[1], StrLength8);
+      TheString:= line;
+      StringSize:= Strlength8 + 1;
+    end;
+
+    dtCStr: begin
+      Sign:= 'c';
+      ReadStringFromStream(fSection.CodeStream, fSection.CodeStream.Position, line);
+      TheString:=line;
+      StringSize:=Length(TheString) + 1;
+    end;
+
+    dtPascalUniCodeStr: begin
+      Sign:= 'pu';
+      fSection.CodeStream.Read(StrLength16, 2);
+      SetLength(TheString, StrLength16);
+      fSection.CodeStream.Read(TheString[1], StrLength16*2);
+      StringSize:=Strlength16 + 2;
+    end;
+
+    // napr. cmd.exe
+    dtCUniCodeStr: begin
+      Sign:='cu';
+      fSection.CodeStream.Read(TheWideChar, 2);
+      while TheWideChar <> #0 do begin
+        Inc(StrLength16);
+        TheString:= TheString + TheWideChar;
+        fSection.CodeStream.Read(TheWideChar, 2);
+      end;
+      StringSize:= Strlength16*2 + 2;
+    end;
+    else
+      Raise Exception.Create('ChangeToStringData error');
+  end;
+
+  NewLines:= TStringList.Create;
+  NewLines.Add(IntToHex(StartAddress, 8) + ' bytes: ' + IntToHex(StringSize, 8) + '(hex)' + '    ' + Sign + 'string ''' + TheString + '''');
+  for i:= StartOffset to StartOffset + StringSize - 1 do
+    fSection.DisassemblerMap[i]:=byte(fSection.DisassemblerMap[i] and (maxByte - dfInstruction - dfPart));
+
+  fSection.ReplaceLines(LineIndex, StartOffset, StringSize, NewLines);
+end;
+
+
+
+procedure TCodeTabFrame.Disassemble(Options: TDisassembleFormOptions);
+var
+  LineIndex: cardinal;
+  DisOptions: TDisassembleOptions;
+begin
+  // Find line containing an instruction
+  LineIndex:= plocha.CaretY - 1;
+  while GetLineType(plocha.Lines[LineIndex]) <> ltInstruction do begin
+    Inc(LineIndex);
+    if LineIndex = plocha.Lines.Count then
+      Exit;
+  end;
+
+  // Set options for disassembling
+  DisOptions.Address:= GetLineAddress(plocha.Lines[LineIndex]);
+  case Options.Option of
+    dtBytes: DisOptions.Size:= Options.Value;
+    dtMaxAddress: DisOptions.Size:= Max(DisOptions.Address - Options.Value, 0);
+    dtNormal: DisOptions.Size:=  fSection.CodeSize - (DisOptions.Address - fSection.MemOffset);
+  end;
+  DisOptions.Bit32:= Options.Bit32;
+  DisOptions.Recursive:= Options.Recursive;
+
+  // Disassemble and move carret to the first instruction
+  fSection.DisassemblePart(DisOptions);
+  GotoPosition(fSection.GetPosition(DisOptions.Address), soBeginning);
+end;
+
 
 function TCodeTabFrame.GetSection: TSection;
 begin
   result:=fSection;
 end;
+
+
+{$R *.dfm}
+
 
 end.

@@ -21,7 +21,6 @@ type
     destructor Destroy(); override;
     function SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
     function LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; override;
-//    function GetAdvancedInfo: TExecFileAdvancedInfo; override;
   end;
 
   
@@ -34,7 +33,6 @@ var
 begin
   inherited;
   fExecFormat:= ffCOM;
-  fFormatDescription:='COM (16-bit)';
 
   CodeSection:= TCodeSection.Create(InputFile, false, 0, InputFile.Size, $100, InputFile.Size, 0, 'N/A', self);
   CodeSection.EntryPointAddress:= 0;
@@ -63,13 +61,6 @@ begin
   inherited;
 end;
 
-
-{
-function TCOMFile.GetAdvancedInfo: TExecFileAdvancedInfo;
-begin
-
-end;
-}
 
 
 end.

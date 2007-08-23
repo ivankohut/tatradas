@@ -1,10 +1,10 @@
 object MainForm: TMainForm
-  Left = 357
-  Top = 165
+  Left = 454
+  Top = 107
   Width = 783
   Height = 722
   BorderIcons = [biSystemMenu, biMinimize]
-  Caption = 'TatraDAS disassembler 2.9.7'
+  Caption = 'TatraDAS disassembler 2.9.8'
   Color = clBtnFace
   Constraints.MinHeight = 450
   Constraints.MinWidth = 638
@@ -152,6 +152,7 @@ object MainForm: TMainForm
       end
       object Disassemble2: TMenuItem
         Caption = 'Disassemble'
+        ShortCut = 24644
         OnClick = Disassemble2Click
       end
       object AdvancedDisassemble: TMenuItem
@@ -218,10 +219,12 @@ object MainForm: TMainForm
         Caption = 'Change to string'
         object StringPascal: TMenuItem
           Caption = 'Pascal'
+          ShortCut = 24656
           OnClick = ChangeStringClick
         end
         object StringC: TMenuItem
           Caption = 'C'
+          ShortCut = 24643
           OnClick = ChangeStringClick
         end
         object StringPascalUniCode: TMenuItem
@@ -258,11 +261,11 @@ object MainForm: TMainForm
     object Search1: TMenuItem
       Caption = 'Search'
       Enabled = False
-      object Findtext1: TMenuItem
+      object FindText1: TMenuItem
         Caption = 'Find text'
         Hint = 'Vyh'#318'ad'#225'vanie slov v disassemblovanom s'#250'bore'
         ShortCut = 16454
-        OnClick = Findtext1Click
+        OnClick = FindText1Click
       end
       object Searchagain1: TMenuItem
         Caption = 'Search again'

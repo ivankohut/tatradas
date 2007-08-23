@@ -38,30 +38,46 @@ const HEX_CIFRY : set of char = ['0'..'9','A'..'F'];
 const CodeArrayReserve = 20;
       MaxCardinal = $FFFFFFFF;
 
+  MaxAddressLength = 8;
+  MaxParsedLength = 24;
+
+  TranslateErrorStr = 'TRANS ERROR';
+
+  // Exe format descriptions
+
+  fdCOM = 'COM (16-bit)';
+  fdMZ = 'MZ - DOS executable (16-bit)';
+  fdNE = 'NE - New Executable (16-bit)';
+  fdPE = 'PE - Portable Executable (32-bit)';
+  fdELF = 'ELF - Executable and Linkable Format';
+  fdCustom = 'Custom file format';
+
+
 type
 
   TTatraDASStringList = TSynEditStringList;
+
 
 
   TProgressFunction = Function(a,b: cardinal; c: string): boolean;
 
   TDataChangeType = (dcItems, dcBytes, dcMaxAddress, dcEndSection, dcCode, dcNormal);
 
-  TDisassembleType = TDataChangeType;
+  TDisassembleType = (dtBytes, dtMaxAddress, dtNormal);
 
   TDataChangeOptions = record
-    datatype: byte;
-    datatypesize: byte;
-    signed: boolean;
-    option: TDataChangeType;
-    value: cardinal;
+    DataType: byte;
+    DatatypeSize: byte;
+    Signed: boolean;
+    Option: TDataChangeType;
+    Value: cardinal;
   end;
 
   TDisassembleFormOptions = record
-    option: TDisassembleType;
-    value: cardinal;
-    bit32: boolean;
-    recursive: boolean;
+    Option: TDisassembleType;
+    Value: cardinal;
+    Bit32: boolean;
+    Recursive: boolean;
   end;
 
   TTatraDASOptions = record
@@ -115,6 +131,25 @@ type
   end;
 
 
+type
+
+  TProgressError = (errNone, errOpen, errUnknownFormat, errBadFormat, errDASNotFound, errBadProjectVersion, errSave, errCanceled, errUserTerminated);
+
+
+  TProgressData = record
+    Name: string;
+    Position: cardinal;
+    Maximum: cardinal;
+//    Terminate: boolean;
+    Finished: boolean;
+    ErrorStatus: TProgressError;
+    Result: Pointer;
+  end;
+
+const
+  MaxProgressNameLength = 25;
+
+
 const
   TatraDASVersion:cardinal=$00029700;
   TatraDASDate:cardinal=$23122004;
@@ -123,13 +158,10 @@ const
   TatraDASFullName:string='TatraDAS disassembler';
   TatraDASFullNameVersion:string='TatraDAS disassembler 2.9.8 alpha';
 
+
 var ProcessText: TProcessText;
 
-
-    ProgressPosition: cardinal;
-    ProgressMaximum: cardinal;
-    ProgressFinished: boolean;
-    ProgressName: string;
+    ProgressData: TProgressData;
 
     Modified: boolean; // stav otvoreneho zdisassemblovane suboru resp. projektu
 
@@ -142,7 +174,7 @@ function GetTargetAddress(s:string; var address:cardinal):boolean;
 
 function IntToSignedHex(Value: integer; Digits: Integer): string;
 
-function InsertStr(const Source:string; const Dest: string; index:integer):string;
+function InsertStr(const Source: string; const Dest: string; index:integer):string;
 function FirstCommaToPoint(AText: string):string;
 
 
@@ -154,6 +186,14 @@ function CarToHex(Value: cardinal; Digits: integer): string;
 
 function IsHexNumber(number: string): boolean;
 function IsNumber(number: string): boolean;
+
+function StringLeftPad(AString: string; Size: integer): string; overload;
+function StringLeftPad(AString: string; Size: integer; PadChar: char): string; overload;
+
+function StringRightPad(AString: string; Size: integer): string; overload;
+function StringRightPad(AString: string; Size: integer; PadChar: char): string; overload;
+
+
 
 {$IFDEF GUI_B}
 procedure SM(msg: string);
@@ -357,23 +397,30 @@ begin
   for i:=Length(AString) downto 1 do result:=result + AString[i];
 end;
 
+
 function CarToStr(value: cardinal): string;
 begin
+  result:= '';
   while value <> 0 do begin
-    result:=result + Chr(value mod 10);
-    value:=value div 10;
+    result:= result + Chr(value mod 10);
+    value:= value div 10;
   end;
-  result:=StringReverz(result);
+  result:= StringReverz(result);
 end;
+
+
 
 function CarToHex(Value: cardinal; Digits: integer): string;
 begin
+  result:= '';
   while value <> 0 do begin
     result:=result + IntToHex(value mod 16,1);
     value:=value div 16;
   end;
-  result:=StringReverz(result);
+  result:= StringReverz(result);
 end;
+
+
 
 function IsHexNumber(number: string): boolean;
 var i: integer;
@@ -431,6 +478,43 @@ begin
   Write(aLine,Length(aLine));
   Write(EndOfLine,1);
 end;
+
+
+
+function StringLeftPad(AString: string; Size: integer): string;
+begin
+  result:= StringLeftPad(AString, Size, ' ');
+end;
+
+
+
+function StringLeftPad(AString: string; Size: integer; PadChar: char): string;
+var
+  i: integer;
+begin
+  result:= AString;
+  for i:=1 to Size - Length(AString) do
+    result:= PadChar + result;
+end;
+
+
+
+function StringRightPad(AString: string; Size: integer): string;
+begin
+  result:= StringRightPad(AString, Size, ' ');
+end;
+
+
+
+function StringRightPad(AString: string; Size: integer; PadChar: char): string;
+var
+  i: integer;
+begin
+  result:= AString;
+  for i:=1 to Size - Length(AString) do
+    result:= result + PadChar;
+end;
+
 
 
 end.

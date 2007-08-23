@@ -238,7 +238,6 @@ begin
 
 
   EntryPoint:= header.e_entry;
-  fFormatDescription:='ELF - Executable and Linkable Format';
   fExecFormat:= ffELF;
 end;
 

@@ -1,6 +1,6 @@
 { TODO:
-  - vymysliet vhodny sposob prace s konstatnymi udajmi v ExecFile-och - format a description
   - zracionalizovat premenne ImportSection, ExportSection, ImportSectionIndex a ExportSectionIndex
+  - CodeSectionsCount - zapisovat do projektu ?
 }
 
 unit ExecFileUnit;
@@ -30,6 +30,7 @@ var
   OnExecFileCreateSection: TExecFileCreateSectionEvent;
 
 type
+
   TMZHeader = record
     Sign: word;               // "MZ"
     PageRemainder: word;      // FileSize mod PageSize <=> FileSize mod 512
@@ -39,7 +40,7 @@ type
     MinMem, MaxMem: word;
     reloSS: word;
     EXESP: word;
-    ChkSum: word;
+    CheckSum: word;
     EXEIP: word;
     reloCS: word;
     RelocTableOffset: word;
@@ -58,7 +59,6 @@ type
    protected
     fRegions: TRegions;
     fSections: TSections;
-    fFormatDescription: string;
     fExecFormat: TExecFileFormat;
     fCodeSectionsCount: integer;
 
@@ -70,12 +70,11 @@ type
     EntryPointOffset: cardinal;                              // adresa Entry Pointu v subore
     EntryPointCodeAddress: cardinal;                         // adresa Entry Pointu v kode
 
-
     constructor Create; overload; virtual;
-    constructor Create(InputFile: TStream; aFileName: TFileName); overload; virtual;      
+    constructor Create(InputFile: TStream; aFileName: TFileName); overload; virtual;
     destructor Destroy; override;
 
-    function Disassemble():boolean; virtual;
+    function Disassemble(): boolean; virtual;
 
     function SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; overload; virtual;
     function LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; virtual;
@@ -84,7 +83,6 @@ type
     property FullPath: TFileName read fFullPath;
     property FileSize: cardinal read fFileSize;
 
-    property FormatDescription: string read fFormatDescription;
     property ExeFormat: TExecFileFormat read fExecFormat;
     property Regions: TRegions read fRegions;
     property Sections: TSections read fSections;
@@ -95,10 +93,7 @@ type
   end;
 
 
-
 implementation
-
-
 
 
 //******************************************************************************
@@ -113,7 +108,7 @@ end;
 
 
 
-constructor TExecutableFile.Create(InputFile: TStream; aFileName:TFileName);
+constructor TExecutableFile.Create(InputFile: TStream; aFileName: TFileName);
 begin
   fFileSize:= InputFile.Size;
   fFullPath:= aFileName;
@@ -157,8 +152,6 @@ begin
             if Sections[j] is TCodeSection then (Sections[j] as TCodeSection).ClearDisassembled;
           Exit;
         end;
-        if Assigned(OnExecFileCreateSection) then
-          OnExecFileCreateSection(Sections[i]);
       end;
   fIsDisassembled:=true;
   result:=true;
@@ -183,6 +176,8 @@ begin
 
     StreamSectionCount:=Sections.Count;
     DHF.Write(StreamSectionCount, 4);
+    WriteLn(DAS, 'DisASsembled file, Original file: ' + FileName + '  ' + TatraDASFullNameVersion + ', Ivan Kohut (c) 2007');
+    Writeln(DAS);
     for SectionIndex:=0 to Sections.Count-1 do begin
       DHF.Write(Sections[SectionIndex].typ, sizeof(TSectionType));
       if not Sections[SectionIndex].SaveToFile(DHF, DAS, SaveOptions) then
@@ -191,12 +186,14 @@ begin
   end
 
   // Save disassembled code sections
-  else
+  else begin
+    WriteLn(DAS, 'DisASsembled file, Original file: ' + FileName + '  ' + TatraDASFullNameVersion + ', Ivan Kohut (c) 2007');
+    Writeln(DAS);
     for SectionIndex:=0 to Sections.Count-1 do
       if Sections[SectionIndex].typ = stCode then
         if not Sections[SectionIndex].SaveToFile(DHF, DAS, SaveOptions) then
           Exit;
-
+  end;
   result:=true;
 end;
 
@@ -219,7 +216,7 @@ begin
 
   DHF.Read(StreamSectionCount,4);                                     // Sections
   for i:=0 to StreamSectionCount-1 do begin
-    DHF.Read(SectionType,sizeOf(TSectionType));
+    DHF.Read(SectionType, sizeOf(TSectionType));
     case SectionType of
       stCode: begin
         Section:=TCodeSection.Create(self);
@@ -242,8 +239,6 @@ begin
 
     if not Section.LoadFromFile(DHF, DAS) then
       Exit;
-    if Assigned(OnExecFileCreateSection) then
-      OnExecFileCreateSection(Section);
     Sections.Add(Section);
   end;
   for i:=0 to Sections.Count-1 do begin
@@ -253,7 +248,6 @@ begin
     end;
   end;
   fIsDisassembled:=true;
-//  Status:=tsProject;
   result:=true;
 end;
 

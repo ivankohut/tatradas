@@ -1,9 +1,9 @@
 object AdvancedDisassembleForm: TAdvancedDisassembleForm
-  Left = 289
-  Top = 163
+  Left = 502
+  Top = 236
   BorderStyle = bsDialog
   Caption = 'Advanced disassemble'
-  ClientHeight = 278
+  ClientHeight = 245
   ClientWidth = 281
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -14,57 +14,49 @@ object AdvancedDisassembleForm: TAdvancedDisassembleForm
   OldCreateOrder = False
   Position = poScreenCenter
   OnCreate = FormCreate
+  OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13
   object OptionsGroupBox: TGroupBox
     Left = 8
     Top = 8
     Width = 265
-    Height = 161
+    Height = 121
     Caption = 'Options'
     TabOrder = 0
-    object ItemsRadioButton: TRadioButton
+    object BytesRadioButton: TRadioButton
       Left = 16
       Top = 24
       Width = 113
       Height = 17
-      Caption = 'Instructions count:'
+      Caption = 'Bytes count:'
       Checked = True
       TabOrder = 0
       TabStop = True
-      OnClick = ItemsRadioButtonClick
-    end
-    object BytesRadioButton: TRadioButton
-      Left = 16
-      Top = 56
-      Width = 113
-      Height = 17
-      Caption = 'Bytes count:'
-      TabOrder = 1
       OnClick = BytesRadioButtonClick
     end
     object MaxRadioButton: TRadioButton
       Left = 16
-      Top = 88
+      Top = 56
       Width = 113
       Height = 17
       Caption = 'Max address:'
-      TabOrder = 2
+      TabOrder = 1
       OnClick = MaxRadioButtonClick
     end
     object NormalRadioButton: TRadioButton
       Left = 16
-      Top = 120
+      Top = 88
       Width = 113
       Height = 17
       Caption = 'Normal'
-      TabOrder = 3
+      TabOrder = 2
       OnClick = NormalRadioButtonClick
     end
   end
   object OKButton: TButton
     Left = 114
-    Top = 242
+    Top = 210
     Width = 75
     Height = 25
     Caption = 'OK'
@@ -74,7 +66,7 @@ object AdvancedDisassembleForm: TAdvancedDisassembleForm
   end
   object CancelButton: TButton
     Left = 198
-    Top = 242
+    Top = 210
     Width = 75
     Height = 25
     Cancel = True
@@ -84,7 +76,7 @@ object AdvancedDisassembleForm: TAdvancedDisassembleForm
   end
   object Bit1632GroupBox: TGroupBox
     Left = 8
-    Top = 176
+    Top = 144
     Width = 265
     Height = 57
     Caption = '16/32 bit mode'
@@ -112,7 +104,7 @@ object AdvancedDisassembleForm: TAdvancedDisassembleForm
   end
   object RecursiveCheckBox: TCheckBox
     Left = 8
-    Top = 248
+    Top = 216
     Width = 97
     Height = 17
     Caption = 'Recursive'

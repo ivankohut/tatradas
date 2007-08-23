@@ -4,15 +4,20 @@ interface
 
 uses
 {$IFDEF MSWINDOWS}
-  Controls, Forms, Dialogs, 
+  Controls, Forms, Dialogs, StdCtrls,
 {$ENDIF}
 {$IFDEF LINUX}
   QControls, QForms, QStdCtrls,
 {$ENDIF}
-  SysUtils, Classes, INIFiles, StdCtrls;
+  SysUtils,
+  Classes,
+  INIFiles,
+
+  procmat,
+  TatraDASFormUnit;
 
 type
-  TInsertCommentForm = class(TForm)
+  TInsertCommentForm = class(TTatraDASForm)
     InsertCommentEdit: TEdit;
     InsertCommentLabel: TLabel;
     OKButton: TButton;
@@ -23,7 +28,7 @@ type
   private
     { Private declarations }
   public
-    procedure Translate(ini: TMemINIFile; error: string);
+    procedure Translate(ini: TMemINIFile); override;
   end;
 
 var
@@ -48,11 +53,11 @@ begin
   InsertCommentEdit.SetFocus;
 end;
 
-procedure TInsertCommentForm.Translate(ini: TMemINIFile; error: string);
+procedure TInsertCommentForm.Translate(ini: TMemINIFile);
 begin
-  Caption:=ini.ReadString('InsertCommentForm','Caption',error);
-  InsertCommentLabel.Caption:=ini.ReadString('InsertCommentForm','InsertCommentLabel',error);
-  CancelButton.Caption:=ini.ReadString('Common','CancelButton',error);
+  Caption:=ini.ReadString('InsertCommentForm','Caption',TranslateErrorStr);
+  InsertCommentLabel.Caption:=ini.ReadString('InsertCommentForm','InsertCommentLabel',TranslateErrorStr);
+  CancelButton.Caption:=ini.ReadString('Common','CancelButton',TranslateErrorStr);
 end;
 
 end.

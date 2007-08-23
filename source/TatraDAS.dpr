@@ -28,20 +28,20 @@ uses
     SynEdit,
   {$ENDIF}
 {$ENDIF}
-{$IFNDEF DELPHI}
-  Crt,
-{$ENDIF}
+  {$IFDEF FPC}
+  Crt, cthreads,
+  {$ENDIF}
   SysUtils,
+  Classes,
+  StrUtils,
   procmat in 'procmat.pas',
   VersionUnit in 'VersionUnit.pas',
   CallsAndJumpsTableUnit in 'CallsAndJumpsTableUnit.pas',
   disassembler in 'disassembler.pas',
   ExecFileManagerUnit in 'ExecFileManagerUnit.pas',
-  RegionsUnit in 'RegionsUnit.pas',
   ExecFileUnit in 'ExecFileUnit.pas',
   SectionUnit in 'SectionUnit.pas',
-
-//  UProgressThread in 'UProgressThread.pas',
+  ProgressThreads in 'ProgressThreads.pas',
 
 {$IFDEF MSWINDOWS}
 
@@ -76,14 +76,12 @@ uses
   ExportTabFrameUnit in 'frames\ExportTabFrameUnit.pas',
   ResourceTabFrameUnit in 'frames\ResourceTabFrameUnit.pas',
 
-
 {$ELSE}
   TatraDAS_SynEditStringList in 'misc\TatraDAS_SynEditStringList.pas',
 {$ENDIF}
 
 // Executable formats' units
 
-  CustomFileUnit in 'exefiles\CustomFileUnit.pas',
   MZFileUnit in 'exefiles\MZFileUnit.pas',
   COMFileUnit in 'exefiles\COMFileUnit.pas',
   LEFileUnit in 'exefiles\LEFileUnit.pas',
@@ -91,6 +89,7 @@ uses
   NEFileUnit in 'exefiles\NEFileUnit.pas',
   PEFileUnit in 'exefiles\PEFileUnit.pas',
   ELFFileUnit in 'exefiles\ELFFileUnit.pas',
+  CustomFileUnit in 'exefiles\CustomFileUnit.pas',
 
 // Sections' units
   CodeSectionUnit in 'sections\CodeSectionUnit.pas',
@@ -134,14 +133,14 @@ uses
   ResourceSectionUnit in 'sections/ResourceSectionUnit.pas',
 
 // Executable formats' units
-  CustomFileUnit in 'exefiles/CustomFileUnit.pas',
   MZFileUnit in 'exefiles/MZFileUnit.pas',
   COMFileUnit in 'exefiles/COMFileUnit.pas',
   LEFileUnit in 'exefiles/LEFileUnit.pas',
   LXFileUnit in 'exefiles/LXFileUnit.pas',
   NEFileUnit in 'exefiles/NEFileUnit.pas',
   PEFileUnit in 'exefiles/PEFileUnit.pas',
-  ELFFileUnit in 'exefiles/ELFFileUnit.pas';
+  ELFFileUnit in 'exefiles/ELFFileUnit.pas',
+  CustomFileUnit in 'exefiles/CustomFileUnit.pas';
 
 {$ENDIF}
 
@@ -170,85 +169,77 @@ end.
 
 {$IFDEF CONSOLE}
 
-const
-  ProjectName = 'TatraDAS';
-var
-  NotSupported: string='This version of '+projectname+' does not support this file format!';
-  NotFound: string=' not found!';
-  DisassemblyingText: string='Disassemblying...';         // ProgressLabel texty
-  IdentifyingJumpsText: string='Identifying jumps and calls...';
-  PreparingOutputText: string='Preparing output...';      //
-
-  ExecFileManager: TExecFileManager;
-  ExecFile: TExecutableFile;
-//  CurrentLanguage: string;
-  ProgressPosition: cardinal;
-
-
-
-procedure CloseProgram;
-begin
-  if ExecFile <> nil then
-    ExecFile.Destroy;
-end;
-
-
-
 procedure ShowUsage;
 begin
-  writeln('usage:');
-  Writeln;
-  writeln('tdascon input_file_name output_file_name');
-  writeln;
-  writeln('  input_file_name       name of file you want to disassemble');
-  writeln('  output_file_name      name of file you want to send disassembled output to');
-//  writeln('language = language which TatraDAS will use to comunicate with you');
-  writeln;
-//  writeln('Note: If you type invalid language, this parameter will be ignored');
+  WriteLn('usage:');
+  WriteLn;
+  WriteLn('tdascon input_file_name output_file_name');
+  WriteLn;
+  WriteLn('  input_file_name       name of file you want to disassemble');
+  WriteLn('  output_file_name      name of file you want to send disassembled output to');
+  WriteLn;
 end;
 
 
 
-function ProgressFunction(a, b: cardinal; c: string): boolean;
+procedure ExecuteProgress(AThread: TThread);
+var
+  ProgressCharsCount: integer;
+  CurrentProgress: string;
+  SavedXPosition: integer;
 begin
-  if a = 0 then begin
-    if c<>'' then begin
-      Writeln;
-      Write(c,':');
-    end;
-    ProgressPosition:=0;
-    result:=true;
-    exit;
-  end;
-{$IFNDEF DELPHI} // Delphi nepozna unit Crt
-  GotoXY(75,WhereY);
-//  Write((100*a) div b,'%');
-  Write(Round(100*a/b),'%');
+  ProgressData.Finished:= false;
+  ProgressData.ErrorStatus:= errNone;
+  ProgressData.Maximum:= 0;
+  ProgressData.Position:= 0;
+  ProgressData.Name:= '';
 
-  GotoXY(22+(50*a) div b,WhereY);
-{$ENDIF}
-  while (50*a) div b > ProgressPosition do begin
-    Inc(ProgressPosition);
-    Write('.');
+  ProgressCharsCount:= 0;
+  CurrentProgress:= '';
+  AThread.Resume;
+  while not ProgressData.Finished do begin
+    if ProgressData.Maximum <> 0 then begin
+      // Display progress name and reset progress shower after progress change
+      if CurrentProgress <> ProgressData.Name then begin
+        CurrentProgress:= ProgressData.Name;
+        ProgressCharsCount:= 0;
+        WriteLn;
+        Write(StringRightPad(ProgressData.Name + ':', MaxProgressNameLength + 1));
+      end;
+      // Show progress
+      while ProgressCharsCount < Round(20 * ProgressData.Position / ProgressData.Maximum) do begin
+        Write('.');
+        Inc(ProgressCharsCount);
+      end;
+       {$IFDEF FPC}
+       SavedXPosition:= WhereX;
+       GotoXY(MaxProgressNameLength + 2 + 20 + 1, WhereY);
+       Write(Round(100 * ProgressData.Position / ProgressData.Maximum), '%');
+       GotoXY(SavedXPosition, WhereY);
+      {$ENDIF}
+    end;
+    Sleep(100);
   end;
-  result:=true;
+  AThread.WaitFor;
+  WriteLn;
 end;
 
 
 
 procedure RunDisassembler(InputFileName, OutputFileName:string);
 var
+  ExecFileManager: TExecFileManager;
+  ExecFile: TExecutableFile;
   SaveOptions: TSaveOptions;
-  ProgressFunctionVar: TProgressFunction;
-begin
-  ProgressFunctionVar:=ProgressFunction;
 
+begin
   ExecFileManager:= TExecFileManager.Create;
 
-  ExecFile:=ExecFileManager.CreateNewExecFile(ExpandFilename(InputFileName));
-  if ExecFileManager.Error <> errNone then begin
-    case ExecFileManager.Error of
-      errOpen: Writeln('Unable to open file '''+ExpandFilename(InputFileName)+'''.');
+  // Create ExecFile
+  ExecFile:= ExecFileManager.CreateNewExecFile(ExpandFilename(InputFileName));
+  if ProgressData.ErrorStatus <> errNone then begin
+    case ProgressData.ErrorStatus of
+      errOpen: Writeln('Unable to open file ''' + ExpandFilename(InputFileName) + '''.');
       else
         Writeln('Unknown error !');
     end;
@@ -256,65 +247,52 @@ begin
     Exit;
   end;
 
+  // Disassemble it
+  Writeln;
+  Writeln('CS_n <=> Code Section No.');
+  Writeln;
+  ExecuteProgress(TDisassembleThread.Create(ExecFile));
 
-  WriteLn('Format: ', Integer(ExecFile.ExeFormat));
-  if ExecFile.ExeFormat <> ffPE then begin
-    writeln('Skipping non-PE file.');
-    ExecFile.Free;
-    ExecFileManager.Free;
-    halt;
-  end;
+  // Save result to file
+  SaveOptions:= [soDisassembly];
+  ExecuteProgress(TSaveThread.Create(ExecFileManager, ExecFile, OutputFileName, SaveOptions));
+  RenameFile(ChangeFileExt(OutputFileName, '.das'), OutputFileName);
+  WriteLn;
+  WriteLn;
+  WriteLn('Disassemblying finished, result saved to ''', OutputFileName, '''.');
 
-  Writeln;
-  Writeln('CSn = Code Section No.');
-  Writeln;
-  ExecFile.Disassemble;
-  SaveOptions:=[soDisassembly];
-  ExecFileManager.SaveExecFileToFile(ExecFile, OutputFileName, SaveOptions);
-  RenameFile(ChangeFileExt(OutputFileName,'.das'), OutputFileName);
-  Writeln;
-  Writeln;
-  Writeln('Disassemblying finished, output saved to ''',OutputFileName,'''.');
   ExecFile.Free;
   ExecFileManager.Free;
 end;
 
 
-
-procedure TranslateConsole(language:string);
-var f:integer;
-begin
-  f:=fileopen('lan'+language+'.ini', fmsharedenynone);
-  if f<>0 then fileclose(f);
-end;
-
-
-
-var ProgramIdentification:string;
-    i:integer;
+var
+  ProgramIdentification: string;
 
 begin
-  ProcessText.Disassemblying:='Disassemblying CS';
-  ProcessText.Indentifying:='Identifying jumps and calls...';
-  ProcessText.PreparingOutput:='Preparing output CS';
-  ProcessText.LoadingDAS:='Loading DAS file - Code Section #';
-  ProcessText.LoadingDHF:='Loading DHF file - Code Section #';
-  ProcessText.SavingDAS:='Saving DAS file CS';// - Code Section #';
-  ProcessText.SavingDHF:='Saving DHF file CS';// - Code Section #';
+  ProcessText.Disassemblying:= 'Disassemblying CS_';
+//  ProcessText.Indentifying:= 'Identifying jumps and calls...';
+  ProcessText.PreparingOutput:='Preparing output CS_';
+  ProcessText.LoadingDAS:= 'Loading DAS file - Code Section #';
+  ProcessText.LoadingDHF:= 'Loading DHF file - Code Section #';
+  ProcessText.SavingDAS:= 'Saving DAS file CS_';// - Code Section #';
+  ProcessText.SavingDHF:= 'Saving DHF file CS_';// - Code Section #';
 
-  ProgramIdentification:=TatraDASFullNameVersion + ' - console version,   Ivan Kohut  2007';
-  Writeln(ProgramIdentification);
-  for i:=0 to length(ProgramIdentification)-1 do Write('-');
+
+  ProgramIdentification:= TatraDASFullNameVersion + ' - console version, Ivan Kohut (c) 2007';
+  WriteLn(ProgramIdentification);
+  WriteLn(DupeString('-', Length(ProgramIdentification)));
   Writeln;
+
   case ParamCount of
     2: begin
-//        TranslateConsole(ParamStr(2));
-        RunDisassembler(ParamStr(1),ParamStr(2));
+         RunDisassembler(ParamStr(1), ParamStr(2));
        end;
     else begin
       ShowUsage;
     end;
   end;
+
 end.
 
 {$ENDIF}

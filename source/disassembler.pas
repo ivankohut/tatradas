@@ -101,11 +101,10 @@ type
      end;
 
   TDisassembleOptions = record
-    address: cardinal;
-    size: cardinal;
-    bit32: boolean;
-    recursive: boolean;
-    typ: (doSize,doCount);
+    Address: cardinal; // starting address
+    Size: cardinal; // size of code to disassemble
+    Bit32: boolean;
+    Recursive: boolean;
   end;
 
 
@@ -140,7 +139,7 @@ type
        DisasmMap: TByteDynamicArray;
        CodeSize: cardinal;
        fStatistics: TStatistics;
-
+       fBit32: boolean;
 //       pocetadries:cardinal;
        modrm:tmodrm;
        sib:TSib;
@@ -152,8 +151,8 @@ type
        AddressSize: TSize;
        genreg16:boolean;
        SegmentOverride: string;
-       counter: cardinal;
-       ProgressPosition: cardinal;
+//       counter: cardinal;
+//       ProgressPosition: cardinal;
        InstrAddress: cardinal;
     Vpc: Byte;                              // Pocet parametrov aktualnej instrukcie
        fMemOffset: cardinal;
@@ -172,7 +171,7 @@ type
 
        function ReadFourBytes:string;
 
-       function DisassembleBlock(start, finish: cardinal; bit32: boolean):boolean;
+       function DisassembleBlock(Start, Finish: cardinal):boolean;
 
        function GetDisassembledBlock(Index: integer): TDisassembledBlock;
        function GetBlockCount: integer;
@@ -183,11 +182,11 @@ type
        Disassembled: array of TDisassembledItem;  // Vystup disassemblovania
        Imported: array of cardinal;
 
-       constructor Create(SectionCode: TByteDynamicArray; var DisassemblerMap: TByteDynamicArray; MemOffset: cardinal);
+       constructor Create(SectionCode: TByteDynamicArray; var DisassemblerMap: TByteDynamicArray; MemOffset: cardinal; Bit32: boolean);
 
-       function DisassembleAll(bit32: boolean): boolean;
+       function DisassembleAll: boolean;
 
-       function Disassemble: boolean;
+       function Disassemble(Recursive: boolean): boolean;
 
 //       function DisassemblePart(Options: TDisassembleOptions): boolean;
 
@@ -2433,7 +2432,7 @@ begin
   b:=fpupole[(c mod 8)+1].pZ;
 end;
 
-constructor TDisassembler.Create(SectionCode: TByteDynamicArray; var DisassemblerMap: TByteDynamicArray; MemOffset: cardinal);
+constructor TDisassembler.Create(SectionCode: TByteDynamicArray; var DisassemblerMap: TByteDynamicArray; MemOffset: cardinal; Bit32: boolean);
 begin
   code:= SectionCode;
   CodeSize:=Length(code)-CodeArrayReserve;
@@ -2443,6 +2442,7 @@ begin
   CAJ:=TCallsAndJumps.Create(DisasmMap);
   fBlocks:= TDisassembledBlocks.Create;
   fMemOffset:= MemOffset;
+  fBit32:= Bit32;
 end;
 
 
@@ -2461,24 +2461,33 @@ end;
 
 
 
-function TDisassembler.Disassemble():boolean;
-var i: integer;
+function TDisassembler.Disassemble(Recursive: boolean): boolean;
+var
+  i: integer;
 begin
-  while CAJ.count > 0 do begin
-    for i:=0 to CAJ.Count-1 do
-      DisassembleBlock(CAJ[i].start,CAJ[i].finish,true); // treba odstranit posledny parameter
-    CAJ.Process(CodeSize);
-  end;
+  if Recursive then
+    while CAJ.count > 0 do begin
+      for i:=0 to CAJ.Count-1 do
+        DisassembleBlock(CAJ[i].start,CAJ[i].finish);
+      CAJ.Process(CodeSize);
+    end
+  else
+    DisassembleBlock(CAJ[0].start, CAJ[0].finish); 
+
   result:=true; // ???
 end;
 
 
-function TDisassembler.DisassembleAll(bit32: boolean): boolean;
+
+function TDisassembler.DisassembleAll: boolean;
 var i: integer;
     CodeIndex: cardinal;
 begin
   result:=false;
-  ProgressPosition:=0;
+
+  ProgressData.Maximum:= CodeSize;
+  ProgressData.Position:= 0;
+
 // 1. faza - disassemblovanie kodu
   while CAJ.Count > 0 do begin
     for i:=0 to CAJ.Count-1 do begin
@@ -2492,7 +2501,7 @@ begin
         push edi
       end;
 {$ENDIF}
-      if not DisassembleBlock(CAJ[i].start, CAJ[i].finish, bit32) then Exit;
+      if not DisassembleBlock(CAJ[i].start, CAJ[i].finish) then Exit;
 {$IFDEF DELPHI}
       asm
         pop edi
@@ -2534,7 +2543,7 @@ begin
   CAJ.Process(CodeSize);
   while CAJ.Count > 0 do begin
     for i:=0 to CAJ.Count-1 do begin
-      if not DisassembleBlock(CAJ[i].start, CAJ[i].finish, bit32) then Exit;
+      if not DisassembleBlock(CAJ[i].start, CAJ[i].finish) then Exit;
     end;
     CAJ.Process(CodeSize);
   end;
@@ -2542,21 +2551,12 @@ begin
   // 3. faza - nepouzitie bajty zmenime na data typu UNSIGNED BYTE
   for CodeIndex:=0 to CodeSize-1 do
     if DisasmMap[CodeIndex] = dfNone then begin     // nespracovany byty kodu
-{
-      inc(counter);
-      if (counter > 1000) then begin
-        inc(ProgressPosition,counter);
-        if not ProgressFunction(ProgressPosition,CodeSize,'') then begin
-          Exit;
-        end;
-        counter:=0;
-      end;
-}
+      Inc(ProgressData.Position);
       Disassembled[CodeIndex].address:=CodeIndex;
       Disassembled[CodeIndex].parsed:=IntToHex(code[CodeIndex],2);
       Disassembled[CodeIndex].name:='byte';
       if (code[CodeIndex]=0) or (code[CodeIndex]=$0A) or (code[CodeIndex]=$0D) then
-        Disassembled[CodeIndex].operandy:='0x'+IntToHex(code[CodeIndex],2) + ' '''''
+        Disassembled[CodeIndex].operandy:='0x'+IntToHex(code[CodeIndex],2)
       else
         Disassembled[CodeIndex].operandy:='0x'+IntToHex(code[CodeIndex],2) + ' ''' + Chr(code[CodeIndex]) + '''';
 //      Inc(DisasmMap[CodeIndex],dfData);
@@ -2573,7 +2573,7 @@ end;
 
 
 
-function TDisassembler.DisassembleBlock(start, finish: cardinal; bit32: boolean):boolean;
+function TDisassembler.DisassembleBlock(Start, Finish: cardinal): boolean;
 var
     Vparam: TParam;                         // Parametre aktualnej instrukcie
     o,p: byte;                               // Interval pri FPU instrukciach
@@ -2597,20 +2597,14 @@ begin
 
   while (i<=finish) and ((DisasmMap[i] and dfPart)=0) and (not KoniecBloku) do begin                     // Hlavny disassemblovaci cyklus
 
-    operand32:=bit32;
-    address32:=bit32;
+    Inc(ProgressData.Position, i - InstrAddress);
+
+
+    operand32:=fBit32;
+    address32:=fBit32;
     SegmentOverride:='';
-{
-    inc(counter,i-InstrAddress);
-    if (counter > 1000) then begin
-      inc(ProgressPosition,counter);
-      if not ProgressFunction(ProgressPosition,CodeSize,'') then begin
-        Result:=false;
-        Exit;
-      end;
-      counter:=0;
-    end;
-}
+
+
     _3DNow_Instruction:=false;
     vpc:=0;                                 // Vynulovanie poctu operandov pre nasledujucu instrukciu
     genreg16:=false;

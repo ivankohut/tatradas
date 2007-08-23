@@ -19,6 +19,7 @@ type
     Segment: word;
   end;
 
+
   TMZFile = class(TExecutableFile)
   private
     fHeader: TMZHeader;
@@ -29,13 +30,12 @@ type
     destructor Destroy(); override;
     function SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
     function LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; override;
-//    function GetAdvancedInfo: TExecFileAdvancedInfo; override;
+  public
+    property Header: TMZHeader read fHeader;
   end;
 
-implementation
 
-const
-  c_MZFileAdvancedInfoCount = 10;
+implementation
 
 
 //******************************************************************************
@@ -47,7 +47,6 @@ constructor TMZFile.Create;
 begin
   inherited;
   fExecFormat:= ffMZ;
-  fFormatDescription:= 'MZ - DOS executable (16-bit)';
 end;
 
 
@@ -59,7 +58,6 @@ var
 begin
   inherited;
   fExecFormat:= ffMZ;
-  fFormatDescription:= 'MZ - DOS executable (16-bit)';
 
   InputFile.Seek(0, 0);
   InputFile.Read(fHeader, 40);
@@ -108,24 +106,6 @@ destructor TMZFile.Destroy;
 begin
   inherited;
 end;
-
-
-{
-function TMZFile.GetAdvancedInfo: TExecFileAdvancedInfo;
-begin
-  result:=TExecFileAdvancedInfo.Create(c_MZFileAdvancedInfoCount);
-  result.Add('', 'Page remainder:', IntToHex(header.pageremainder,4));
-  result.Add('', 'Page count:', IntToStr(header.pagecount)+'(dec)');
-  result.Add('', 'Relocations:', IntToStr(header.RelocCount)+'(dec)');
-  result.Add('', 'Header size:', IntToHex(header.minmem,4));
-  result.Add('', 'MinMem:', IntToHex(header.minmem,4));
-  result.Add('', 'MaxMem:', IntToHex(header.maxmem,4));
-  result.Add('', 'SS:SP', IntToHex(header.reloSS,4)+':'+IntToHex(header.EXESP,4));
-  result.Add('', 'Check sum:', IntToHex(header.ChkSum,4));
-  result.Add('', 'CS:IP', IntToHex(header.reloCS,4)+':'+IntToHex(header.EXEIP,4));
-  result.Add('', 'Overlay:', IntToHex(header.Overlay,4));
-end;
-}
 
 
 end.

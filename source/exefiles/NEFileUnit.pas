@@ -1,7 +1,9 @@
 { TODO:
-    - export, import
     - detekcia sekci pre HexEditor nie je este OK
     - AdvancedInfo
+    - medzi segmentove call a jmp - relokacia (napr. WINSOCK.DLL, sekcia 1, 0x00000020 a 0x00000026)
+    - treba packed record ?
+    - resources
 }
 
 unit NEFileUnit;
@@ -28,41 +30,41 @@ const
 
 type
   TNEHeader = record
-    sign:word;
-    linkerversion,linkerrevision:byte;
-    entrytableRO:word;
-    entrytablesize:word;
-    reserved:cardinal;
-    flags:word;
-    AutomaticDataSegmentNumber:word;
-    InitialHeapSize:word;
-    InitialStackSize:word;
+    Sign: word;
+    LinkerVersion, LinkerRevision: byte;
+    EntryTableRO: word;
+    EntryTableSize: word;
+    _reserved1: cardinal;
+    Flags: word;
+    AutomaticDataSegmentNumber: word;
+    InitialHeapSize: word;
+    InitialStackSize: word;
     _IP,_CS: word;
     _SP,_SS: word;
-    SegmentTableEntryNumber:word;
-    ModuleReferenceTableEntryNumber:word;
-    NonResidentNameTableSize:word;
-    SegmentTableRO:word;
-    ResourceTableRO:word;
-    ResidentNameTableRO:word;
-    ModuleReferenceTableRO:Word;
-    ImportedNameTableRO:word;
-    NonResidentNameTableOffset:cardinal;
-    MoveableEntrypointsNumber:word;
-    ShiftCount:word;
-    ResourceSegmentNumber:word;
-    TargetOS:byte;
-    AdditionalInfo:byte;
-    FLAOffset,FLASize:word;
-    reserved2:word;
-    ExpectedVersionNumber:word
+    SegmentTableEntryNumber: word;
+    ModuleReferenceTableEntryNumber: word;
+    NonResidentNameTableSize: word;
+    SegmentTableRO: word;
+    ResourceTableRO: word;
+    ResidentNameTableRO: word;
+    ModuleReferenceTableRO: word;
+    ImportedNameTableRO: word;
+    NonResidentNameTableOffset: cardinal;
+    MoveableEntrypointsNumber: word;
+    ShiftCount: word;
+    ResourceSegmentNumber: word;
+    TargetOS: byte;
+    AdditionalInfo: byte;
+    FLAOffset,FLASize: word;
+    _reserved2: word;
+    ExpectedVersionNumber: word
   end;
 
   TSegmentTableEntry = record
-    Offset:word;
-    Size:word;
-    Flags:word;
-    AllocationSize:word;
+    Offset: word;
+    Size: word;
+    Flags: word;
+    AllocationSize: word;
   end;
 
   TResourceInformationBlock = record
@@ -103,8 +105,8 @@ type
 
   TNEFile = class(TExecutableFile)
   private
-    Header: TNEHeader;
-    NE_Offset: cardinal;
+    fHeader: TNEHeader;
+    fNEOffset: cardinal;
     SegmentTable: array of TSegmentTableEntry;
 //       ResourceTable:
 //       RsidentNameTable:
@@ -117,13 +119,15 @@ type
     function SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
     function LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; override;
 
-//    function GetAdvancedInfo: TExecFileAdvancedInfo; override;
-
     function GetSegmentType(Index: integer): TSectionType;
 
+    property Header: TNEHeader read fHeader;
+    property NEOffset: cardinal read fNEOffset;
   end;
 
+
 implementation
+
 
 const
   c_NEFileAdvancedInfoCount = 3;
@@ -154,11 +158,11 @@ begin
 
   // Get NE header address
   InputFile.Seek(60, 0);
-  InputFile.Read(NE_Offset, 4);
+  InputFile.Read(fNEOffset, 4);
 
   // Read NE header
-  InputFile.Seek(NE_Offset, 0);
-  InputFile.Read(Header, SizeOf(TNEHeader));
+  InputFile.Seek(fNEOffset, 0);
+  InputFile.Read(fHeader, SizeOf(TNEHeader));
 
   // Read Segment Table
   SetLength(SegmentTable, Header.SegmentTableEntryNumber);
@@ -167,7 +171,7 @@ begin
 
 
   // Read Entry Table
-  InputFile.Position:= header.EntryTableRO + NE_Offset;
+  InputFile.Position:= header.EntryTableRO + fNEOffset;
   BundleIndex:=0;
   InputFile.Read(BundleEntriesCount, 1);
   while BundleEntriesCount <> 0 do begin
@@ -219,10 +223,7 @@ begin
 
   // Read Import section
   if Header.ModuleReferenceTableEntryNumber > 0 then begin
-    fImportSection:= TImportSection.CreateFromNEFile(InputFile, NE_Offset + Header.ModuleReferenceTableRO, NE_Offset + Header.ImportedNameTableRO, Header.ModuleReferenceTableEntryNumber, Header.EntryTableRO-header.ImportedNameTableRO, SegmentImports, '_IMPORT', self);
-
-    if Assigned(OnExecFileCreateSection) then
-      OnExecFileCreateSection(ImportSection);
+    fImportSection:= TImportSection.CreateFromNEFile(InputFile, fNEOffset + Header.ModuleReferenceTableRO, fNEOffset + Header.ImportedNameTableRO, Header.ModuleReferenceTableEntryNumber, Header.EntryTableRO-header.ImportedNameTableRO, SegmentImports, '_IMPORT', self);
     Sections.Add(ImportSection);
 
     // Set Import for all code sections
@@ -232,13 +233,10 @@ begin
   end;
 
   // Read Export section
-  InputFile.Position:= NE_Offset + header.ResidentNameTableRO;
+  InputFile.Position:= fNEOffset + header.ResidentNameTableRO;
   InputFile.Read(ModuleNameLength, 1);
   if ModuleNameLength <> 0 then begin
-    fExportSection:= TExportSection.CreateFromNEFile(InputFile, NE_Offset + Header.ResidentNameTableRO, Header.NonResidentNameTableOffset, Header.NonResidentNameTableSize, '_EXPORT', self);
-
-    if Assigned(OnExecFileCreateSection) then
-      OnExecFileCreateSection(ExportSection);
+    fExportSection:= TExportSection.CreateFromNEFile(InputFile, fNEOffset + Header.ResidentNameTableRO, Header.NonResidentNameTableOffset, Header.NonResidentNameTableSize, '_EXPORT', self);
     Sections.Add(ExportSection);
 
     // Set Export for all code sections
@@ -247,7 +245,6 @@ begin
         (Sections[SectionIndex] as TCodeSection).Exportt:=ExportSection;
   end;
 
-  fFormatDescription:='NE - New Executable (16-bit)';
   fExecFormat := ffNE;
 end;
 
@@ -255,7 +252,7 @@ end;
 
 constructor TNEFile.Create;
 begin
-  fFormatDescription:='NE - New Executable (16-bit)';
+
 end;
 
 
@@ -266,7 +263,8 @@ var
 begin
   if soProject in SaveOptions then begin
     DHF.Write(header, SizeOf(Header));
-    for i:=0 to header.SegmentTableEntryNumber-1 do DHF.Write(SegmentTable[i], SizeOf(TSegmentTableEntry));
+    for i:=0 to header.SegmentTableEntryNumber-1 do
+      DHF.Write(SegmentTable[i], SizeOf(TSegmentTableEntry));
   end;
   result:=inherited SaveToFile(DHF, DAS, SaveOptions);
 end;
@@ -276,29 +274,20 @@ end;
 function TNEFile.LoadFromFile(DHF: TStream; var DAS: TextFile): boolean;
 var i: integer;
 begin
-  DHF.Read(header,SizeOf(header));
+  DHF.Read(fHeader,SizeOf(header));
   SetLength(SegmentTable, header.SegmentTableEntryNumber);
-  for i:=0 to header.SegmentTableEntryNumber-1 do                                // Object Table
+  for i:=0 to fHeader.SegmentTableEntryNumber-1 do                                // Object Table
     DHF.Read(SegmentTable[i], sizeof(TSegmentTableEntry));
   result:=inherited LoadFromFile(DHF, DAS);
 end;
+
+
 
 destructor TNEFile.Destroy;
 begin
   inherited;
 end;
 
-{
-function TNEFile.GetAdvancedInfo: TExecFileAdvancedInfo;
-begin
-  result:=TExecFileAdvancedInfo.Create(c_NEFileAdvancedInfoCount);
-  result.Add('', 'Module reference table number', IntToStr(header.ModuleReferenceTableEntryNumber));
-  result.Add('', 'Module reference table file offset', IntToHex(header.ModuleReferenceTableRO + NEOffset,8));
-  result.Add('', 'Import Module name table file offset', IntToHex(header.ImportedNameTableRO + NEOffset,8));
-
-//    result.Add('', , );
-end;
-}
 
 
 function TNEFile.GetSegmentType(Index: integer): TSectionType;
@@ -312,7 +301,7 @@ begin
 
   // Import
   if header.ModuleReferenceTableEntryNumber > 0 then
-    if (SegmentTable[Index].Offset <= header.ModuleReferenceTableRO + NE_Offset) and (Header.ModuleReferenceTableRO + NE_Offset <= SegmentTable[Index].Offset + SegmentTable[Index].Size) then begin
+    if (SegmentTable[Index].Offset <= header.ModuleReferenceTableRO + fNEOffset) and (Header.ModuleReferenceTableRO + fNEOffset <= SegmentTable[Index].Offset + SegmentTable[Index].Size) then begin
       result:=stImport;
       Exit;
     end;

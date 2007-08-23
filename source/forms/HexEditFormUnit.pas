@@ -1,5 +1,5 @@
 { TODO:
-
+    zamysliet sa nad permanentnym HexEdit-om
   DONE:
 }
 unit HexEditFormUnit;
@@ -13,12 +13,18 @@ uses
 {$IFDEF LINUX}
   QControls, QForms, QStdCtrls, QExtCtrls, QComCtrls, QDialogs,
 {$ENDIF}
-  SysUtils, Classes, INIFiles,
-  procmat, StringRes,
-  MPHexEditor;
+  SysUtils,
+  Classes,
+  IniFiles,
+
+  MPHexEditor,
+
+  procmat,
+  StringRes,
+  TatraDASFormUnit;
 
 type
-  THexEditForm = class(TForm)
+  THexEditForm = class(TTatraDASForm)
     SaveAsButton: TButton;
     Panel1: TPanel;
     SaveDialog1: TSaveDialog;
@@ -48,7 +54,7 @@ type
     procedure GotoAddressButtonClick(Sender: TObject);
   public
     HexEdit: TMPHexEditor;
-    procedure Translate(ini: TMemINIFile; error: string);
+    procedure Translate(ini: TMemINIFile); override;
   end;
 
 
@@ -111,7 +117,7 @@ begin
         Action:=caNone;
         Exit;
       end;
-    end;    
+    end;
   end;
   HexEdit.Free;
   HexEdit:=nil;
@@ -125,8 +131,8 @@ begin
   HexEdit.Align:=alClient;
   HexEdit.OnSelectionChanged:=HexEditChangePosition;
   Panel1.Anchors:=[akLeft,akTop,akRight,akBottom];
-  HexEdit.LoadFromFile(MainForm.ExecFile.fullpath);
-  Caption:='HexEditor - '+MainForm.ExecFile.filename;
+  HexEdit.LoadFromFile(MainForm.ExecFile.FullPath);
+  Caption:='HexEditor - ' + MainForm.ExecFile.FileName;
   StatusBar1.Panels[3].Text:=TatraDASFullNameVersion;
 end;
 
@@ -138,12 +144,12 @@ begin
   HexEdit.SetFocus;
 end;
 
-procedure THexEditForm.Translate(ini: TMemINIFile; error: string);
+procedure THexEditForm.Translate(ini: TMemINIFile);
 begin
-  SaveAsButton.Caption:=ini.ReadString('HexEditForm','SaveAsButton',error);
-  GotoAddressButton.Caption:=ini.ReadString('HexEditForm','GotoAddressButton',error);
-  UnsignedLabel.Caption:=ini.ReadString('HexEditForm','UnsignedLabel',error);
-  SignedLabel.Caption:=ini.ReadString('HexEditForm','SignedLabel',error);
+  SaveAsButton.Caption:=ini.ReadString('HexEditForm','SaveAsButton',TranslateErrorStr);
+  GotoAddressButton.Caption:=ini.ReadString('HexEditForm','GotoAddressButton',TranslateErrorStr);
+  UnsignedLabel.Caption:=ini.ReadString('HexEditForm','UnsignedLabel',TranslateErrorStr);
+  SignedLabel.Caption:=ini.ReadString('HexEditForm','SignedLabel',TranslateErrorStr);
 end;
 
 end.

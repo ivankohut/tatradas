@@ -1,9 +1,13 @@
+{ TODO:
+  - zjednotit sposob prekladania Formov a Framov
+}
+
 unit Languages;
+
 
 interface
 
 uses
-
 
 {$IFDEF MSWINDOWS}
   Menus, Controls, Dialogs, Graphics,
@@ -15,6 +19,7 @@ uses
   SysUtils,
   Classes,
   Types,
+  Forms,
 
   procmat,
   StringRes;
@@ -22,11 +27,8 @@ uses
 const
   LangFileSectionCount = 24;
 
-
-
 type
 
-  
   TLangItem = record
     Index: cardinal;
     FileName: string;
@@ -59,13 +61,13 @@ type
     function ChangeLanguage(LanguageID: cardinal): boolean; overload;
     function ChangeLanguage(LangItem: TLangItem): boolean; overload;
     procedure Translate;
-    function TranslateControl(Category: string; Name: string): string;
+    function TranslateControl(Category: string; Name: string): string; overload;
+    function TranslateControl(aControl: TControl; Category: string; Name: string): boolean; overload;
+
     property Language:string read GetLanguage;
     property INI: TMemINIFile read fINI;
     property ShortCut:string read GetShortCut;
   end;
-
-
 
 
 var
@@ -74,10 +76,7 @@ var
 implementation
 
 uses
-  AboutBoxUnit, GotoAddressFormUnit, UnknownFileFormUnit, SaveOptionsFormUnit,
-  AdvancedDisassembleFormUnit, AdvancedChangingToDataFormUnit, HexEditFormUnit,
-  CalculatorUnit, OptionsFormUnit, CodeSectionUnit, InsertCommentFormUnit, MainFormUnit;
-
+  TatraDASFormUnit, MainFormUnit, TabFrameTemplateUnit;
 
 
 
@@ -211,37 +210,47 @@ begin
 end;
 
 procedure TTatradasLanguages.LangMenuItemClick(Sender: TObject);
-var i:integer;
+var
+  i:integer;
 begin
   for i:=0 to fCount - 1 do
     if LangArray[i].MenuItem = Sender then begin
-      if ChangeLanguage(LangArray[i]) then Translate
-      else ShowMessage('Unable to change language!');
+      if ChangeLanguage(LangArray[i]) then
+        Translate
+      else
+        ShowMessage('Unable to change language!');
     end;
 end;
 
+
+
 procedure TTatradasLanguages.Translate;
+var
+  i: integer;
 begin
-  TranslateStrings(fINI,fError);
-  MainForm.Translate(fINI,fError);
-  AboutBox.Translate(fINI,fError);
-  UnknownFileFormatForm.Translate(fINI,fError);
-  SaveOptionsForm.Translate(fINI,fError);
-  GotoAddressForm.Translate(fINI,fError);
-  InsertCommentForm.Translate(fINI,fError);
-  AdvancedDisassembleForm.Translate(fINI,fError);
-  AdvancedChangingToDataForm.Translate(fINI,fError);
-  HexEditForm.Translate(fINI,fError);
-  Calculator.Translate(fINI,fError);
-  OptionsForm.Translate(fINI,fError);
-//  if MainForm.ExecFile<>nil then MainForm.ExecFile.Translate(fINI,fError);
+  TranslateStrings(fINI);
+
+  // Translate all forms
+  for i:=0 to Application.ComponentCount - 1 do
+    if Application.Components[i] is TTatraDASForm then
+      (Application.Components[i] as TTatraDASForm).Translate(INI);
+
+  // Translate all frames
+  for i:=0 to MainForm.PageControl1.PageCount - 1 do
+    (MainForm.PageControl1.Pages[i] as TTabSheetTemplate).Frame.Translate(self);
 end;
+
+
 
 function TTatradasLanguages.TranslateControl(Category: string; Name: string):string;
 begin
   result:=fINI.ReadString(Category,Name,fError);
 end;
 
+
+function TTatradasLanguages.TranslateControl(aControl: TControl; Category: string; Name: string): boolean;
+begin
+end;
 
 
 end.

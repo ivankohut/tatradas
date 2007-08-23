@@ -81,7 +81,7 @@ type
     st_shndx: word;
   end;
 
-  
+
 const
 
 //  ELF32_ST_TYPE:
@@ -190,7 +190,7 @@ begin
   InputStream.Read(DirEntry, 20);
   ModulIndex:= 0;
   while DirEntry.NameRVA <> 0 do begin
-    SetLength(Moduls, ModulIndex + 1);                               
+    SetLength(Moduls, ModulIndex + 1);
     ReadStringFromStream(InputStream, DirEntry.NameRVA - RVA, moduls[ModulIndex].Name);
 
     // Zistenie SRVA tab. funkcii mudulu }
@@ -207,7 +207,7 @@ begin
     InputStream.Read(LookupTableEntry, 4);
     FunctionIndex:= 0;
     while LookupTableEntry <> 0 do begin
-      SetLength(Moduls[ModulIndex].Functions, FunctionIndex + 1);                          
+      SetLength(Moduls[ModulIndex].Functions, FunctionIndex + 1);
       Moduls[ModulIndex].Functions[FunctionIndex].MemAddress:= DirEntry.AddressTableRVA + FunctionIndex*SizeOf(LookupTableEntry) + ImageBase;
       NameRVA_or_Ordinal := (LookupTableEntry and $7FFFFFFF);
 
@@ -334,10 +334,10 @@ begin
     InputFile.Position:= SegmentImports[i].Offset;
     InputFile.Read(RelocationCount, 2);
     for j:=0 to integer(RelocationCount) - 1 do begin
-      InputFile.Position:= SegmentImports[i].Offset + 2 + j*SizeOf(TRelocationItem);
+      InputFile.Position:= SegmentImports[i].Offset + 2 + cardinal(j)*SizeOf(TRelocationItem);
       InputFile.Read(RelocationItem, SizeOf(TRelocationItem));
 
-      if RelocationItem.RelocAddressType <> RelocAddrType_32bPointer then 
+      if RelocationItem.RelocAddressType <> RelocAddrType_32bPointer then
         Continue;
 
 
@@ -347,7 +347,7 @@ begin
         RelocType_ImportedOrdinal: begin
           with Moduls[RelocationItem.Data1-1] do begin
 
-            // Check if we already have the function  
+            // Check if we already have the function
             while k < FunctionCount do begin
               if Functions[k].Ordinal = RelocationItem.Data2 then
                 Break;
@@ -373,7 +373,7 @@ begin
             SetLength(FunctionName, FunctionNameLength);
             InputFile.Read(FunctionName[1], FunctionNameLength);
 
-            // Check if we already have the function  
+            // Check if we already have the function
             while k < FunctionCount do begin
               if Functions[k].Name = FunctionName  then
                 Break;

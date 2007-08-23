@@ -11,7 +11,9 @@ object ProgressForm: TProgressForm
   Font.Height = -11
   Font.Name = 'MS Sans Serif'
   Font.Style = []
+  FormStyle = fsStayOnTop
   OldCreateOrder = False
+  Position = poMainFormCenter
   PixelsPerInch = 96
   TextHeight = 13
   object ProgressLabel: TLabel
@@ -46,5 +48,6 @@ object ProgressForm: TProgressForm
     Height = 25
     Caption = 'Pause'
     TabOrder = 2
+    OnClick = PauseButtonClick
   end
 end

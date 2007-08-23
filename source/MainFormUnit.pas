@@ -1,7 +1,6 @@
 { TODO:
-  procedure TMainForm.ProjectClick(Sender: TObject);  - co v pripade neuspesneho otvorenia
+  dorobit reakcie na rozne errory
   vynulovanie progressbaru a processlabel by mal kazdy robit sam
-  niekedy pada pri zastaveni progresu
 
   DONE:
 }
@@ -18,15 +17,15 @@ uses
   StdCtrls, ComCtrls, ImgList, Menus, ExtCtrls, Grids,
 {$ENDIF}
 {$IFDEF LINUX}
-  QDialogs, QImgList, QMenus, QTypes,
+  QDialogs, QImgList, QMenus, QTypes, QGraphics,
   QExtCtrls, QComCtrls, QGrids, QStdCtrls, QControls,
 {$ENDIF}
   SysUtils,
   Classes,
-  Graphics,
   IniFiles,
   Contnrs,
 
+  TatraDASFormUnit,
   ButtonsX,
   Languages,
   StringRes,
@@ -38,15 +37,13 @@ uses
   CodeTabFrameUnit,
   ExecFileManagerUnit,
   ExecFileUnit,
-  HexEditFormUnit;
-//  jpeg,
-//  ProgressFormUnit,
-//  UProgressThread;
+  HexEditFormUnit,
+  ProgressThreads;
 
 
 type
 
-  TMainForm = class(TForm)
+  TMainForm = class(TTatraDASForm)
     OpenDialog1: TOpenDialog;
     PageControl1: TPageControl;
     MainMenu1: TMainMenu;
@@ -59,7 +56,7 @@ type
     Help1: TMenuItem;
     N2: TMenuItem;
     About1: TMenuItem;
-    Findtext1: TMenuItem;
+    FindText1: TMenuItem;
     Searchagain1: TMenuItem;
     ImageList1: TImageList;
     OpenProject1: TMenuItem;
@@ -156,10 +153,9 @@ type
     procedure FindText1Click(Sender: TObject);
     procedure Help2Click(Sender: TObject);
 
-    procedure Translate(ini:TMemINIFile; error:string);    // Zmena jazyka prostredia
+    procedure Translate(ini:TMemINIFile); override;   // Zmena jazyka prostredia
 
     procedure FindDialog1Find(Sender: TObject);
-    procedure StopClick(Sender: TObject);
     procedure PageControl1Change(Sender: TObject);
     procedure GotoEntrypoint1Click(Sender: TObject);
     procedure Gotoaddress1Click(Sender: TObject);
@@ -188,25 +184,19 @@ private
 
 {toto bolo v 2.9.8-pokus odstranene }
  ActivePageIndex: integer;
- procedure BeforeProgress;
- procedure AfterProgress;
   function GetActivePageType: TPageType;
 { -- }
 
 public
-    Modified: boolean; 
-    Status: TTatraDASStatus; 
-
-
+    Modified: boolean;
     ExecFile: TExecutableFile;
     procedure CreateSection(ASection: TSection);
-
-
+    procedure UpdatePageControl;
 
 public
     OpenMyButton: TIvanSpeedButton;
     DisassembleMyButton: TIvanSpeedButton;
-    StopMyButton: TIvanSpeedButton;
+//    StopMyButton: TIvanSpeedButton;
     ProjectMyButton: TIvanSpeedButton;
     SaveMyButton: TIvanSpeedButton;
     HelpMyButton: TIvanSpeedButton;
@@ -233,7 +223,6 @@ public
   end;
 
 
-  function ProgressFunction(a,b:cardinal; c: string): boolean;
 
 var
 //  CurrentTab: integer;
@@ -242,15 +231,17 @@ var
 
   OpenMode: boolean;
   PocetVyskytov: integer;
-  Stopped: boolean;
+//  Stopped: boolean;
   ExecFileManager: TExecFileManager;
 
 implementation
 
 uses
-  AboutBoxUnit, GotoAddressFormUnit, UnknownFileFormUnit, SaveOptionsFormUnit,
-  AdvancedDisassembleFormUnit, AdvancedChangingToDataFormUnit, CalculatorUnit,
-  OptionsFormUnit, CodeSectionUnit, InsertCommentFormUnit, ProgressFormUnit;
+  AboutBoxUnit,
+  SaveOptionsFormUnit,
+  CalculatorUnit,
+  OptionsFormUnit,
+  ProgressFormUnit;
 
 {$R *.DFM}
 
@@ -259,23 +250,22 @@ uses
 procedure TMainForm.OpenClick(Sender: TObject);       // Otvorenie suboru
 var
   ErrorMessage: string;
+  i: integer;
 begin
-  OpenDialog1.Filter:='EXE, COM and DLL files(*.EXE;*.COM;*.DLL)|*.exe;*.com;*.dll;|All files(*.*)|*.*';
-  OpenDialog1.FileName:='';
-  OpenDialog1.InitialDir:=OpenFilePath;
+  OpenDialog1.Filter:= 'EXE, COM and DLL files(*.EXE;*.COM;*.DLL)|*.exe;*.com;*.dll;|All files(*.*)|*.*';
+  OpenDialog1.FileName:= '';
+  OpenDialog1.InitialDir:= OpenFilePath;
   if not OpenDialog1.Execute then Exit;
-  OpenFilePath:=ExtractFilePath(OpenDialog1.FileName);
+  OpenFilePath:= ExtractFilePath(OpenDialog1.FileName);
 
   Application.ProcessMessages;
 
   if ExecFile <> nil then CloseFileClick(nil);
 
-//  ctrls.INIFile:=Langs.INI;
-//  MainFile:=TFileEx.Create(ErrNo,OpenDialog1.FileName,ctrls);                       // Otvorenie suboru
-  ExecFile:=ExecFileManager.CreateNewExecFile(OpenDialog1.FileName);
-  if ExecFileManager.Error <> ErrNone then begin
+  ExecFile:= ExecFileManager.CreateNewExecFile(OpenDialog1.FileName);
+  if ProgressData.ErrorStatus <> errNone then begin
     ExecFile.Free;
-    case ExecFileManager.Error of
+    case ProgressData.ErrorStatus of
       errCanceled: begin
         Exit;
       end;
@@ -296,39 +286,44 @@ begin
     Exit;
   end;
 
-  //  Status:=tsOpened;  // do MainForm
   Modified:=false;
 
+  // Create section frames
   TTabSheetTemplate.CreateFileTab(ExecFile);
+  for i := 0 to ExecFile.Sections.Count - 1 do
+    if ExecFile.Sections[i].Typ <> stCode then
+      TTabSheetTemplate.Create(ExecFile.Sections[i]);
+  PageControl1.ActivePageIndex:= 0;
+  PageControl1Change(nil);
 
-  HexEditor1.Enabled:=true;
-  CloseFile1.Enabled:=true;
-  DisassembleMyButton.Enabled:=true;
-  Disassemble1.Enabled:=true;
-  Caption:=TatraDASFullNameVersion+' - '+ExecFile.FileName;
+  HexEditor1.Enabled:= true;
+  CloseFile1.Enabled:= true;
+  DisassembleMyButton.Enabled:= true;
+  Disassemble1.Enabled:= true;
+  Caption:= TatraDASFullNameVersion + ' - ' + ExecFile.FileName;
 end;
 
 
 
-procedure TMainForm.DisassembleClick(Sender: TObject);    // Spustenie disassemblovania
+procedure TMainForm.DisassembleClick(Sender: TObject);
+var
+  i: integer;
 begin
-//  ProgressForm.Show;
-  BeforeProgress;
-  if not ExecFile.Disassemble() then begin
-  // hodila by sa nejaka sprava o pricine neuspechu Disassembluj
-    AfterProgress;
-    DisassembleMyButton.Enabled:=true;
-    SaveMyButton.Enabled:=false;
-    Save1.Enabled:=false;
-    Exit;
+  ProgressForm.Execute(TDisassembleThread.Create(ExecFile));
+  if ProgressData.ErrorStatus = errNone then begin
+    SaveMyButton.Enabled:= true;
+    Save1.Enabled:= true;
+    for i := 0 to ExecFile.Sections.Count - 1 do
+      if ExecFile.Sections[i].Typ = stCode then
+        TTabSheetTemplate.Create(ExecFile.Sections[i]);
+  end
+  else begin
+    SaveMyButton.Enabled:= false;
+    Save1.Enabled:= false;
+    case ProgressData.ErrorStatus of
+      errUserTerminated: ;
+    end
   end;
-  AfterProgress;
-  DisassembleMyButton.Enabled:=true;
-  SaveMyButton.Enabled:=true;
-  Save1.Enabled:=true;
-
-  PageControl1.ActivePageIndex:=ActivePageIndex;      // vratime sa na povodnu kartu
-  PageControl1Change(nil);
 end;
 
 
@@ -336,8 +331,8 @@ end;
 procedure TMainForm.SaveClick(Sender: TObject);    // Ulozenie projektu
 begin
   if SaveOptionsForm.ShowModal = mrOK then begin
-    SaveDialog1.FileName:='';
-    SaveDialog1.InitialDir:=SaveProjectPath;
+    SaveDialog1.FileName:= '';
+    SaveDialog1.InitialDir:= SaveProjectPath;
     if soProject in SaveOptionsForm.SaveOptions then
       SaveDialog1.Filter:=ProjectFilterStr + '(*.DHF)|*.DHF'
     else
@@ -345,54 +340,44 @@ begin
         SaveDialog1.Filter:= SaveDisassemblyFilterStr + '(*.DAS)|*.DAS'
       else
         SaveDialog1.Filter:= '';
-    if not SaveDialog1.Execute then Exit;
-// Osetrit nejakou spravou v pripade zlyhania ukladania, napr. disk full
-    BeforeProgress;
-    ExecFileManager.SaveExecFileToFile(ExecFile, SaveDialog1.FileName, SaveOptionsForm.SaveOptions);
-    AfterProgress;
+    if not SaveDialog1.Execute then
+      Exit;
 
-    Modified:=false;
-    if ExecFile.IsDisassembled then
-      DisassembleMyButton.Enabled:=true;
-    SaveMyButton.Enabled:=true;
-    PageControl1.ActivePageIndex:=ActivePageIndex;  // vratime sa na povodnu kartu
-    PageControl1Change(nil);
-
-    SaveProjectPath:=ExtractFilePath(SaveDialog1.FileName);
+    ProgressForm.Execute(TSaveThread.Create(ExecFileManager, ExecFile, SaveDialog1.FileName, SaveOptionsForm.SaveOptions));
+    if ProgressData.ErrorStatus <> errNone then begin
+      case ProgressData.ErrorStatus of
+        errUserTerminated: ; 
+      end;
+      Exit;
+    end;
+    Modified:= false;
+    SaveProjectPath:= ExtractFilePath(SaveDialog1.FileName);
   end;
 end;
 
 
 
-procedure TMainForm.ProjectClick(Sender: TObject);     // Otvorenie projektu
+procedure TMainForm.ProjectClick(Sender: TObject);     
 var
   ErrorMessage: string;
-//    vlakno: TExecFileManager_LoadExecFileFromFile;
+  i: integer;
 begin
   OpenDialog1.Filter:= ProjectFilterStr + ' (*.dhf)|*.DHF';
   OpenDialog1.Filename:= '';
-  OpenDialog1.InitialDir:=OpenProjectPath;
+  OpenDialog1.InitialDir:= OpenProjectPath;
   if not OpenDialog1.Execute then Exit;
-  OpenProjectPath:=ExtractFilePath(OpenDialog1.FileName);
+  OpenProjectPath:= ExtractFilePath(OpenDialog1.FileName);
 
-  if ExecFile <> nil then CloseFileClick(nil);                                // Odstranenie MainFile a vycistenie MainForm
+  if ExecFile <> nil then
+    CloseFileClick(nil);
 
-  BeforeProgress;
-//  ctrls.INIFile:=Langs.INI;
 
-{
-  ProgressFinished:=false;
-  vlakno:=TExecFileManager_LoadExecFileFromFile.Create(OpenDialog1.FileName);
-  ProgressForm.Execute;
-  ExecFile:=vlakno.TheResult;
-  vlakno.Free;
-}
+  ProgressForm.Execute(TLoadThread.Create(ExecFileManager, OpenDialog1.FileName));
+  ExecFile:= ProgressData.Result;
 
-  ExecFile:=ExecFileManager.LoadExecFileFromFile(OpenDialog1.FileName);
-
-  if ExecFileManager.Error <> ErrNone then begin
+  if ProgressData.ErrorStatus <> ErrNone then begin
     ExecFile.Free;
-    case ExecFileManager.Error of
+    case ProgressData.ErrorStatus of
       errCanceled: begin
         Exit;
       end;
@@ -412,37 +397,21 @@ begin
     Exit;
   end;
 
-
-
-{
-  if not Success then begin
-    MessageDlg(CouldNotOpenProjectStr,mtError,[mbOK],0);
-    ExecFile.Destroy;
-    ExecFile:=nil;
-    AfterProgress;
-    DisassembleMyButton.Enabled:=false;
-    SaveMyButton.Enabled:=false;
-    Disassemble1.Enabled:=false;
-    Save1.Enabled:=false;
-    CloseFile1.Enabled:=false;
-    Exit;
-  end;
-}
-  AfterProgress;
-
   TTabSheetTemplate.CreateFileTab(ExecFile);
+  for i := 0 to ExecFile.Sections.Count - 1 do
+    TTabSheetTemplate.Create(ExecFile.Sections[i]);
 
-  DisassembleMyButton.Enabled:=false;
-  SaveMyButton.Enabled:=true;
-  Save1.Enabled:=true;
-  CloseFile1.Enabled:=true;
+  DisassembleMyButton.Enabled:= false;
+  SaveMyButton.Enabled:= true;
+  Save1.Enabled:= true;
+  CloseFile1.Enabled:= true;
 
   Caption:= TatraDASFullNameVersion + ' - ' + ExecFile.FileName;
 end;
 
 
 
-function TMainForm.CloseMainFile: boolean;// Zavretie suboru
+function TMainForm.CloseMainFile: boolean;
 begin
   // nothing to close
   if ExecFile = nil then begin
@@ -465,34 +434,34 @@ begin
   ExecFile.Free;
   ExecFile:=nil;
 
-  DisassembleMyButton.Enabled:=false;
-  Disassemble1.Enabled:=false;
-  CloseFile1.Enabled:=false;
-  Save1.Enabled:=false;
-  SaveMyButton.Enabled:=false;
-  HexEditor1.Enabled:=false;
+  DisassembleMyButton.Enabled:= false;
+  Disassemble1.Enabled:= false;
+  CloseFile1.Enabled:= false;
+  Save1.Enabled:= false;
+  SaveMyButton.Enabled:= false;
+  HexEditor1.Enabled:= false;
   HexEditForm.Close;
-  Caption:=TatraDASFullNameVersion;
-  result:=true;
+  Caption:= TatraDASFullNameVersion;
+  result:= true;
 end;
 
 
 
-procedure TMainForm.ExitClick(Sender: TObject);                // Ukoncenie programu
+procedure TMainForm.ExitClick(Sender: TObject);                
 begin
   Close;
 end;
 
 
 
-procedure TMainForm.CloseFileClick(Sender: TObject); // Zavretie suboru
+procedure TMainForm.CloseFileClick(Sender: TObject);
 begin
   CloseMainFile;
 end;
 
 
 
-procedure TMainForm.About1Click(Sender: TObject);     // Otvorenie okna 'About...'
+procedure TMainForm.About1Click(Sender: TObject);
 begin
   AboutBox.ShowModal;
 end;
@@ -541,15 +510,6 @@ begin
   DisassembleMyButton.OnClick:=DisassembleClick;
   DisassembleMyButton.Glyph:=DisassembleMyButton.ObrMimo;
   DisassembleMyButton.Enabled:=false;
-
-  StopMyButton:=TIvanSpeedButton.Create(self);
-  StopMyButton.Parent:=self;
-  StopMyButton.ObrMimo.LoadFromResourceName(hinstance,'stop1');
-  StopMyButton.ObrNad.LoadFromResourceName(hinstance,'stop2');
-  StopMyButton.Left:=145;
-  StopMyButton.OnClick:=StopClick;
-  StopMyButton.Glyph:=StopMyButton.ObrMimo;
-  StopMyButton.Enabled:=false;
 
   ProjectMyButton:=TIvanSpeedButton.Create(self);
   ProjectMyButton.Parent:=self;
@@ -600,18 +560,9 @@ begin
 
 //  OptionsForm.LoadSettings(sINI); - treba volat ked uz je OptionsForm vytvoreny
 
-{ ///
-  ctrls.PageControl:=PageControl1;
-//  ctrls.INIFile:=lINI; - toto sa vzdy nastavi nanovo
-  ctrls.InfoMemo:=InfoMemo;
-  ctrls.ProgressFunction:=ProgressFunction;
-  ctrls.InfoFormatEdit:=FileFormatEdit;
-  ctrls.InfoGrid:=StringGrid1;
-  ctrls.InfoListView:=ObjectListView;
-}
-
-  OnExecFileCreateSection:=CreateSection;
+  OnExecFileCreateSection:= CreateSection;
   ExecFileManager:=TExecFileManager.Create;
+
 end;
 
 //==============================================================================
@@ -619,154 +570,156 @@ end;
 
 procedure TMainForm.Help2Click(Sender: TObject);      // Spustenie helpu
 begin
-  ShellExecute(Application.Handle,Pchar('open'),Pchar('hh.exe'),Pchar(ExtractFilePath(Application.ExeName)+'TatraDAS.chm'),nil,sw_show);
+  ShellExecute(Application.Handle, Pchar('open'), Pchar('hh.exe'), Pchar(ExtractFilePath(Application.ExeName) + 'TatraDAS.chm'), nil, sw_show);
 end;
 
-procedure TMainForm.Translate(ini:TMemINIFile; error: string);    // Zmena jazyka prostredia
+procedure TMainForm.Translate(ini:TMemINIFile);    // Zmena jazyka prostredia
 var i:integer;
 begin
 // Zmena popisov komponent
 
   //  [ButtonCaption]
-  OpenMyButton.ChangeCaption(ini.ReadString('ButtonCaption','OpenFile',error));
-  ProjectMyButton.ChangeCaption(ini.ReadString('ButtonCaption','OpenDisasm',error));
-  DisassembleMyButton.ChangeCaption(ini.ReadString('ButtonCaption','Disassemble',error));
-  SaveMyButton.ChangeCaption(ini.ReadString('ButtonCaption','SaveDisasm',error));
-  HelpMyButton.ChangeCaption(ini.ReadString('ButtonCaption','Help',error));
+  OpenMyButton.ChangeCaption(ini.ReadString('ButtonCaption', 'OpenFile', TranslateErrorStr));
+  ProjectMyButton.ChangeCaption(ini.ReadString('ButtonCaption','OpenDisasm',TranslateErrorStr));
+  DisassembleMyButton.ChangeCaption(ini.ReadString('ButtonCaption','Disassemble',TranslateErrorStr));
+  SaveMyButton.ChangeCaption(ini.ReadString('ButtonCaption','SaveDisasm',TranslateErrorStr));
+  HelpMyButton.ChangeCaption(ini.ReadString('ButtonCaption','Help',TranslateErrorStr));
 
   // [MenuCaption]
-  File1.Caption:=ini.ReadString('MenuCaption','file',error);
-  Edit1.Caption:=ini.ReadString('MenuCaption','edit',error);
-  Search1.Caption:=ini.ReadString('MenuCaption','search',error);
-  Goto1.Caption:=ini.ReadString('MenuCaption','goto',error);
-  Tools1.Caption:=ini.ReadString('MenuCaption','tools',error);
-  Settings1.Caption:=ini.ReadString('MenuCaption','settings',error);
-  Help1.Caption:=ini.ReadString('MenuCaption','help',error);
+  File1.Caption:=ini.ReadString('MenuCaption','file',TranslateErrorStr);
+  Edit1.Caption:=ini.ReadString('MenuCaption','edit',TranslateErrorStr);
+  Search1.Caption:=ini.ReadString('MenuCaption','search',TranslateErrorStr);
+  Goto1.Caption:=ini.ReadString('MenuCaption','goto',TranslateErrorStr);
+  Tools1.Caption:=ini.ReadString('MenuCaption','tools',TranslateErrorStr);
+  Settings1.Caption:=ini.ReadString('MenuCaption','settings',TranslateErrorStr);
+  Help1.Caption:=ini.ReadString('MenuCaption','help',TranslateErrorStr);
 
-  OpenFile1.Caption:=ini.ReadString('MenuCaption','Openfile',error);
-  OpenProject1.Caption:=ini.ReadString('MenuCaption','OpenProject',error);
-  Disassemble1.Caption:=ini.ReadString('MenuCaption','Disassemble',error);
-  Save1.Caption:=ini.ReadString('MenuCaption','Save',error);
-  Closefile1.Caption:=ini.ReadString('MenuCaption','Closefile',error);
-  Exit1.Caption:=ini.ReadString('MenuCaption','Exit',error);
-  FindText1.Caption:=ini.ReadString('MenuCaption','Findtext',error);
-  SearchAgain1.Caption:=ini.ReadString('MenuCaption','SearchAgain',error);
-  Calculator1.Caption:=ini.ReadString('MenuCaption','Calculator',error);
-  Language1.Caption:=ini.ReadString('MenuCaption','Language',error);
-  Options1.Caption:=ini.ReadString('MenuCaption','Options',error);
-  Help2.Caption:=ini.ReadString('MenuCaption','HelpTopic',error);
-  About1.Caption:=ini.ReadString('MenuCaption','About',error);
+  OpenFile1.Caption:=ini.ReadString('MenuCaption','Openfile',TranslateErrorStr);
+  OpenProject1.Caption:=ini.ReadString('MenuCaption','OpenProject',TranslateErrorStr);
+  Disassemble1.Caption:=ini.ReadString('MenuCaption','Disassemble',TranslateErrorStr);
+  Save1.Caption:=ini.ReadString('MenuCaption','Save',TranslateErrorStr);
+  Closefile1.Caption:=ini.ReadString('MenuCaption','Closefile',TranslateErrorStr);
+  Exit1.Caption:=ini.ReadString('MenuCaption','Exit',TranslateErrorStr);
+  FindText1.Caption:=ini.ReadString('MenuCaption','Findtext',TranslateErrorStr);
+  SearchAgain1.Caption:=ini.ReadString('MenuCaption','SearchAgain',TranslateErrorStr);
+  Calculator1.Caption:=ini.ReadString('MenuCaption','Calculator',TranslateErrorStr);
+  Language1.Caption:=ini.ReadString('MenuCaption','Language',TranslateErrorStr);
+  Options1.Caption:=ini.ReadString('MenuCaption','Options',TranslateErrorStr);
+  Help2.Caption:=ini.ReadString('MenuCaption','HelpTopic',TranslateErrorStr);
+  About1.Caption:=ini.ReadString('MenuCaption','About',TranslateErrorStr);
 
-  ToggleBookmarks.Caption:=ini.ReadString('Code','ToggleBookmark',error);
-  ToggleBookmarks.Hint:=ini.ReadString('Code','MainToggleBookmarkHint',error);
+  ToggleBookmarks.Caption:=ini.ReadString('Code','ToggleBookmark',TranslateErrorStr);
+  ToggleBookmarks.Hint:=ini.ReadString('Code','MainToggleBookmarkHint',TranslateErrorStr);
   for i:=0 to 9 do begin
-    ToggleBookmarks.Items[i].Caption:=ini.ReadString('Code','Bookmark',error)+' '+IntToStr(i);
-    ToggleBookmarks.Items[i].Hint:=ini.ReadString('Code','ToggleBookmarkHint',error)+' '+IntToStr(i);
+    ToggleBookmarks.Items[i].Caption:=ini.ReadString('Code','Bookmark',TranslateErrorStr)+' '+IntToStr(i);
+    ToggleBookmarks.Items[i].Hint:=ini.ReadString('Code','ToggleBookmarkHint',TranslateErrorStr)+' '+IntToStr(i);
   end;
-  GotoBookmarks.Caption:=ini.ReadString('Code','GotoBookmark',error);
-  GotoBookmarks.Hint:=ini.ReadString('Code','MainGotoBookmarkHint',error);
+  GotoBookmarks.Caption:=ini.ReadString('Code','GotoBookmark',TranslateErrorStr);
+  GotoBookmarks.Hint:=ini.ReadString('Code','MainGotoBookmarkHint',TranslateErrorStr);
   for i:=0 to 9 do begin
-    GotoBookmarks.Items[i].Caption:=ini.ReadString('Code','Bookmark',error)+' '+IntToStr(i);
-    GotoBookmarks.Items[i].Hint:=ini.ReadString('Code','GotoBookmarkHint',error)+' '+IntToStr(i);
+    GotoBookmarks.Items[i].Caption:=ini.ReadString('Code','Bookmark',TranslateErrorStr)+' '+IntToStr(i);
+    GotoBookmarks.Items[i].Hint:=ini.ReadString('Code','GotoBookmarkHint',TranslateErrorStr)+' '+IntToStr(i);
   end;
 
-  ChangeToUnsigned.Caption:=ini.ReadString('Code','ChangeToUnsigned',error);
-  UByte.Caption:=ini.ReadString('Code','ChangeByte',error);
-  UWord.Caption:=ini.ReadString('Code','ChangeWord',error);
-  UDword.Caption:=ini.ReadString('Code','ChangeDword',error);
-  UQword.Caption:=ini.ReadString('Code','ChangeQword',error);
-  ChangeToSigned.Caption:=ini.ReadString('Code','ChangeToSigned',error);
-  SByte.Caption:=ini.ReadString('Code','ChangeByte',error);
-  SWord.Caption:=ini.ReadString('Code','ChangeWord',error);
-  SDword.Caption:=ini.ReadString('Code','ChangeDword',error);
-  SQword.Caption:=ini.ReadString('Code','ChangeQword',error);
-  ChangeToFloat.Caption:=ini.ReadString('Code','ChangeToFloat',error);
-  FSingle.Caption:=ini.ReadString('Code','ChangeSingle',error);
-  FDouble.Caption:=ini.ReadString('Code','ChangeDouble',error);
-  FExtended.Caption:=ini.ReadString('Code','ChangeExtended',error);
-  ChangeToString.Caption:=ini.ReadString('Code','ChangeToString',error);
-  StringPascal.Caption:=ini.ReadString('Code','ChangePascal',error);
-  StringC.Caption:=ini.ReadString('Code','ChangeC',error);
-  AdvancedDataChange.Caption:=ini.ReadString('Code','AdvancedDataChange',error);
-  Disassemble2.Caption:=ini.ReadString('Code','Disassemble',error);
-  AdvancedDisassemble.Caption:=ini.ReadString('Code','AdvancedDisassemble',error);
-  Insert1.Caption:=ini.ReadString('Code','Insert',error);
-  InsertComment.Caption:=ini.ReadString('Code','InsertComment',error);
-  EmptyLine.Caption:=ini.ReadString('Code','InsertEmpty',error);
-  RemoveLine.Caption:=ini.ReadString('Code','Remove',error);
+  ChangeToUnsigned.Caption:=ini.ReadString('Code','ChangeToUnsigned',TranslateErrorStr);
+  UByte.Caption:=ini.ReadString('Code','ChangeByte',TranslateErrorStr);
+  UWord.Caption:=ini.ReadString('Code','ChangeWord',TranslateErrorStr);
+  UDword.Caption:=ini.ReadString('Code','ChangeDword',TranslateErrorStr);
+  UQword.Caption:=ini.ReadString('Code','ChangeQword',TranslateErrorStr);
+  ChangeToSigned.Caption:=ini.ReadString('Code','ChangeToSigned',TranslateErrorStr);
+  SByte.Caption:=ini.ReadString('Code','ChangeByte',TranslateErrorStr);
+  SWord.Caption:=ini.ReadString('Code','ChangeWord',TranslateErrorStr);
+  SDword.Caption:=ini.ReadString('Code','ChangeDword',TranslateErrorStr);
+  SQword.Caption:=ini.ReadString('Code','ChangeQword',TranslateErrorStr);
+  ChangeToFloat.Caption:=ini.ReadString('Code','ChangeToFloat',TranslateErrorStr);
+  FSingle.Caption:=ini.ReadString('Code','ChangeSingle',TranslateErrorStr);
+  FDouble.Caption:=ini.ReadString('Code','ChangeDouble',TranslateErrorStr);
+  FExtended.Caption:=ini.ReadString('Code','ChangeExtended',TranslateErrorStr);
+  ChangeToString.Caption:=ini.ReadString('Code','ChangeToString',TranslateErrorStr);
+  StringPascal.Caption:=ini.ReadString('Code','ChangePascal',TranslateErrorStr);
+  StringC.Caption:=ini.ReadString('Code','ChangeC',TranslateErrorStr);
+  AdvancedDataChange.Caption:=ini.ReadString('Code','AdvancedDataChange',TranslateErrorStr);
+  Disassemble2.Caption:=ini.ReadString('Code','Disassemble',TranslateErrorStr);
+  AdvancedDisassemble.Caption:=ini.ReadString('Code','AdvancedDisassemble',TranslateErrorStr);
+  Insert1.Caption:=ini.ReadString('Code','Insert',TranslateErrorStr);
+  InsertComment.Caption:=ini.ReadString('Code','InsertComment',TranslateErrorStr);
+  EmptyLine.Caption:=ini.ReadString('Code','InsertEmpty',TranslateErrorStr);
+  RemoveLine.Caption:=ini.ReadString('Code','Remove',TranslateErrorStr);
 
 
 
   // [LabelCaption]
 
-  ProcessText.Disassemblying:=ini.ReadString('LabelCaption','Disassemblying',error);
-  ProcessText.Indentifying:=ini.ReadString('LabelCaption','Identifyingjumps',error);
-  ProcessText.PreparingOutput:=ini.ReadString('LabelCaption','Preparingoutput',error);
-  ProcessText.LoadingDAS:=ini.ReadString('LabelCaption','LoadingDAS',error);
-  ProcessText.LoadingDHF:=ini.ReadString('LabelCaption','LoadingDHF',error);
-  ProcessText.SavingDAS:=ini.ReadString('LabelCaption','SavingDAS',error);
-  ProcessText.SavingDHF:=ini.ReadString('LabelCaption','SavingDHF',error);
+  ProcessText.Disassemblying:=ini.ReadString('LabelCaption','Disassemblying',TranslateErrorStr);
+  ProcessText.Indentifying:=ini.ReadString('LabelCaption','Identifyingjumps',TranslateErrorStr);
+  ProcessText.PreparingOutput:=ini.ReadString('LabelCaption','Preparingoutput',TranslateErrorStr);
+  ProcessText.LoadingDAS:=ini.ReadString('LabelCaption','LoadingDAS',TranslateErrorStr);
+  ProcessText.LoadingDHF:=ini.ReadString('LabelCaption','LoadingDHF',TranslateErrorStr);
+  ProcessText.SavingDAS:=ini.ReadString('LabelCaption','SavingDAS',TranslateErrorStr);
+  ProcessText.SavingDHF:=ini.ReadString('LabelCaption','SavingDHF',TranslateErrorStr);
 
-
-  GotoEntryPoint1.Caption:=ini.ReadString('Code','EntrypointButton',error);
-  GotoAddress1.Caption:=ini.ReadString('Code','GotoAddressButton',error);
-  FollowJUMPCALL1.Caption:=ini.ReadString('Code','FollowButton',error);
-  ReturnfromJUMPCALL1.Caption:=ini.ReadString('Code','ReturnButton',error);
+  GotoEntryPoint1.Caption:=ini.ReadString('Code','EntrypointButton',TranslateErrorStr);
+  GotoAddress1.Caption:=ini.ReadString('Code','GotoAddressButton',TranslateErrorStr);
+  FollowJUMPCALL1.Caption:=ini.ReadString('Code','FollowButton',TranslateErrorStr);
+  ReturnfromJUMPCALL1.Caption:=ini.ReadString('Code','ReturnButton',TranslateErrorStr);
 
 // Zmena hintov
 
 //[ButtonHint]
-  OpenMyButton.Hint:=ini.ReadString('ButtonHint','OpenFile',error);
-  ProjectMyButton.Hint:=ini.ReadString('ButtonHint','OpenDisasm',error);
-  DisassembleMyButton.Hint:=ini.ReadString('ButtonHint','Disassemble',error);
-  SaveMyButton.Hint:=ini.ReadString('ButtonHint','SaveDisasm',error);
-  HelpMyButton.Hint:=ini.ReadString('ButtonHint','Help',error);
-  StopMyButton.Hint:=ini.ReadString('ButtonHint','StopDisasm',error);
+  OpenMyButton.Hint:=ini.ReadString('ButtonHint','OpenFile',TranslateErrorStr);
+  ProjectMyButton.Hint:=ini.ReadString('ButtonHint','OpenDisasm',TranslateErrorStr);
+  DisassembleMyButton.Hint:=ini.ReadString('ButtonHint','Disassemble',TranslateErrorStr);
+  SaveMyButton.Hint:=ini.ReadString('ButtonHint','SaveDisasm',TranslateErrorStr);
+  HelpMyButton.Hint:=ini.ReadString('ButtonHint','Help',TranslateErrorStr);
+//  StopMyButton.Hint:=ini.ReadString('ButtonHint','StopDisasm',TranslateErrorStr);
 
 //[MenuHint]
-  OpenFile1.Hint:=ini.ReadString('MenuHint','Openfile',error);
-  OpenProject1.Hint:=ini.ReadString('MenuHint','Opendisassembled',error);
-  Disassemble1.Hint:=ini.ReadString('MenuHint','Disassemble',error);
-  Save1.Hint:=ini.ReadString('MenuHint','Savedisassembled',error);
-  Closefile1.Hint:=ini.ReadString('MenuHint','Closefile',error);
-  Exit1.Hint:=ini.ReadString('MenuHint','Exit',error);
+  OpenFile1.Hint:=ini.ReadString('MenuHint','Openfile',TranslateErrorStr);
+  OpenProject1.Hint:=ini.ReadString('MenuHint','Opendisassembled',TranslateErrorStr);
+  Disassemble1.Hint:=ini.ReadString('MenuHint','Disassemble',TranslateErrorStr);
+  Save1.Hint:=ini.ReadString('MenuHint','Savedisassembled',TranslateErrorStr);
+  Closefile1.Hint:=ini.ReadString('MenuHint','Closefile',TranslateErrorStr);
+  Exit1.Hint:=ini.ReadString('MenuHint','Exit',TranslateErrorStr);
 
-  FindText1.Hint:=ini.ReadString('MenuHint','Findtext',error);
-  SearchAgain1.Hint:=ini.ReadString('MenuHint','SearchAgain',error);
+  FindText1.Hint:=ini.ReadString('MenuHint','Findtext',TranslateErrorStr);
+  SearchAgain1.Hint:=ini.ReadString('MenuHint','SearchAgain',TranslateErrorStr);
 
-//  Language1.Hint:=ini.ReadString('MenuHint','Language',error);
-//  Language1.Hint:=ini.ReadString('MenuHint','Language',error);
+//  Language1.Hint:=ini.ReadString('MenuHint','Language',TranslateErrorStr);
+//  Language1.Hint:=ini.ReadString('MenuHint','Language',TranslateErrorStr);
 
-  GotoEntrypoint1.Hint:=ini.ReadString('Code','EntrypointButtonHint',error);
-  GotoAddress1.Hint:=ini.ReadString('Code','GotoAddressButtonHint',error);
-  FollowJUMPCALL1.Hint:=ini.ReadString('Code','FollowButtonHint',error);
-  ReturnFromJUMPCALL1.Hint:=ini.ReadString('Code','ReturnButtonHint',error);
+  GotoEntrypoint1.Hint:=ini.ReadString('Code','EntrypointButtonHint',TranslateErrorStr);
+  GotoAddress1.Hint:=ini.ReadString('Code','GotoAddressButtonHint',TranslateErrorStr);
+  FollowJUMPCALL1.Hint:=ini.ReadString('Code','FollowButtonHint',TranslateErrorStr);
+  ReturnFromJUMPCALL1.Hint:=ini.ReadString('Code','ReturnButtonHint',TranslateErrorStr);
 
-  Calculator1.Hint:=ini.ReadString('MenuHint','Calculator',error);
-  HexEditor1.Hint:=ini.ReadString('MenuHint','HexEditor',error);
+  Calculator1.Hint:=ini.ReadString('MenuHint','Calculator',TranslateErrorStr);
+  HexEditor1.Hint:=ini.ReadString('MenuHint','HexEditor',TranslateErrorStr);
 
-  Language1.Hint:=ini.ReadString('MenuHint','Language',error);
-//  Options1.Hint:=ini.ReadString('MenuHint','Options',error);
+  Language1.Hint:=ini.ReadString('MenuHint','Language',TranslateErrorStr);
+//  Options1.Hint:=ini.ReadString('MenuHint','Options',TranslateErrorStr);
 
-  Help2.Hint:=ini.ReadString('MenuHint','Help',error);
-  About1.Hint:=ini.ReadString('MenuHint','About',error);
+  Help2.Hint:=ini.ReadString('MenuHint','Help',TranslateErrorStr);
+  About1.Hint:=ini.ReadString('MenuHint','About',TranslateErrorStr);
+
 end;
 
-procedure TMainForm.Findtext1Click(Sender: TObject);  // Otvorenie vyhladavacieho dialogu
+
+
+procedure TMainForm.FindText1Click(Sender: TObject);  // Otvorenie vyhladavacieho dialogu
 begin
-  if ActivePageType = ttCode then FindDialog1.Execute;
+  if ActivePageType = ttCode then
+    FindDialog1.Execute;
 end;
+
+
 
 procedure TMainForm.FindDialog1Find(Sender: TObject); // Vyhladavanie retazca
 begin
-  ((PageControl1.ActivePage as TTabSheetTemplate).Frame as TCodeTabFrame).FindString(FindDialog1.FindText,FindDialog1.Options);
+  ((PageControl1.ActivePage as TTabSheetTemplate).Frame as TCodeTabFrame).FindString(FindDialog1.FindText, FindDialog1.Options);
   FindDialog1.CloseDialog;
 end;
 
-procedure TMainForm.StopClick(Sender: TObject);
-begin
-  Stopped:=true;
-end;
+
 
 procedure TMainForm.PageControl1Change(Sender: TObject);
 begin
@@ -836,98 +789,77 @@ begin
   fSaveProjectPath:=path;
 end;
 
+
+
 procedure TMainForm.AdvancedDataChangeClick(Sender: TObject);
 begin
-  with ActiveFrame as TCodeTabFrame do begin
-    if AdvancedChangingToDataForm.ShowModal = mrOK then
-      ChangeToData(AdvancedChangingToDataForm.Options);
-  end;
+  (ActiveFrame as TCodeTabFrame).AdvancedChangeToDataClick(Sender);
 end;
+
+
 
 procedure TMainForm.AdvancedDisassemble1Click(Sender: TObject);
 begin
-  if AdvancedDisassembleForm.ShowModal=mrOK then
-    (ActiveFrame as TCodeTabFrame).Disassemble(AdvancedDisassembleForm.Options);
+  (ActiveFrame as TCodeTabFrame).AdvancedDisassembleClick(Sender);
 end;
+
+
 
 procedure TMainForm.Insert1Click(Sender: TObject);
 begin
   (ActiveFrame as TCodeTabFrame).InsertCommentClick(Sender);
 end;
 
+
+
 procedure TMainForm.RemoveLineClick(Sender: TObject);
 begin
   (ActiveFrame as TCodeTabFrame).RemoveLineClick(Sender);
 end;
+
+
 
 procedure TMainForm.TBookmarkClick(Sender: TObject);
 begin
   (ActiveFrame as TCodeTabFrame).ToggleBookmarkClick(Sender);
 end;
 
+
+
 procedure TMainForm.GBookmarkClick(Sender: TObject);
 begin
   (ActiveFrame as TCodeTabFrame).GotoBookmarkClick(Sender);
 end;
 
+
+
 procedure TMainForm.ChangeUDataClick(Sender: TObject);
-var Options: TDataChangeOptions;
 begin
-  Options.signed:=false;
-  Options.option:=dcItems;
-  Options.value:=1;
-  case (Sender as TMenuItem).MenuIndex of
-    0: Options.datatype:=dtByte;
-    1: Options.datatype:=dtWord;
-    2: Options.datatype:=dtDword;
-    3: Options.datatype:=dtQword;
-  end;
-  (ActiveFrame as TCodeTabFrame).ChangeToData(Options);
+  (ActiveFrame as TCodeTabFrame).ChangeToUnsignedDataClick(Sender);
 end;
+
+
 
 procedure TMainForm.ChangeSDataClick(Sender: TObject);
-var Options: TDataChangeOptions;
 begin
-  Options.signed:=true;
-  Options.option:=dcItems;
-  Options.value:=1;
-  case (Sender as TMenuItem).MenuIndex of
-    0: Options.datatype:=dtByte;
-    1: Options.datatype:=dtWord;
-    2: Options.datatype:=dtDword;
-    3: Options.datatype:=dtQword;
-  end;
-  (ActiveFrame as TCodeTabFrame).ChangeToData(Options);
+  (ActiveFrame as TCodeTabFrame).ChangeToSignedDataClick(Sender);
 end;
+
+
 
 procedure TMainForm.ChangeFDataClick(Sender: TObject);
-var Options: TDataChangeOptions;
 begin
-  Options.signed:=false;
-  Options.option:=dcItems;
-  Options.value:=1;
-  case (Sender as TMenuItem).MenuIndex of
-    0: Options.datatype:=dtSingle;
-    1: Options.datatype:=dtDouble;
-    2: Options.datatype:=dtDoubleEx;
-  end;
-  (ActiveFrame as TCodeTabFrame).ChangeToData(Options);
+  (ActiveFrame as TCodeTabFrame).ChangeToFloatDataClick(Sender);
 end;
 
+
+
 procedure TMainForm.ChangeStringClick(Sender: TObject);
-var Options: TDataChangeOptions;
 begin
-  Options.signed:=false;
-  Options.option:=dcItems;
-  Options.value:=1;
-  case (Sender as TMenuItem).MenuIndex of
-    0: Options.datatype:=dtPascalStr;
-    1: Options.datatype:=dtCStr;
-    2: Options.datatype:=dtPascalUniCodeStr;
-    3: Options.datatype:=dtCUniCodeStr;
-  end;
-  (ActiveFrame as TCodeTabFrame).ChangeToStringData(Options);
+  (ActiveFrame as TCodeTabFrame).ChangeToStringDataClick(Sender);
 end;
+
+
 
 procedure TMainForm.Disassemble2Click(Sender: TObject);
 var Options: TDisassembleFormOptions;
@@ -935,15 +867,21 @@ begin
   (ActiveFrame as TCodeTabFrame).NormalDisassembleClick(Sender);
 end;
 
+
+
 procedure TMainForm.Calculator1Click(Sender: TObject);
 begin
   Calculator.Show;
 end;
 
+
+
 procedure TMainForm.Options1Click(Sender: TObject);
 begin
   OptionsForm.ShowModal;
 end;
+
+
 
 procedure TMainForm.HexEditor1Click(Sender: TObject);
 var ff:integer;
@@ -957,48 +895,11 @@ begin
   HexEditForm.Show;
 end;
 
-function ProgressFunction(a,b:cardinal; c: string): boolean;
-begin
-  if a = 0 then begin
-///    Mainform.ProgressBar1.Max:=round(b/1000);
-///    MainForm.ProcessLabel.Caption:=c;
-  end;
-///  Mainform.ProgressBar1.Position:=round(a/1000);
-  Application.ProcessMessages;
-  result:=not Stopped;
-  if stopped then
-  Stopped:=false;
-end;
-
-
-
-procedure TMainForm.BeforeProgress;
-begin
-  OpenMyButton.Enabled:=false;
-  DisassembleMyButton.Enabled:=false;
-  StopMyButton.Enabled:=true;
-  ProjectMyButton.Enabled:=false;
-  SaveMyButton.Enabled:=false;
-  File1.Enabled:=false;
-  Settings1.Enabled:=false;
-end;
-
-procedure TMainForm.AfterProgress;
-begin
-//  ProcessLabel.Caption:='';
-//  ProgressBar1.Position:=0;
-  OpenMyButton.Enabled:=true;
-  StopMyButton.Enabled:=false;
-  ProjectMyButton.Enabled:=true;
-  File1.Enabled:=true;
-  Settings1.Enabled:=true;
-end;
-
 
 
 procedure TMainForm.CreateSection(ASection: TSection);
 begin
-  TTabSheetTemplate.Create(aSection);
+//  TTabSheetTemplate.Create(aSection);
 end;
 
 function TMainForm.GetActivePageType: TPageType;
@@ -1017,6 +918,18 @@ begin
 end;
 
 
+
+procedure TMainForm.UpdatePageControl;
+var
+  i,j: integer;
+begin
+  if ExecFile = nil then Exit;
+
+  if PageControl1.PageCount = 0 then
+
+//  for i:= 0 to Sections.Count - 1 do
+
+end;
 
 initialization
   ProcessText.Disassemblying:='Disassemblying...';

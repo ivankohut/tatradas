@@ -9,10 +9,19 @@ uses
 {$IFDEF LINUX}
     QForms, QStdCtrls, QControls, QExtCtrls, QDialogs,
 {$ENDIF}
-    SysUtils, Classes, INIFiles, {PBBinHexEdit, }StringRes, myedits;
+    SysUtils,
+    Classes,
+    INIFiles,
+
+    {PBBinHexEdit, }
+
+    procmat,
+    TatraDASFormUnit,
+    StringRes,
+    myedits;
 
 type
-  TGoToAddressForm = class(TForm)
+  TGoToAddressForm = class(TTatraDASForm)
     OKButton: TButton;
     CancelButton: TButton;
     GotoAddressLabel: TLabel;
@@ -26,7 +35,7 @@ type
     function GetAddress: cardinal;
   public
     GotoAddressEdit: TMyHexEdit;
-    procedure Translate(ini: TMemINIFile; error: string);
+    procedure Translate(ini: TMemINIFile); override;
     property MaxAddress: cardinal write SetMaxAddress;
     property Address: cardinal read GetAddress;
   end;
@@ -81,11 +90,11 @@ begin
   GotoAddressEdit.SetFocus;
 end;
 
-procedure TGoToAddressForm.Translate(ini: TMemINIFile; error: string);
+procedure TGoToAddressForm.Translate(ini: TMemINIFile);
 begin
-  Caption:=ini.ReadString('GotoAddressForm','Caption',error);
-  GotoAddressLabel.Caption:=ini.ReadString('GotoAddressForm','GotoAddressLabel',error);
-  CancelButton.Caption:=ini.ReadString('Common','CancelButton',error);
+  Caption:=ini.ReadString('GotoAddressForm','Caption',TranslateErrorStr);
+  GotoAddressLabel.Caption:=ini.ReadString('GotoAddressForm','GotoAddressLabel',TranslateErrorStr);
+  CancelButton.Caption:=ini.ReadString('Common','CancelButton',TranslateErrorStr);
 end;
 
 procedure TGoToAddressForm.FormDestroy(Sender: TObject);

@@ -59,6 +59,7 @@ inherited CodeTabFrame: TCodeTabFrame
       Hint = 'Jump to Jump or Call instruction target'
       Anchors = [akTop, akRight]
       Caption = 'Follow Jump/Call'
+      Enabled = False
       TabOrder = 2
       OnClick = FollowButtonClick
     end
@@ -70,6 +71,7 @@ inherited CodeTabFrame: TCodeTabFrame
       Hint = 'Return from last jump'
       Anchors = [akTop, akRight]
       Caption = 'Return Jump/Call'
+      Enabled = False
       TabOrder = 3
       OnClick = ReturnButtonClick
     end
@@ -210,19 +212,19 @@ inherited CodeTabFrame: TCodeTabFrame
       Caption = 'Change to unsigned data'
       object BYTE8bits2: TMenuItem
         Caption = 'BYTE (8 bits)'
-        OnClick = ChangeUDataClick
+        OnClick = ChangeToUnsignedDataClick
       end
       object WORD16bits2: TMenuItem
         Caption = 'WORD (16 bits)'
-        OnClick = ChangeUDataClick
+        OnClick = ChangeToUnsignedDataClick
       end
       object DWORD32bits2: TMenuItem
         Caption = 'DWORD (32 bits)'
-        OnClick = ChangeUDataClick
+        OnClick = ChangeToUnsignedDataClick
       end
       object QWORD64bits2: TMenuItem
         Caption = 'QWORD (64 bits)'
-        OnClick = ChangeUDataClick
+        OnClick = ChangeToUnsignedDataClick
       end
       object TMenuItem
       end
@@ -231,69 +233,69 @@ inherited CodeTabFrame: TCodeTabFrame
       Caption = 'Change to signed data'
       object BYTE8bits1: TMenuItem
         Caption = 'BYTE (8 bits)'
-        OnClick = ChangeSDataClick
+        OnClick = ChangeToSignedDataClick
       end
       object WORD16bits1: TMenuItem
         Caption = 'WORD (16 bits)'
-        OnClick = ChangeSDataClick
+        OnClick = ChangeToSignedDataClick
       end
       object DWORD32bits1: TMenuItem
         Caption = 'DWORD (32 bits)'
-        OnClick = ChangeSDataClick
+        OnClick = ChangeToSignedDataClick
       end
       object QWORD64bits1: TMenuItem
         Caption = 'QWORD (64 bits)'
-        OnClick = ChangeSDataClick
+        OnClick = ChangeToSignedDataClick
       end
     end
     object Changetounsigneddata4: TMenuItem
       Caption = 'Change to float data'
       object SINGLE32bits1: TMenuItem
         Caption = 'SINGLE (32 bits)'
-        OnClick = ChangeFDataClick
+        OnClick = ChangeToFloatDataClick
       end
       object DOUBLE64bits1: TMenuItem
         Caption = 'DOUBLE (64 bits)'
-        OnClick = ChangeFDataClick
+        OnClick = ChangeToFloatDataClick
       end
       object EXTENDED80bits1: TMenuItem
         Caption = 'EXTENDED (80 bits)'
-        OnClick = ChangeFDataClick
+        OnClick = ChangeToFloatDataClick
       end
     end
     object Changetostringdata2: TMenuItem
       Caption = 'Change to string data'
       object Pascal1: TMenuItem
         Caption = 'Pascal'
-        OnClick = ChangeStringClick
+        OnClick = ChangeToStringDataClick
       end
       object C1: TMenuItem
         Caption = 'C'
-        OnClick = ChangeStringClick
+        OnClick = ChangeToStringDataClick
       end
       object PascalUnicode1: TMenuItem
         Caption = 'Pascal Unicode'
-        OnClick = ChangeStringClick
+        OnClick = ChangeToStringDataClick
       end
       object CUnicode1: TMenuItem
         Caption = 'C Unicode'
-        OnClick = ChangeStringClick
+        OnClick = ChangeToStringDataClick
       end
     end
     object Advancedchangetodata2: TMenuItem
       Caption = 'Advanced change to data ...'
-      OnClick = Advancedchanging1Click
+      OnClick = AdvancedChangeToDataClick
     end
     object N6: TMenuItem
       Caption = '-'
     end
     object Dis2: TMenuItem
       Caption = 'Disassemble'
-      OnClick = DisassembleClick
+      OnClick = NormalDisassembleClick
     end
     object Advanceddisassemble2: TMenuItem
       Caption = 'Advanced disassemble ...'
-      OnClick = AdvancedDisassemble1Click
+      OnClick = AdvancedDisassembleClick
     end
     object N7: TMenuItem
       Caption = '-'

@@ -37,7 +37,7 @@ type
   TExportSection = class(TSection)
     FunctionCount: integer;
     Functions: array of TExportFunction;
-    constructor Create(EFile:TObject); overload;
+    constructor Create(ExecFile: TObject); overload;
     constructor CreateFromPEFile(InputFile: TStream; FileOffset, ExportRVA, ExportDataSize, ImageBase: cardinal; aName: string; aExecFile: TObject);
     constructor CreateFromNEFile(InputFile: TStream; ResidentTableOffset, NonResidentTableOffset, NonResidentTableSize: cardinal; aName: string; aExecFile: TObject); overload;
 
@@ -47,8 +47,8 @@ type
   end;
 
 
-
 implementation
+
 
 uses
   ExecFileUnit,
@@ -56,10 +56,12 @@ uses
   NEFileUnit,
   PEFileUnit;
 
-constructor TExportSection.Create(efile:TObject);
+
+
+constructor TExportSection.Create(ExecFile: TObject);
 begin
-  fTyp:=stExport;
-  fExecFile:=efile;
+  fTyp:= stExport;
+  fExecFile:= ExecFile;
 end;
 
 
@@ -147,7 +149,6 @@ begin
     end;
   end;
 
-
   ExportStream.Free;
 end;
 
@@ -201,6 +202,7 @@ constructor TExportSection.CreateFromNEFile(InputFile: TStream; ResidentTableOff
       InputFile.Read(Functions[FunIndex].Name[1], FunNameLength);
       InputFile.Read(Functions[FunIndex].Ordinal, 2);
       FindEntryPoint(Functions[FunIndex].Ordinal, Functions[FunIndex].Section, Functions[FunIndex].CodeSectionOffset);
+      Functions[FunIndex].MemOffset:= Functions[FunIndex].CodeSectionOffset;
       InputFile.Read(FunNameLength, 1);
       Inc(FunIndex);
     end;

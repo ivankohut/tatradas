@@ -42,11 +42,11 @@ const
 
 type
 
-  TFileError = (errNone, errOpen, errUnknownFormat, errBadFormat, errDASNotFound, errBadProjectVersion, errSave, errCanceled);
+//  TFileError = (errNone, errOpen, errUnknownFormat, errBadFormat, errDASNotFound, errBadProjectVersion, errSave, errCanceled);
 
   TExecFileManager = class
    private
-    fError: TFileError;
+//    fError: TFileError;
     function GetExecFileFormat(FileStream: TFileStream): TExecFileFormat;
 
    public
@@ -54,7 +54,7 @@ type
     function SaveExecFileToFile(ExecFile: TExecutableFile; AFileName: TFileName; SaveOptions: TSaveOptions): boolean;
     function CreateNewExecFile(AFileName: TFileName): TExecutableFile;
 
-    property Error: TFileError read fError;
+//    property Error: TFileError read fError;
   end;
 
 
@@ -67,13 +67,13 @@ var
   FileFormat: TExecFileFormat;
   InputFile: TFileStream;
 begin
-  fError:= errNone;
+  ProgressData.ErrorStatus:= errNone;
   result:=nil;
 
   try
     InputFile:=TFileStream.Create(aFileName, fmShareDenyNone);
   except
-    fError:=errOpen;
+    ProgressData.ErrorStatus:=errOpen;
     Exit;
   end;
 
@@ -95,20 +95,20 @@ begin
       if UnknownFileFormatForm.ShowModal = mrOK then
         result:=TCustomFile.Create(InputFile, aFileName, UnknownFileFormatForm.Parameters)
       else begin
-        fError:= errCanceled;
+        ProgressData.ErrorStatus:= errCanceled;
         Exit;
       end;
     end;
    {$ELSE}
     ffUnknown: begin
-      fError:=errUnknownFormat;
+      ProgressData.ErrorStatus:=errUnknownFormat;
       Exit;
     end;
    {$ENDIF}
   end;
 
   if result.ExeFormat = ffError then begin
-    fError:= errBadFormat;
+    ProgressData.ErrorStatus:= errBadFormat;
     result.Free;
   end;
 
@@ -169,6 +169,9 @@ end;
 
 
 
+
+
+
 function TExecFileManager.SaveExecFileToFile(ExecFile: TExecutableFile; AFileName: TFileName; SaveOptions: TSaveOptions): boolean;
 var
   DAS: TextFile;
@@ -186,12 +189,12 @@ begin
     try
       DHF:= TFileStream.Create(DHF_FileName, fmCreate);
     except
-      fError:=errSave;
+      ProgressData.ErrorStatus:= errSave;
       DHF.Free;
       result:= false;
       Exit;
     end;
-    Version:=TatraDASProjectVersion;
+    Version:= TatraDASProjectVersion;
     DHF.Write(Version, 4);
     DHF.Write(ExecFile.ExeFormat, SizeOf(TExecFileFormat));
 
@@ -213,8 +216,6 @@ begin
   // Initialize DAS file
   AssignFile(DAS, DAS_FileName);
   Rewrite(DAS);
-  WriteLn(DAS, 'DisASsembled file, Original file: ' + ExecFile.FileName + '  ' + TatraDASFullNameVersion + ', Ivan Kohut (c) 2007');
-  Writeln(DAS);
 
   // Save :)
   result:= ExecFile.SaveToFile(DHF, DAS, SaveOptions);
@@ -239,7 +240,7 @@ begin
   DAS_FileName:= ChangeFileExt(DHF_FileName, '.das');
 
   if not FileExists(DAS_FileName) then begin
-    fError:= errDASNotFound;
+    ProgressData.ErrorStatus:= errDASNotFound;
     result:= nil;
     Exit;
   end;
@@ -250,7 +251,7 @@ begin
   case ProjectVersion of
     TatraDASProjectVersion: begin
 
-      DHF.Read(ProjectExecFileFormat, SizeOf(TExecFileFormat));                          
+      DHF.Read(ProjectExecFileFormat, SizeOf(TExecFileFormat));
       case ProjectExecFileFormat of
         ffPE:  result:=TPEFile.Create;
         ffMZ:  result:=TMZFile.Create;
@@ -260,7 +261,7 @@ begin
 //        Unknown: result:=TUnknownFile.Create(ctrls);
         else begin
           DHF.Free;
-          fError:= errBadFormat;
+          ProgressData.ErrorStatus:= errBadFormat;
           Exit;
         end;
       end;
@@ -282,7 +283,7 @@ begin
     end
 
     else begin
-      fError:= errBadProjectVersion;
+      ProgressData.ErrorStatus:= errBadProjectVersion;
       result:= nil;
       DHF.Free;
       Exit;

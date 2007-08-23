@@ -34,7 +34,9 @@ type
     procedure FunctionListViewSelectItem(Sender: TObject; Item: TListItem; Selected: Boolean);
     procedure AddressListBoxDblClick(Sender: TObject);
     procedure FunctionListViewDblClick(Sender: TObject);
-    procedure Translate(ini:TMemINIFile; error:string); 
+    procedure Translate(Translator: TTatraDASLanguages); override;
+    procedure FunctionListViewColumnClick(Sender: TObject;
+      Column: TListColumn);
   private
     fSection: TImportSection;
   protected
@@ -76,16 +78,24 @@ begin
   with fSection.moduls[ModulCombobox.ItemIndex] do
     for FunctionIndex:=0 to integer(FunctionCount) - 1 do begin
       ListItem:=FunctionListView.Items.Add;
+      ListItem.Data:= Pointer(FunctionIndex);
       ListItem.Caption:=IntToStr(FunctionIndex + 1) + '.';
       ListItem.SubItems.Add(functions[FunctionIndex].Name);
-      ListItem.SubItems.Add(IntToHex(functions[FunctionIndex].MemAddress, 8));
+      if functions[FunctionIndex].MemAddress <> 0 then
+        ListItem.SubItems.Add(IntToHex(functions[FunctionIndex].MemAddress, 8))
+      else
+        ListItem.SubItems.Add('');
+
       if functions[FunctionIndex].ByOrdinal then begin
         ListItem.SubItems.Add(IntToHex(functions[FunctionIndex].Ordinal, 8));
         ListItem.SubItems.Add('');
       end
       else begin
         ListItem.SubItems.Add('');
-        ListItem.SubItems.Add(IntToHex(functions[FunctionIndex].Hint, 4));
+        if functions[FunctionIndex].Hint <> 0 then
+          ListItem.SubItems.Add(IntToHex(functions[FunctionIndex].Hint, 4))
+        else
+          ListItem.SubItems.Add('');
       end;
     end;
 end;
@@ -104,7 +114,7 @@ begin
 
   AddressListBox.Clear;
   ModulIndex:=ModulComboBox.ItemIndex;
-  FunctionIndex:=FunctionListView.ItemIndex;
+  FunctionIndex:= Integer(FunctionListView.Selected.Data);
   PocetVyskytov:=Length(fSection.moduls[ModulIndex].functions[FunctionIndex].Occurs);
   for OccurIndex:=0 to PocetVyskytov - 1 do begin
     Address:=fSection.moduls[ModulIndex].functions[FunctionIndex].Occurs[OccurIndex].Address;
@@ -121,18 +131,17 @@ var
   Tab: TTabSheetTemplate;
 begin
   ModulIndex:= ModulComboBox.ItemIndex;
-  FunctionIndex:= FunctionListView.ItemIndex;
+  FunctionIndex:= Integer(FunctionListView.Selected.Data);
   OccurenceIndex:= AddressListBox.ItemIndex;
-  Address:= fSection.Moduls[ModulIndex].Functions[FunctionIndex].Occurs[OccurenceIndex].Address;
 
-//  SectionIndex:= MainForm.ExecFile.Sections.GetSectionIndexFromMemOffset(Address);
+  Address:= fSection.Moduls[ModulIndex].Functions[FunctionIndex].Occurs[OccurenceIndex].Address;
   SectionIndex:= fSection.Moduls[ModulIndex].Functions[FunctionIndex].Occurs[OccurenceIndex].SectionIndex;
 
   Tab:=MainForm.GetSectionsTabSheet(MainForm.ExecFile.Sections[SectionIndex]);
   with (Tab.Frame as TCodeTabFrame) do begin
     GotoPosition(GetPosition(Address), soBeginning);
   end;
-  MainForm.PageControl1.ActivePage:=Tab;
+  MainForm.PageControl1.ActivePage:= Tab;
 end;
 
 
@@ -146,11 +155,10 @@ begin
   if (AddressListBox.Items.Count <> 1) then Exit;
 
   ModulIndex:= ModulComboBox.ItemIndex;
-  FunctionIndex:= FunctionListView.ItemIndex;
+  FunctionIndex:= Integer(FunctionListView.Selected.Data);
   OccurenceIndex:= 0;
   Address:= fSection.Moduls[ModulIndex].Functions[FunctionIndex].Occurs[OccurenceIndex].Address;
 
-//  SectionIndex:= MainForm.ExecFile.Sections.GetSectionIndexFromMemOffset(Address);
   SectionIndex:= fSection.Moduls[ModulIndex].Functions[FunctionIndex].Occurs[OccurenceIndex].SectionIndex;
 
   Tab:=MainForm.GetSectionsTabSheet(MainForm.ExecFile.Sections[SectionIndex]);
@@ -162,27 +170,86 @@ end;
 
 
 
-procedure TImportTabFrame.Translate(ini:TMemINIFile; error:string);
+procedure TImportTabFrame.Translate(Translator: TTatraDASLanguages);
 begin
   inherited;
-  Caption:=ini.ReadString('Import','Caption',error);
-  ModulLabel.Caption:=ini.ReadString('Import','ModulLabel',error);
-  FunctionLabel.Caption:=ini.ReadString('Import','FunctionLabel',error);
-  OccurLabel.Caption:=ini.ReadString('Import','OccurLabel',error);
-  OccurHintLabel.Caption:=ini.ReadString('Import','OccurHintLabel',error);
+  Caption:= Translator.TranslateControl('Import', 'Caption');
+  ModulLabel.Caption:= Translator.TranslateControl('Import', 'ModulLabel');
+  FunctionLabel.Caption:= Translator.TranslateControl('Import', 'FunctionLabel');
+  OccurLabel.Caption:= Translator.TranslateControl('Import', 'OccurLabel');
+  OccurHintLabel.Caption:= Translator.TranslateControl('Import', 'OccurHintLabel');
 
-  FunctionListView.Columns.Items[0].Caption:=ini.ReadString('Import','FunctionListNumber',error);
-  FunctionListView.Columns.Items[1].Caption:=ini.ReadString('Import','FunctionListName',error);
-  FunctionListView.Columns.Items[2].Caption:=ini.ReadString('Import','FunctionListAddress',error);
-  FunctionListView.Columns.Items[3].Caption:=ini.ReadString('Import','FunctionListOrdinal',error);
-  FunctionListView.Columns.Items[4].Caption:=ini.ReadString('Import','FunctionListHint',error);
+  FunctionListView.Columns.Items[0].Caption:= Translator.TranslateControl('Import', 'FunctionListNumber');
+  FunctionListView.Columns.Items[1].Caption:= Translator.TranslateControl('Import', 'FunctionListName');
+  FunctionListView.Columns.Items[2].Caption:= Translator.TranslateControl('Import', 'FunctionListAddress');
+  FunctionListView.Columns.Items[3].Caption:= Translator.TranslateControl('Import', 'FunctionListOrdinal');
+  FunctionListView.Columns.Items[4].Caption:= Translator.TranslateControl('Import', 'FunctionListHint');
 end;
 
 
 
 function TImportTabFrame.GetSection: TSection;
 begin
-  result:=fSection;
+  result:= fSection;
+end;
+
+
+
+function ImportTabFrameSortListView(Item1, Item2, SortColumn: integer): integer stdcall;
+var
+  ListItem1, ListItem2: TListItem;
+  Num1, Num2: integer;
+  Str1, Str2: string;
+begin
+  ListItem1:= TListItem(item1);
+  ListItem2:= TListItem(item2);
+
+  if SortColumn = 0 then begin
+    str1:= ListItem1.Caption;
+    str2:= ListItem2.Caption;
+  end
+  else begin
+    str1:= ListItem1.SubItems[SortColumn-1];
+    str2:= ListItem2.SubItems[SortColumn-1];
+  end;
+
+  case SortColumn of
+    0: begin
+      num1:= StrToInt(Copy(str1, 1, Length(str1)-1));
+      num2:= StrToInt(Copy(str2, 1, Length(str2)-1));
+      if num1 > num2 then
+        result:= +1
+      else
+        if num1 < num2 then
+          result:= -1
+        else
+          result:=0;
+    end;
+
+    1,2,3,4: begin
+      if str1 > str2 then
+        result:= +1
+      else
+        if str1 < str2 then
+          result:=-1
+        else
+          result:= 0;
+    end;
+
+    else
+      result:= 0;
+  end;
+end;
+
+
+
+procedure TImportTabFrame.FunctionListViewColumnClick(Sender: TObject;
+  Column: TListColumn);
+begin
+  inherited;
+  FunctionListView.Items.BeginUpdate;
+  FunctionListView.CustomSort(ImportTabFrameSortListView, Column.Index);
+  FunctionListView.Items.EndUpdate;
 end;
 
 

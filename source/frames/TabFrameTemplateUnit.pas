@@ -11,7 +11,9 @@ uses
   Dialogs,
   ExtCtrls,
   ComCtrls,
+  IniFiles,
 
+  procmat,
   Languages,
   SectionUnit,
   CodeSectionUnit,
@@ -31,8 +33,9 @@ type
     function GetSection: TSection; virtual; abstract;
     property Section: TSection read GetSection;
   public
-    constructor Create(AOwner: TComponent; ASection: TSection); overload; virtual;  //abstract;
+    constructor Create(AOwner: TComponent; ASection: TSection); overload; virtual; //abstract;
     procedure Translate(Translator: TTatraDASLanguages); virtual; abstract;
+//    procedure Translate(INI: TMemIniFile); virtual; abstract;
 //    procedure SaveToStream(AStream: TStream); virtual; abstract;
     property TypeName: string read fTypeName;
     property PageType: TPageType read GetPageType;
@@ -88,6 +91,7 @@ begin
   end;
   Frame.Parent:=self;
   Caption:=Frame.Caption;
+  Frame.Translate(Langs);
 end;
 
 
@@ -97,8 +101,17 @@ begin
   inherited Create(MainForm.PageControl1);
   PageControl:=MainForm.PageControl1;
   PageIndex:=0;
-  Frame:=TFileTabFrame.Create(self, aExecFile);
-  Frame.Parent:=self;
+  case aExecFile.ExeFormat of
+    ffCOM: Frame:= TCOMFileTabFrame.Create(self, aExecFile);
+    ffMZ: Frame:= TMZFileTabFrame.Create(self, aExecFile);
+    ffNE: Frame:= TNEFileTabFrame.Create(self, aExecFile);
+    ffPE: Frame:= TPEFileTabFrame.Create(self, aExecFile);
+    ffELF: Frame:= TELFFileTabFrame.Create(self, aExecFile);
+    ffCustom: Frame:= TCustomFileTabFrame.Create(self, aExecFile);
+    else
+      Frame:= TFileTabFrame.Create(self, aExecFile);
+  end;
+  Frame.Parent:= self;
   Caption:=Frame.Caption;
 end;
 
@@ -121,7 +134,7 @@ end;
 
 procedure TTabSheetTemplate.Translate(Translator: TTatraDASLanguages);
 begin
-  Caption:=Translator.TranslateControl(Frame.TypeName,'Caption');
+  Caption:=Translator.TranslateControl(Frame.TypeName, 'Caption');
   Frame.Translate(Translator);
 end;
 

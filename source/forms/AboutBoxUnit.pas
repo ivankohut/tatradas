@@ -9,11 +9,16 @@ uses
 {$IFDEF LINUX}
   QForms, QExtCtrls, QStdCtrls, QControls, QGraphics, QActnList,
 {$ENDIF}
-  Classes, SysUtils, INIFiles,
-  procmat;
+
+  Classes,
+  SysUtils,
+  INIFiles,
+
+  procmat,
+  TatraDASFormUnit;
 
 type
-  TAboutBox = class(TForm)
+  TAboutBox = class(TTatraDASForm)
     Panel1: TPanel;
     ProductName: TLabel;
     VersionLabel: TLabel;
@@ -34,10 +39,8 @@ type
     procedure URLLabelClick(Sender: TObject);
     procedure Button1Click(Sender: TObject);
     procedure FormActivate(Sender: TObject);
-  private
 
-  public
-    procedure Translate(ini: TMemINIFile; error: string);
+    procedure Translate(INI: TMemINIFile); override;
   end;
 
 var
@@ -80,14 +83,14 @@ begin
 }
 end;
 
-procedure TAboutBox.Translate(ini: TMemINIFile; error: string);
+procedure TAboutBox.Translate(ini: TMemINIFile);
 begin
-  URLLabel.Hint:=ini.ReadString('AboutBoxForm','URLLabelHint',error);
-  Caption:=ini.ReadString('AboutBoxForm','Caption',error);
-  AuthorLabel.Caption:=ini.ReadString('AboutBoxForm','AutorLabel',error);
-  GraphicsLabel.Caption:=ini.ReadString('AboutBoxForm','GraphicsLabel',error);
-  VersionLabel.Caption:=ini.ReadString('AboutBoxForm','VersionLabel',error) + ' ' + ShortTatraDASVersion + '   ' + IntToHex(TatraDASDate,8) + ' (DMY)';
-  LicenseLabel.Caption:=ini.ReadString('AboutBoxForm','LicenseLabel',error) + ' GNU GPL';
+  URLLabel.Hint:=ini.ReadString('AboutBoxForm','URLLabelHint', TranslateErrorStr);
+  Caption:=ini.ReadString('AboutBoxForm','Caption', TranslateErrorStr);
+  AuthorLabel.Caption:=ini.ReadString('AboutBoxForm','AutorLabel', TranslateErrorStr);
+  GraphicsLabel.Caption:=ini.ReadString('AboutBoxForm','GraphicsLabel', TranslateErrorStr);
+  VersionLabel.Caption:=ini.ReadString('AboutBoxForm','VersionLabel', TranslateErrorStr) + ' ' + ShortTatraDASVersion + '   ' + IntToHex(TatraDASDate,8) + ' (DMY)';
+  LicenseLabel.Caption:=ini.ReadString('AboutBoxForm','LicenseLabel', TranslateErrorStr) + ' GNU GPL';
 end;
 
 
