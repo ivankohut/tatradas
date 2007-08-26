@@ -225,11 +225,6 @@ begin
   if Header.ModuleReferenceTableEntryNumber > 0 then begin
     fImportSection:= TImportSection.CreateFromNEFile(InputFile, fNEOffset + Header.ModuleReferenceTableRO, fNEOffset + Header.ImportedNameTableRO, Header.ModuleReferenceTableEntryNumber, Header.EntryTableRO-header.ImportedNameTableRO, SegmentImports, '_IMPORT', self);
     Sections.Add(ImportSection);
-
-    // Set Import for all code sections
-    for SectionIndex:=0 to Sections.Count-1 do
-      if Sections[SectionIndex].Typ = stCode then
-        (Sections[SectionIndex] as TCodeSection).Import:=ImportSection;
   end;
 
   // Read Export section
@@ -238,11 +233,6 @@ begin
   if ModuleNameLength <> 0 then begin
     fExportSection:= TExportSection.CreateFromNEFile(InputFile, fNEOffset + Header.ResidentNameTableRO, Header.NonResidentNameTableOffset, Header.NonResidentNameTableSize, '_EXPORT', self);
     Sections.Add(ExportSection);
-
-    // Set Export for all code sections
-    for SectionIndex:=0 to Sections.Count-1 do
-      if Sections[SectionIndex].Typ = stCode then
-        (Sections[SectionIndex] as TCodeSection).Exportt:=ExportSection;
   end;
 
   fExecFormat := ffNE;
@@ -252,7 +242,8 @@ end;
 
 constructor TNEFile.Create;
 begin
-
+  inherited;
+  fExecFormat:= ffNE;
 end;
 
 

@@ -17,6 +17,7 @@ uses
   Math,
 
   procmat,
+  StringUtilities,
   CallsAndJumpsTableUnit;
 
 {$INCLUDE 'disassembler.inc'}
@@ -70,8 +71,8 @@ type
      end;
 
 
-     modrmparametertype = (reg, greg, sreg, creg, dreg, treg, regmem, mem);
-     modrmparametersize = (onebyte, twobyte, twoorfour, fourbyte, fourorsix, mmx, xmm, R32_M16, R128_M32, R128_M64);
+     ModRMParameterType = (reg, greg, sreg, creg, dreg, treg, regmem, mem);
+     ModRMParameterSize = (onebyte, twobyte, twoorfour, fourbyte, fourorsix, mmx, xmm, R32_M16, R128_M32, R128_M64);
 
 
      TModRM = record
@@ -134,7 +135,6 @@ type
 
      TDisassembler = class                        // Hlavny objekt disassemblovania
      private
-       ProgressFunction: TProgressFunction;
        code: TByteDynamicArray; //array of byte;                 // Pole s kodom
        DisasmMap: TByteDynamicArray;
        CodeSize: cardinal;
@@ -151,8 +151,6 @@ type
        AddressSize: TSize;
        genreg16:boolean;
        SegmentOverride: string;
-//       counter: cardinal;
-//       ProgressPosition: cardinal;
        InstrAddress: cardinal;
     Vpc: Byte;                              // Pocet parametrov aktualnej instrukcie
        fMemOffset: cardinal;
@@ -2993,11 +2991,11 @@ XADD, and XCHG.
     if (code[InstrAddress]=$0F) then     //  nieco podobne by sa mozno zislo aj pre PUNPCKxxx instrukcie
       case code[InstrAddress+1] of
 // MOVZX
-        $B6: Disassembled[InstrAddress].operandy:=InsertStr('byte ',Disassembled[InstrAddress].operandy, Pos(',',Disassembled[InstrAddress].operandy)+1);
-        $B7: Disassembled[InstrAddress].operandy:=InsertStr('word ',Disassembled[InstrAddress].operandy, Pos(',',Disassembled[InstrAddress].operandy)+1);
+        $B6: Disassembled[InstrAddress].operandy:= InsertStr('byte ',Disassembled[InstrAddress].operandy, Pos(',',Disassembled[InstrAddress].operandy)+1);
+        $B7: Disassembled[InstrAddress].operandy:= InsertStr('word ',Disassembled[InstrAddress].operandy, Pos(',',Disassembled[InstrAddress].operandy)+1);
 // MOVSX
-        $BE: Disassembled[InstrAddress].operandy:=InsertStr('byte ',Disassembled[InstrAddress].operandy, Pos(',',Disassembled[InstrAddress].operandy)+1);
-        $BF: Disassembled[InstrAddress].operandy:=InsertStr('word ',Disassembled[InstrAddress].operandy, Pos(',',Disassembled[InstrAddress].operandy)+1);
+        $BE: Disassembled[InstrAddress].operandy:= InsertStr('byte ',Disassembled[InstrAddress].operandy, Pos(',',Disassembled[InstrAddress].operandy)+1);
+        $BF: Disassembled[InstrAddress].operandy:= InsertStr('word ',Disassembled[InstrAddress].operandy, Pos(',',Disassembled[InstrAddress].operandy)+1);
       end;
 
 // Ak je posledny bajt aktual. instrukcie uz sucastou nejakej inej instrukcie alebo je uz mimo bloku,

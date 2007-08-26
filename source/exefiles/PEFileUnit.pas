@@ -90,6 +90,7 @@ type
 
   // Common fields and methods
   public
+    constructor Create; overload; override;
     constructor Create(InputFile: TStream; aFileName: TFileName); overload; override;
     destructor Destroy; override;
     function SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
@@ -111,6 +112,14 @@ implementation
 
 const
   c_ExecutableSection =  $20000000;
+
+
+constructor TPEFile.Create;
+begin
+  inherited;
+  fExecFormat:= ffPE;
+end;
+
 
 
 destructor TPEFile.Destroy;
@@ -156,14 +165,12 @@ begin
   end;
 
   // Create code sections
-  for i:=0 to header.objectcount-1 do begin
+  for i:=0 to Header.ObjectCount-1 do begin
     if IsObjectExecutable(i) then begin
-      CodeSection:= TCodeSection.Create(InputFile, true, ObjectTable[i].offset, ObjectTable[i].size, ObjectTable[i].rva + header.ImageBase, ObjectTable[i].virtualsize, fCodeSectionsCount, ObjectTable[i].Name, self);
+      CodeSection:= TCodeSection.Create(InputFile, true, ObjectTable[i].Offset, ObjectTable[i].Size, ObjectTable[i].RVA + Header.ImageBase, ObjectTable[i].VirtualSize, fCodeSectionsCount, ObjectTable[i].Name, self);
       Inc(fCodeSectionsCount);
-// treba pridat do constructora
-//      CodeSection.CodeSectionIndex:=CodeSectionsCount-1;
       if CodeSection.IsInSection(Header.EntryPoint + Header.ImageBase) then
-        CodeSection.EntryPointAddress:=header.EntryPoint + header.ImageBase - (ObjectTable[i].rva + header.ImageBase);
+        CodeSection.EntryPointAddress:= header.EntryPoint + header.ImageBase - (ObjectTable[i].RVA + header.ImageBase);
 
       Sections.Add(CodeSection);
     end;
@@ -171,14 +178,9 @@ begin
 
   // Create Import section
   if fInterestingRVAs.ImportTableRVA <> 0 then begin
-    i:=GetObjectNumberFromRVA(fInterestingRVAs.ImportTableRVA);
-    fImportSection:= TImportSection.CreateFromPEFile(InputFile, fInterestingRVAs.ImportTableRVA, header.ImageBase, ObjectTable[i].offset, ObjectTable[i].size, ObjectTable[i].rva + header.ImageBase, ObjectTable[i].virtualsize, ObjectTable[i].name, self);
+    i:= GetObjectNumberFromRVA(fInterestingRVAs.ImportTableRVA);
+    fImportSection:= TImportSection.CreateFromPEFile(InputFile, fInterestingRVAs.ImportTableRVA, Header.ImageBase, ObjectTable[i].Offset, ObjectTable[i].Size, ObjectTable[i].RVA + Header.ImageBase, ObjectTable[i].VirtualSize, ObjectTable[i].Name, self);
     Sections.Add(ImportSection);
-
-    // Set Import for all code sections
-    for i:=0 to Sections.Count-1 do
-      if Sections[i].Typ = stCode then
-        (Sections[i] as TCodeSection).Import:=ImportSection;
   end;
 
   // Create Export section
@@ -186,20 +188,13 @@ begin
     i:=GetObjectNumberFromRVA(fInterestingRVAs.ExportTableRVA);
     fExportSection:= TExportSection.CreateFromPEFile(InputFile, ObjectTable[i].Offset + (fInterestingRVAs.ExportTableRVA - ObjectTable[i].RVA), fInterestingRVAs.ExportTableRVA, fInterestingRVAs.ExportDataSize, header.ImageBase, ObjectTable[i].name, self);
     Sections.Add(ExportSection);
-
-    // Set Export for all code sections
-    for i:=0 to Sections.Count-1 do
-      if Sections[i].Typ = stCode then
-        (Sections[i] as TCodeSection).Exportt:=ExportSection;
   end;
-
-
+{
   if fInterestingRVAs.ResourceTableRVA <> 0 then begin
     i:= GetObjectNumberFromRVA(fInterestingRVAs.ResourceTableRVA);
-  //  Sections.Add( TResourceSection.Create(InputFile, ObjectTable[i].name, ObjectTable[i].offset, ObjectTable[i].size, ObjectTable[i].rva + header.ImageBase, ObjectTable[i].virtualsize, fInterestingRVAs.ResourceTableRVA, i, self) );
+    Sections.Add( TResourceSection.Create(InputFile, ObjectTable[i].name, ObjectTable[i].offset, ObjectTable[i].size, ObjectTable[i].rva + header.ImageBase, ObjectTable[i].virtualsize, fInterestingRVAs.ResourceTableRVA, i, self) );
   end;
-
-  EntryPoint:= Header.EntryPoint;
+}
   fExecFormat:= ffPE;
 end;
 

@@ -71,8 +71,8 @@ uses CodeSectionUnit;
 
 constructor TSection.Create(aName: string; aExecFile: TObject);
 begin
-  fName:=aName;
-  fExecFile:=aExecFile;
+  fName:= aName;
+  fExecFile:= aExecFile;
 end;
 
 
@@ -95,14 +95,14 @@ begin
   result:= true;
 end;
 
-{ TSections }
 
+{ TSections }
 
 
 constructor TSections.Create;
 begin
-  fReadOnly:=false;
-  fCount:=0;
+  fReadOnly:= false;
+  fCount:= 0;
 end;
 
 

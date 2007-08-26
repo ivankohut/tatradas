@@ -18,33 +18,35 @@ uses
   {$ENDIF}
   ;
 
-const HEX_CIFRY : set of char = ['0'..'9','A'..'F'];
-      maxByte=255;
-      dtByte = 0;
-      dtWord = 1;
-      dtDword = 2;
-      dtQword = 3;
-      dtSingle = 4;
-      dtDouble = 5;
-      dtDoubleEx = 6;
-      dtPascalStr = 7;
-      dtCStr = 8;
-      dtPascalUniCodeStr = 9;
-      dtCUniCodeStr = 10;
 
-      DataTypesCount = 11;
-      DataTypeSizes:array [0..DataTypesCount-1] of Byte = ( (1),(2),(4),(8),(4),(8),(10),(1),(1),(1),(1) );
+const
 
-const CodeArrayReserve = 20;
-      MaxCardinal = $FFFFFFFF;
+  HEX_CIFRY : set of char = ['0'..'9', 'A'..'F'];
+  MaxByte = 255;
+  MaxCardinal = $FFFFFFFF;
 
-  MaxAddressLength = 8;
-  MaxParsedLength = 24;
+  // Data types
+  dtByte = 0;
+  dtWord = 1;
+  dtDword = 2;
+  dtQword = 3;
+  dtSingle = 4;
+  dtDouble = 5;
+  dtDoubleEx = 6;
+  dtPascalStr = 7;
+  dtCStr = 8;
+  dtPascalUniCodeStr = 9;
+  dtCUniCodeStr = 10;
 
-  TranslateErrorStr = 'TRANS ERROR';
+  DataTypesCount = 11;
+  DataTypeSizes: array [0..DataTypesCount-1] of Byte = ( (1),(2),(4),(8),(4),(8),(10),(1),(1),(1),(1) );
+
+  // Instruction line constants
+  ilMaxAddressLength = 8;
+  ilMaxParsedLength = 24;
+  ilInstructionMnemonicIndex = ilMaxAddressLength + 1 + ilMaxParsedLength + 1 + 1; // 1 based index
 
   // Exe format descriptions
-
   fdCOM = 'COM (16-bit)';
   fdMZ = 'MZ - DOS executable (16-bit)';
   fdNE = 'NE - New Executable (16-bit)';
@@ -52,14 +54,23 @@ const CodeArrayReserve = 20;
   fdELF = 'ELF - Executable and Linkable Format';
   fdCustom = 'Custom file format';
 
+  // TatraDAS version constants
+  TatraDASVersion: cardinal = $00029700;
+  TatraDASDate: cardinal = $23122004;
+  TatraDASProjectVersion = $00030002;
+  ShortTatraDASVersion: string = '2.9.8';
+  TatraDASFullName: string = 'TatraDAS disassembler';
+  TatraDASFullNameVersion: string = 'TatraDAS disassembler 2.9.8 alpha';
+
+
+  TranslateErrorStr = 'TRANS ERROR';
+  CodeArrayReserve = 20;
+  MaxProgressNameLength = 25;
+
 
 type
 
   TTatraDASStringList = TSynEditStringList;
-
-
-
-  TProgressFunction = Function(a,b: cardinal; c: string): boolean;
 
   TDataChangeType = (dcItems, dcBytes, dcMaxAddress, dcEndSection, dcCode, dcNormal);
 
@@ -81,17 +92,12 @@ type
   end;
 
   TTatraDASOptions = record
-    autoformat: boolean;          // automatic file format selection
-    procdetect: boolean;          // procedure detection
-    stringdetect: boolean;        // string detection
-    removejump: boolean;
-    removeimport: boolean;
-    removeexport: boolean;
-  end;
-
-  TProcessText = record
-    Disassemblying,Indentifying,PreparingOutput:string;
-    LoadingDAS, LoadingDHF, SavingDAS, SavingDHF:string;
+    AutoFormat: boolean;          // automatic file format selection
+    ProcDetect: boolean;          // procedure detection
+    StringDetect: boolean;        // string detection
+    RemoveJump: boolean;
+    RemoveImport: boolean;
+    RemoveExport: boolean;
   end;
 
   TCardinalDynamicArray = array of cardinal;
@@ -101,7 +107,6 @@ type
 
   TPByteDynamicArray = ^TByteDynamicArray;
 
-
   TSaveOption = (soProject, soDisassembly, soNASM, soAddress, soParsed, soDisassembled, soJump, soCall, soExport, soImport, soEntryPoint);
   TSaveOptions = set of TSaveOption;
 
@@ -109,100 +114,54 @@ type
 
   TExecFileFormat = (ffError, ffUnknown, ffCustom, ffPE, ffMZ, ffCOM, ffNE, LE, LX, ffELF);
 
-  TCpuType = (_80386,_80486,Pentium);
-
-  TTatraDASStatus = (tsEmpty, tsOpened, tsDisassembled, tsProject);
-
-  TSectionInfoEntry = record
-    offset,size:cardinal;
-    logoffset,logsize:cardinal;
-    bit32:boolean;
-  end;
-
-  TSectionInfo = array of TSectionInfoEntry;
+  TCPUType = (_80386, _80486, Pentium);
 
   TMyMemoryStream = class(TMemoryStream)
     procedure SetMemory(Ptr: pointer; Size: LongInt);
   end;
 
-  TTextFileStream = class(TFileStream)
-    function ReadLine: string;
-    procedure WriteLine(const aLine: string);
+  // Progress types
+  TProcessText = record
+    Disassemblying, Indentifying, PreparingOutput: string;
+    LoadingDAS, LoadingDHF, SavingDAS, SavingDHF: string;
   end;
 
-
-type
-
   TProgressError = (errNone, errOpen, errUnknownFormat, errBadFormat, errDASNotFound, errBadProjectVersion, errSave, errCanceled, errUserTerminated);
-
 
   TProgressData = record
     Name: string;
     Position: cardinal;
     Maximum: cardinal;
-//    Terminate: boolean;
     Finished: boolean;
     ErrorStatus: TProgressError;
     Result: Pointer;
   end;
 
-const
-  MaxProgressNameLength = 25;
 
+var
+  ProcessText: TProcessText;
+  ProgressData: TProgressData;
 
-const
-  TatraDASVersion:cardinal=$00029700;
-  TatraDASDate:cardinal=$23122004;
-  TatraDASProjectVersion=$00030002;
-  ShortTatraDASVersion:string='2.9.7';
-  TatraDASFullName:string='TatraDAS disassembler';
-  TatraDASFullNameVersion:string='TatraDAS disassembler 2.9.8 alpha';
-
-
-var ProcessText: TProcessText;
-
-    ProgressData: TProgressData;
-
-    Modified: boolean; // stav otvoreneho zdisassemblovane suboru resp. projektu
 
 procedure ReadStringFromStream(a:TStream; pos:cardinal; var retazec:string);
 function StreamReadAnsiString (AStream: TStream): string;
 Procedure StreamWriteAnsiString (AStream: TStream; AString: String);
 
-function Nezaporne(cislo:integer):cardinal;
-function GetTargetAddress(s:string; var address:cardinal):boolean;
-
-function IntToSignedHex(Value: integer; Digits: Integer): string;
-
-function InsertStr(const Source: string; const Dest: string; index:integer):string;
-function FirstCommaToPoint(AText: string):string;
-
+function NonNegative(Number: integer): cardinal;
 
 function MyIsNan(const AValue: Single): Boolean; overload;
 function MyIsNan(const AValue: Double): Boolean; overload;
-
-function CarToStr(value: cardinal): string;
-function CarToHex(Value: cardinal; Digits: integer): string;
-
-function IsHexNumber(number: string): boolean;
-function IsNumber(number: string): boolean;
-
-function StringLeftPad(AString: string; Size: integer): string; overload;
-function StringLeftPad(AString: string; Size: integer; PadChar: char): string; overload;
-
-function StringRightPad(AString: string; Size: integer): string; overload;
-function StringRightPad(AString: string; Size: integer; PadChar: char): string; overload;
-
-
-
 {$IFDEF GUI_B}
 procedure SM(msg: string);
 {$ENDIF}
 
+
 Implementation
 
+
 {$IFDEF GUI_B}
-uses dialogs;
+uses
+  Dialogs;
 
 procedure SM(msg: string);
 begin
@@ -217,18 +176,9 @@ begin
   SetPointer(Ptr, Size);
 end;
 
-function Nezaporne(cislo:integer):cardinal;
-begin
-  if cislo<0 then result:=0 else result:=cislo;
-end;
+
 
 procedure ReadStringFromStream(a: TStream; pos:cardinal; var retazec:string);
-{
-var znak:char;
-    r:string[255];
-begin
-
-}
 var
   StartPosition, StrLen: cardinal;
   TheChar: Char;
@@ -248,135 +198,44 @@ begin
     a.Seek(Pos, 0);
     a.Read(retazec[1], StrLen);
   end;
-
-{
-
-
-  r:='';
-  a.Seek(pos, 0);
-  a.Read(znak, 1);
-  // befunguje to tak ako ma, position a siye su stale 0
-  while (znak<>#0) and (not (a.Position > a.size)) do begin
-    r:=r + znak;
-    a.read(znak,1);
-  end;
-  retazec:=r;
-}
 end;
-{
-procedure WriteStringToStream(AStream: TStream; Position: cardinal; var AString: string);
-var TheLength: cardinal;
+
+
+
+// From FPC
+Function StreamReadAnsiString(AStream: TStream): String;
+Type
+  PByte = ^Byte;
+Var
+  TheSize : Longint;
+  P : PByte ;
 begin
-//  for i:=1 to Length(AString) do
-  TheLength:= Length
-  AStream.Write
-  AStream.WriteBuffer(AString - 4, Length(AString));
-end;
-}
-
-  Function StreamReadAnsiString(AStream: TStream): String;
-  Type
-    PByte = ^Byte;
-  Var
-    TheSize : Longint;
-    P : PByte ;
-  begin
-    AStream.ReadBuffer (TheSize, SizeOf(TheSize));
-    SetLength(Result, TheSize);
-    if TheSize > 0 then
-     begin
-       AStream.ReadBuffer (Pointer(Result)^,TheSize);
-       {$IFDEF FPC}
-       P:=Pointer(Result) + TheSize;
-       {$ELSE}
-       P:=Ptr(LongInt(Pointer(Result)) + TheSize);
-       {$ENDIF}
-       p^:=0;
-     end;
+  AStream.ReadBuffer (TheSize, SizeOf(TheSize));
+  SetLength(Result, TheSize);
+  if TheSize > 0 then
+   begin
+     AStream.ReadBuffer (Pointer(Result)^,TheSize);
+     {$IFDEF FPC}
+     P:=Pointer(Result) + TheSize;
+     {$ELSE}
+     P:=Ptr(LongInt(Pointer(Result)) + TheSize);
+     {$ENDIF}
+     p^:=0;
    end;
-
-  Procedure StreamWriteAnsiString (AStream: TStream; AString: String);
-
-  Var L : Longint;
-
-  begin
-    L:=Length(AString);
-    AStream.WriteBuffer (L,SizeOf(L));
-    AStream.WriteBuffer (Pointer(AString)^,L);
-  end;
+ end;
 
 
-{
-procedure TExecutableFile.Init;
+
+// From FPC
+Procedure StreamWriteAnsiString (AStream: TStream; AString: String);
+Var L : Longint;
 begin
-end;
-}
-function GetTargetAddress(s:string; var address:cardinal):boolean;
-//function GetTargetAddress(s:string; var address:cardinal):byte;
-var i:cardinal;
-begin
-// Este to nie je spravne osetrene!!!
-  if length(s)<43 then begin
-    result:=false;
-    exit;
-  end;
-    result:=true;
-    address:=0;
-    i:=34;
-// JMP, Jxx
-    if s[i]='J' then begin
-      while s[i]<>' ' do inc(i);
-      inc(i,3);
-      if (s[i-1]='x') and (s[i-2]='0') and (s[i] in HEX_CIFRY)
-        then address:=cardinal(StrToIntDef('$'+trim(copy(s,i,50)),-1)) else result:=false;
-    end
-// CALL
-    else if copy(s,i,4)='CALL' then begin
-      inc(i,7);
-      if (s[i-1]='x') and (s[i-2]='0') and (s[i] in HEX_CIFRY)
-        then address:=cardinal(StrToIntDef('$'+trim(copy(s,i,50)),-1))
-      else result:=false;
-    end
-// LOOPxx
-    else if copy(s,i,4)='LOOP' then begin
-      while s[i]<>' ' do inc(i);
-      inc(i,3);
-      if (s[i-1]='x') and (s[i-2]='0') and (s[i] in HEX_CIFRY)
-        then address:=cardinal(StrToIntDef('$'+trim(copy(s,i,50)),-1)) else result:=false;
-    end
-    else result:=false;
-    if address=$FFFFFFFF then result:=false;
+  L:=Length(AString);
+  AStream.WriteBuffer (L,SizeOf(L));
+  AStream.WriteBuffer (Pointer(AString)^,L);
 end;
 
 
-function IntToSignedHex(Value: integer; Digits: Integer): string;
-begin
-  if Value >= 0 then result:=IntToHex(Value,Digits)
-  else begin
-    Value:=Abs(Value);
-    result:='-' + IntToHex(Value,Digits);
-  end;
-end;
-
-
-function InsertStr(const Source:string; const Dest: string; index:integer):string;
-var s: string;
-begin
-  s:=dest;
-  Insert(Source,s,index);
-  result:=s;
-end;
-
-function FirstCommaToPoint(AText: string):string;
-var i: integer;
-begin
-  for i:=1 to Length(AText) do
-    if AText[i]=',' then begin
-      AText[i]:='.';
-      break;
-    end;
-  result:=AText;
-end;
 
 function MyIsNan(const AValue: Single): Boolean;
 begin
@@ -384,135 +243,22 @@ begin
             ((PInteger(@AValue)^ and $007FFFFF) <> $00000000)
 end;
 
+
+
 function MyIsNan(const AValue: Double): Boolean;
 begin
   Result := ((PInt64(@AValue)^ and $7FF0000000000000)  = $7FF0000000000000) and
             ((PInt64(@AValue)^ and $000FFFFFFFFFFFFF) <> $0000000000000000)
 end;
 
-function StringReverz(AString: string): string;
-var i: integer;
+
+
+function NonNegative(Number: integer): cardinal;
 begin
-  result:='';
-  for i:=Length(AString) downto 1 do result:=result + AString[i];
-end;
-
-
-function CarToStr(value: cardinal): string;
-begin
-  result:= '';
-  while value <> 0 do begin
-    result:= result + Chr(value mod 10);
-    value:= value div 10;
-  end;
-  result:= StringReverz(result);
-end;
-
-
-
-function CarToHex(Value: cardinal; Digits: integer): string;
-begin
-  result:= '';
-  while value <> 0 do begin
-    result:=result + IntToHex(value mod 16,1);
-    value:=value div 16;
-  end;
-  result:= StringReverz(result);
-end;
-
-
-
-function IsHexNumber(number: string): boolean;
-var i: integer;
-begin
-  result:=false;
-  for i:=1 to Length(Number) do if not (Number[i] in ['0'..'9','A'..'F','a'..'f']) then exit;
-  result:=true;
-end;
-
-function IsNumber(number: string): boolean;
-var Index,i: integer;
-begin
-  Index:=1;
-  result:=false;
-  if Number = '' then Exit;
-  if Number = '0' then begin
-    result:=true;
-    exit;
-  end;
-  if Number[1] = '-' then Inc(index);
-  if Length(Number) < Index then Exit;
-  if Number[Index] = '0' then Exit;
-  for i:=Index to Length(Number) do if not (Number[i] in ['0'..'9']) then exit;
-  result:=true;
-end;
-
-
-{ TTextFileStream }
-
-function TTextFileStream.ReadLine: string;
-var Character,SecondCharacter: Char;
-begin
-  result:='';
-  if Position = Size then Exit;
-  Read(Character,1);
-
-  while (Character <> #10) and (Character <> #13) do begin
-    result:=result + Character;
-    if Position = Size then Exit;
-    Read(Character,1);
-  end;
-
-  if Position = Size then Exit;
-  Position:=Position + 1;
-  Read(SecondCharacter,1);
-  if not ((Character = #10) and (SecondCharacter = #13)) or ((Character <> #13) and (SecondCharacter <> #13)) then
-    Position:=Position - 1;
-end;
-
-
-procedure TTextFileStream.WriteLine(const aLine: string);
-var EndOfLine: Char;
-begin
-  EndOfLine:=#10;
-  Write(aLine,Length(aLine));
-  Write(EndOfLine,1);
-end;
-
-
-
-function StringLeftPad(AString: string; Size: integer): string;
-begin
-  result:= StringLeftPad(AString, Size, ' ');
-end;
-
-
-
-function StringLeftPad(AString: string; Size: integer; PadChar: char): string;
-var
-  i: integer;
-begin
-  result:= AString;
-  for i:=1 to Size - Length(AString) do
-    result:= PadChar + result;
-end;
-
-
-
-function StringRightPad(AString: string; Size: integer): string;
-begin
-  result:= StringRightPad(AString, Size, ' ');
-end;
-
-
-
-function StringRightPad(AString: string; Size: integer; PadChar: char): string;
-var
-  i: integer;
-begin
-  result:= AString;
-  for i:=1 to Size - Length(AString) do
-    result:= result + PadChar;
+  if Number < 0 then
+    result:= 0
+  else
+    result:= Number;
 end;
 
 

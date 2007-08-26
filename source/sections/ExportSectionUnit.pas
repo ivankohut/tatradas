@@ -35,15 +35,21 @@ type
   end;
 
   TExportSection = class(TSection)
-    FunctionCount: integer;
-    Functions: array of TExportFunction;
+  private
+    fFunctionCount: integer;
+    fFunctions: array of TExportFunction;
+    function GetFunction(Index: integer): TExportFunction;
+  public
     constructor Create(ExecFile: TObject); overload;
     constructor CreateFromPEFile(InputFile: TStream; FileOffset, ExportRVA, ExportDataSize, ImageBase: cardinal; aName: string; aExecFile: TObject);
     constructor CreateFromNEFile(InputFile: TStream; ResidentTableOffset, NonResidentTableOffset, NonResidentTableSize: cardinal; aName: string; aExecFile: TObject); overload;
 
     destructor Destroy; override;
     function SaveToFile  (DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
-    function LoadFromFile(DHF: TStream; var DAS: TextFile):boolean; overload; override;
+    function LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; overload; override;
+
+    property FunctionCount: integer read fFunctionCount;
+    property Functions[Index: integer]: TExportFunction read GetFunction;
   end;
 
 
@@ -86,7 +92,7 @@ var
 
   OrdinalTable: array of word;
   NamePointersTable: array of cardinal;
-  
+
 begin
   inherited Create(aName, aExecFile);
   fTyp:= stExport;
@@ -100,10 +106,10 @@ begin
   ExportStream.Position:= 0;
 
   ExportStream.Read(ExportDirTable, 40);
-  FunctionCount:= ExportDirTable.EATentriesCount;
-  SetLength(Functions, FunctionCount);
+  fFunctionCount:= ExportDirTable.EATentriesCount;
+  SetLength(fFunctions, fFunctionCount);
 
-  // Read names of named functions
+  // Read names of named fFunctions
   // Read Ordinal table
   SetLength(OrdinalTable, ExportDirTable.NamePointersCount);
   ExportStream.Seek(ExportDirTable.OrdinalTableRVA - ExportRVA, 0);
@@ -114,28 +120,28 @@ begin
   ExportStream.Seek(ExportDirTable.NamePointerTableRVA - ExportRVA, 0);
   ExportStream.Read(NamePointersTable[0], 4*ExportDirTable.NamePointersCount);
 
-  // Read functions' names
+  // Read fFunctions' names
   for i:= 0 to integer(ExportDirTable.NamePointersCount) - 1 do
-    ReadStringFromStream(ExportStream, NamePointersTable[i] - ExportRVA, functions[OrdinalTable[i]].name);
+    ReadStringFromStream(ExportStream, NamePointersTable[i] - ExportRVA, fFunctions[OrdinalTable[i]].name);
     // this should be correct according to PE specification !
-    // ReadStringFromStream(ExportStream, NamePointersTable[i] - ExportRVA, functions[OrdinalTable[i] - DirTable.OrdinalBase].name);
+    // ReadStringFromStream(ExportStream, NamePointersTable[i] - ExportRVA, fFunctions[OrdinalTable[i] - DirTable.OrdinalBase].name);
 
 
   // Read addresses of all function
-  // Read functions' mem. addresses from Export Address Table
+  // Read fFunctions' mem. addresses from Export Address Table
   ExportStream.Seek(ExportDirTable.AddressTableRVA - ExportRVA, 0);
-  for i:= 0 to FunctionCount - 1 do begin
+  for i:= 0 to fFunctionCount - 1 do begin
     ExportStream.Read(FunctionRVA, 4);
-    functions[i].Ordinal:= i + ExportDirTable.OrdinalBase;
+    fFunctions[i].Ordinal:= i + ExportDirTable.OrdinalBase;
 
     // FunctionRVA is really RVA of symbol in code/data(?) section
     if (FunctionRVA < ExportRVA) or (FunctionRVA >= ExportRVA + ExportDataSize) then begin
-      functions[i].MemOffset:= FunctionRVA + ImageBase;
-      functions[i].Section:= PEFile.GetSectionNumberFromRVA(FunctionRVA);
-      if functions[i].Section = -1 then
-        functions[i].CodeSectionOffset:= 0
+      fFunctions[i].MemOffset:= FunctionRVA + ImageBase;
+      fFunctions[i].Section:= PEFile.GetSectionNumberFromRVA(FunctionRVA);
+      if fFunctions[i].Section = -1 then
+        fFunctions[i].CodeSectionOffset:= 0
       else
-        functions[i].CodeSectionOffset:= functions[i].MemOffset - (PEFile.Sections[functions[i].section] as TCodeSection).MemOffset;
+        fFunctions[i].CodeSectionOffset:= fFunctions[i].MemOffset - (PEFile.Sections[fFunctions[i].section] as TCodeSection).MemOffset;
     end
 
     // FunctionRVA is ForwardRVA
@@ -143,9 +149,9 @@ begin
       StreamPosition:= ExportStream.Position;
       ReadStringFromStream(ExportStream, FunctionRVA - ExportRVA, ForwardFunction);
       ExportStream.Position:= StreamPosition;
-      functions[i].Name:= functions[i].Name + ' (forwarded to ' + ForwardFunction + ')';
-      functions[i].Section:= -1;
-      functions[i].CodeSectionOffset:= 0;
+      fFunctions[i].Name:= fFunctions[i].Name + ' (forwarded to ' + ForwardFunction + ')';
+      fFunctions[i].Section:= -1;
+      fFunctions[i].CodeSectionOffset:= 0;
     end;
   end;
 
@@ -188,7 +194,7 @@ constructor TExportSection.CreateFromNEFile(InputFile: TStream; ResidentTableOff
     FirstNameLength: byte;
     FunNameLength: byte;
   begin
-    FunIndex:= FunctionCount;
+    FunIndex:= fFunctionCount;
     InputFile.Position:= TableOffset;
     InputFile.Read(FirstNameLength, 1);
     SetLength(FirstName, FirstNameLength);
@@ -197,16 +203,16 @@ constructor TExportSection.CreateFromNEFile(InputFile: TStream; ResidentTableOff
 
     InputFile.Read(FunNameLength, 1);
     while FunNameLength > 1 do begin
-      SetLength(Functions, FunIndex+1);
-      SetLength(Functions[FunIndex].Name, FunNameLength);
-      InputFile.Read(Functions[FunIndex].Name[1], FunNameLength);
-      InputFile.Read(Functions[FunIndex].Ordinal, 2);
-      FindEntryPoint(Functions[FunIndex].Ordinal, Functions[FunIndex].Section, Functions[FunIndex].CodeSectionOffset);
-      Functions[FunIndex].MemOffset:= Functions[FunIndex].CodeSectionOffset;
+      SetLength(fFunctions, FunIndex+1);
+      SetLength(fFunctions[FunIndex].Name, FunNameLength);
+      InputFile.Read(fFunctions[FunIndex].Name[1], FunNameLength);
+      InputFile.Read(fFunctions[FunIndex].Ordinal, 2);
+      FindEntryPoint(fFunctions[FunIndex].Ordinal, fFunctions[FunIndex].Section, fFunctions[FunIndex].CodeSectionOffset);
+      fFunctions[FunIndex].MemOffset:= fFunctions[FunIndex].CodeSectionOffset;
       InputFile.Read(FunNameLength, 1);
       Inc(FunIndex);
     end;
-    FunctionCount:= FunIndex;
+    fFunctionCount:= FunIndex;
   end;
 
 var
@@ -229,10 +235,10 @@ function TExportSection.SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions:
 var i: integer;
 begin
   inherited SaveToFile(DHF, DAS, SaveOptions);
-  DHF.Write(FunctionCount, 4);
-  for i:=0 to FunctionCount do begin
-    DHF.Write(functions[i], SizeOf(TExportFunction)-4);
-    StreamWriteAnsiString(DHF, functions[i].name);
+  DHF.Write(fFunctionCount, 4);
+  for i:=0 to fFunctionCount do begin
+    DHF.Write(fFunctions[i], SizeOf(TExportFunction)-4);
+    StreamWriteAnsiString(DHF, fFunctions[i].name);
   end;
   result:= true;
 end;
@@ -243,15 +249,20 @@ function TExportSection.LoadFromFile(DHF: TStream; var DAS: TextFile):boolean;
 var i: integer;
 begin
   inherited LoadFromFile(DHF, DAS);
-  DHF.Read(FunctionCount, 4);
-  SetLength(functions, FunctionCount);
-  for i:=0 to FunctionCount - 1 do begin
-    DHF.Read(functions[i], SizeOf(TExportFunction) - 4);
-    functions[i].name:= StreamReadAnsiString(DHF);
+  DHF.Read(fFunctionCount, 4);
+  SetLength(fFunctions, fFunctionCount);
+  for i:=0 to fFunctionCount - 1 do begin
+    DHF.Read(fFunctions[i], SizeOf(TExportFunction) - 4);
+    fFunctions[i].name:= StreamReadAnsiString(DHF);
   end;
   result:= true;
 end;
 
+
+function TExportSection.GetFunction(Index: integer): TExportFunction;
+begin
+  result:= fFunctions[Index];
+end;
 
 
 end.

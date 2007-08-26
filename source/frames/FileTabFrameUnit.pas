@@ -38,7 +38,8 @@ type
     Splitter1: TSplitter;
     Panel2: TPanel;
     AdvancedInfoGrid: TStringGrid;
-    Label1: TLabel;
+    MoreInfoLabel: TLabel;
+    procedure Panel2Resize(Sender: TObject);
 
   protected
     function GetSection: TSection; override;
@@ -114,7 +115,10 @@ end;
 procedure TFileTabFrame.AddAdvancedInfo(InfoName, InfoValue: string);
 begin
   with AdvancedInfoGrid do begin
-    RowCount := RowCount + 1;
+    // Increase number of rows only if we add non-first pair of information (there always one row in grid in the beginning)
+    if AdvancedInfoGrid.Cells[0,0] <> '' then
+      RowCount := RowCount + 1;
+
     Cells[0, RowCount - 1]:= InfoName;
     Cells[1, RowCount - 1]:= InfoValue;
   end;
@@ -124,6 +128,8 @@ end;
 
 procedure TFileTabFrame.Translate(Translator: TTatraDASLanguages);
 begin
+  (Parent as TTabSheet).Caption:= Translator.TranslateControl('File','Caption');
+
   // Translate FileOverviewGroupBox and its subitems
   FileOverviewGroupBox.Caption:=Translator.TranslateControl('File','FileOverview');
   FilenameLabel.Caption:=Translator.TranslateControl('File','Filename');
@@ -133,12 +139,14 @@ begin
   BytesLabel.Caption:=Translator.TranslateControl('File','Bytes');
 
   // Translate ObjectListView column captions
-  ObjectListView.Columns[1].Caption:=Translator.TranslateControl('File','SectionName');
-  ObjectListView.Columns[2].Caption:=Translator.TranslateControl('File','SectionFileOffset');
-  ObjectListView.Columns[3].Caption:=Translator.TranslateControl('File','SectionFileSize');
-  ObjectListView.Columns[4].Caption:=Translator.TranslateControl('File','SectionMemAddress');
-  ObjectListView.Columns[5].Caption:=Translator.TranslateControl('File','SectionMemSize');
-  ObjectListView.Columns[6].Caption:=Translator.TranslateControl('File','SectionFlags');
+  ObjectListView.Columns[1].Caption:= Translator.TranslateControl('File','SectionName');
+  ObjectListView.Columns[2].Caption:= Translator.TranslateControl('File','SectionFileOffset');
+  ObjectListView.Columns[3].Caption:= Translator.TranslateControl('File','SectionFileSize');
+  ObjectListView.Columns[4].Caption:= Translator.TranslateControl('File','SectionMemAddress');
+  ObjectListView.Columns[5].Caption:= Translator.TranslateControl('File','SectionMemSize');
+  ObjectListView.Columns[6].Caption:= Translator.TranslateControl('File','SectionFlags');
+
+  MoreInfoLabel.Caption:= Translator.TranslateControl('File', 'MoreInformation');
 end;
 
 
@@ -219,7 +227,7 @@ end;
 
 constructor TPEFileTabFrame.Create(AOwner: TComponent; aExecFile: TExecutableFile);
 var
-  ColIndex, RowIndex: integer;
+  RowIndex: integer;
   ListItem: TListItem;
   ExecFile: TPEFile;
 begin
@@ -287,10 +295,17 @@ begin
       AddAdvancedInfo('Mode:', '32 bit')
     else
       AddAdvancedInfo('Mode:', '16 bit');
-    AddAdvancedInfo('Entry point', IntToHex(EntryPoint, 8));
+//    AddAdvancedInfo('Entry point', IntToHex(EntryPoint, 8));
   end;
 end;
 
+
+procedure TFileTabFrame.Panel2Resize(Sender: TObject);
+begin
+  inherited;
+  AdvancedInfoGrid.ColWidths[0]:= AdvancedInfoGrid.Width div 2;
+  AdvancedInfoGrid.ColWidths[1]:= AdvancedInfoGrid.Width div 2;
+end;
 
 end.
 

@@ -268,11 +268,12 @@ end;
 
 
 procedure TCodeTabFrame.GotoPosition(Offset: LongInt; Origin: TSeekOrigin); // Offset zacina od 0
-var Position: integer;
+var
+  Position: integer;
 begin
   case Origin of
-    soBeginning: Position:= Nezaporne(Offset);
-    soCurrent: Position:= Nezaporne(Plocha.CaretY - 1 + Offset);
+    soBeginning: Position:= NonNegative(Offset);
+    soCurrent: Position:= NonNegative(Plocha.CaretY - 1 + Offset);
     else
       raise Exception.Create('This should not happened.');
   end;

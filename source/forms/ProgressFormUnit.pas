@@ -63,6 +63,7 @@ begin
   end;
   Close;
   MainForm.Enabled:= true;
+  MainForm.SetFocus;
 end;
 
 

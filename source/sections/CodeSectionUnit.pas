@@ -15,16 +15,11 @@
 }
 
 {
-  mozne chyby:
-    citanie IsDissambled zo suboru, predtym SizeOf(TSectionStatus), teraz SizeOf(boolean)
-
   problemy
     constructor ma strasne vela parametrov (a potreboval by dalsie)
 
 
 }
-
-{$DEFINE TATRADAS_FAST}
 
 unit CodeSectionUnit;
 
@@ -40,6 +35,7 @@ uses
   Types,
 
   procmat,
+  StringUtilities,
   disassembler,
   ImportSectionUnit,
   ExportSectionUnit,
@@ -79,17 +75,12 @@ type
        function GetMaxAddress: cardinal;
 
      public
-// Dynamicke data
-        //       PocetInstrukcii:cardinal;            // Pocet instrukcii v DisBloku
 // Polia
        CodeArray: TByteDynamicArray;        // Pole obsahujuce kod
        CodeStream: TMyMemoryStream;         // Stream obsahujuci kod
        DisassemblerMap: TByteDynamicArray;
 
-       Exportt: TExportSection;
-       Import: TImportSection;
-
-       constructor Create(InputStream: TStream; bb:boolean; aFileOffset, aFileSize, aMemOffset, aMemSize: cardinal; aCodeSectionIndex: integer; aName: string; aExecFile: TObject); overload;
+       constructor Create(InputStream: TStream; aBit32: boolean; aFileOffset, aFileSize, aMemOffset, aMemSize: cardinal; aCodeSectionIndex: integer; aName: string; aExecFile: TObject); overload;
        constructor Create(ExecFile: TObject); overload;
        destructor Destroy; override;
 
@@ -97,7 +88,7 @@ type
        function DisassemblePart(Options: TDisassembleOptions): boolean;
 
        function IsInSection(MemAddress: cardinal): boolean;
-       function GetPosition(Address: cardinal): cardinal; // Get position in Disassembled from Address (memory address)
+       function GetPosition(MemAddress: cardinal): cardinal; // Get position in Disassembled from Address (memory address)
        function FindAddressableLine(Position: cardinal): cardinal; // forward search, returns $FFFFFFFF if reaches end of Disassembled
        procedure ClearDisassembled;
        function GetLineFromDataEx(PData: Pointer; DataType: cardinal; Signed: boolean; StartAddress: cardinal; Count: integer): TStrings;
@@ -127,6 +118,7 @@ type
 function GetLineAddress(line: string): cardinal;
 function GetLineBytes(line: string): cardinal;
 function GetLineType(line: string): TLineType;
+function GetTargetAddress(Line: string; var Address: cardinal): boolean;
 
 
 
@@ -142,14 +134,14 @@ uses
 //******************************************************************************
 
 
-constructor TCodeSection.Create(InputStream: TStream; bb:boolean; aFileOffset, aFileSize, aMemOffset, aMemSize: cardinal; aCodeSectionIndex: integer; aName: string; aExecFile: TObject);
+constructor TCodeSection.Create(InputStream: TStream; aBit32: boolean; aFileOffset, aFileSize, aMemOffset, aMemSize: cardinal; aCodeSectionIndex: integer; aName: string; aExecFile: TObject);
 var position: cardinal;
     i: integer;
 begin
   inherited Create(aName, aExecFile);
 
   fTyp:=stCode;
-  fBit32:=bb;
+  fBit32:=aBit32;
 
   fFileOffset:= aFileOffset;
   fFileSize:= aFileSize;
@@ -218,10 +210,11 @@ end;
 procedure TCodeSection.ClearDisassembled;
 var CodeIndex: cardinal;
 begin
-  Disassembled.Clear;
-  if CodeSize > 0 then
+  if CodeSize > 0 then begin
+    Disassembled.Clear;
     for CodeIndex:= 0 to CodeSize - 1 do
       DisassemblerMap[CodeIndex]:= 0;
+  end;
   fIsDisassembled:= false;
 end;
 
@@ -265,23 +258,23 @@ var
   NewLines: TStrings;
 begin
   // Disassemble
-  Decoder:=TDisassembler.Create(CodeArray, DisassemblerMap, MemOffset, Options.Bit32);
+  Decoder:= TDisassembler.Create(CodeArray, DisassemblerMap, MemOffset, Options.Bit32);
 //  Decoder.IsDisassembled:=True;
   Decoder.CAJ.Add(Options.Address - MemOffset);
   Decoder.CAJ.Process(Options.Address - MemOffset + Options.Size - 1);
   if not Decoder.Disassemble(Options.Recursive) then begin
     Decoder.Free;
-    Decoder:=nil;
-    result:=false;
+    Decoder:= nil;
+    result:= false;
     Exit;
   end;
 //  Statistics:=Decoder.Statistics;
 
   // Process all disassembled blocks
-  NewLines:=TStringList.Create;
+  NewLines:= TStringList.Create;
   for BlockIndex:=0 to Decoder.BlockCount - 1 do begin
     NewLines.Clear;
-    CodeIndex:=Decoder.Blocks[BlockIndex].Address;
+    CodeIndex:= Decoder.Blocks[BlockIndex].Address;
     while CodeIndex < Decoder.Blocks[BlockIndex].Address + Decoder.Blocks[BlockIndex].Size do begin
       // References
       for ReferenceIndex:=0 to (Decoder.Disassembled[CodeIndex].ReferCount - 1) do
@@ -291,7 +284,7 @@ begin
       Dec(DisassemblerMap[CodeIndex], dfNewInstr);
       Inc(DisassemblerMap[CodeIndex], dfInstruction);
 
-      Line:= IntToHex(Decoder.Disassembled[CodeIndex].Address + fMemOffset, 8) + ' ' + StringRightPad(Decoder.Disassembled[CodeIndex].parsed, MaxParsedLength) + ' ';
+      Line:= IntToHex(Decoder.Disassembled[CodeIndex].Address + fMemOffset, 8) + ' ' + StringRightPad(Decoder.Disassembled[CodeIndex].parsed, ilMaxParsedLength) + ' ';
 
       if Decoder.Disassembled[CodeIndex].prefix <> '' then
         Line:=Line + Decoder.Disassembled[CodeIndex].prefix + ' ';
@@ -313,25 +306,28 @@ begin
 
   Decoder.Free;
   Decoder:= nil;
-  Result:=True;
+  Result:= true;
 end;
 
 
 
-function TCodeSection.DisassembleAll(Options: TDisassembleOptions):boolean;               // Disasseblovanie, hladanie skokov, spracovanie vystupu...
+function TCodeSection.DisassembleAll(Options: TDisassembleOptions): boolean;               // Disasseblovanie, hladanie skokov, spracovanie vystupu...
 var
   i,j,k: integer;
 
   IndexAddressStr: string;
   IndexAddress: cardinal;
   CallInstrAddress: cardinal;
-  FunctionFromModul:string; // nazov importovanej funkcie a modulu
+  FunctionFromModul: string; // nazov importovanej funkcie a modulu
 
   Position: cardinal; // Position of exported function's entry point in Disassembled
 
   ReferenceIndex: integer; // Index of instruction references
   Line: string;         // retazec, do ktoreho sa pridavaju jednotlive casti intstruckie, nakoniec je zapisany do pola Disassembled (priprava vystupu)
   CodeIndex: cardinal;
+
+  ImportSection: TImportSection;
+  ExportSection: TExportSection;
 
   procedure CancelDisassemblying;
   begin
@@ -345,21 +341,24 @@ var
 begin
   // Empty section is considered already disassembled
   if CodeSize = 0 then begin
-    result:=true;        // tu mozno treba este nieco pridat
+    result:= true;        // tu mozno treba este nieco pridat
     Exit;
   end;
+
+  ImportSection:= (ExecFile as TExecutableFile).ImportSection;
+  ExportSection:= (ExecFile as TExecutableFile).ExportSection;
 
   ProgressData.Name:= ProcessText.Disassemblying + IntToStr(CodeSectionIndex);
 
   Decoder:= TDisassembler.Create(CodeArray, DisassemblerMap, MemOffset, Bit32);
 
   if (ExecFile as TExecutableFile).ExeFormat = ffNE then
-    if Import <> nil then begin
-      for i:=0 to Integer(Import.ModulCount) - 1 do begin
-        for j:=0 to Integer(Import.Moduls[i].FunctionCount) - 1 do begin
-          for k:=0 to Length(Import.Moduls[i].Functions[j].Occurs)-1 do begin
-            if Import.Moduls[i].Functions[j].Occurs[k].SectionIndex = SectionIndex then begin
-              Decoder.CAJ.Add(Import.Moduls[i].Functions[j].Occurs[k].Address);
+    if ImportSection <> nil then begin
+      for i:=0 to Integer(ImportSection.ModulCount) - 1 do begin
+        for j:=0 to Integer(ImportSection.Moduls[i].FunctionCount) - 1 do begin
+          for k:=0 to Length(ImportSection.Moduls[i].Functions[j].Occurs)-1 do begin
+            if ImportSection.Moduls[i].Functions[j].Occurs[k].SectionIndex = SectionIndex then begin
+              Decoder.CAJ.Add(ImportSection.Moduls[i].Functions[j].Occurs[k].Address);
             end;
           end;
         end;
@@ -367,11 +366,11 @@ begin
     end;
 
   // Add exported functions' entry points to Decoder.CAJ
-  if Exportt <> nil then begin
-    Decoder.CAJ.Capacity:=Decoder.CAJ.Capacity + Exportt.functioncount;
-    for i:=0 to Exportt.functioncount-1 do
-      if SectionIndex = Exportt.functions[i].section then
-        Decoder.CAJ.Add(Exportt.functions[i].CodeSectionOffset);
+  if ExportSection <> nil then begin
+    Decoder.CAJ.Capacity:=Decoder.CAJ.Capacity + ExportSection.functioncount;
+    for i:=0 to ExportSection.FunctionCount-1 do
+      if SectionIndex = ExportSection.functions[i].section then
+        Decoder.CAJ.Add(ExportSection.functions[i].CodeSectionOffset);
   end;
 
   // Add program's entry point to Decoder.CAJ if present
@@ -403,7 +402,7 @@ begin
   end;
 
   // Process imported functions (if execfile is PE file)
-  if (Import <> nil) then begin
+  if (ImportSection <> nil) then begin
     case (ExecFile as TExecutableFile).ExeFormat of
 
       ffPE: begin
@@ -415,7 +414,7 @@ begin
           if IndexAddress = 0 then
             Continue;
           CallInstrAddress:=Decoder.Disassembled[Decoder.Imported[i]].Address + MemOffset;
-          FunctionFromModul:=Import.AddFunctionOccurence(IndexAddress, CallInstrAddress, SectionIndex);
+          FunctionFromModul:=ImportSection.AddFunctionOccurence(IndexAddress, CallInstrAddress, SectionIndex);
           if FunctionFromModul <> '' then begin
 //            Inc(Statistics.References);
 //            Inc(Statistics.Blanks);
@@ -430,18 +429,18 @@ begin
       end;
 
       ffNE: begin
-        for i:=0 to Import.ModulCount - 1 do begin
-          for j:=0 to integer(Import.Moduls[i].FunctionCount) - 1 do begin
-            for k:=0 to Length(Import.Moduls[i].Functions[j].Occurs) - 1 do begin
-              if Import.Moduls[i].Functions[j].Occurs[k].SectionIndex = SectionIndex then begin
-                with Decoder.Disassembled[Import.Moduls[i].Functions[j].Occurs[k].Address] do begin
+        for i:=0 to ImportSection.ModulCount - 1 do begin
+          for j:=0 to integer(ImportSection.Moduls[i].FunctionCount) - 1 do begin
+            for k:=0 to Length(ImportSection.Moduls[i].Functions[j].Occurs) - 1 do begin
+              if ImportSection.Moduls[i].Functions[j].Occurs[k].SectionIndex = SectionIndex then begin
+                with Decoder.Disassembled[ImportSection.Moduls[i].Functions[j].Occurs[k].Address] do begin
                   Inc(ReferCount, 2);
                   SetLength(Refer, ReferCount);
                   refer[ReferCount-2]:= '';
-                  if Import.Moduls[i].Functions[j].ByOrdinal then
-                    refer[ReferCount-1]:= 'Imported function '''+ IntToHex(Import.Moduls[i].Functions[j].Ordinal, 4) + '''(Ordinal) from ''' + Import.Moduls[i].Name + ''' used'
+                  if ImportSection.Moduls[i].Functions[j].ByOrdinal then
+                    refer[ReferCount-1]:= 'Imported function ''' + IntToHex(ImportSection.Moduls[i].Functions[j].Ordinal, 4) + '''(Ordinal) from ''' + ImportSection.Moduls[i].Name + ''' used'
                   else
-                    refer[ReferCount-1]:= 'Imported function '''+ Import.Moduls[i].Functions[j].Name + ''' from ''' + Import.Moduls[i].Name + ''' used';
+                    refer[ReferCount-1]:= 'Imported function ''' + ImportSection.Moduls[i].Functions[j].Name + ''' from ''' + ImportSection.Moduls[i].Name + ''' used';
                 end;
               end;
             end;
@@ -453,21 +452,21 @@ begin
   end;
 
   // Process exported functions
-  if Exportt <> nil then begin
-    for i:=0 to Exportt.FunctionCount-1 do begin
-      if Exportt.functions[i].section = SectionIndex then begin
+  if ExportSection <> nil then begin
+    for i:=0 to ExportSection.FunctionCount-1 do begin
+      if ExportSection.functions[i].section = SectionIndex then begin
 //        Inc(Statistics.References);
 //        Inc(Statistics.Blanks);
 
-        Position:=Exportt.functions[i].CodeSectionOffset;
+        Position:=ExportSection.functions[i].CodeSectionOffset;
         with Decoder.Disassembled[Position] do begin
           Inc(ReferCount, 2);
           SetLength(refer, ReferCount);
           refer[ReferCount-2]:='';
-          if (Exportt.Functions[i].Name <> '') then
-            refer[ReferCount-1]:='Exported function ''' + Exportt.functions[i].name + ''''
+          if (ExportSection.Functions[i].Name <> '') then
+            refer[ReferCount-1]:= 'Exported function ''' + ExportSection.functions[i].name + ''''
           else
-            refer[ReferCount-1]:='Exported function ' + 'ordinal: ''' + IntToStr(Exportt.functions[i].ordinal) + '''';
+            refer[ReferCount-1]:= 'Exported function ' + 'ordinal: ''' + IntToStr(ExportSection.functions[i].ordinal) + '''';
         end;
       end;
     end;
@@ -503,7 +502,7 @@ begin
       Disassembled.Add(Decoder.Disassembled[i].refer[ReferenceIndex]);
 
     // Create intruction line of Disassembled from particles
-    Line:= IntToHex(Decoder.Disassembled[i].Address + fMemOffset, 8) + ' ' + StringRightPad(Decoder.Disassembled[i].parsed, MaxParsedLength) + ' ';
+    Line:= IntToHex(Decoder.Disassembled[i].Address + fMemOffset, 8) + ' ' + StringRightPad(Decoder.Disassembled[i].parsed, ilMaxParsedLength) + ' ';
 
     if Decoder.Disassembled[i].prefix <> '' then
       Line:=Line + Decoder.Disassembled[i].prefix + ' ';
@@ -581,6 +580,7 @@ begin
     DHF.Write(ReferenceLineCount, 4);
     DHF.Write(BlankLineCount, 4);
 //    DHF.Write(Statistics,sizeof(TStatistics));
+    DHF.Write(fLastItem, 4);
     DHF.Write(IsDisassembled, 1);
     DisasmCount:= Disassembled.Count;
     DHF.Write(DisasmCount, 4);
@@ -778,9 +778,9 @@ begin
   DHF.Read(ReferenceLineCount, 4);
   DHF.Read(BlankLineCount, 4);
 //  DHF.Read(Statistics, SizeOf(TStatistics));
+  DHF.Read(fLastItem, 4);
   DHF.Read(fIsDisassembled, 1);
   DHF.Read(DisasmCount, 4);
-
   DHF.Read(InstructionsCount, 4);
 
   // Polia
@@ -790,7 +790,7 @@ begin
   SetLength(DisassemblerMap, CodeSize);
   DHF.Read(DisassemblerMap[0], CodeSize);
 
-  CodeStream:=TMyMemoryStream.Create;
+  CodeStream:= TMyMemoryStream.Create;
   CodeStream.SetMemory(Pointer(CodeArray), CodeSize);
 
   // Nacitanie DAS suboru
@@ -800,18 +800,6 @@ begin
   Readln(DAS, line);
 
   fDisassembled:= TTatraDASStringList.Create;
-
-{
-  fDisassembled.Add('');
-  ProgressPosition:=0;
-  while not EOF(DAS) do begin
-    Inc(ProgressPosition);
-    ReadLn(DAS, line);
-    Disassembled.Add(line);
-  end;
-  ProgressPosition:=0;
-}
-
   fDisassembled.Capacity:= DisasmCount;
   ProgressData.Position:= 0;
   ProgressData.Maximum:= DisasmCount;
@@ -829,19 +817,19 @@ end;
 
 
 // Get position in Disassembled from Address (memory address)
-function TCodeSection.GetPosition(Address: cardinal): cardinal;
+function TCodeSection.GetPosition(MemAddress: cardinal): cardinal;
 var
   Estimate: cardinal;
   DisIndex: cardinal;
 begin
   // Range check of Address
-  if (Address < MemOffset) or (Address > MaxAddress) then begin
+  if (MemAddress < MemOffset) or (MemAddress > MaxAddress) then begin
     result:= cardinal(-1);
     Exit;
   end;
 
   // Process if Address is in last item
-  if Address >= MemOffset + LastItem then begin
+  if MemAddress >= MemOffset + LastItem then begin
     DisIndex:= Disassembled.Count - 1;
     while (GetLineAddress(Disassembled[DisIndex]) = $FFFFFFFF) do
       Dec(DisIndex);
@@ -850,7 +838,7 @@ begin
   end;
 
   // Estimate position
-  Estimate:= Min(Round ( (Address - fMemOffset) / (fMemSize/Disassembled.Count)), Disassembled.Count - 1);
+  Estimate:= Min(Round ( (MemAddress - fMemOffset) / (fMemSize/Disassembled.Count)), Disassembled.Count - 1);
 
   // Find a addressable (e.g. not comment, reference, blank etc.) line close to estimated position
   DisIndex:= Estimate;
@@ -868,14 +856,14 @@ begin
       end;
 
   // Find line with address equal to (or lower than) Address
-  if GetLineAddress(Disassembled[DisIndex]) < Address then begin
+  if GetLineAddress(Disassembled[DisIndex]) < MemAddress then begin
     result:= DisIndex;
     while true do begin
       if GetLineAddress(Disassembled[DisIndex]) = $FFFFFFFF then begin
         Inc(DisIndex);
         Continue;
       end;
-      case CompareValue(GetLineAddress(Disassembled[DisIndex]), Address) of
+      case CompareValue(GetLineAddress(Disassembled[DisIndex]), MemAddress) of
         LessThanValue: begin
           result:= DisIndex;
           Inc(DisIndex);
@@ -893,7 +881,7 @@ begin
   end
 
   else begin
-    while (Address < GetLineAddress(Disassembled[DisIndex])) or (GetLineAddress(Disassembled[DisIndex])=$FFFFFFFF) do
+    while (MemAddress < GetLineAddress(Disassembled[DisIndex])) or (GetLineAddress(Disassembled[DisIndex])=$FFFFFFFF) do
       Dec(DisIndex);
     result:= DisIndex;
   end;
@@ -940,7 +928,7 @@ begin
       Line:= Line + IntToHex(Byte(BytePtr^), 2);
       Inc(cardinal(BytePtr));
     end;
-    Line:= StringRightPad(Line, MaxAddressLength + 1 + MaxParsedLength + 1);
+    Line:= StringRightPad(Line, ilInstructionMnemonicIndex - 1);
 
     // Data
     if Signed then begin
@@ -1056,6 +1044,60 @@ begin
     result:= (i-11) div 2;
   end;
 end;
+
+
+
+// type of Line is ltInstruction 
+function GetTargetAddress(Line: string; var Address: cardinal): boolean;
+
+  function HexToAddress(Index: integer): boolean;
+  begin
+    if (Line[Index] <> '0') or (Line[Index + 1] <> 'x') then begin
+      result:= false;
+      Exit;
+    end;  
+    Inc(Index, 2);
+    try
+      Address:= cardinal(StrToInt('$' + Trim(Copy(Line, Index, 8))));
+      result:= true;
+    except
+      result:= false;
+    end;
+  end;
+
+var
+  Index: integer;
+begin
+  // Este to nie je spravne osetrene!!!
+  if Length(Line) < 43 then begin
+    result:= false;
+    Exit;
+  end;
+
+  Index:= ilInstructionMnemonicIndex;
+
+  // JMP, Jxx
+  if Line[Index] = 'J' then begin
+    while Line[Index] <> ' ' do
+      Inc(Index);
+    Inc(Index);
+    result:= HexToAddress(Index);
+  end
+
+  // CALL
+  else if Copy(Line, Index ,4) = 'CALL' then begin
+    Inc(Index, 5);
+    result:= HexToAddress(Index);
+  end
+
+  // LOOPxx
+  else if Copy(Line, Index, 4) = 'LOOP' then begin
+    while Line[Index] <> ' ' do Inc(Index);
+    Inc(Index);
+    result:= HexToAddress(Index);
+  end
+end;
+
 
 
 end.

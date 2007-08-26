@@ -166,7 +166,7 @@ var
   RVA: cardinal;
   ModulIndex: cardinal;
   DirEntry: TImportDirectoryEntry;
-  FunctionTableSRVA:cardinal;
+  FunctionTableSRVA: cardinal;
 
   FunctionIndex: cardinal;
   LookupTableEntry: cardinal;
@@ -193,15 +193,14 @@ begin
     SetLength(Moduls, ModulIndex + 1);
     ReadStringFromStream(InputStream, DirEntry.NameRVA - RVA, moduls[ModulIndex].Name);
 
-    // Zistenie SRVA tab. funkcii mudulu }
-    // asdasdasd bleble
+    // LookupTableRVA and AddressTable should point to tables with exactly the same content
+    // However some files have LookupTableRVA set to zero, so we use AddressTableRVA instead of LookupTableRVA
+    // => we read functions' names RVAs (or ordinals) from AddressTable instead of LookupTable
     if DirEntry.LookupTableRVA <> 0 then
       FunctionTableSRVA:= DirEntry.LookupTableRVA - RVA
-    else begin
+    else
       FunctionTableSRVA:= DirEntry.AddressTableRVA - RVA;
-      raise Exception.Create('DirEntry.LookupTableRVA is NULL');
-    end;
-
+    
     // Read modul functions
     InputStream.Seek(FunctionTableSRVA, 0);
     InputStream.Read(LookupTableEntry, 4);

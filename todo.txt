@@ -1,39 +1,30 @@
+TO DO list (TatraDAS)
+
+3.x
+drag a drop
+rozne znakove sady v synedit
+zdroje (PE, NE, atd) ?
+
+
 2.9.9
  - porozmyslat na rozdelenim SaveToFile na dve metody (DAS a DHF)
+- translation system
+- errory a vynimky
+- refactor (rewrite :) ) disassembler, add more instructions (SSE3, SSSE) 
 
 2.9.8 todo list:
-  - refactorovat a opravit 
-      vsetky EXECfiles
-      save & load
-      disassembler 
-        - nahradit konstanty symbolickymi konstantami
-        - 
-      mainform - vo vseobecnosti oddelit gui od zvysku
-      procmat
-      codetab
-  - progress
-  - SSE3
-   
+  - refaktorizacia
+    - zvysne exe fily
+  - procmat - rozdelit na viac unitov ?
+  - progress pocas DisassemblePart
+  - system na spravu GUI dat (hodnoty formularov) & ich ukladanie do projektoveho suboru
+    - pridat ulozenie bookmarkov v projekte
   - problemy:
-      pe import lookup table NULL error
+      mozno je to OK - pe import lookup table NULL error
       usporiadanie GUI prvkov na FileTabFrame
-      parametre konstruktora TCodeSection a veci okolo (EntryPointy)
-      translation
-      errory a vynimky
+      textovy progress - dobiehanie do 100%, aj je progress naozaj kratky, tak sa nezobrazi ani jeho nazov
 
 -----------------------------
-drag a drop
-ulozenie bookmarkov v projekte
-ulozenie resources v projekte
-classic(2.2) vzhlad
-rozne znakove sady v synedit
-SSE 3
-zdroje v NE
-system na spravu GUI dat (hodnoty formularov) & ich ukladanie do projektoveho suboru
-----
-
-
-
 
 - ukoncit disassemblovanie bloku v ktorom sa nachadza nedefinovana instrukcia ?
 - skoky a volania medzi sekciam
@@ -57,3 +48,9 @@ statistika funkcii (po najdeni call pridaj funkciu, velkost pridaj po najdeni je
 
 interpretacia call [aaa], kde aaa je v statickych datach
 
+
+*******************************************
+
+Navrhy na mozne zmeny:
+
+fExecFormat si pri loadovani kazdy File nastavuje v Create(). Dalo by sa spravit "protected function GetExecFormat: ..." ktoru by si kazdy File overridol

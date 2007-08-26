@@ -23,7 +23,7 @@ inherited CodeTabFrame: TCodeTabFrame
       Caption = 'Line:'
     end
     object LineDataLabel: TLabel
-      Left = 371
+      Left = 385
       Top = 248
       Width = 3
       Height = 13

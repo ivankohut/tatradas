@@ -1,9 +1,5 @@
 unit CallsAndJumpsTableUnit; 
 
-{$ifdef fpc}
-  {$mode delphi}
-{$endif}
-
 interface
 
 uses
@@ -24,16 +20,16 @@ type
   end;
 
   TCallsAndJumps = class
-   private
-    current: array of TCaJEntry;
-    next: array of cardinal;
+  private
+    Current: array of TCaJEntry;
+    Next: array of cardinal;
     fNextCount: integer;
     fDisassemblerMap: TByteDynamicArray;
     function GetCount: integer;
     function GetCapacity: integer;
     function GetData(index: integer):tcajentry;
     procedure SetCapacity(aCapacity: integer);
-   public
+  public
     constructor Create(var aDisassemblerMap: TByteDynamicArray); overload;
 
     procedure Add(address: cardinal);                              // pridanie do buducich
@@ -51,6 +47,7 @@ constructor TCallsAndJumps.Create(var aDisassemblerMap: TByteDynamicArray);
 begin
   fDisassemblerMap:=aDisassemblerMap;
 end;
+
 
 
 function TCallsAndJumps.GetCount: integer;
@@ -96,7 +93,8 @@ end;
 
 
 procedure TCallsAndJumps.Process(lastAddress: cardinal);
-var pom: TCardinalDynamicArray;
+var
+  pom: TCardinalDynamicArray;
 
   procedure MergeCAS(a1,a2,b1,b2:cardinal);
   var zac,i,pocet: integer;

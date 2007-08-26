@@ -17,6 +17,7 @@ uses
 type
 
   TCOMFile = class(TExecutableFile)
+    constructor Create; overload; override;
     constructor Create(InputFile: TStream; aFileName: TFileName); overload; override;
     destructor Destroy(); override;
     function SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
@@ -25,6 +26,14 @@ type
 
   
 implementation
+
+
+constructor TCOMFile.Create;
+begin
+  inherited;
+  fExecFormat:= ffCOM;
+end;
+
 
 
 constructor TCOMFile.Create(InputFile: TStream; aFileName: TFileName);
@@ -37,7 +46,6 @@ begin
   CodeSection:= TCodeSection.Create(InputFile, false, 0, InputFile.Size, $100, InputFile.Size, 0, 'N/A', self);
   CodeSection.EntryPointAddress:= 0;
   Sections.Add(CodeSection);
-  EntryPoint:=0;
 end;
 
 

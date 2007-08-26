@@ -4,14 +4,15 @@ inherited FileTabFrame: TFileTabFrame
       Left = 577
       Top = 8
       Width = 8
-      Height = 260
+      Height = 261
       Cursor = crHSplit
+      MinSize = 150
     end
     object Panel1: TPanel
       Left = 8
       Top = 8
       Width = 569
-      Height = 260
+      Height = 261
       Align = alLeft
       BevelOuter = bvNone
       Caption = 'Panel1'
@@ -19,7 +20,7 @@ inherited FileTabFrame: TFileTabFrame
       TabOrder = 0
       DesignSize = (
         569
-        260)
+        261)
       object FileOverviewGroupBox: TGroupBox
         Left = 0
         Top = 8
@@ -153,31 +154,31 @@ inherited FileTabFrame: TFileTabFrame
     object Panel2: TPanel
       Left = 585
       Top = 8
-      Width = 355
-      Height = 260
+      Width = 150
+      Height = 261
       Align = alClient
       BevelOuter = bvNone
       Caption = 'Panel2'
       TabOrder = 1
+      OnResize = Panel2Resize
       DesignSize = (
-        355
-        260)
-      object Label1: TLabel
+        150
+        261)
+      object MoreInfoLabel: TLabel
         Left = 0
         Top = 8
-        Width = 32
+        Width = 81
         Height = 13
-        Caption = 'Label1'
+        Caption = 'More information:'
       end
       object AdvancedInfoGrid: TStringGrid
         Left = 0
         Top = 24
-        Width = 353
+        Width = 148
         Height = 385
         Anchors = [akLeft, akTop, akRight, akBottom]
         ColCount = 2
         Constraints.MinHeight = 30
-        Constraints.MinWidth = 150
         DefaultColWidth = 153
         DefaultRowHeight = 20
         FixedCols = 0

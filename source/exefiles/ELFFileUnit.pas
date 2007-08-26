@@ -168,6 +168,7 @@ type
     SectionHeaders: array of TSectionHeader;
     ProgramHeaders: array of TProgramHeader;
   public
+    constructor Create; overload;
     constructor Create(InputFile: TStream; aFileName: TFileName); overload; override;
 
     function SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
@@ -176,6 +177,14 @@ type
 
 
 implementation
+
+
+constructor TELFFile.Create;
+begin
+  inherited;
+  fExecFormat:= ffELF;
+end;
+
 
 
 constructor TELFFile.Create(InputFile: TStream; aFileName: TFileName);
@@ -235,9 +244,6 @@ begin
 
   end;
 
-
-
-  EntryPoint:= header.e_entry;
   fExecFormat:= ffELF;
 end;
 

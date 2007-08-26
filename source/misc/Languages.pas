@@ -22,6 +22,7 @@ uses
   Forms,
 
   procmat,
+  VersionUnit,
   StringRes;
 
 const
@@ -64,9 +65,9 @@ type
     function TranslateControl(Category: string; Name: string): string; overload;
     function TranslateControl(aControl: TControl; Category: string; Name: string): boolean; overload;
 
-    property Language:string read GetLanguage;
+    property Language: string read GetLanguage;
     property INI: TMemINIFile read fINI;
-    property ShortCut:string read GetShortCut;
+    property ShortCut: string read GetShortCut;
   end;
 
 
@@ -167,11 +168,17 @@ begin
   end;
   SectionList.Free;
 
-  if testINI.ReadString('General','LanguageName',fError) = fError then Exit;
-  if testINI.ReadString('General','LanguageShortCut',fError) = fError then Exit;
-  if testINI.ReadInteger('General','LanguageID',-1) = -1 then Exit;
-  if testINI.ReadString('General','Version',fError) <> ShortTatraDASVersion then Exit;
-  result:=true;
+  if testINI.ReadString('General', 'LanguageName',fError) = fError then Exit;
+  if testINI.ReadString('General', 'LanguageShortCut',fError) = fError then Exit;
+  if testINI.ReadInteger('General', 'LanguageID',-1) = -1 then Exit;
+
+  if   (TatraDAS_Version.Compare(testINI.ReadString('General', 'MinVersion', fError)) = GreaterThanValue)
+     OR
+       (TatraDAS_Version.Compare(testINI.ReadString('General', 'MaxVersion', fError)) = LessThanValue)
+  then
+    Exit;
+
+  result:= true;
 end;
 
 function TTatradasLanguages.ChangeLanguage(LanguageShortCut: string): boolean;

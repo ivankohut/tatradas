@@ -46,7 +46,6 @@ var
 begin
   inherited Create(InputFile, aFileName);
   fExecFormat:= ffCustom;
-  EntryPoint:= Parameters.Entrypoint;
 
   InputFile.Seek(0, 0);
   CodeSection:= TCodeSection.Create(InputFile, Parameters.bit32, Parameters.StartOffset, Parameters.Size, Parameters.StartOffset, Parameters.Size, 0, 'N/A', self);

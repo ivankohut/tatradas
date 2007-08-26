@@ -66,10 +66,6 @@ type
     fExportSection: TExportSection;
 
    public
-    EntryPoint: cardinal;                                    // adresa Entry Pointu z hlavicky suboru
-    EntryPointOffset: cardinal;                              // adresa Entry Pointu v subore
-    EntryPointCodeAddress: cardinal;                         // adresa Entry Pointu v kode
-
     constructor Create; overload; virtual;
     constructor Create(InputFile: TStream; aFileName: TFileName); overload; virtual;
     destructor Destroy; override;
@@ -240,12 +236,6 @@ begin
     if not Section.LoadFromFile(DHF, DAS) then
       Exit;
     Sections.Add(Section);
-  end;
-  for i:=0 to Sections.Count-1 do begin
-    if Sections[i].typ = stCode then begin
-      (Sections[i] as TCodeSection).Exportt:=ExportSection;
-      (Sections[i] as TCodeSection).Import:=ImportSection;
-    end;
   end;
   fIsDisassembled:=true;
   result:=true;

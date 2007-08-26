@@ -12,7 +12,9 @@ uses
 
   Math,
   SysUtils,
-  Types
+  Types,
+
+  procmat
   ;
 
 type
@@ -41,6 +43,10 @@ type
     procedure testCompare;
   end;
   {$ENDIF}
+
+var
+  TatraDAS_Version: TVersion;
+
 
 implementation
 
@@ -74,7 +80,7 @@ begin
   Inc(Index);
   fMajor:= StrToIntDef(MajorVerStr, 0);
 
-  // Read major version number
+  // Read minor version number
   while Index <= Length(AVersion) do begin
     if AVersion[Index] = '.' then Break;
     MinorVerStr:=MinorVerStr + AVersion[Index];
@@ -83,7 +89,7 @@ begin
   Inc(Index);
   fMinor:= StrToIntDef(MinorVerStr, 0);
 
-  // Read major version number
+  // Read fix version number
   while Index <= Length(AVersion) do begin
     FixVerStr:=FixVerStr + AVersion[Index];
     Inc(Index);
@@ -150,8 +156,10 @@ end;
 
 
 initialization
- TestFramework.RegisterTest(TTestVersion.Suite);
+  TestFramework.RegisterTest(TTestVersion.Suite);
 {$ENDIF}
 
+initialization
+  TatraDAS_Version:= TVersion.Create(ShortTatraDASVersion);
 
 end.

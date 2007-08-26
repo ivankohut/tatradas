@@ -34,9 +34,9 @@ object ProgressForm: TProgressForm
   end
   object ProgressBar1: TProgressBar
     Left = 8
-    Top = 24
+    Top = 32
     Width = 313
-    Height = 25
+    Height = 17
     Min = 0
     Max = 100
     TabOrder = 1

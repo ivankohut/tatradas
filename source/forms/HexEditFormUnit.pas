@@ -20,6 +20,7 @@ uses
   MPHexEditor,
 
   procmat,
+  StringUtilities,
   StringRes,
   TatraDASFormUnit;
 
@@ -138,9 +139,10 @@ end;
 
 procedure THexEditForm.GotoAddressButtonClick(Sender: TObject);
 begin
-  GotoAddressForm.GotoAddressEdit.Text:='';
-  GotoAddressForm.MaxAddress:=Nezaporne(HexEdit.DataSize-1);
-  if GotoAddressForm.ShowModal = mrOK then HexEdit.Seek(GotoAddressForm.address,0);
+  GotoAddressForm.GotoAddressEdit.Text:= '';
+  GotoAddressForm.MaxAddress:= NonNegative(HexEdit.DataSize - 1);
+  if GotoAddressForm.ShowModal = mrOK then
+    HexEdit.Seek(GotoAddressForm.address, 0);
   HexEdit.SetFocus;
 end;
 

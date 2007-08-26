@@ -1,9 +1,3 @@
-{ TODO:
-  dorobit reakcie na rozne errory
-  vynulovanie progressbaru a processlabel by mal kazdy robit sam
-
-  DONE:
-}
 unit MainFormUnit;
 
 {$INCLUDE 'delver.inc'}
@@ -37,6 +31,7 @@ uses
   CodeTabFrameUnit,
   ExecFileManagerUnit,
   ExecFileUnit,
+  CodeSectionUnit,
   HexEditFormUnit,
   ProgressThreads;
 
@@ -191,18 +186,15 @@ public
     Modified: boolean;
     ExecFile: TExecutableFile;
     procedure CreateSection(ASection: TSection);
-    procedure UpdatePageControl;
 
 public
     OpenMyButton: TIvanSpeedButton;
     DisassembleMyButton: TIvanSpeedButton;
-//    StopMyButton: TIvanSpeedButton;
     ProjectMyButton: TIvanSpeedButton;
     SaveMyButton: TIvanSpeedButton;
     HelpMyButton: TIvanSpeedButton;
 
     sINI: TMemINIFile;
-//    Ctrls: TCtrls;
 
 //    ActivePage: TTabSheetTemplate;
     ActiveFrame: TTabFrameTemplate;
@@ -231,7 +223,6 @@ var
 
   OpenMode: boolean;
   PocetVyskytov: integer;
-//  Stopped: boolean;
   ExecFileManager: TExecFileManager;
 
 implementation
@@ -288,7 +279,7 @@ begin
 
   Modified:=false;
 
-  // Create section frames
+  // Create section tabs and frames
   TTabSheetTemplate.CreateFileTab(ExecFile);
   for i := 0 to ExecFile.Sections.Count - 1 do
     if ExecFile.Sections[i].Typ <> stCode then
@@ -313,9 +304,11 @@ begin
   if ProgressData.ErrorStatus = errNone then begin
     SaveMyButton.Enabled:= true;
     Save1.Enabled:= true;
+    // Create section tabs and frames
     for i := 0 to ExecFile.Sections.Count - 1 do
       if ExecFile.Sections[i].Typ = stCode then
-        TTabSheetTemplate.Create(ExecFile.Sections[i]);
+        if (ExecFile.Sections[i] as TCodeSection).IsDisassembled then
+          TTabSheetTemplate.Create(ExecFile.Sections[i]);
   end
   else begin
     SaveMyButton.Enabled:= false;
@@ -390,16 +383,24 @@ begin
         ErrorMessage:=CouldNotOpenFileStr;
       end;
       errBadFormat: begin
-        ErrorMessage:='File is corrupted: ';
+        ErrorMessage:= 'File is corrupted: ';
       end;
     end;
     MessageDlg(ErrorMessage + '"' + Opendialog1.FileName + '"', mtError, [mbOK], 0);
     Exit;
   end;
 
+  // Create file and section tabs and frames
   TTabSheetTemplate.CreateFileTab(ExecFile);
-  for i := 0 to ExecFile.Sections.Count - 1 do
-    TTabSheetTemplate.Create(ExecFile.Sections[i]);
+  // Load non-code sections
+  for i := 0 to ExecFile.Sections.Count - 1 do 
+    if ExecFile.Sections[i].typ <> stCode then
+      TTabSheetTemplate.Create(ExecFile.Sections[i]);
+  // Load code sections
+  for i := 0 to ExecFile.Sections.Count - 1 do 
+    if ExecFile.Sections[i].typ = stCode then
+      if (ExecFile.Sections[i] as TCodeSection).IsDisassembled then
+        TTabSheetTemplate.Create(ExecFile.Sections[i]);
 
   DisassembleMyButton.Enabled:= false;
   SaveMyButton.Enabled:= true;
@@ -862,7 +863,6 @@ end;
 
 
 procedure TMainForm.Disassemble2Click(Sender: TObject);
-var Options: TDisassembleFormOptions;
 begin
   (ActiveFrame as TCodeTabFrame).NormalDisassembleClick(Sender);
 end;
@@ -918,18 +918,6 @@ begin
 end;
 
 
-
-procedure TMainForm.UpdatePageControl;
-var
-  i,j: integer;
-begin
-  if ExecFile = nil then Exit;
-
-  if PageControl1.PageCount = 0 then
-
-//  for i:= 0 to Sections.Count - 1 do
-
-end;
 
 initialization
   ProcessText.Disassemblying:='Disassemblying...';

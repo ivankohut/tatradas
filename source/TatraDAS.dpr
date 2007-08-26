@@ -35,6 +35,7 @@ uses
   Classes,
   StrUtils,
   procmat in 'procmat.pas',
+  StringUtilities in 'StringUtilities.pas', 
   VersionUnit in 'VersionUnit.pas',
   CallsAndJumpsTableUnit in 'CallsAndJumpsTableUnit.pas',
   disassembler in 'disassembler.pas',

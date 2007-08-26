@@ -82,10 +82,10 @@ begin
   PageControl:=MainForm.PageControl1;
   PageIndex:=PageControl.PageCount-1;
   case aSection.typ of
-    stCode: Frame:=TCodeTabFrame.Create(self,ASection);
-    stExport: Frame:=TExportTabFrame.Create(self,ASection);
-    stImport: Frame:=TImportTabFrame.Create(self,ASection);
-    stResource: Frame:=TResourceTabFrame.Create(self,ASection);
+    stCode: Frame:=TCodeTabFrame.Create(self, ASection);
+    stExport: Frame:=TExportTabFrame.Create(self, ASection);
+    stImport: Frame:=TImportTabFrame.Create(self, ASection);
+    stResource: Frame:=TResourceTabFrame.Create(self, ASection);
     else
       Exit;
   end;
@@ -113,6 +113,7 @@ begin
   end;
   Frame.Parent:= self;
   Caption:=Frame.Caption;
+  Frame.Translate(Langs);
 end;
 
 
