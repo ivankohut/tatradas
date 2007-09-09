@@ -14,7 +14,7 @@ uses
 
 
   TabFrameTemplateUnit,
-  Languages,
+  TranslatorUnit,
   procmat,
   ExecFileUnit,
   SectionUnit,
@@ -34,7 +34,7 @@ type
     function GetSection: TSection; override;
   public
     constructor Create(AOwner: TComponent; ASection: TSection); override;
-    procedure Translate(Translator: TTatraDASLanguages); override;
+    procedure Translate; override;
   end;
 
 
@@ -111,7 +111,7 @@ end;
 
 
 
-procedure TExportTabFrame.Translate(Translator: TTatradasLanguages);
+procedure TExportTabFrame.Translate;
 begin
   Caption:= Translator.INI.ReadString('Export','Caption', TranslateErrorStr);
   FunctionListView.Columns.Items[0].Caption:= Translator.ini.ReadString('Export','FunctionListNumber',TranslateErrorStr);

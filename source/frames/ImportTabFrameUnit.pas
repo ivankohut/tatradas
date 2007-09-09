@@ -18,7 +18,7 @@ uses
   ExecFileUnit,
   ImportSectionUnit,
   TabFrameTemplateUnit,
-  Languages;
+  TranslatorUnit;
 
 type
   TImportTabFrame = class(TTabFrameTemplate)
@@ -34,7 +34,7 @@ type
     procedure FunctionListViewSelectItem(Sender: TObject; Item: TListItem; Selected: Boolean);
     procedure AddressListBoxDblClick(Sender: TObject);
     procedure FunctionListViewDblClick(Sender: TObject);
-    procedure Translate(Translator: TTatraDASLanguages); override;
+    procedure Translate; override;
     procedure FunctionListViewColumnClick(Sender: TObject;
       Column: TListColumn);
   private
@@ -170,7 +170,7 @@ end;
 
 
 
-procedure TImportTabFrame.Translate(Translator: TTatraDASLanguages);
+procedure TImportTabFrame.Translate;
 begin
   inherited;
   Caption:= Translator.TranslateControl('Import', 'Caption');

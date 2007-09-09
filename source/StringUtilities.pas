@@ -4,6 +4,7 @@ interface
 
 uses
   SysUtils,
+  Math,
   StrUtils;
 
 
@@ -37,10 +38,18 @@ end;
 function StringLeftPad(AString: string; Size: integer; PadChar: char): string;
 var
   i: integer;
+  PadCharCount: integer;
 begin
+{
   result:= AString;
   for i:=1 to Size - Length(AString) do
     result:= PadChar + result;
+}
+  PadCharCount:= Size - Length(AString);
+  SetLength(result, Max(Size, Length(AString)));
+  for i:=1 to PadCharCount do
+    result[i]:= PadChar;
+  result:= result + AString;
 end;
 
 
@@ -56,9 +65,15 @@ function StringRightPad(AString: string; Size: integer; PadChar: char): string;
 var
   i: integer;
 begin
-  result:= AString;
-  for i:=1 to Size - Length(AString) do
-    result:= result + PadChar;
+  SetLength(result, Max(Length(AString), Size));
+
+  // Copy AString into result
+  for i:=1 to Length(AString) do
+    result[i]:= AString[i];
+
+  // Fill the rest of result with PadChar
+  for i:=Length(AString)+1 to Size do
+    result[i]:= PadChar;
 end;
 
 

@@ -17,6 +17,7 @@ uses
   Math,
 
   procmat,
+  LoggerUnit,
   StringUtilities,
   CallsAndJumpsTableUnit;
 
@@ -183,10 +184,7 @@ type
        constructor Create(SectionCode: TByteDynamicArray; var DisassemblerMap: TByteDynamicArray; MemOffset: cardinal; Bit32: boolean);
 
        function DisassembleAll: boolean;
-
        function Disassemble(Recursive: boolean): boolean;
-
-//       function DisassemblePart(Options: TDisassembleOptions): boolean;
 
        property Statistics: TStatistics read fStatistics;
        property Blocks[Index: integer]: TDisassembledBlock read GetDisassembledBlock;
@@ -2572,13 +2570,16 @@ end;
 
 
 function TDisassembler.DisassembleBlock(Start, Finish: cardinal): boolean;
+type
+  TPrefixFlags = record
+    group1, group2, group3, group4: boolean;
+  end;
+
 var
     Vparam: TParam;                         // Parametre aktualnej instrukcie
     o,p: byte;                               // Interval pri FPU instrukciach
+    PrefixFlags: TPrefixFlags;
     PrefixStr:string;
-    PrefixFlags: record
-      group1,group2,group3,group4: boolean;
-    end;
     AsmByte: byte;
     c: cardinal;
     _3DNow_Instruction: boolean;
@@ -2592,11 +2593,16 @@ begin
   KoniecBloku:=false;
 //  while (i<=finish) and (DisasmMap[i] =0) and (not KoniecBloku) do begin                     // Hlavny disassemblovaci cyklus
 
+//  Logger.Info('Start: ' + IntToHex(start, 8) + ',  Finish: ' + IntToHex(finish, 8));
 
   while (i<=finish) and ((DisasmMap[i] and dfPart)=0) and (not KoniecBloku) do begin                     // Hlavny disassemblovaci cyklus
 
     Inc(ProgressData.Position, i - InstrAddress);
 
+    // When optimization is ON then program sometimes causes Access Violation here, probably Delphi bug
+    // solution: make an access to Start variable inside this while loop
+    if Start = $109 then
+      Logger.Info(IntToStr(start)); 
 
     operand32:=fBit32;
     address32:=fBit32;
@@ -3133,6 +3139,12 @@ begin
   fCapacity:=10;
   fCount:=0;
 end;
+
+
+initialization
+  Logger.AddListener(TTextFileLoggerListener.Create('disasm.log'));
+  Logger.Info('');
+  Logger.Info('----- START -----');
 
 
 end.

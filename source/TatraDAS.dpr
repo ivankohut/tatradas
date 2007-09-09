@@ -28,34 +28,49 @@ uses
     SynEdit,
   {$ENDIF}
 {$ENDIF}
+
   {$IFDEF FPC}
-  Crt, cthreads,
+    Crt,
+    {$IFNDEF MSWINDOWS}
+      cthreads,
+    {$ENDIF}
   {$ENDIF}
+
+  {$IFDEF MSWINDOWS}
+    {$IFDEF DELPHI}
+      {$IFDEF CONSOLE}
+        Crt in 'misc\win32\crt.pp',
+      {$ENDIF}
+    {$ENDIF}
+  {$ENDIF}
+
   SysUtils,
   Classes,
   StrUtils,
   procmat in 'procmat.pas',
-  StringUtilities in 'StringUtilities.pas', 
+  StringUtilities in 'StringUtilities.pas',
   VersionUnit in 'VersionUnit.pas',
   CallsAndJumpsTableUnit in 'CallsAndJumpsTableUnit.pas',
   disassembler in 'disassembler.pas',
   ExecFileManagerUnit in 'ExecFileManagerUnit.pas',
   ExecFileUnit in 'ExecFileUnit.pas',
   SectionUnit in 'SectionUnit.pas',
+  RegionsUnit in 'RegionsUnit.pas',
   ProgressThreads in 'ProgressThreads.pas',
 
 {$IFDEF MSWINDOWS}
 
-// Misc. units
+  // Misc. units
   StringRes in 'misc\StringRes.pas',
+  LoggerUnit in 'misc\LoggerUnit.pas',
 
 {$IFDEF GUI_B}
   TatraDASHighlighter in 'misc\TatraDASHighlighter.pas',
   ButtonsX in 'misc\ButtonsX.pas',
-  Languages in 'misc\Languages.pas',
+  TranslatorUnit in 'TranslatorUnit.pas',
 
-// Forms' units
-
+  // Forms' units
+  TatraDASFormUnit in 'TatraDASFormUnit.pas',
   MainFormUnit in 'MainFormUnit.pas' {MainForm},
   HexEditFormUnit in 'forms\HexEditFormUnit.pas' {HexEditForm},
   CalculatorUnit in 'forms\CalculatorUnit.pas' {Calculator},
@@ -81,8 +96,7 @@ uses
   TatraDAS_SynEditStringList in 'misc\TatraDAS_SynEditStringList.pas',
 {$ENDIF}
 
-// Executable formats' units
-
+  // Executable formats' units
   MZFileUnit in 'exefiles\MZFileUnit.pas',
   COMFileUnit in 'exefiles\COMFileUnit.pas',
   LEFileUnit in 'exefiles\LEFileUnit.pas',
@@ -92,7 +106,7 @@ uses
   ELFFileUnit in 'exefiles\ELFFileUnit.pas',
   CustomFileUnit in 'exefiles\CustomFileUnit.pas',
 
-// Sections' units
+  // Sections' units
   CodeSectionUnit in 'sections\CodeSectionUnit.pas',
   ExportSectionUnit in 'sections\ExportSectionUnit.pas',
   ImportSectionUnit in 'sections\ImportSectionUnit.pas',
@@ -101,15 +115,17 @@ uses
 {$ENDIF}
 
 {$IFDEF LINUX}
-// Misc. units
+  // Misc. units
   StringRes in 'misc/StringRes.pas',
+  LoggerUnit in 'misc/LoggerUnit.pas',
 
 {$IFDEF GUI_B}
   ButtonsX in 'misc/ButtonsX.pas',
-  Languages in 'misc/Languages.pas',
+  TranslatorUnit in 'TranslatorUnit.pas',
   TatraDASHighlighter in 'misc/TatraDASHighlighter.pas',
 
-// Forms' units
+  // Forms' units
+  TatraDASFormUnit in 'TatraDASFormUnit.pas',
   MainFormUnit in 'MainFormUnit.pas' {MainForm},
   HexEditFormUnit in 'forms/HexEditFormUnit.pas' {HexEditForm},
   CalculatorUnit in 'forms/CalculatorUnit.pas' {Calculator},
@@ -127,13 +143,13 @@ uses
   TatraDAS_SynEditStringList in 'misc/TatraDAS_SynEditStringList.pas',
 {$ENDIF}
 
-// Sections' units
+  // Sections' units
   CodeSectionUnit in 'sections/CodeSectionUnit.pas',
   ExportSectionUnit in 'sections/ExportSectionUnit.pas',
   ImportSectionUnit in 'sections/ImportSectionUnit.pas',
   ResourceSectionUnit in 'sections/ResourceSectionUnit.pas',
 
-// Executable formats' units
+  // Executable formats' units
   MZFileUnit in 'exefiles/MZFileUnit.pas',
   COMFileUnit in 'exefiles/COMFileUnit.pas',
   LEFileUnit in 'exefiles/LEFileUnit.pas',
@@ -145,7 +161,7 @@ uses
 
 {$ENDIF}
 
-{$IFDEF GUI_B} // Hlavny program v GUI
+{$IFDEF GUI_B}
 
 begin
   Application.Initialize;
@@ -212,11 +228,11 @@ begin
         Write('.');
         Inc(ProgressCharsCount);
       end;
-       {$IFDEF FPC}
-       SavedXPosition:= WhereX;
-       GotoXY(MaxProgressNameLength + 2 + 20 + 1, WhereY);
-       Write(Round(100 * ProgressData.Position / ProgressData.Maximum), '%');
-       GotoXY(SavedXPosition, WhereY);
+      {$IFDEF FPC OR MSWINDOWS}
+      SavedXPosition:= WhereX;
+      GotoXY(MaxProgressNameLength + 2 + 20 + 1, WhereY);
+      Write(Round(100 * ProgressData.Position / ProgressData.Maximum), '%');
+      GotoXY(SavedXPosition, WhereY);
       {$ENDIF}
     end;
     Sleep(100);
@@ -272,7 +288,6 @@ var
 
 begin
   ProcessText.Disassemblying:= 'Disassemblying CS_';
-//  ProcessText.Indentifying:= 'Identifying jumps and calls...';
   ProcessText.PreparingOutput:='Preparing output CS_';
   ProcessText.LoadingDAS:= 'Loading DAS file - Code Section #';
   ProcessText.LoadingDHF:= 'Loading DHF file - Code Section #';

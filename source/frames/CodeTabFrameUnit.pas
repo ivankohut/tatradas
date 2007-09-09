@@ -17,15 +17,16 @@ uses
   Classes,
   SysUtils,
   Math,
-  INIFiles,
-  strutils,
+  IniFiles,
+  StrUtils,
+  Graphics,
 
   SynEdit,
   SynEditTypes,
   SynEditTextBuffer,
   TatraDASHighlighter,
 
-  Languages,
+  TranslatorUnit,
   TabFrameTemplateUnit,
   GotoAddressFormUnit,
   AdvancedChangingToDataFormUnit,
@@ -35,7 +36,9 @@ uses
   procmat,
   disassembler,
   CodeSectionUnit,
-  SectionUnit;
+  SectionUnit,
+  ProgressFormUnit,
+  ProgressThreads;
 
 
 type
@@ -149,7 +152,7 @@ type
     function GetPosition(Address: cardinal): cardinal; // Get position in Disassembled from Address (memory address)
     procedure GotoPosition(Offset: LongInt; Origin: TSeekOrigin); // Offset zacina od 0
 
-    procedure Translate(Translator: TTatraDASLanguages); override;
+    procedure Translate; override;
 
   protected
     function GetSection: TSection; override;
@@ -177,7 +180,7 @@ begin
   JumpStack:= TStack.Create;
   Caption:= 'Code section #' + IntToStr(fSection.CodeSectionIndex);
 
-// Vytvorenie Textovej plochy SynEdit
+  // Vytvorenie Textovej plochy SynEdit
   plocha:= TSynEdit.Create(Panel);
   plocha.Parent:= Panel;
   plocha.SetSubComponent(true);
@@ -192,16 +195,14 @@ begin
   plocha.Font.Size:= 8;
   plocha.HideSelection:= true;
   plocha.ScrollBars:= ssVertical;
-//  Nova verzia syeditu neberie
-//  plocha.MaxLeftChar:=80;
-
-//  plocha.Options:=plocha.Options + [eoScrollPastEol];
+  plocha.ActiveLineColor:= $FFE8E0;
 
   plocha.Highlighter:= TSynTatraDASSyn.Create(plocha);
   plocha.OnStatusChange:= PlochaStatusChange;
   plocha.OnMouseDown:= PlochaMouseDown;
   plocha.HookTextBuffer(fSection.Disassembled, plocha.UndoList, plocha.RedoList);
 
+//  MainForm.actGoToEntryPoint.Enabled
   GotoEntrypointButton.Enabled:= fSection.HasEntryPoint;
   GotoAddressButton.Enabled:= (fSection.CodeSize <> 0);
   FollowButton.Enabled:= false;
@@ -347,7 +348,7 @@ end;
 
 
 
-procedure TCodeTabFrame.Translate(Translator: TTatraDASLanguages);
+procedure TCodeTabFrame.Translate;
 var
   i: integer;
 begin
@@ -783,7 +784,7 @@ begin
   DisOptions.Recursive:= Options.Recursive;
 
   // Disassemble and move carret to the first instruction
-  fSection.DisassemblePart(DisOptions);
+  ProgressForm.Execute(TDisassemblePartThread.Create(fSection, DisOptions));
   GotoPosition(fSection.GetPosition(DisOptions.Address), soBeginning);
 end;
 

@@ -34,11 +34,9 @@ inherited CodeTabFrame: TCodeTabFrame
       Top = 8
       Width = 88
       Height = 25
-      Hint = 'Jump to program Entry point'
+      Action = MainForm.actGoToEntryPoint
       Anchors = [akTop, akRight]
-      Caption = 'Goto Entry Point'
       TabOrder = 0
-      OnClick = GotoEntryPointButtonClick
     end
     object GotoAddressButton: TButton
       Left = 346

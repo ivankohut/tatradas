@@ -2,3 +2,5 @@
 + imported functions in NE files 
 - advanced disassemble - instruction count
 + sorting of columns in Import and Export 
++ highlight active line in disassembly view
+~ preparing output takes 60% less time (simple string optimization :) ) 

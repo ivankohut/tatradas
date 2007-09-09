@@ -24,6 +24,8 @@ type
   private
     fHeader: TMZHeader;
     fRelocations: array of TRelocationEntry;
+    function GetRelocationEntry(Index: integer): TRelocationEntry;
+    function GetRelocationsCount: integer;
   public
     constructor Create; overload; override;
     constructor Create(InputFile: TStream; aFileName: TFileName); overload; override;
@@ -32,6 +34,8 @@ type
     function LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; override;
   public
     property Header: TMZHeader read fHeader;
+    property Relocations[Index: integer]: TRelocationEntry read GetRelocationEntry;
+    property RelocationsCount: integer read GetRelocationsCount;
   end;
 
 
@@ -63,6 +67,12 @@ begin
   InputFile.Read(fHeader, 40);
   CodeSize:= (fHeader.PageCount-1)*512 + fHeader.PageRemainder - fHeader.HeaderSize*16;
 
+  // Set Regions
+  Regions.Add('MZ Header', 0, 40);
+  Regions.Add('Code', fHeader.HeaderSize*16, CodeSize);
+  Regions.Add('Relocation table', fHeader.RelocTableOffset, fHeader.RelocCount * SizeOf(TRelocationEntry));
+  Regions.Finish;
+
   // Code section
   if CodeSize > 0 then begin
     CodeSection:= TCodeSection.Create(InputFile, false, fHeader.HeaderSize*16, CodeSize, fHeader.HeaderSize*16, CodeSize, 0, 'N/A', self);
@@ -76,7 +86,13 @@ begin
     InputFile.Seek(fHeader.RelocTableOffset, 0);
     InputFile.Read(fRelocations[0], fHeader.RelocCount * SizeOf(TRelocationEntry));
   end;
+end;
 
+
+
+destructor TMZFile.Destroy;
+begin
+  inherited;
 end;
 
 
@@ -102,9 +118,21 @@ end;
 
 
 
-destructor TMZFile.Destroy;
+function TMZFile.GetRelocationEntry(Index: integer): TRelocationEntry;
 begin
-  inherited;
+  if (Index < 0) or (Index >= Length(fRelocations)) then begin
+    result.Offset:= 0;
+    result.Segment:= 0;
+  end
+  else
+    result:= fRelocations[Index];
+end;
+
+
+
+function TMZFile.GetRelocationsCount: integer;
+begin
+  result:= Length(fRelocations);
 end;
 
 

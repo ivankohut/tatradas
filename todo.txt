@@ -1,28 +1,45 @@
 TO DO list (TatraDAS)
 
 3.x
-drag a drop
-rozne znakove sady v synedit
-zdroje (PE, NE, atd) ?
+- drag a drop
+- rozne znakove sady v synedit
+- zdroje (PE, NE, atd) ?
 
 
 2.9.9
- - porozmyslat na rozdelenim SaveToFile na dve metody (DAS a DHF)
+- porozmyslat na rozdelenim SaveToFile na dve metody (DAS a DHF)
 - translation system
-- errory a vynimky
-- refactor (rewrite :) ) disassembler, add more instructions (SSE3, SSSE) 
+- errory a vynimky (o.i. ako osetrovat pristup do poli v array propertoch)
+- refactor (rewrite :) ) disassembler, add more instructions (SSE3, SSSE)
+- system na spravu GUI dat (hodnoty formularov) & ich ukladanie do projektoveho suboru
+  - pridat ulozenie bookmarkov v projekte
+- prerobit menu pomocou actions
+- zamysliet sa nad polozkami v menu (a buttonmi na codeframe)
+- ELF
+    - pochopit a prerobit import
+    - pridat inicializaciu Regionov
+    - exefily by mali mat len take polia, ktore su hodne ukladania do projektu (resp. existencie po otvoreni projektu), zvysok by sa mal posuvat pri vytvarani ako parametre
+
 
 2.9.8 todo list:
+  - poriadok v misc/ adresari
   - refaktorizacia
     - zvysne exe fily
+    - codeSection.savetofile
   - procmat - rozdelit na viac unitov ?
-  - progress pocas DisassemblePart
-  - system na spravu GUI dat (hodnoty formularov) & ich ukladanie do projektoveho suboru
-    - pridat ulozenie bookmarkov v projekte
   - problemy:
       mozno je to OK - pe import lookup table NULL error
       usporiadanie GUI prvkov na FileTabFrame
       textovy progress - dobiehanie do 100%, aj je progress naozaj kratky, tak sa nezobrazi ani jeho nazov
+      framy si nepamataju svoju velkost
+      advancedinfogrid by sa nemal zvacsovat donekonecna (presiahnut formular)
+      disable/enable menu items
+      pada pri zapnutej optimalizacii A vypnutych checkoch - aladdin.exe
+      odstranit code taby po ynovu disassemblovani
+      odstranit nepotrebne volania loggera
+      slovo Disassemblying
+      stringy rozhadzane po suboroch
+
 
 -----------------------------
 
@@ -31,7 +48,6 @@ zdroje (PE, NE, atd) ?
 
 - AAS nie je zvyraznena v MEM.jar
 - relocation table v MZ formate
-- SynEdit este treba: oznacovat cely riadok a plynule skrolovanie bez kurzora(podobene ako vo WinDASM, ale s moznostou selktovat text)
 - moznost vzdy si vybrat otvorit subor ako subor neznameho formatu
 - lepsia detekcia volania funkcii
 - spracovanie resources (alebo pridanie Resource Hackera)
@@ -53,4 +69,5 @@ interpretacia call [aaa], kde aaa je v statickych datach
 
 Navrhy na mozne zmeny:
 
-fExecFormat si pri loadovani kazdy File nastavuje v Create(). Dalo by sa spravit "protected function GetExecFormat: ..." ktoru by si kazdy File overridol
+- fExecFormat si pri loadovani kazdy File nastavuje v Create(). Dalo by sa spravit "protected function GetExecFormat: ..." ktoru by si kazdy File overridol
+- nastavenia do XML (?)

@@ -168,7 +168,7 @@ type
     SectionHeaders: array of TSectionHeader;
     ProgramHeaders: array of TProgramHeader;
   public
-    constructor Create; overload;
+    constructor Create; overload; override;
     constructor Create(InputFile: TStream; aFileName: TFileName); overload; override;
 
     function SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
@@ -267,7 +267,7 @@ function TELFFile.SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSave
 var
   i: integer;
 begin
-  result:=inherited SaveToFile(DHF, DAS, SaveOptions);
+  result:= inherited SaveToFile(DHF, DAS, SaveOptions);
   if soProject in SaveOptions then begin
     DHF.Write(Header, SizeOf(TELFHeader));
     for i:= 0 to header.e_shnum - 1 do begin
@@ -283,7 +283,7 @@ function TELFFile.LoadFromFile(DHF: TStream; var DAS: TextFile): boolean;
 var
   i: integer;
 begin
-  result:=inherited LoadFromFile(DHF, DAS);
+  result:= inherited LoadFromFile(DHF, DAS);
   DHF.Read(header, SizeOf(TELFHeader));
   SetLength(SectionHeaders, header.e_shnum);
   for i:= 0 to header.e_shnum - 1 do begin

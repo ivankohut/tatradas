@@ -17,6 +17,7 @@ uses
 type
 
   TCOMFile = class(TExecutableFile)
+  public
     constructor Create; overload; override;
     constructor Create(InputFile: TStream; aFileName: TFileName); overload; override;
     destructor Destroy(); override;
@@ -43,7 +44,10 @@ begin
   inherited;
   fExecFormat:= ffCOM;
 
-  CodeSection:= TCodeSection.Create(InputFile, false, 0, InputFile.Size, $100, InputFile.Size, 0, 'N/A', self);
+  fRegions.Add('COM file', 0, FileSize);
+  fRegions.Finish;
+
+  CodeSection:= TCodeSection.Create(InputFile, false, 0, FileSize, $100, FileSize, 0, 'N/A', self);
   CodeSection.EntryPointAddress:= 0;
   Sections.Add(CodeSection);
 end;

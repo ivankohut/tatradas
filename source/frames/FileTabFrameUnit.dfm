@@ -15,7 +15,6 @@ inherited FileTabFrame: TFileTabFrame
       Height = 261
       Align = alLeft
       BevelOuter = bvNone
-      Caption = 'Panel1'
       Constraints.MinWidth = 252
       TabOrder = 0
       DesignSize = (

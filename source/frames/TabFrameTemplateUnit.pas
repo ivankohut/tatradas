@@ -14,7 +14,7 @@ uses
   IniFiles,
 
   procmat,
-  Languages,
+  TranslatorUnit,
   SectionUnit,
   CodeSectionUnit,
   ImportSectionUnit,
@@ -24,7 +24,7 @@ type
 
   TPageType = (ttFile, ttCode, ttImport, ttExport, ttRelocation, ttResource);
 
-  TTabFrameTemplate = class(TFrame)
+  TTabFrameTemplate = class(TFrame, ITranslatable)
     Panel: TPanel;
   private
     fTypeName: string;
@@ -34,7 +34,7 @@ type
     property Section: TSection read GetSection;
   public
     constructor Create(AOwner: TComponent; ASection: TSection); overload; virtual; //abstract;
-    procedure Translate(Translator: TTatraDASLanguages); virtual; abstract;
+    procedure Translate; virtual; abstract;
 //    procedure Translate(INI: TMemIniFile); virtual; abstract;
 //    procedure SaveToStream(AStream: TStream); virtual; abstract;
     property TypeName: string read fTypeName;
@@ -51,7 +51,7 @@ type
     constructor CreateFileTab(aExecFile: TExecutableFile); 
     constructor Create(aSection: TSection); overload;
     destructor Destroy; override;
-    procedure Translate(Translator: TTatraDASLanguages);
+    procedure Translate;
     function IsHavingSection(ASection: TSection): boolean; 
     property PageType: TPageType read GetPageType;
   end;
@@ -91,7 +91,7 @@ begin
   end;
   Frame.Parent:=self;
   Caption:=Frame.Caption;
-  Frame.Translate(Langs);
+  Frame.Translate;
 end;
 
 
@@ -113,7 +113,7 @@ begin
   end;
   Frame.Parent:= self;
   Caption:=Frame.Caption;
-  Frame.Translate(Langs);
+  Frame.Translate;
 end;
 
 
@@ -133,10 +133,10 @@ end;
 
 
 
-procedure TTabSheetTemplate.Translate(Translator: TTatraDASLanguages);
+procedure TTabSheetTemplate.Translate;
 begin
   Caption:=Translator.TranslateControl(Frame.TypeName, 'Caption');
-  Frame.Translate(Translator);
+  Frame.Translate;
 end;
 
 

@@ -1,6 +1,6 @@
 object MainForm: TMainForm
-  Left = 454
-  Top = 107
+  Left = 438
+  Top = 184
   Width = 783
   Height = 722
   BorderIcons = [biSystemMenu, biMinimize]
@@ -23,8 +23,9 @@ object MainForm: TMainForm
     Left = 0
     Top = 0
     Width = 775
-    Height = 89
+    Height = 83
     Align = alTop
+    Stretch = True
     Transparent = True
   end
   object PageControl1: TPageControl
@@ -59,7 +60,10 @@ object MainForm: TMainForm
     ShowHint = True
     SimplePanel = False
   end
-  object OpenDialog1: TOpenDialog
+  object OpenFileOpenDialog: TOpenDialog
+    Filter = 
+      'Executable files and libraries (*.EXE;*.COM;*.DLL)|*.exe;*.com;*' +
+      '.dll;|All files(*.*)|*.*'
     Options = [ofEnableSizing]
     Left = 72
     Top = 8
@@ -388,9 +392,7 @@ object MainForm: TMainForm
       Caption = 'Go to ...'
       Enabled = False
       object GotoEntrypoint1: TMenuItem
-        Caption = 'Goto Entry point'
-        ShortCut = 16453
-        OnClick = GotoEntrypoint1Click
+        Action = actGoToEntryPoint
       end
       object Gotoaddress1: TMenuItem
         Caption = 'Goto address ...'
@@ -863,7 +865,7 @@ object MainForm: TMainForm
       FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00000000000000000000000000000000
       000000000000}
   end
-  object SaveDialog1: TSaveDialog
+  object SaveProjectSaveDialog: TSaveDialog
     Left = 136
     Top = 8
   end
@@ -872,5 +874,26 @@ object MainForm: TMainForm
     OnFind = FindDialog1Find
     Left = 104
     Top = 8
+  end
+  object ActionList1: TActionList
+    Left = 160
+    Top = 224
+    object actGoToEntryPoint: TAction
+      Category = 'GoTo'
+      Caption = 'Go to entry point'
+      OnExecute = actGotoEntrypointExecute
+    end
+    object Action2: TAction
+      Caption = 'Action2'
+    end
+    object actFollowJump: TAction
+      Category = 'GoTo'
+      Caption = 'actFollowJump'
+    end
+  end
+  object OpenProjectOpenDialog: TOpenDialog
+    Filter = ' (*.dhf)|*.DHF'
+    Left = 72
+    Top = 40
   end
 end

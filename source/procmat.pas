@@ -56,7 +56,7 @@ const
 
   // TatraDAS version constants
   TatraDASVersion: cardinal = $00029700;
-  TatraDASDate: cardinal = $23122004;
+  TatraDASDate: string = '02. 09. 2007';
   TatraDASProjectVersion = $00030002;
   ShortTatraDASVersion: string = '2.9.8';
   TatraDASFullName: string = 'TatraDAS disassembler';
@@ -116,6 +116,32 @@ type
 
   TCPUType = (_80386, _80486, Pentium);
 
+
+  TEntryTableEntryType = (etEmpty,etFixed,etMovable);
+
+
+  TFixedBundle = packed record
+    Flag: byte;
+    Offset: word;
+  end;
+
+  TMovableBundle = packed record
+    Flag: byte;
+    Int3F: word;
+    Segment: byte;
+    Offset: word;
+  end;
+
+  TEntryTableEntry = record
+    count: byte;
+    typ: TEntryTableEntryType;
+    Fixed: array of TFixedBundle;
+    Movable: array of TMovableBundle;
+  end;
+
+
+
+
   TMyMemoryStream = class(TMemoryStream)
     procedure SetMemory(Ptr: pointer; Size: LongInt);
   end;
@@ -137,6 +163,10 @@ type
     Result: Pointer;
   end;
 
+  ITranslatable = interface
+    ['{E293B4CE-B91A-42FE-884A-27F54EEAD8DD}']
+    procedure Translate;
+  end;
 
 var
   ProcessText: TProcessText;

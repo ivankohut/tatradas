@@ -1,5 +1,5 @@
 mainicon ICON ..\..\images\icons\tatradas.ico
-background BITMAP ..\..\images\background.bmp
+buttons_background BITMAP ..\..\images\buttons_background.bmp
 open1 BITMAP ..\..\images\buttons\open1.bmp
 open2 BITMAP ..\..\images\buttons\open2.bmp
 disassemble1 BITMAP ..\..\images\buttons\disassemble1.bmp

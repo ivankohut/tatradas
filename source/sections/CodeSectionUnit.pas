@@ -125,6 +125,8 @@ function GetTargetAddress(Line: string; var Address: cardinal): boolean;
 implementation
 
 uses
+  LoggerUnit,
+  DateUtils,
   ExecFileUnit,
   PEFileUnit;
 
@@ -257,6 +259,8 @@ var
   Line: string;
   NewLines: TStrings;
 begin
+  ProgressData.Name:= ProcessText.Disassemblying;
+
   // Disassemble
   Decoder:= TDisassembler.Create(CodeArray, DisassemblerMap, MemOffset, Options.Bit32);
 //  Decoder.IsDisassembled:=True;
@@ -271,8 +275,13 @@ begin
 //  Statistics:=Decoder.Statistics;
 
   // Process all disassembled blocks
+  ProgressData.Name:= ProcessText.PreparingOutput;
+  ProgressData.Position:= 0;
+  ProgressData.Maximum:= Decoder.BlockCount - 1;
+
   NewLines:= TStringList.Create;
   for BlockIndex:=0 to Decoder.BlockCount - 1 do begin
+    Inc(ProgressData.Position);
     NewLines.Clear;
     CodeIndex:= Decoder.Blocks[BlockIndex].Address;
     while CodeIndex < Decoder.Blocks[BlockIndex].Address + Decoder.Blocks[BlockIndex].Size do begin
@@ -284,7 +293,7 @@ begin
       Dec(DisassemblerMap[CodeIndex], dfNewInstr);
       Inc(DisassemblerMap[CodeIndex], dfInstruction);
 
-      Line:= IntToHex(Decoder.Disassembled[CodeIndex].Address + fMemOffset, 8) + ' ' + StringRightPad(Decoder.Disassembled[CodeIndex].parsed, ilMaxParsedLength) + ' ';
+      Line:= IntToHex(Decoder.Disassembled[CodeIndex].Address + fMemOffset, 8) + StringRightPad(Decoder.Disassembled[CodeIndex].parsed, 1 + ilMaxParsedLength + 1, ' ');
 
       if Decoder.Disassembled[CodeIndex].prefix <> '' then
         Line:=Line + Decoder.Disassembled[CodeIndex].prefix + ' ';
@@ -484,6 +493,8 @@ begin
 
   fDisassembled.Add('');  // prazdny riadok na zaciatku
 
+  Logger.Info('Output preparing started');
+
   for i:= 0 to CodeSize - 1 do begin
     Inc(ProgressData.Position);
 
@@ -502,7 +513,7 @@ begin
       Disassembled.Add(Decoder.Disassembled[i].refer[ReferenceIndex]);
 
     // Create intruction line of Disassembled from particles
-    Line:= IntToHex(Decoder.Disassembled[i].Address + fMemOffset, 8) + ' ' + StringRightPad(Decoder.Disassembled[i].parsed, ilMaxParsedLength) + ' ';
+    Line:= IntToHex(Decoder.Disassembled[i].Address + fMemOffset, 8) + StringRightPad(Decoder.Disassembled[i].parsed, 1 + ilMaxParsedLength + 1, ' ');
 
     if Decoder.Disassembled[i].prefix <> '' then
       Line:=Line + Decoder.Disassembled[i].prefix + ' ';
@@ -510,6 +521,7 @@ begin
 
     Disassembled.Add(Line);
   end;
+  Logger.Info('Output preparing finished');
 
   // Compute LastItem
   CodeIndex:= CodeSize - 1;
@@ -547,12 +559,12 @@ begin
   if (soProject in SaveOptions) or (soDisassembly in SaveOptions) then begin
   // Zapis do suboru "*.das"
     Writeln(DAS,'------------------------------');
-    Writeln(DAS,'Code Section Number: ' + IntToStr(SectionIndex));
+    Writeln(DAS,'Code Section Number: '  + IntToStr(CodeSectionIndex));
     Writeln(DAS,'Number of lines: ' + IntToStr(Disassembled.Count));
 
     ProgressData.Maximum := Disassembled.Count;
     ProgressData.Position := 0;
-    ProgressData.Name := ProcessText.SavingDAS;
+    ProgressData.Name := ProcessText.SavingDAS + IntToStr(CodeSectionIndex);
     for i := 0 to Disassembled.Count - 1 do begin
       WriteLn(DAS, Disassembled[i]);
       Inc(ProgressData.Position);
@@ -606,7 +618,7 @@ begin
 
     Append(DAS);
     Writeln(DAS,'------------------------------');
-    Writeln(DAS,'Code Section Number: '+IntToStr(SectionIndex));
+    Writeln(DAS,'Code Section Number: ' + IntToStr(CodeSectionIndex));
 //    Writeln(DAS,'Number of lines: '+IntToStr(PocetDisassembled));       nema zmysel (pocet naozaj zapisanych riadkov je stale iny
 
     for i:=0 to Disassembled.Count - 1 do begin
@@ -642,7 +654,7 @@ begin
 
     Append(DAS);
     Writeln(DAS,'; ------------------------------');
-    Writeln(DAS,'; Code Section Number: '+IntToStr(SectionIndex));
+    Writeln(DAS,'; Code Section Number: ' + IntToStr(CodeSectionIndex));
     Writeln(DAS);
     case Bit32 of
       true:  Writeln(DAS,'BITS 32');
@@ -803,6 +815,7 @@ begin
   fDisassembled.Capacity:= DisasmCount;
   ProgressData.Position:= 0;
   ProgressData.Maximum:= DisasmCount;
+  ProgressData.Name := ProcessText.LoadingDAS + IntToStr(CodeSectionIndex);
   for i:=0 to DisasmCount - 1 do begin
     ProgressData.Position:= i;
     ReadLn(DAS, line);
@@ -1047,7 +1060,7 @@ end;
 
 
 
-// type of Line is ltInstruction 
+// type of Line is ltInstruction
 function GetTargetAddress(Line: string; var Address: cardinal): boolean;
 
   function HexToAddress(Index: integer): boolean;
@@ -1055,7 +1068,7 @@ function GetTargetAddress(Line: string; var Address: cardinal): boolean;
     if (Line[Index] <> '0') or (Line[Index + 1] <> 'x') then begin
       result:= false;
       Exit;
-    end;  
+    end;
     Inc(Index, 2);
     try
       Address:= cardinal(StrToInt('$' + Trim(Copy(Line, Index, 8))));

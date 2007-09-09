@@ -2,7 +2,7 @@
   - zjednotit sposob prekladania Formov a Framov
 }
 
-unit Languages;
+unit TranslatorUnit;
 
 
 interface
@@ -26,7 +26,7 @@ uses
   StringRes;
 
 const
-  LangFileSectionCount = 24;
+  LangFileSectionCount = 25;
 
 type
 
@@ -41,7 +41,7 @@ type
     IconFileName: string;
   end;
 
-  TTatradasLanguages = class
+  TTranslator = class
     LangArray: array of TLangItem;
     Index: cardinal;
     fFolder: string;
@@ -64,6 +64,7 @@ type
     procedure Translate;
     function TranslateControl(Category: string; Name: string): string; overload;
     function TranslateControl(aControl: TControl; Category: string; Name: string): boolean; overload;
+    function TranslateCaption(var aCaption: TCaption; Category: string; Name: string): boolean;
 
     property Language: string read GetLanguage;
     property INI: TMemINIFile read fINI;
@@ -72,7 +73,7 @@ type
 
 
 var
-  Langs: TTatradasLanguages;
+  Translator: TTranslator;
 
 implementation
 
@@ -81,7 +82,7 @@ uses
 
 
 
-constructor TTatradasLanguages.Create(Folder: string; Menu: TMenuItem; ImageList: TImageList);
+constructor TTranslator.Create(Folder: string; Menu: TMenuItem; ImageList: TImageList);
 var
   LangItem: TLangItem;
   sr: TSearchRec;
@@ -127,22 +128,22 @@ end;
 
 
 
-function TTatradasLanguages.GetShortCut: string;
+function TTranslator.GetShortCut: string;
 begin
   result:=LangArray[Index].ShortCut;
 end;
 
-function TTatradasLanguages.GetLanguage: string;
+function TTranslator.GetLanguage: string;
 begin
   result:=LangArray[Index].Name;
 end;
 
-function TTatradasLanguages.GetID: cardinal;
+function TTranslator.GetID: cardinal;
 begin
   result:=LangArray[Index].ID;
 end;
 
-function TTatradasLanguages.CheckLangFile(FileName: string):boolean;
+function TTranslator.CheckLangFile(FileName: string):boolean;
 var tINI: TMemINIFile;
 begin
   result:=false;
@@ -156,7 +157,7 @@ begin
   tINI.Free;
 end;
 
-function TTatradasLanguages.CheckLangFile(testINI: TMemINIFile):boolean;
+function TTranslator.CheckLangFile(testINI: TMemINIFile):boolean;
 var SectionList: TStrings;
 begin
   result:=false;
@@ -181,7 +182,7 @@ begin
   result:= true;
 end;
 
-function TTatradasLanguages.ChangeLanguage(LanguageShortCut: string): boolean;
+function TTranslator.ChangeLanguage(LanguageShortCut: string): boolean;
 var i: integer;
 begin
   result:=false;
@@ -190,7 +191,7 @@ begin
       result:= ChangeLanguage(LangArray[i]);
 end;
 
-function TTatradasLanguages.ChangeLanguage(LanguageID: cardinal): boolean;
+function TTranslator.ChangeLanguage(LanguageID: cardinal): boolean;
 var i:integer;
 begin
   result:=false;
@@ -199,7 +200,7 @@ begin
      result:=ChangeLanguage(LangArray[i]);
 end;
 
-function TTatradasLanguages.ChangeLanguage(LangItem: TLangItem): boolean;
+function TTranslator.ChangeLanguage(LangItem: TLangItem): boolean;
 var tINI: TMemINIFile;
 begin
   result:=false;
@@ -216,7 +217,7 @@ begin
   result:=true;
 end;
 
-procedure TTatradasLanguages.LangMenuItemClick(Sender: TObject);
+procedure TTranslator.LangMenuItemClick(Sender: TObject);
 var
   i:integer;
 begin
@@ -231,32 +232,46 @@ end;
 
 
 
-procedure TTatradasLanguages.Translate;
+procedure TTranslator.Translate;
 var
   i: integer;
 begin
   TranslateStrings(fINI);
 
   // Translate all forms
+{
   for i:=0 to Application.ComponentCount - 1 do
-    if Application.Components[i] is TTatraDASForm then
-      (Application.Components[i] as TTatraDASForm).Translate(INI);
+    if Application.Components[i] is ITranslatable then
+      (Application.Components[i] as ITranslatable).Translate;
+}
+
+  for i:=0 to Application.ComponentCount - 1 do begin
+    if Supports(Application.Components[i], ITranslatable) then
+      (Application.Components[i] as ITranslatable).Translate;
+  end;
+
 
   // Translate all frames
   for i:=0 to MainForm.PageControl1.PageCount - 1 do
-    (MainForm.PageControl1.Pages[i] as TTabSheetTemplate).Frame.Translate(self);
+    (MainForm.PageControl1.Pages[i] as TTabSheetTemplate).Frame.Translate;
 end;
 
 
 
-function TTatradasLanguages.TranslateControl(Category: string; Name: string):string;
+function TTranslator.TranslateControl(Category: string; Name: string): string;
 begin
-  result:=fINI.ReadString(Category,Name,fError);
+  result:= fINI.ReadString(Category, Name, fError);
 end;
 
 
-function TTatradasLanguages.TranslateControl(aControl: TControl; Category: string; Name: string): boolean;
+function TTranslator.TranslateControl(aControl: TControl; Category: string; Name: string): boolean;
 begin
+end;
+
+
+function TTranslator.TranslateCaption(var aCaption: TCaption; Category: string; Name: string): boolean;
+begin
+  aCaption:= fINI.ReadString(Category, Name, fError);
 end;
 
 

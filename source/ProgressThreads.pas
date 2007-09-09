@@ -6,6 +6,8 @@ uses
   Classes,
 
   procmat,
+  disassembler,
+  CodeSectionUnit,
   ExecFileManagerUnit,
   ExecFileUnit;
 
@@ -18,6 +20,16 @@ type
     procedure Execute; override;
   public
     constructor Create(AExecFile: TExecutableFile);
+  end;
+
+  TDisassemblePartThread = class(TThread)
+  private
+    fCodeSection: TCodeSection;
+    fOptions: TDisassembleOptions;
+  protected
+    procedure Execute; override;
+  public
+    constructor Create(ACodeSection: TCodeSection; AOptions: TDisassembleOptions);
   end;
 
   TSaveThread = class(TThread)
@@ -60,6 +72,25 @@ end;
 procedure TDisassembleThread.Execute;
 begin
   fExecFile.Disassemble;
+  ProgressData.Finished:= true;
+end;
+
+
+{ TDisassemblePartThread }
+
+
+constructor TDisassemblePartThread.Create(ACodeSection: TCodeSection; AOptions: TDisassembleOptions);
+begin
+  inherited Create(true);
+  fCodeSection:= ACodeSection;
+  fOptions:= AOptions;
+end;
+
+
+
+procedure TDisassemblePartThread.Execute;
+begin
+  fCodeSection.DisassemblePart(fOptions);
   ProgressData.Finished:= true;
 end;
 

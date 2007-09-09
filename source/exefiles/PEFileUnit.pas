@@ -61,7 +61,7 @@ type
     DebugTableRVA,       DebugDataSize: cardinal;
     ImageDescriptionRVA, DescriptionSize: cardinal;
     MachineSpecificRVA,  MachineSpecificSize: cardinal;
-    TLSRVA,              TLSSize: cardinal;                 //Thread local storage
+    TLSRVA,              TLSSize: cardinal;
   end;
 
   TObjectTableEntry = record
@@ -78,7 +78,6 @@ type
   TPeFile = class(TExecutableFile)
   private
     fHeader: TPEHeader;
-    fInterestingRVAs: TInterestingRVAs;
     fObjectTable: array of TObjectTableEntry;
 
     function GetCPUType: string;
@@ -100,7 +99,6 @@ type
   public
     function GetSectionNumberFromRVA(RVA: cardinal): integer;
     property Header: TPEHeader read fHeader;
-    property InterestingRVAs: TInterestingRVAs read fInterestingRVAs;
     property ObjectTable[Index: integer]: TObjectTableEntry read GetObjectTableEntry;
     property PEFileType: string read GetPEFileType;
     property CPUType: string read GetCPUType;
@@ -135,6 +133,8 @@ var
   PEHeaderOffset: cardinal;
   CodeSection: TCodeSection;
   ObjectIndex: integer;
+  InterestingRVAs: TInterestingRVAs;
+
 begin
   inherited;
 
@@ -145,7 +145,7 @@ begin
   InputFile.Read(fHeader, SizeOf(TPEHeader));
 
   // Read Interesting RVA/Sizes table
-  InputFile.Read(fInterestingRVAs, 4*(header.interestingcount));
+  InputFile.Read(InterestingRVAs, 4*(header.interestingcount));
 
   // Read Object Table
   InputFile.Seek(PEHeaderOffset + 248, 0);
@@ -156,13 +156,14 @@ begin
   end;
 
   // Set file regions
-  fRegions.Add('MZ header', 0, 60, -1);
-  fRegions.Add('PE header', 60, header.HeaderSize, -1);
+  fRegions.Add('MZ header', 0, SizeOf(TMZHeader));
+  fRegions.Add('PE header', 60, header.HeaderSize);
   for ObjectIndex:= 0 to header.ObjectCount - 1 do begin
     with ObjectTable[ObjectIndex] do
       if size > 0 then
-        fRegions.Add(Name, Offset, Size, 0);
+        fRegions.Add(Name, Offset, Size);
   end;
+  fRegions.Finish;
 
   // Create code sections
   for i:=0 to Header.ObjectCount-1 do begin
@@ -177,22 +178,22 @@ begin
   end;
 
   // Create Import section
-  if fInterestingRVAs.ImportTableRVA <> 0 then begin
-    i:= GetObjectNumberFromRVA(fInterestingRVAs.ImportTableRVA);
-    fImportSection:= TImportSection.CreateFromPEFile(InputFile, fInterestingRVAs.ImportTableRVA, Header.ImageBase, ObjectTable[i].Offset, ObjectTable[i].Size, ObjectTable[i].RVA + Header.ImageBase, ObjectTable[i].VirtualSize, ObjectTable[i].Name, self);
+  if InterestingRVAs.ImportTableRVA <> 0 then begin
+    i:= GetObjectNumberFromRVA(InterestingRVAs.ImportTableRVA);
+    fImportSection:= TImportSection.CreateFromPEFile(InputFile, InterestingRVAs.ImportTableRVA, Header.ImageBase, ObjectTable[i].Offset, ObjectTable[i].Size, ObjectTable[i].RVA + Header.ImageBase, ObjectTable[i].VirtualSize, ObjectTable[i].Name, self);
     Sections.Add(ImportSection);
   end;
 
   // Create Export section
-  if fInterestingRVAs.ExportTableRVA <> 0 then begin                // Spracovanie Exportu
-    i:=GetObjectNumberFromRVA(fInterestingRVAs.ExportTableRVA);
-    fExportSection:= TExportSection.CreateFromPEFile(InputFile, ObjectTable[i].Offset + (fInterestingRVAs.ExportTableRVA - ObjectTable[i].RVA), fInterestingRVAs.ExportTableRVA, fInterestingRVAs.ExportDataSize, header.ImageBase, ObjectTable[i].name, self);
+  if InterestingRVAs.ExportTableRVA <> 0 then begin                // Spracovanie Exportu
+    i:=GetObjectNumberFromRVA(InterestingRVAs.ExportTableRVA);
+    fExportSection:= TExportSection.CreateFromPEFile(InputFile, ObjectTable[i].Offset + (InterestingRVAs.ExportTableRVA - ObjectTable[i].RVA), InterestingRVAs.ExportTableRVA, InterestingRVAs.ExportDataSize, header.ImageBase, ObjectTable[i].name, self);
     Sections.Add(ExportSection);
   end;
 {
-  if fInterestingRVAs.ResourceTableRVA <> 0 then begin
-    i:= GetObjectNumberFromRVA(fInterestingRVAs.ResourceTableRVA);
-    Sections.Add( TResourceSection.Create(InputFile, ObjectTable[i].name, ObjectTable[i].offset, ObjectTable[i].size, ObjectTable[i].rva + header.ImageBase, ObjectTable[i].virtualsize, fInterestingRVAs.ResourceTableRVA, i, self) );
+  if InterestingRVAs.ResourceTableRVA <> 0 then begin
+    i:= GetObjectNumberFromRVA(InterestingRVAs.ResourceTableRVA);
+    Sections.Add( TResourceSection.Create(InputFile, ObjectTable[i].name, ObjectTable[i].offset, ObjectTable[i].size, ObjectTable[i].rva + header.ImageBase, ObjectTable[i].virtualsize, InterestingRVAs.ResourceTableRVA, i, self) );
   end;
 }
   fExecFormat:= ffPE;

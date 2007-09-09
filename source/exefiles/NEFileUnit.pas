@@ -1,9 +1,7 @@
 { TODO:
-    - detekcia sekci pre HexEditor nie je este OK
-    - AdvancedInfo
     - medzi segmentove call a jmp - relokacia (napr. WINSOCK.DLL, sekcia 1, 0x00000020 a 0x00000026)
-    - treba packed record ?
     - resources
+
 }
 
 unit NEFileUnit;
@@ -55,7 +53,7 @@ type
     ResourceSegmentNumber: word;
     TargetOS: byte;
     AdditionalInfo: byte;
-    FLAOffset,FLASize: word;
+    FLAOffset, FLASize: word;
     _reserved2: word;
     ExpectedVersionNumber: word
   end;
@@ -81,48 +79,25 @@ type
     reserved: cardinal;
   end;
 
-  TEntryTableEntryType = (etEmpty,etFixed,etMovable);
-
-
-  TFixedBundle = packed record
-    Flag: byte;
-    Offset: word;
-  end;
-
-  TMovableBundle = packed record
-    Flag: byte;
-    Int3F: word;
-    Segment: byte;
-    Offset: word;
-  end;
-
-  TEntryTableEntry = record
-     count: byte;
-     typ: TEntryTableEntryType;
-     Fixed: array of TFixedBundle;
-     Movable: array of TMovableBundle;
-  end;
 
   TNEFile = class(TExecutableFile)
   private
     fHeader: TNEHeader;
-    fNEOffset: cardinal;
-    SegmentTable: array of TSegmentTableEntry;
-//       ResourceTable:
-//       RsidentNameTable:
-  public
-    EntryTable: array of TEntryTableEntry;
+    fSegmentTable: array of TSegmentTableEntry;
+    function GetSegmentTableEntry(Index: integer): TSegmentTableEntry;
+    function GetTargetOS: string;
 
+  public
     constructor Create(InputFile: TStream; aFileName: TFileName); overload; override;
     constructor Create; overload; override;
     destructor Destroy; override;
     function SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
     function LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; override;
 
-    function GetSegmentType(Index: integer): TSectionType;
-
+  // Fields and methods specific to PE File
     property Header: TNEHeader read fHeader;
-    property NEOffset: cardinal read fNEOffset;
+    property TargetOS: string read GetTargetOS;
+    property SegmentTable[Index: integer]: TSegmentTableEntry read GetSegmentTableEntry;
   end;
 
 
@@ -138,40 +113,55 @@ constructor TNEFile.Create(InputFile: TStream; aFileName: TFileName);
 
   function IsExecutableSegment(Index: Integer): boolean;
   begin
-    result:= (SegmentTable[Index].Flags and word(1)) = 0;
+    result:= (fSegmentTable[Index].Flags and word(1)) = 0;
   end;
 
 var
   SegmentIndex: integer;
   CodeSection: TCodeSection;
   SectionIndex: integer;
+  SegmentSectorSize: cardinal;
 
   SegmentImports: array of TNESectionImports;
+  EntryTable: array of TEntryTableEntry;
 
   BundleIndex: integer;
   SegmentMovement: byte;
   BundleEntriesCount: byte;
   ModuleNameLength: byte;
-  
+  NEOffset: cardinal;
+
 begin
   inherited;
 
   // Get NE header address
   InputFile.Seek(60, 0);
-  InputFile.Read(fNEOffset, 4);
+  InputFile.Read(NEOffset, 4);
 
   // Read NE header
-  InputFile.Seek(fNEOffset, 0);
+  InputFile.Seek(NEOffset, 0);
   InputFile.Read(fHeader, SizeOf(TNEHeader));
 
+  SegmentSectorSize:= 1 shl fHeader.ShiftCount;
+
   // Read Segment Table
-  SetLength(SegmentTable, Header.SegmentTableEntryNumber);
+  SetLength(fSegmentTable, Header.SegmentTableEntryNumber);
   for SegmentIndex:= 0 to Header.SegmentTableEntryNumber - 1 do
-    InputFile.Read(SegmentTable[SegmentIndex], SizeOf(TSegmentTableEntry));
+    InputFile.Read(fSegmentTable[SegmentIndex], SizeOf(TSegmentTableEntry));
+
+  // Set file Regions
+  fRegions.Add('MZ header', 0, SizeOf(TMZHeader));
+  fRegions.Add('NE header', 60, SizeOf(TNEHeader));
+  for SegmentIndex:= 0 to Header.SegmentTableEntryNumber - 1 do begin
+    with fSegmentTable[SegmentIndex] do
+      if Size > 0 then
+        fRegions.Add('Segment ' + IntToStr(SegmentIndex + 1), Offset * SegmentSectorSize, Size);
+  end;
+  fRegions.Finish;
 
 
   // Read Entry Table
-  InputFile.Position:= header.EntryTableRO + fNEOffset;
+  InputFile.Position:= header.EntryTableRO + NEOffset;
   BundleIndex:=0;
   InputFile.Read(BundleEntriesCount, 1);
   while BundleEntriesCount <> 0 do begin
@@ -201,37 +191,37 @@ begin
 
 
   // Read Code segments and create code sections
-  for SegmentIndex:= 0 to Length(SegmentTable) - 1 do
+  for SegmentIndex:= 0 to Length(fSegmentTable) - 1 do
     if IsExecutableSegment(SegmentIndex) then begin
 
     // vecny problem: velkost segmentu v subore InputFile pamati, obcas je pamat vacsia, ale aj kod v nej, ale subor je mensi, t.j. treba asi doplnit nulami
     //      neviem, ci subor hoci je mensi, predsa obsahuje chybajuce data (niekedy ano)
-      CodeSection:=TCodeSection.Create(InputFile, false, SegmentTable[SegmentIndex].offset*16, SegmentTable[SegmentIndex].Size, 0, SegmentTable[SegmentIndex].AllocationSize, fCodeSectionsCount, 'N/InputFile - code', self);
+      CodeSection:=TCodeSection.Create(InputFile, false, fSegmentTable[SegmentIndex].offset*SegmentSectorSize, fSegmentTable[SegmentIndex].Size, 0, fSegmentTable[SegmentIndex].AllocationSize, fCodeSectionsCount, 'N/InputFile - code', self);
       Inc(fCodeSectionsCount);
       if SegmentIndex = header._CS - 1 then
         CodeSection.EntryPointAddress:= header._IP;
       Sections.Add(CodeSection);
 
       // Segment has relocations
-      if (SegmentTable[SegmentIndex].Flags and $100) <> 0 then begin
+      if (fSegmentTable[SegmentIndex].Flags and $100) <> 0 then begin
         SetLength(SegmentImports, Length(SegmentImports) + 1);
-        SegmentImports[High(SegmentImports)].Offset:= SegmentTable[SegmentIndex].offset*16 + SegmentTable[SegmentIndex].Size;
+        SegmentImports[High(SegmentImports)].Offset:= fSegmentTable[SegmentIndex].offset*SegmentSectorSize + fSegmentTable[SegmentIndex].Size;
         SegmentImports[High(SegmentImports)].SectionIndex:= CodeSection.SectionIndex;
-        SegmentImports[High(SegmentImports)].SectionFileOffset:= SegmentTable[SegmentIndex].offset*16;
+        SegmentImports[High(SegmentImports)].SectionFileOffset:= fSegmentTable[SegmentIndex].offset*SegmentSectorSize;
       end;
     end;
 
   // Read Import section
   if Header.ModuleReferenceTableEntryNumber > 0 then begin
-    fImportSection:= TImportSection.CreateFromNEFile(InputFile, fNEOffset + Header.ModuleReferenceTableRO, fNEOffset + Header.ImportedNameTableRO, Header.ModuleReferenceTableEntryNumber, Header.EntryTableRO-header.ImportedNameTableRO, SegmentImports, '_IMPORT', self);
+    fImportSection:= TImportSection.CreateFromNEFile(InputFile, NEOffset + Header.ModuleReferenceTableRO, NEOffset + Header.ImportedNameTableRO, Header.ModuleReferenceTableEntryNumber, Header.EntryTableRO-header.ImportedNameTableRO, SegmentImports, '_IMPORT', self);
     Sections.Add(ImportSection);
   end;
 
   // Read Export section
-  InputFile.Position:= fNEOffset + header.ResidentNameTableRO;
+  InputFile.Position:= NEOffset + header.ResidentNameTableRO;
   InputFile.Read(ModuleNameLength, 1);
   if ModuleNameLength <> 0 then begin
-    fExportSection:= TExportSection.CreateFromNEFile(InputFile, fNEOffset + Header.ResidentNameTableRO, Header.NonResidentNameTableOffset, Header.NonResidentNameTableSize, '_EXPORT', self);
+    fExportSection:= TExportSection.CreateFromNEFile(InputFile, NEOffset + Header.ResidentNameTableRO, Header.NonResidentNameTableOffset, Header.NonResidentNameTableSize, EntryTable, '_EXPORT', self);
     Sections.Add(ExportSection);
   end;
 
@@ -250,26 +240,27 @@ end;
 
 function TNEFile.SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean;
 var
-  i:integer;
+  SegmentIndex: integer;
 begin
+  result:= inherited SaveToFile(DHF, DAS, SaveOptions);
   if soProject in SaveOptions then begin
-    DHF.Write(header, SizeOf(Header));
-    for i:=0 to header.SegmentTableEntryNumber-1 do
-      DHF.Write(SegmentTable[i], SizeOf(TSegmentTableEntry));
+    DHF.Write(fHeader, SizeOf(fHeader));
+    for SegmentIndex := 0 to fHeader.SegmentTableEntryNumber - 1 do
+      DHF.Write(fSegmentTable[SegmentIndex], SizeOf(TSegmentTableEntry));
   end;
-  result:=inherited SaveToFile(DHF, DAS, SaveOptions);
 end;
 
 
 
 function TNEFile.LoadFromFile(DHF: TStream; var DAS: TextFile): boolean;
-var i: integer;
+var
+  SegmentIndex: integer;
 begin
-  DHF.Read(fHeader,SizeOf(header));
-  SetLength(SegmentTable, header.SegmentTableEntryNumber);
-  for i:=0 to fHeader.SegmentTableEntryNumber-1 do                                // Object Table
-    DHF.Read(SegmentTable[i], sizeof(TSegmentTableEntry));
-  result:=inherited LoadFromFile(DHF, DAS);
+  result:= inherited LoadFromFile(DHF, DAS);
+  DHF.Read(fHeader, SizeOf(header));
+  SetLength(fSegmentTable, header.SegmentTableEntryNumber);
+  for SegmentIndex := 0 to fHeader.SegmentTableEntryNumber - 1 do
+    DHF.Read(fSegmentTable[SegmentIndex], sizeof(TSegmentTableEntry));
 end;
 
 
@@ -281,24 +272,24 @@ end;
 
 
 
-function TNEFile.GetSegmentType(Index: integer): TSectionType;
+function TNEFile.GetSegmentTableEntry(Index: integer): TSegmentTableEntry;
 begin
+  result:= fSegmentTable[Index];
+end;
 
-  // Code segment
-  if (SegmentTable[Index].Flags and word(1)) = 0 then begin
-    result:=stCode;
-    Exit;
+
+
+function TNEFile.GetTargetOS: string;
+begin
+  case header.TargetOS of
+    0: result:= 'Unknown';
+    1: result:= '_reserved_value_';
+    2: result:= 'MS Windows';
+    3: result:= '_reserved_value_';
+    4: result:= '_reserved_value_';
+  else
+    result:= '_undefined_value_';
   end;
-
-  // Import
-  if header.ModuleReferenceTableEntryNumber > 0 then
-    if (SegmentTable[Index].Offset <= header.ModuleReferenceTableRO + fNEOffset) and (Header.ModuleReferenceTableRO + fNEOffset <= SegmentTable[Index].Offset + SegmentTable[Index].Size) then begin
-      result:=stImport;
-      Exit;
-    end;
-
-
-  result:= stDummy;
 end;
 
 

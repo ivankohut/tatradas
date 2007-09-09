@@ -42,7 +42,7 @@ type
   public
     constructor Create(ExecFile: TObject); overload;
     constructor CreateFromPEFile(InputFile: TStream; FileOffset, ExportRVA, ExportDataSize, ImageBase: cardinal; aName: string; aExecFile: TObject);
-    constructor CreateFromNEFile(InputFile: TStream; ResidentTableOffset, NonResidentTableOffset, NonResidentTableSize: cardinal; aName: string; aExecFile: TObject); overload;
+    constructor CreateFromNEFile(InputFile: TStream; ResidentTableOffset, NonResidentTableOffset, NonResidentTableSize: cardinal; EntryTable: array of TEntryTableEntry; aName: string; aExecFile: TObject); overload;
 
     destructor Destroy; override;
     function SaveToFile  (DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
@@ -160,8 +160,7 @@ end;
 
 
 
-
-constructor TExportSection.CreateFromNEFile(InputFile: TStream; ResidentTableOffset, NonResidentTableOffset, NonResidentTableSize: cardinal; aName: string; aExecFile: TObject);
+constructor TExportSection.CreateFromNEFile(InputFile: TStream; ResidentTableOffset, NonResidentTableOffset, NonResidentTableSize: cardinal; EntryTable: array of TEntryTableEntry; aName: string; aExecFile: TObject);
 
   procedure FindEntryPoint(Ordinal: cardinal; var segment: integer; var address: cardinal);
   var i: integer;
@@ -172,12 +171,12 @@ constructor TExportSection.CreateFromNEFile(InputFile: TStream; ResidentTableOff
         if ordinal <= EntryTable[i].count then begin
           case EntryTable[i].typ of
             etFixed: begin
-              address:=EntryTable[i].Fixed[ordinal-1].Offset;
-              segment:=-1;
+              address:= EntryTable[i].Fixed[ordinal-1].Offset;
+              segment:= -1;
             end;
             etMovable: begin
-              address:=EntryTable[i].Movable[ordinal-1].Offset;
-              segment:=EntryTable[i].Movable[ordinal-1].Segment-1;
+              address:= EntryTable[i].Movable[ordinal-1].Offset;
+              segment:= EntryTable[i].Movable[ordinal-1].Segment-1;
             end;
           end;
           Exit;
@@ -232,13 +231,14 @@ end;
 
 
 function TExportSection.SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean;
-var i: integer;
+var
+  FunctionIndex: integer;
 begin
   inherited SaveToFile(DHF, DAS, SaveOptions);
   DHF.Write(fFunctionCount, 4);
-  for i:=0 to fFunctionCount do begin
-    DHF.Write(fFunctions[i], SizeOf(TExportFunction)-4);
-    StreamWriteAnsiString(DHF, fFunctions[i].name);
+  for FunctionIndex := 0 to fFunctionCount - 1 do begin
+    DHF.Write(fFunctions[FunctionIndex], SizeOf(TExportFunction)-4);
+    StreamWriteAnsiString(DHF, fFunctions[FunctionIndex].name);
   end;
   result:= true;
 end;
@@ -246,17 +246,19 @@ end;
 
 
 function TExportSection.LoadFromFile(DHF: TStream; var DAS: TextFile):boolean;
-var i: integer;
+var
+  FunctionIndex: integer;
 begin
   inherited LoadFromFile(DHF, DAS);
   DHF.Read(fFunctionCount, 4);
   SetLength(fFunctions, fFunctionCount);
-  for i:=0 to fFunctionCount - 1 do begin
-    DHF.Read(fFunctions[i], SizeOf(TExportFunction) - 4);
-    fFunctions[i].name:= StreamReadAnsiString(DHF);
+  for FunctionIndex := 0 to fFunctionCount - 1 do begin
+    DHF.Read(fFunctions[FunctionIndex], SizeOf(TExportFunction) - 4);
+    fFunctions[FunctionIndex].name:= StreamReadAnsiString(DHF);
   end;
   result:= true;
 end;
+
 
 
 function TExportSection.GetFunction(Index: integer): TExportFunction;

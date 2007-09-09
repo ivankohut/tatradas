@@ -201,33 +201,35 @@ var i:integer;
     StreamSectionCount: integer;
     Section: TSection;
 begin
-  result:=false;
+  result:= false;
 
   DHF.Read(fFileSize, 4);
   fFullPath:= StreamReadAnsiString(DHF);
   fFileName:= ExtractFileName(fFullpath);
 
+  // Load Regions
   fRegions:= TRegions.Create(fFileSize);
   fRegions.LoadFromFile(DHF);
 
-  DHF.Read(StreamSectionCount,4);                                     // Sections
-  for i:=0 to StreamSectionCount-1 do begin
+  // Load Sections
+  DHF.Read(StreamSectionCount,4);
+  for i := 0 to StreamSectionCount - 1 do begin
     DHF.Read(SectionType, sizeOf(TSectionType));
     case SectionType of
       stCode: begin
-        Section:=TCodeSection.Create(self);
-        //inc(CodeSectionsCount);
+        Section:= TCodeSection.Create(self);
+        Inc(fCodeSectionsCount);
       end;
       stImport: begin
-        Section:=TImportSection.Create(self);
-        fImportSection:=Section as TImportSection;
+        Section:= TImportSection.Create(self);
+        fImportSection:= Section as TImportSection;
       end;
       stExport: begin
-        Section:=TExportSection.Create(self);
-        fExportSection:=Sections[i] as TExportSection;
+        Section:= TExportSection.Create(self);
+        fExportSection:= Section as TExportSection;
       end;
       stResource: begin
-        Section:=TResourceSection.Create(self);
+        Section:= TResourceSection.Create(self);
       end;
       else
         raise Exception.Create('Bad section type (Executable.LoadFromFile)');
@@ -237,8 +239,8 @@ begin
       Exit;
     Sections.Add(Section);
   end;
-  fIsDisassembled:=true;
-  result:=true;
+  fIsDisassembled:= true;
+  result:= true;
 end;
 
 

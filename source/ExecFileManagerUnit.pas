@@ -253,12 +253,12 @@ begin
 
       DHF.Read(ProjectExecFileFormat, SizeOf(TExecFileFormat));
       case ProjectExecFileFormat of
-        ffPE:  result:=TPEFile.Create;
-        ffMZ:  result:=TMZFile.Create;
-//        NE: result:=TNEFile.Create(Ctrls);
         ffCOM: result:=TCOMFile.Create;
-//        ELF: result:=TELFFile.Create(Ctrls);
-//        Unknown: result:=TUnknownFile.Create(ctrls);
+        ffMZ:  result:=TMZFile.Create;
+        ffNE:  result:=TNEFile.Create;
+        ffPE:  result:=TPEFile.Create;
+        ffELF: result:=TELFFile.Create;
+        ffCustom: result:=TCustomFile.Create;
         else begin
           DHF.Free;
           ProgressData.ErrorStatus:= errBadFormat;
