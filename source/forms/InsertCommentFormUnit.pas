@@ -14,10 +14,10 @@ uses
   INIFiles,
 
   procmat,
-  TatraDASFormUnit;
+  TranslatorUnit;
 
 type
-  TInsertCommentForm = class(TTatraDASForm)
+  TInsertCommentForm = class(TForm, ITranslatable)
     InsertCommentEdit: TEdit;
     InsertCommentLabel: TLabel;
     OKButton: TButton;
@@ -28,7 +28,7 @@ type
   private
     { Private declarations }
   public
-    procedure Translate(ini: TMemINIFile); override;
+    procedure Translate;
   end;
 
 var
@@ -53,11 +53,11 @@ begin
   InsertCommentEdit.SetFocus;
 end;
 
-procedure TInsertCommentForm.Translate(ini: TMemINIFile);
+procedure TInsertCommentForm.Translate;
 begin
-  Caption:=ini.ReadString('InsertCommentForm','Caption',TranslateErrorStr);
-  InsertCommentLabel.Caption:=ini.ReadString('InsertCommentForm','InsertCommentLabel',TranslateErrorStr);
-  CancelButton.Caption:=ini.ReadString('Common','CancelButton',TranslateErrorStr);
+  Caption:= Translator.TranslateControl('InsertCommentForm', 'Caption');
+  InsertCommentLabel.Caption:= Translator.TranslateControl('InsertCommentForm', 'InsertCommentLabel');
+  CancelButton.Caption:= Translator.TranslateControl('Common', 'CancelButton');
 end;
 
 end.

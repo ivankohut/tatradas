@@ -23,10 +23,11 @@ uses
   CustomFileUnit,
   StringRes,
   TatraDASFormUnit,
+  TranslatorUnit,
   myedits;
 
 type
-  TUnknownFileFormatForm = class(TTatraDASForm)
+  TUnknownFileFormatForm = class(TForm, ITranslatable)
     OKButton: TButton;
     CancelButton: TButton;
     Panel1: TPanel;
@@ -63,7 +64,7 @@ type
     Entrypoint: cardinal;
     Size: cardinal;
     Bit32: boolean;
-    procedure Translate(ini: TMemINIFile); override;
+    procedure Translate;
     property Parameters: TCustomFileParameters read GetParameters;
     { Public declarations }
   end;
@@ -134,23 +135,23 @@ begin
   StartOffsetEdit.SetFocus;
 end;
 
-procedure TUnknownFileFormatForm.Translate(ini: TMemINIFile);
+procedure TUnknownFileFormatForm.Translate;
 begin
-  Caption:=ini.ReadString('UnknownFileFormatForm','Caption',TranslateErrorStr);
-  UnknownInfoLabel.Caption:=ini.ReadString('UnknownFileFormatForm','UnknownInfoLabel',TranslateErrorStr);
-  FileNameLabel.Caption:=ini.ReadString('UnknownFileFormatForm','FileNameLabel',TranslateErrorStr);
-  FileSizeLabel.Caption:=ini.ReadString('UnknownFileFormatForm','FileSizeLabel',TranslateErrorStr);
+  Caption:= Translator.TranslateControl('UnknownFileFormatForm','Caption');
+  UnknownInfoLabel.Caption:= Translator.TranslateControl('UnknownFileFormatForm','UnknownInfoLabel');
+  FileNameLabel.Caption:= Translator.TranslateControl('UnknownFileFormatForm','FileNameLabel');
+  FileSizeLabel.Caption:= Translator.TranslateControl('UnknownFileFormatForm','FileSizeLabel');
 
-  OffsetLabel.Caption:=ini.ReadString('UnknownFileFormatForm','OffsetLabel',TranslateErrorStr);
-  EntryPointLabel.Caption:=ini.ReadString('UnknownFileFormatForm','EntryPointLabel',TranslateErrorStr);
-  SizeLabel.Caption:=ini.ReadString('UnknownFileFormatForm','SizeLabel',TranslateErrorStr);
+  OffsetLabel.Caption:= Translator.TranslateControl('UnknownFileFormatForm','OffsetLabel');
+  EntryPointLabel.Caption:= Translator.TranslateControl('UnknownFileFormatForm','EntryPointLabel');
+  SizeLabel.Caption:= Translator.TranslateControl('UnknownFileFormatForm','SizeLabel');
 
-  Bit1632GroupBox.Caption:=ini.ReadString('UnknownFileFormatForm','Bit1632GroupBox',TranslateErrorStr);
-  SizeEndOffsetGroupBox.Caption:=ini.ReadString('UnknownFileFormatForm','SizeEndOffsetGroupBox',TranslateErrorStr);
-  SizeRadioButton.Caption:=ini.ReadString('UnknownFileFormatForm','SizeRadioButton',TranslateErrorStr);
-  EndOffsetRadioButton.Caption:=ini.ReadString('UnknownFileFormatForm','EndOffsetRadioButton',TranslateErrorStr);
-  HexNoteLabel.Caption:=ini.ReadString('UnknownFileFormatForm','HexNoteLabel',TranslateErrorStr);
-  CancelButton.Caption:=ini.ReadString('Common','CancelButton',TranslateErrorStr);
+  Bit1632GroupBox.Caption:= Translator.TranslateControl('UnknownFileFormatForm','Bit1632GroupBox');
+  SizeEndOffsetGroupBox.Caption:= Translator.TranslateControl('UnknownFileFormatForm','SizeEndOffsetGroupBox');
+  SizeRadioButton.Caption:= Translator.TranslateControl('UnknownFileFormatForm','SizeRadioButton');
+  EndOffsetRadioButton.Caption:= Translator.TranslateControl('UnknownFileFormatForm','EndOffsetRadioButton');
+  HexNoteLabel.Caption:= Translator.TranslateControl('UnknownFileFormatForm','HexNoteLabel');
+  CancelButton.Caption:= Translator.TranslateControl('Common','CancelButton');
 end;
 
 

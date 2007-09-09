@@ -16,12 +16,11 @@ uses
     {PBBinHexEdit, }
 
     procmat,
-    TatraDASFormUnit,
     StringRes,
     myedits;
 
 type
-  TGoToAddressForm = class(TTatraDASForm)
+  TGoToAddressForm = class(TForm, ITranslatable)
     OKButton: TButton;
     CancelButton: TButton;
     GotoAddressLabel: TLabel;
@@ -35,7 +34,7 @@ type
     function GetAddress: cardinal;
   public
     GotoAddressEdit: TMyHexEdit;
-    procedure Translate(ini: TMemINIFile); override;
+    procedure Translate;
     property MaxAddress: cardinal write SetMaxAddress;
     property Address: cardinal read GetAddress;
   end;
@@ -45,7 +44,7 @@ var
 
 implementation
 
-uses MainFormUnit, Languages, OptionsFormUnit;
+uses MainFormUnit, TranslatorUnit, OptionsFormUnit;
 
 {$R *.dfm}
 
@@ -80,7 +79,8 @@ begin
 
 // Tu sa spusta prelozenie prostredia na zaciatku behu programu
 // GotoAddressForm musi vznikat ako posledny z formularov
-  if Langs.fCount > 0 then Langs.Translate;
+  if Translator.fCount > 0 then
+    Translator.Translate;
 
   OptionsForm.LoadSettings(MainForm.sINI);
 end;
@@ -90,11 +90,11 @@ begin
   GotoAddressEdit.SetFocus;
 end;
 
-procedure TGoToAddressForm.Translate(ini: TMemINIFile);
+procedure TGoToAddressForm.Translate;
 begin
-  Caption:=ini.ReadString('GotoAddressForm','Caption',TranslateErrorStr);
-  GotoAddressLabel.Caption:=ini.ReadString('GotoAddressForm','GotoAddressLabel',TranslateErrorStr);
-  CancelButton.Caption:=ini.ReadString('Common','CancelButton',TranslateErrorStr);
+  Caption:= Translator.TranslateControl('GotoAddressForm','Caption');
+  GotoAddressLabel.Caption:= Translator.TranslateControl('GotoAddressForm','GotoAddressLabel');
+  CancelButton.Caption:= Translator.TranslateControl('Common','CancelButton');
 end;
 
 procedure TGoToAddressForm.FormDestroy(Sender: TObject);

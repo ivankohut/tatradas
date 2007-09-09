@@ -15,10 +15,10 @@ uses
   IniFiles,
 
   procmat,
-  TatraDASFormUnit;
+  TranslatorUnit;
 
 type
-  TAdvancedDisassembleForm = class(TTatraDASForm)
+  TAdvancedDisassembleForm = class(TForm, ITranslatable)
     OptionsGroupBox: TGroupBox;
     BytesRadioButton: TRadioButton;
     MaxRadioButton: TRadioButton;
@@ -44,7 +44,7 @@ type
     BytesBinHexEdit: TMyNumEdit;//TPBBinHexEdit;
     MaxAddressBinHexEdit: TMyHexEdit;//TPBBinHexEdit;
     Options: TDisassembleFormOptions;
-    procedure Translate(ini: TMemINIFile); override;
+    procedure Translate;
   private
     changing: boolean; // true, ak prebieha spracovanie OnChange nejakeho editu
   end;
@@ -129,20 +129,20 @@ begin
   changing:=false;
 end;
 
-procedure TAdvancedDisassembleForm.Translate(ini: TMemINIFile);
+procedure TAdvancedDisassembleForm.Translate;
 begin
-  Caption:=ini.ReadString('AdvancedDisassembleForm','Caption',TranslateErrorStr);
-  OptionsGroupBox.Caption:= ini.ReadString('AdvancedDisassembleForm','Options',TranslateErrorStr);
-  BytesRadioButton.Caption:=ini.ReadString('AdvancedDisassembleForm','Bytes',TranslateErrorStr);
-  MaxRadioButton.Caption:=ini.ReadString('AdvancedDisassembleForm','Max',TranslateErrorStr);
-  NormalRadioButton.Caption:=ini.ReadString('AdvancedDisassembleForm','Normal',TranslateErrorStr);
-  Bit1632GroupBox.Caption:=ini.ReadString('AdvancedDisassembleForm','Bit1632GroupBox',TranslateErrorStr);
-//  bit16Radiobutton.Caption:=ini.ReadString('AdvancedDisassembleForm','',TranslateErrorStr);
-//  bit32Radiobutton.Caption:=ini.ReadString('AdvancedDisassembleForm','',TranslateErrorStr);
-  RecursiveCheckBox.Caption:=ini.ReadString('AdvancedDisassembleForm','Recursive',TranslateErrorStr);
+  Caption:= Translator.TranslateControl('AdvancedDisassembleForm','Caption');
+  OptionsGroupBox.Caption:= Translator.TranslateControl('AdvancedDisassembleForm','Options');
+  BytesRadioButton.Caption:= Translator.TranslateControl('AdvancedDisassembleForm','Bytes');
+  MaxRadioButton.Caption:= Translator.TranslateControl('AdvancedDisassembleForm','Max');
+  NormalRadioButton.Caption:= Translator.TranslateControl('AdvancedDisassembleForm','Normal');
+  Bit1632GroupBox.Caption:= Translator.TranslateControl('AdvancedDisassembleForm','Bit1632GroupBox');
+//  bit16Radiobutton.Caption:= Translator.TranslateControl('AdvancedDisassembleForm','');
+//  bit32Radiobutton.Caption:= Translator.TranslateControl('AdvancedDisassembleForm','');
+  RecursiveCheckBox.Caption:= Translator.TranslateControl('AdvancedDisassembleForm','Recursive');
 
-  OKButton.Caption:=ini.ReadString('Common','OKButton',TranslateErrorStr);
-  CancelButton.Caption:=ini.ReadString('Common','CancelButton',TranslateErrorStr);
+  OKButton.Caption:= Translator.TranslateControl('Common','OKButton');
+  CancelButton.Caption:= Translator.TranslateControl('Common','CancelButton');
 end;
 
 procedure TAdvancedDisassembleForm.RecursiveCheckBoxClick(Sender: TObject);

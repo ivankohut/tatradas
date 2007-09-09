@@ -22,10 +22,10 @@ uses
   procmat,
   StringUtilities,
   StringRes,
-  TatraDASFormUnit;
+  TranslatorUnit;
 
 type
-  THexEditForm = class(TTatraDASForm)
+  THexEditForm = class(TForm, ITranslatable)
     SaveAsButton: TButton;
     Panel1: TPanel;
     SaveDialog1: TSaveDialog;
@@ -55,7 +55,7 @@ type
     procedure GotoAddressButtonClick(Sender: TObject);
   public
     HexEdit: TMPHexEditor;
-    procedure Translate(ini: TMemINIFile); override;
+    procedure Translate;
   end;
 
 
@@ -146,12 +146,12 @@ begin
   HexEdit.SetFocus;
 end;
 
-procedure THexEditForm.Translate(ini: TMemINIFile);
+procedure THexEditForm.Translate;
 begin
-  SaveAsButton.Caption:=ini.ReadString('HexEditForm','SaveAsButton',TranslateErrorStr);
-  GotoAddressButton.Caption:=ini.ReadString('HexEditForm','GotoAddressButton',TranslateErrorStr);
-  UnsignedLabel.Caption:=ini.ReadString('HexEditForm','UnsignedLabel',TranslateErrorStr);
-  SignedLabel.Caption:=ini.ReadString('HexEditForm','SignedLabel',TranslateErrorStr);
+  SaveAsButton.Caption:= Translator.TranslateControl('HexEditForm','SaveAsButton');
+  GotoAddressButton.Caption:= Translator.TranslateControl('HexEditForm','GotoAddressButton');
+  UnsignedLabel.Caption:= Translator.TranslateControl('HexEditForm','UnsignedLabel');
+  SignedLabel.Caption:= Translator.TranslateControl('HexEditForm','SignedLabel');
 end;
 
 end.

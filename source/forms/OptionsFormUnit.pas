@@ -14,10 +14,10 @@ uses
   INIFiles,
   
   procmat,
-  TatraDASFormUnit;
+  TranslatorUnit;
 
 type
-  TOptionsForm = class(TTatraDASForm)
+  TOptionsForm = class(TForm, ITranslatable)
     DisassemblerGroupBox: TGroupBox;
     DisasmCheckBox: TCheckBox;
     DetectStringCheckBox: TCheckBox;
@@ -38,7 +38,7 @@ type
     { Private declarations }
   public
     Options: TTatraDASOptions;
-    procedure Translate(ini: TMemINIFile); override;
+    procedure Translate;
     procedure SaveSettings(ini: TMemINIFile);
     procedure LoadSettings(ini: TMemINIFile);
 
@@ -101,25 +101,25 @@ begin
   Options.removeexport:=ini.ReadBool('Options','RemoveExportRefs',true);
 end;
 
-procedure TOptionsForm.Translate(ini: TMemINIFile);
+procedure TOptionsForm.Translate;
 begin
-  Caption:=ini.ReadString('OptionsForm','Caption',TranslateErrorStr);
-  OpeningGroupBox.Caption:=ini.ReadString('OptionsForm','OpeningGroupBox',TranslateErrorStr);
-  DisassemblerGroupBox.Caption:=ini.ReadString('OptionsForm','DisassemblerGroupBox',TranslateErrorStr);
-  ToDataChangeGroupBox.Caption:=ini.ReadString('OptionsForm','ToDataChangeGroupBox',TranslateErrorStr);
+  Caption:= Translator.TranslateControl('OptionsForm','Caption');
+  OpeningGroupBox.Caption:= Translator.TranslateControl('OptionsForm','OpeningGroupBox');
+  DisassemblerGroupBox.Caption:= Translator.TranslateControl('OptionsForm','DisassemblerGroupBox');
+  ToDataChangeGroupBox.Caption:= Translator.TranslateControl('OptionsForm','ToDataChangeGroupBox');
 
-  UserRadioButton.Caption:=ini.ReadString('OptionsForm','UserRadioButton',TranslateErrorStr);
-  AutomaticRadioButton.Caption:=ini.ReadString('OptionsForm','AutomaticRadioButton',TranslateErrorStr);
+  UserRadioButton.Caption:= Translator.TranslateControl('OptionsForm','UserRadioButton');
+  AutomaticRadioButton.Caption:= Translator.TranslateControl('OptionsForm','AutomaticRadioButton');
 
-  DisasmCheckBox.Caption:=ini.ReadString('OptionsForm','DisasmCheckBox',TranslateErrorStr);
-  DetectStringCheckBox.Caption:=ini.ReadString('OptionsForm','DetectStringCheckBox',TranslateErrorStr);
+  DisasmCheckBox.Caption:= Translator.TranslateControl('OptionsForm','DisasmCheckBox');
+  DetectStringCheckBox.Caption:= Translator.TranslateControl('OptionsForm','DetectStringCheckBox');
 
-  RemoveJumpRefCheckBox.Caption:=ini.ReadString('OptionsForm','RemoveJumpRefCheckBox',TranslateErrorStr);
-  RemoveImportRefCheckBox.Caption:=ini.ReadString('OptionsForm','RemoveImportRefCheckBox',TranslateErrorStr);
-  RemoveExportRefCheckBox.Caption:=ini.ReadString('OptionsForm','RemoveExportRefCheckBox',TranslateErrorStr);
+  RemoveJumpRefCheckBox.Caption:= Translator.TranslateControl('OptionsForm','RemoveJumpRefCheckBox');
+  RemoveImportRefCheckBox.Caption:= Translator.TranslateControl('OptionsForm','RemoveImportRefCheckBox');
+  RemoveExportRefCheckBox.Caption:= Translator.TranslateControl('OptionsForm','RemoveExportRefCheckBox');
 
-  OKButton.Caption:=ini.ReadString('Common','OKButton',TranslateErrorStr);
-  CancelButton.Caption:=ini.ReadString('Common','CancelButton',TranslateErrorStr);
+  OKButton.Caption:= Translator.TranslateControl('Common','OKButton');
+  CancelButton.Caption:= Translator.TranslateControl('Common','CancelButton');
 end;
 
 

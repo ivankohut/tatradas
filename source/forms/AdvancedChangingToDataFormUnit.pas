@@ -14,11 +14,11 @@ uses
   IniFiles,
 
   procmat,
-  TatraDASFormUnit,
+  TranslatorUnit,
   myedits;
 
 type
-  TAdvancedChangingToDataForm = class(TTatraDASForm)
+  TAdvancedChangingToDataForm = class(TForm, ITranslatable)
     OKButton: TButton;
     CancelButton: TButton;
     DataTypeGroupBox: TGroupBox;
@@ -52,7 +52,7 @@ type
     ItemsBinHexEdit: TMyNumEdit; //TPBBinHexEdit;
     SelectedEdit: TMyEdit; //TPBBinHexEdit;
     Options: TDataChangeOptions;
-    procedure Translate(ini: TMemINIFile); override;
+    procedure Translate;
   end;
 
 var
@@ -185,21 +185,21 @@ begin
   ItemsBinHexEdit.Destroy;
 end;
 
-procedure TAdvancedChangingToDataForm.Translate(ini: TMemINIFile);
+procedure TAdvancedChangingToDataForm.Translate;
 begin
-  Caption:=ini.ReadString('AdvancedChangingToDataForm','Caption',TranslateErrorStr);
-  OptionsGroupBox.Caption:= ini.ReadString('AdvancedChangingToDataForm','Options',TranslateErrorStr);
-  ItemsRadioButton.Caption:=ini.ReadString('AdvancedChangingToDataForm','Items',TranslateErrorStr);
-  BytesRadioButton.Caption:=ini.ReadString('AdvancedChangingToDataForm','Bytes',TranslateErrorStr);
-  MaxRadioButton.Caption:=ini.ReadString('AdvancedChangingToDataForm','Max',TranslateErrorStr);
-  EndSectionRadioButton.Caption:=ini.ReadString('AdvancedChangingToDataForm','EndSection',TranslateErrorStr);
-  CodeRadioButton.Caption:=ini.ReadString('AdvancedChangingToDataForm','Code',TranslateErrorStr);
-  SignGroupBox.Caption:=ini.ReadString('AdvancedChangingToDataForm','Sign',TranslateErrorStr);
-  UnsignedRadioButton.Caption:=ini.ReadString('AdvancedChangingToDataForm','Unsigned',TranslateErrorStr);
-  SignedRadioButton.Caption:=ini.ReadString('AdvancedChangingToDataForm','Signed',TranslateErrorStr);
-  DataTypeGroupBox.Caption:=ini.ReadString('AdvancedChangingToDataForm','DataType',TranslateErrorStr);
-  OKButton.Caption:=ini.ReadString('Common','OKButton',TranslateErrorStr);
-  CancelButton.Caption:=ini.ReadString('Common','CancelButton',TranslateErrorStr);
+  Caption:= Translator.TranslateControl('AdvancedChangingToDataForm','Caption');
+  OptionsGroupBox.Caption:= Translator.TranslateControl('AdvancedChangingToDataForm','Options');
+  ItemsRadioButton.Caption:= Translator.TranslateControl('AdvancedChangingToDataForm','Items');
+  BytesRadioButton.Caption:= Translator.TranslateControl('AdvancedChangingToDataForm','Bytes');
+  MaxRadioButton.Caption:= Translator.TranslateControl('AdvancedChangingToDataForm','Max');
+  EndSectionRadioButton.Caption:= Translator.TranslateControl('AdvancedChangingToDataForm','EndSection');
+  CodeRadioButton.Caption:= Translator.TranslateControl('AdvancedChangingToDataForm','Code');
+  SignGroupBox.Caption:= Translator.TranslateControl('AdvancedChangingToDataForm','Sign');
+  UnsignedRadioButton.Caption:= Translator.TranslateControl('AdvancedChangingToDataForm','Unsigned');
+  SignedRadioButton.Caption:= Translator.TranslateControl('AdvancedChangingToDataForm','Signed');
+  DataTypeGroupBox.Caption:= Translator.TranslateControl('AdvancedChangingToDataForm','DataType');
+  OKButton.Caption:= Translator.TranslateControl('Common','OKButton');
+  CancelButton.Caption:= Translator.TranslateControl('Common','CancelButton');
 end;
 
 end.

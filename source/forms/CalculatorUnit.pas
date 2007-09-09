@@ -26,13 +26,13 @@ uses
   procmat,
   myedits,
   StringRes,
-  TatraDASFormUnit;
+  TranslatorUnit;
 
 type
 
   TCalcOperation = (coPlus, coMinus, coMul, coDiv, coMod);
 
-  TCalculator = class(TTatraDASForm)
+  TCalculator = class(TForm, ITranslatable)
     Panel1: TPanel;
     Panel2: TPanel;
     Panel3: TPanel;
@@ -56,7 +56,7 @@ type
     procedure MulButtonClick(Sender: TObject);
     procedure DivButtonClick(Sender: TObject);
 
-    procedure Translate(ini: TMemINIFile); override;
+    procedure Translate;
   private
     Changing: boolean;
     DataBuffer: Int64;
@@ -229,13 +229,13 @@ begin
   CurrentEdit.SelectAll;
 end;
 
-procedure TCalculator.Translate(ini: TMemINIFile);
+procedure TCalculator.Translate;
 begin
-  Caption:=ini.ReadString('CalculatorForm', 'Caption', TranslateErrorStr);
-  DecimalLabel.Caption:=ini.ReadString('CalculatorForm','DecimalLabel',TranslateErrorStr);
-  HexadecimalLabel.Caption:=ini.ReadString('CalculatorForm','HexadecimalLabel',TranslateErrorStr);
-  BinaryLabel.Caption:=ini.ReadString('CalculatorForm','BinaryLabel',TranslateErrorStr);
-  OctalLabel.Caption:=ini.ReadString('CalculatorForm','OctalLabel',TranslateErrorStr);
+  Caption:= Translator.TranslateControl('CalculatorForm', 'Caption');
+  DecimalLabel.Caption:= Translator.TranslateControl('CalculatorForm', 'DecimalLabel');
+  HexadecimalLabel.Caption:= Translator.TranslateControl('CalculatorForm', 'HexadecimalLabel');
+  BinaryLabel.Caption:= Translator.TranslateControl('CalculatorForm', 'BinaryLabel');
+  OctalLabel.Caption:= Translator.TranslateControl('CalculatorForm', 'OctalLabel');
 end;
 
 end.
