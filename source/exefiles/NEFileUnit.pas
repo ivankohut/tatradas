@@ -108,7 +108,7 @@ const
   c_NEFileAdvancedInfoCount = 3;
 
 
-  
+
 constructor TNEFile.Create(InputFile: TStream; aFileName: TFileName);
 
   function IsExecutableSegment(Index: Integer): boolean;
@@ -119,10 +119,10 @@ constructor TNEFile.Create(InputFile: TStream; aFileName: TFileName);
 var
   SegmentIndex: integer;
   CodeSection: TCodeSection;
-  SectionIndex: integer;
   SegmentSectorSize: cardinal;
 
   SegmentImports: array of TNESectionImports;
+  SegmentImportsCount: integer;
   EntryTable: array of TEntryTableEntry;
 
   BundleIndex: integer;
@@ -203,11 +203,13 @@ begin
       Sections.Add(CodeSection);
 
       // Segment has relocations
+      SegmentImportsCount:= 0;
       if (fSegmentTable[SegmentIndex].Flags and $100) <> 0 then begin
-        SetLength(SegmentImports, Length(SegmentImports) + 1);
-        SegmentImports[High(SegmentImports)].Offset:= fSegmentTable[SegmentIndex].offset*SegmentSectorSize + fSegmentTable[SegmentIndex].Size;
-        SegmentImports[High(SegmentImports)].SectionIndex:= CodeSection.SectionIndex;
-        SegmentImports[High(SegmentImports)].SectionFileOffset:= fSegmentTable[SegmentIndex].offset*SegmentSectorSize;
+        Inc(SegmentImportsCount);
+        SetLength(SegmentImports, SegmentImportsCount);
+        SegmentImports[SegmentImportsCount - 1].Offset:= fSegmentTable[SegmentIndex].offset*SegmentSectorSize + fSegmentTable[SegmentIndex].Size;
+        SegmentImports[SegmentImportsCount - 1].SectionIndex:= CodeSection.SectionIndex;
+        SegmentImports[SegmentImportsCount - 1].SectionFileOffset:= fSegmentTable[SegmentIndex].offset*SegmentSectorSize;
       end;
     end;
 

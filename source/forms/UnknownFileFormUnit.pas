@@ -22,7 +22,6 @@ uses
   procmat,
   CustomFileUnit,
   StringRes,
-  TatraDASFormUnit,
   TranslatorUnit,
   myedits;
 

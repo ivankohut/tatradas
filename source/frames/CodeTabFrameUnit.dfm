@@ -1,36 +1,29 @@
 inherited CodeTabFrame: TCodeTabFrame
   inherited Panel: TPanel
     object Bevel1: TBevel
-      Left = 348
-      Top = 72
+      Left = 346
+      Top = 76
       Width = 87
-      Height = 9
-      Anchors = [akTop, akRight]
-    end
-    object Bevel2: TBevel
-      Left = 348
-      Top = 152
-      Width = 87
-      Height = 9
+      Height = 2
       Anchors = [akTop, akRight]
     end
     object LineLabel: TLabel
-      Left = 347
-      Top = 248
+      Left = 345
+      Top = 246
       Width = 23
       Height = 13
       Anchors = [akRight, akBottom]
       Caption = 'Line:'
     end
     object LineDataLabel: TLabel
-      Left = 385
-      Top = 248
+      Left = 383
+      Top = 246
       Width = 3
       Height = 13
       Anchors = [akRight, akBottom]
     end
     object GotoEntryPointButton: TButton
-      Left = 347
+      Left = 345
       Top = 8
       Width = 88
       Height = 25
@@ -39,39 +32,31 @@ inherited CodeTabFrame: TCodeTabFrame
       TabOrder = 0
     end
     object GotoAddressButton: TButton
-      Left = 346
+      Left = 344
       Top = 40
       Width = 89
       Height = 25
-      Hint = 'Jump to user defined address'
+      Action = MainForm.actGoToAddress
       Anchors = [akTop, akRight]
-      Caption = 'Go to address ...'
       TabOrder = 1
-      OnClick = GotoAddressButtonClick
     end
     object FollowButton: TButton
-      Left = 346
+      Left = 344
       Top = 88
       Width = 89
       Height = 25
-      Hint = 'Jump to Jump or Call instruction target'
+      Action = MainForm.actFollowJump
       Anchors = [akTop, akRight]
-      Caption = 'Follow Jump/Call'
-      Enabled = False
       TabOrder = 2
-      OnClick = FollowButtonClick
     end
     object ReturnButton: TButton
-      Left = 346
+      Left = 344
       Top = 120
       Width = 89
       Height = 25
-      Hint = 'Return from last jump'
+      Action = MainForm.actReturnJump
       Anchors = [akTop, akRight]
-      Caption = 'Return Jump/Call'
-      Enabled = False
       TabOrder = 3
-      OnClick = ReturnButtonClick
     end
   end
   object CodePopupMenu: TPopupMenu
@@ -265,10 +250,12 @@ inherited CodeTabFrame: TCodeTabFrame
       Caption = 'Change to string data'
       object Pascal1: TMenuItem
         Caption = 'Pascal'
+        ShortCut = 24656
         OnClick = ChangeToStringDataClick
       end
       object C1: TMenuItem
         Caption = 'C'
+        ShortCut = 24643
         OnClick = ChangeToStringDataClick
       end
       object PascalUnicode1: TMenuItem
@@ -289,6 +276,7 @@ inherited CodeTabFrame: TCodeTabFrame
     end
     object Dis2: TMenuItem
       Caption = 'Disassemble'
+      ShortCut = 24644
       OnClick = NormalDisassembleClick
     end
     object Advanceddisassemble2: TMenuItem

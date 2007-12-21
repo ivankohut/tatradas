@@ -49,6 +49,8 @@ object SaveOptionsForm: TSaveOptionsForm
       Width = 153
       Height = 17
       Caption = 'JUMP from ...'
+      Checked = True
+      State = cbChecked
       TabOrder = 0
     end
     object CallCheckBox: TCheckBox
@@ -57,6 +59,8 @@ object SaveOptionsForm: TSaveOptionsForm
       Width = 153
       Height = 17
       Caption = 'CALL from ...'
+      Checked = True
+      State = cbChecked
       TabOrder = 1
     end
     object ExportCheckBox: TCheckBox
@@ -65,6 +69,8 @@ object SaveOptionsForm: TSaveOptionsForm
       Width = 153
       Height = 17
       Caption = 'Exported function ... '
+      Checked = True
+      State = cbChecked
       TabOrder = 2
     end
     object ImportCheckBox: TCheckBox
@@ -73,6 +79,8 @@ object SaveOptionsForm: TSaveOptionsForm
       Width = 153
       Height = 17
       Caption = 'Imported function ...'
+      Checked = True
+      State = cbChecked
       TabOrder = 3
     end
     object EntryPointCheckBox: TCheckBox
@@ -81,6 +89,8 @@ object SaveOptionsForm: TSaveOptionsForm
       Width = 153
       Height = 17
       Caption = 'Program Entry point'
+      Checked = True
+      State = cbChecked
       TabOrder = 4
     end
   end
@@ -97,6 +107,8 @@ object SaveOptionsForm: TSaveOptionsForm
       Width = 97
       Height = 17
       Caption = 'Address'
+      Checked = True
+      State = cbChecked
       TabOrder = 0
     end
     object ParsedCheckBox: TCheckBox
@@ -105,6 +117,8 @@ object SaveOptionsForm: TSaveOptionsForm
       Width = 177
       Height = 17
       Caption = 'Hexadecimal representation'
+      Checked = True
+      State = cbChecked
       TabOrder = 1
     end
     object DisassembledCheckBox: TCheckBox
@@ -113,6 +127,8 @@ object SaveOptionsForm: TSaveOptionsForm
       Width = 145
       Height = 17
       Caption = 'Disassembled instruction'
+      Checked = True
+      State = cbChecked
       TabOrder = 2
     end
   end

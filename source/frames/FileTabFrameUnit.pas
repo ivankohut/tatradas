@@ -36,13 +36,14 @@ type
     FileformatEdit: TEdit;
     ObjectListView: TListView;
     Splitter1: TSplitter;
-    Panel2: TPanel;
+    AdvancedInfoPanel: TPanel;
     AdvancedInfoGrid: TStringGrid;
     MoreInfoLabel: TLabel;
-    procedure Panel2Resize(Sender: TObject);
+    procedure AdvancedInfoPanelResize(Sender: TObject);
 
   protected
     function GetSection: TSection; override;
+    procedure HideAddvancedInfoPanel;
     procedure AddAdvancedInfo(InfoName, InfoValue: string);
   public
     constructor Create(AOwner: TComponent; aExecFile: TExecutableFile);
@@ -143,9 +144,19 @@ begin
 end;
 
 
+
 function TFileTabFrame.GetSection: TSection;
 begin
   result:=nil;
+end;
+
+
+
+procedure TFileTabFrame.HideAddvancedInfoPanel;
+begin
+  // prerobit, nefunguje dobre
+  AdvancedInfoPanel.Align:= alNone;
+  AdvancedInfoPanel.Width:= 0;
 end;
 
 
@@ -159,7 +170,7 @@ begin
   inherited;
   FileFormatEdit.Text:= fdCOM;
   ObjectListView.Visible:= false;
-  AdvancedInfoGrid.Visible:= false;
+  HideAddvancedInfoPanel;
 end;
 
 
@@ -350,6 +361,8 @@ constructor TELFFileTabFrame.Create(AOwner: TComponent; aExecFile: TExecutableFi
 begin
   inherited;
   FileFormatEdit.Text:= fdELF;
+  ObjectListView.Visible:= false;
+  HideAddvancedInfoPanel
 end;
 
 
@@ -363,6 +376,8 @@ begin
   inherited;
   FileFormatEdit.Text:= fdCustom;
 
+  ObjectListView.Visible:= false;
+
   with aExecFile do begin
     AddAdvancedInfo('Code section offset', IntToHex((Sections[0] as TCodeSection).FileOffset, 8));
     AddAdvancedInfo('Code section size', IntToHex((Sections[0] as TCodeSection).FileSize, 8));
@@ -375,7 +390,7 @@ begin
 end;
 
 
-procedure TFileTabFrame.Panel2Resize(Sender: TObject);
+procedure TFileTabFrame.AdvancedInfoPanelResize(Sender: TObject);
 begin
   inherited;
   AdvancedInfoGrid.ColWidths[0]:= AdvancedInfoGrid.Width div 2;

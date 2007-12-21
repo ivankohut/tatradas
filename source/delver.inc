@@ -73,29 +73,77 @@
                {$DEFINE DELPHI6UP}
         {$ENDIF}
 {$ENDIF}
-
 {$IFDEF VER150}
         {$IFNDEF BCB}
-                 {$DEFINE DELPHI}
-	         {$DEFINE DELPHI7}
-                 {$DEFINE DELPHI2UP}
-                 {$DEFINE DELPHI3UP}
-                 {$DEFINE DELPHI4UP}
-                 {$DEFINE DELPHI5UP}
-                 {$DEFINE DELPHI6UP}
-                 {$DEFINE DELPHI7UP}
+             {$DEFINE DELPHI}
+             {$DEFINE DELPHI7}
+             {$DEFINE DELPHI2UP}
+             {$DEFINE DELPHI3UP}
+             {$DEFINE DELPHI4UP}
+             {$DEFINE DELPHI5UP}
+             {$DEFINE DELPHI6UP}
+             {$DEFINE DELPHI7UP}
         {$ELSE}
-               {$DEFINE BCB}
-	       {$DEFINE BCB6}
-               {$DEFINE DELPHI2UP}
-               {$DEFINE DELPHI3UP}
-               {$DEFINE DELPHI4UP}
-               {$DEFINE DELPHI5UP}
-               {$DEFINE DELPHI6UP}
-               {$DEFINE DELPHI7UP}
+             {$DEFINE BCB}
+             {$DEFINE BCB7}
+             {$DEFINE DELPHI2UP}
+             {$DEFINE DELPHI3UP}
+             {$DEFINE DELPHI4UP}
+             {$DEFINE DELPHI5UP}
+             {$DEFINE DELPHI6UP}
+             {$DEFINE DELPHI7UP}
         {$ENDIF}
 {$ENDIF}
-
+{$IFDEF VER160}
+        {$DEFINE DELPHI}
+        {$DEFINE DELPHI8}
+        {$DEFINE DELPHI2UP}
+        {$DEFINE DELPHI3UP}
+        {$DEFINE DELPHI4UP}
+        {$DEFINE DELPHI5UP}
+        {$DEFINE DELPHI6UP}
+        {$DEFINE DELPHI7UP}
+        {$DEFINE DELPHI8UP}
+{$ENDIF}
+{$IFDEF VER170}
+        {$DEFINE DELPHI}
+        {$DEFINE DELPHI2005}
+        {$DEFINE DELPHI2UP}
+        {$DEFINE DELPHI3UP}
+        {$DEFINE DELPHI4UP}
+        {$DEFINE DELPHI5UP}
+        {$DEFINE DELPHI6UP}
+        {$DEFINE DELPHI7UP}
+        {$DEFINE DELPHI8UP}
+        {$DEFINE DELPHI2005UP}
+{$ENDIF}
+{$IFDEF VER180}
+        {$DEFINE DELPHI}
+        {$DEFINE DELPHI2006}
+        {$DEFINE DELPHI2UP}
+        {$DEFINE DELPHI3UP}
+        {$DEFINE DELPHI4UP}
+        {$DEFINE DELPHI5UP}
+        {$DEFINE DELPHI6UP}
+        {$DEFINE DELPHI7UP}
+        {$DEFINE DELPHI8UP}
+        {$DEFINE DELPHI2005UP}
+        {$DEFINE DELPHI2006UP}
+{$ENDIF}
+{$IFDEF VER190}
+        {$DEFINE DELPHI}
+        {$DEFINE DELPHI2007}
+        {$DEFINE DELPHI2UP}
+        {$DEFINE DELPHI3UP}
+        {$DEFINE DELPHI4UP}
+        {$DEFINE DELPHI5UP}
+        {$DEFINE DELPHI6UP}
+        {$DEFINE DELPHI7UP}
+        {$DEFINE DELPHI8UP}
+        {$DEFINE DELPHI2005UP}
+        {$DEFINE DELPHI2006UP}
+        {$DEFINE DELPHI2007UP}
+{$ENDIF}
 {$IFDEF DELPHI4UP}
         {$DEFINE DYNARRAY}
 {$ENDIF}

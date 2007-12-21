@@ -1,46 +1,57 @@
 TO DO list (TatraDAS)
 
 3.x
-- drag a drop
 - rozne znakove sady v synedit
 - zdroje (PE, NE, atd) ?
-
+- paralelne disassemblovanie viacerych sekcii
 
 2.9.9
 - porozmyslat na rozdelenim SaveToFile na dve metody (DAS a DHF)
 - translation system
 - errory a vynimky (o.i. ako osetrovat pristup do poli v array propertoch)
+- stringy rozhadzane po suboroch
 - refactor (rewrite :) ) disassembler, add more instructions (SSE3, SSSE)
 - system na spravu GUI dat (hodnoty formularov) & ich ukladanie do projektoveho suboru
   - pridat ulozenie bookmarkov v projekte
 - prerobit menu pomocou actions
 - zamysliet sa nad polozkami v menu (a buttonmi na codeframe)
+- textovy progress - dobiehanie do 100%, aj je progress naozaj kratky, tak sa nezobrazi ani jeho nazov
 - ELF
     - pochopit a prerobit import
     - pridat inicializaciu Regionov
     - exefily by mali mat len take polia, ktore su hodne ukladania do projektu (resp. existencie po otvoreni projektu), zvysok by sa mal posuvat pri vytvarani ako parametre
-
+- refaktorizacia
+  - codeSection.savetofile (NASM)
+- kompilovatelnost s NASM
+  - wxivan.asm sa neskompiluje
+  - upravit aby NASM nehadzal warningy
+  - optimalizovat ukladanie do NASM (stringy)
+  - najvhodnejsi by bol specialny mod disassemblovania
+- osetrenie viacerych vynimiek v ProgressThreads a nasledne v MainForm-e(GUI) a TatraDAS-e(console)
+- procmat - rozdelit na viac unitov ?
+- vlastny MessageDlg, aby zobrazoval buttony v jazyku TatraDASu
+- nastroj pre dokumentaciu zdrojoveho kodu (komentare na zaciatku metod)
+- drag a drop
+- ReplaceLines
+  - nevyhadzovat vsetky bezadresne riadky
+  - vyhodit tie, na ktore odkazuje nahradzovany kod
+  - porozmyslat nad volanim beginupdate/endupdate niekde vyssie
+- AV - TatraFPC.exe  - disasemble, change everything to byte data, disasm at 0x0041B4FD
 
 2.9.8 todo list:
-  - poriadok v misc/ adresari
-  - refaktorizacia
-    - zvysne exe fily
-    - codeSection.savetofile
-  - procmat - rozdelit na viac unitov ?
   - problemy:
       mozno je to OK - pe import lookup table NULL error
       usporiadanie GUI prvkov na FileTabFrame
-      textovy progress - dobiehanie do 100%, aj je progress naozaj kratky, tak sa nezobrazi ani jeho nazov
       framy si nepamataju svoju velkost
       advancedinfogrid by sa nemal zvacsovat donekonecna (presiahnut formular)
-      disable/enable menu items
-      pada pri zapnutej optimalizacii A vypnutych checkoch - aladdin.exe
-      odstranit code taby po ynovu disassemblovani
-      odstranit nepotrebne volania loggera
-      slovo Disassemblying
-      stringy rozhadzane po suboroch
+- Fat32.dll - v 32 bit rezime,
+   - disasm na 0xF7 zamrzne
+   - po stlaceni zrusit vlakno stale bezi
 
+- dn.com
+  to C string na ssssss..., potom disasm na 14C zblbne
 
+- dlho trvajuca zmena na ???
 -----------------------------
 
 - ukoncit disassemblovanie bloku v ktorom sa nachadza nedefinovana instrukcia ?
@@ -71,3 +82,10 @@ Navrhy na mozne zmeny:
 
 - fExecFormat si pri loadovani kazdy File nastavuje v Create(). Dalo by sa spravit "protected function GetExecFormat: ..." ktoru by si kazdy File overridol
 - nastavenia do XML (?)
+
+
+Refactoring DISASSEMBLER-a
+- zacat pisat novy TDisassembler
+- Test-Driven Programming
+- oddelit disassembler konkretneho procesora od vseobecnych casti kodu a dat
+- ASM aj PUREPASCAL verzie metod kvoli platform independence

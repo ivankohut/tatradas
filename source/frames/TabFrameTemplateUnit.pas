@@ -35,7 +35,6 @@ type
   public
     constructor Create(AOwner: TComponent; ASection: TSection); overload; virtual; //abstract;
     procedure Translate; virtual; abstract;
-//    procedure Translate(INI: TMemIniFile); virtual; abstract;
 //    procedure SaveToStream(AStream: TStream); virtual; abstract;
     property TypeName: string read fTypeName;
     property PageType: TPageType read GetPageType;
@@ -49,7 +48,7 @@ type
    public
     Frame: TTabFrameTemplate;
     constructor CreateFileTab(aExecFile: TExecutableFile); 
-    constructor Create(aSection: TSection); overload;
+    constructor Create(ASection: TSection); reintroduce; overload;
     destructor Destroy; override;
     procedure Translate;
     function IsHavingSection(ASection: TSection): boolean; 
@@ -82,10 +81,10 @@ begin
   PageControl:=MainForm.PageControl1;
   PageIndex:=PageControl.PageCount-1;
   case aSection.typ of
-    stCode: Frame:=TCodeTabFrame.Create(self, ASection);
-    stExport: Frame:=TExportTabFrame.Create(self, ASection);
-    stImport: Frame:=TImportTabFrame.Create(self, ASection);
-    stResource: Frame:=TResourceTabFrame.Create(self, ASection);
+    stCode: Frame:= TCodeTabFrame.Create(self, ASection);
+    stExport: Frame:= TExportTabFrame.Create(self, ASection);
+    stImport: Frame:= TImportTabFrame.Create(self, ASection);
+    stResource: Frame:= TResourceTabFrame.Create(self, ASection);
     else
       Exit;
   end;
@@ -162,7 +161,7 @@ end;
 function TTabFrameTemplate.GetPageType: TPageType;
 begin
   if self is TFileTabFrame then
-    result:=ttFile
+    result:= ttFile
   else begin
     if Section = nil then
       raise Exception.Create('TTabSheetTemplate.Create: Section = nil');

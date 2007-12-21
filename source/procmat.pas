@@ -60,7 +60,7 @@ const
   TatraDASProjectVersion = $00030002;
   ShortTatraDASVersion: string = '2.9.8';
   TatraDASFullName: string = 'TatraDAS disassembler';
-  TatraDASFullNameVersion: string = 'TatraDAS disassembler 2.9.8 alpha';
+  TatraDASFullNameVersion: string = 'TatraDAS disassembler 2.9.8';
 
 
   TranslateErrorStr = 'TRANS ERROR';
@@ -100,13 +100,6 @@ type
     RemoveExport: boolean;
   end;
 
-  TCardinalDynamicArray = array of cardinal;
-  TByteDynamicArray = array of byte;
-  TBooleanDynamicArray = array of boolean;
-  TStringDynamicArray = array of string;
-
-  TPByteDynamicArray = ^TByteDynamicArray;
-
   TSaveOption = (soProject, soDisassembly, soNASM, soAddress, soParsed, soDisassembled, soJump, soCall, soExport, soImport, soEntryPoint);
   TSaveOptions = set of TSaveOption;
 
@@ -117,7 +110,7 @@ type
   TCPUType = (_80386, _80486, Pentium);
 
 
-  TEntryTableEntryType = (etEmpty,etFixed,etMovable);
+  TEntryTableEntryType = (etEmpty, etFixed, etMovable);
 
 
   TFixedBundle = packed record
@@ -140,7 +133,8 @@ type
   end;
 
 
-
+  ETatraDASException = class (Exception);
+  EUserTerminatedProcess = class (ETatraDASException);
 
   TMyMemoryStream = class(TMemoryStream)
     procedure SetMemory(Ptr: pointer; Size: LongInt);
@@ -148,11 +142,11 @@ type
 
   // Progress types
   TProcessText = record
-    Disassemblying, Indentifying, PreparingOutput: string;
+    Disassembling, PreparingOutput: string;
     LoadingDAS, LoadingDHF, SavingDAS, SavingDHF: string;
   end;
 
-  TProgressError = (errNone, errOpen, errUnknownFormat, errBadFormat, errDASNotFound, errBadProjectVersion, errSave, errCanceled, errUserTerminated);
+  TProgressError = (errNone, errOpen, errUnknownFormat, errBadFormat, errDASNotFound, errBadProjectVersion, errSave, errCanceled, errUserTerminated, errUnspecified);
 
   TProgressData = record
     Name: string;
@@ -181,6 +175,9 @@ function NonNegative(Number: integer): cardinal;
 
 function MyIsNan(const AValue: Single): Boolean; overload;
 function MyIsNan(const AValue: Double): Boolean; overload;
+
+function CompareValue(n1, n2: cardinal): integer;
+
 {$IFDEF GUI_B}
 procedure SM(msg: string);
 {$ENDIF}
@@ -291,6 +288,16 @@ begin
     result:= Number;
 end;
 
+
+function CompareValue(n1, n2: cardinal): integer;
+begin
+  if n1 = n2 then
+    result:= 0
+  else if n1 < n2 then
+    result:= -1
+  else
+    result:= 1;
+end;
 
 
 end.

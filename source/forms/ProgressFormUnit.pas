@@ -100,6 +100,8 @@ procedure TProgressForm.CancelButtonClick(Sender: TObject);
 begin
   ProgressData.ErrorStatus:= errUserTerminated;
   ProgressData.Finished:= true;
+  if fThread.Suspended then
+    PauseButtonClick(self);
 end;
 
 

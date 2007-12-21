@@ -17,7 +17,8 @@ uses
   procmat,
   SectionUnit,
   RegionsUnit,
-  disassembler,
+  DisassemblerUnit,
+  DisassemblerTypes,
   CodeSectionUnit,
   ImportSectionUnit,
   ExportSectionUnit,
@@ -70,7 +71,7 @@ type
     constructor Create(InputFile: TStream; aFileName: TFileName); overload; virtual;
     destructor Destroy; override;
 
-    function Disassemble(): boolean; virtual;
+    procedure Disassemble; virtual;
 
     function SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; overload; virtual;
     function LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; virtual;
@@ -123,34 +124,34 @@ end;
 
 
 
-function TExecutableFile.Disassemble():boolean;
-var i,j: integer;
-    Options: TDisassembleOptions;
+procedure TExecutableFile.Disassemble;
+var
+  SectionIndex, j: integer;
+  Options: TDisassembleOptions;
 begin
-  result:=false;
-
   // Reset code section if file is already disassembled
   if IsDisassembled then
-    for i:=0 to Sections.Count-1 do
-      if Sections[i].Typ = stCode then
-        (Sections[i] as TCodeSection).ClearDisassembled;
-  fIsDisassembled:=false;
+    for SectionIndex:=0 to Sections.Count-1 do
+      if Sections[SectionIndex].Typ = stCode then
+        (Sections[SectionIndex] as TCodeSection).ClearDisassembled;
+  fIsDisassembled:= false;
 
   // Nastavime parametre a disassemblujme
-  for i:=0 to Sections.Count-1 do
-    if Sections[i].Typ = stCode then
-      with Sections[i] as TCodeSection do begin
+  for SectionIndex:=0 to Sections.Count-1 do
+    if Sections[SectionIndex].Typ = stCode then
+      with Sections[SectionIndex] as TCodeSection do begin
         Options.Address:= EntryPointAddress;
         Options.Size:= CodeSize;
         Options.Bit32:= Bit32;
-        if not DisassembleAll(Options) then begin
-          for j:=0 to i do
+        try
+          DisassembleAll(Options);
+        except
+          for j:=0 to SectionIndex do
             if Sections[j] is TCodeSection then (Sections[j] as TCodeSection).ClearDisassembled;
-          Exit;
+          raise;
         end;
       end;
-  fIsDisassembled:=true;
-  result:=true;
+  fIsDisassembled:= true;
 end;
 
 
@@ -172,7 +173,7 @@ begin
 
     StreamSectionCount:=Sections.Count;
     DHF.Write(StreamSectionCount, 4);
-    WriteLn(DAS, 'DisASsembled file, Original file: ' + FileName + '  ' + TatraDASFullNameVersion + ', Ivan Kohut (c) 2007');
+    WriteLn(DAS, ';DisASsembled file, Original file: ' + FileName + '  ' + TatraDASFullNameVersion + ', Ivan Kohut (c) 2007');
     Writeln(DAS);
     for SectionIndex:=0 to Sections.Count-1 do begin
       DHF.Write(Sections[SectionIndex].typ, sizeof(TSectionType));
@@ -183,7 +184,7 @@ begin
 
   // Save disassembled code sections
   else begin
-    WriteLn(DAS, 'DisASsembled file, Original file: ' + FileName + '  ' + TatraDASFullNameVersion + ', Ivan Kohut (c) 2007');
+    WriteLn(DAS, ';DisASsembled file, Original file: ' + FileName + '  ' + TatraDASFullNameVersion + ', Ivan Kohut (c) 2007');
     Writeln(DAS);
     for SectionIndex:=0 to Sections.Count-1 do
       if Sections[SectionIndex].typ = stCode then

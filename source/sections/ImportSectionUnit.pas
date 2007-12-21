@@ -36,7 +36,7 @@ type
   end;
 
   TImportModul = record
-    FunctionCount: cardinal;
+    FunctionCount: integer;
     Functions: array of TImportFunction;
     Name: string;
   end;
@@ -128,7 +128,9 @@ var
   FunctionFound: boolean;
   label FOUND;
 begin
-  FunctionFound:=false;
+  FunctionFound:= false;
+  ModulIndex:= -1;
+  FunctionIndex:= -1;
 
   // Find function and its modul
   for ModIndex:=0 to ModulCount - 1 do
@@ -200,7 +202,7 @@ begin
       FunctionTableSRVA:= DirEntry.LookupTableRVA - RVA
     else
       FunctionTableSRVA:= DirEntry.AddressTableRVA - RVA;
-    
+
     // Read modul functions
     InputStream.Seek(FunctionTableSRVA, 0);
     InputStream.Read(LookupTableEntry, 4);

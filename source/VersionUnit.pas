@@ -162,4 +162,7 @@ initialization
 initialization
   TatraDAS_Version:= TVersion.Create(ShortTatraDASVersion);
 
+finalization
+  TatraDAS_Version.Free;
+  
 end.

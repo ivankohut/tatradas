@@ -132,7 +132,7 @@ begin
   ExportStream.Seek(ExportDirTable.AddressTableRVA - ExportRVA, 0);
   for i:= 0 to fFunctionCount - 1 do begin
     ExportStream.Read(FunctionRVA, 4);
-    fFunctions[i].Ordinal:= i + ExportDirTable.OrdinalBase;
+    fFunctions[i].Ordinal:= cardinal(i) + ExportDirTable.OrdinalBase;
 
     // FunctionRVA is really RVA of symbol in code/data(?) section
     if (FunctionRVA < ExportRVA) or (FunctionRVA >= ExportRVA + ExportDataSize) then begin

@@ -36,9 +36,10 @@ uses
 
   procmat,
   StringUtilities,
-  disassembler,
+  DisassemblerUnit,
   ImportSectionUnit,
   ExportSectionUnit,
+  DisassemblerTypes,
   SectionUnit;
 
 const
@@ -57,8 +58,6 @@ type
        fHasEntryPoint: boolean;
        fEntryPointAddress: cardinal;
 
-       Decoder: TDisassembler;
-
        fFileOffset: cardinal;
        fFileSize: cardinal;
        fMemOffset: cardinal;
@@ -76,22 +75,22 @@ type
 
      public
 // Polia
-       CodeArray: TByteDynamicArray;        // Pole obsahujuce kod
+       CodeArray: TByteDynArray;        // Pole obsahujuce kod
        CodeStream: TMyMemoryStream;         // Stream obsahujuci kod
-       DisassemblerMap: TByteDynamicArray;
+       DisassemblerMap: TByteDynArray;
 
        constructor Create(InputStream: TStream; aBit32: boolean; aFileOffset, aFileSize, aMemOffset, aMemSize: cardinal; aCodeSectionIndex: integer; aName: string; aExecFile: TObject); overload;
        constructor Create(ExecFile: TObject); overload;
        destructor Destroy; override;
 
-       function DisassembleAll(Options: TDisassembleOptions): boolean;
-       function DisassemblePart(Options: TDisassembleOptions): boolean;
+       procedure DisassembleAll(Options: TDisassembleOptions);
+       procedure DisassemblePart(Options: TDisassembleOptions);
 
        function IsInSection(MemAddress: cardinal): boolean;
        function GetPosition(MemAddress: cardinal): cardinal; // Get position in Disassembled from Address (memory address)
        function FindAddressableLine(Position: cardinal): cardinal; // forward search, returns $FFFFFFFF if reaches end of Disassembled
        procedure ClearDisassembled;
-       function GetLineFromDataEx(PData: Pointer; DataType: cardinal; Signed: boolean; StartAddress: cardinal; Count: integer): TStrings;
+       function GetLineFromDataEx(PData: Pointer; DataType: cardinal; Signed: boolean; const StartAddress: cardinal; Count: integer): TStrings; // StartAddress is memory address
        procedure ReplaceLines(StartLineIndex, StartAddress, ByteCount: cardinal; NewLines: TStrings);
 
        function SaveToFile  (DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
@@ -175,6 +174,8 @@ begin
   SetLength(DisassemblerMap, CodeSize + CodeArrayReserve);
   for i:=0 to CodeSize + CodeArrayReserve - 1 do
     DisassemblerMap[i]:= 0;
+
+  fDisassembled:= TTatraDASStringList.Create;
 end;
 
 
@@ -227,8 +228,25 @@ var
   AfterAddress: cardinal;
   Address: cardinal;
   LineIndex: cardinal;
-  RestCodeIndex: cardinal;
+  PreCodeIndex, RestCodeIndex: cardinal;
+  PreLines: TStrings;
 begin
+  // Konverzia zaciatku instrukcie, v ktorej zaciname nahradzovanie, na typ "byte"
+  PreLines:= TStringList.Create;
+  for PreCodeIndex:= GetLineAddress(Disassembled[StartLineIndex]) to StartAddress + MemOffset - 1 do
+    DisassemblerMap[PreCodeIndex - MemOffset]:= dfNone;
+
+  PreLines.AddStrings(GetLineFromDataEx(
+    Addr(CodeArray[GetLineAddress(Disassembled[StartLineIndex]) - MemOffset]),
+    dtByte,
+    false,
+    GetLineAddress(Disassembled[StartLineIndex]),
+    (StartAddress + MemOffset - 1) - GetLineAddress(Disassembled[StartLineIndex])
+  ));
+  PreLines.AddStrings(NewLines);
+//  NewLines.Free;
+  NewLines:= PreLines;
+
   // Jednoduche zistenie kolko riadkov nahradime (bezadresne riadky sa vyhodia)
   LineIndex:= StartLineIndex;
   Address:= StartAddress;
@@ -242,85 +260,87 @@ begin
   // Konverzia zvysnych bytov na datovy typ "byte"
   for RestCodeIndex:=1 to Address - AfterAddress do
     DisassemblerMap[AfterAddress + RestCodeIndex - 1]:= dfNone;
-  NewLines.AddStrings(GetLineFromDataEx(Addr(CodeArray[AfterAddress]), dtByte, false, AfterAddress, Address - AfterAddress));
+  NewLines.AddStrings(GetLineFromDataEx(Addr(CodeArray[AfterAddress]), dtByte, false, AfterAddress + MemOffset, Address - AfterAddress));
 
   // Actual replace
+  Disassembled.BeginUpdate;
   Disassembled.DeleteLines(StartLineIndex, LineIndex - StartLineIndex);
   Disassembled.InsertStrings(StartLineIndex, NewLines);
+  Disassembled.EndUpdate;
+  //sm('Pokracuj');
 end;
 
 
 
-function TCodeSection.DisassemblePart(Options: TDisassembleOptions): boolean;
+procedure TCodeSection.DisassemblePart(Options: TDisassembleOptions);
 var
   BlockIndex: integer;
   CodeIndex: cardinal;
   ReferenceIndex: integer;
-  Line: string;
   NewLines: TStrings;
+  Disassembler: TDisassembler;
 begin
-  ProgressData.Name:= ProcessText.Disassemblying;
+  ProgressData.Name:= ProcessText.Disassembling;
+  NewLines:= nil;
+  Disassembler:= nil;
+  try
+    // Disassemble
+    Disassembler:= TDisassembler.Create(CodeArray, DisassemblerMap, MemOffset, Options.Bit32);
+    Disassembler.CAJ.Add(Options.Address - MemOffset);
+    Disassembler.CAJ.Process(Options.Address - MemOffset + Options.Size - 1);
 
-  // Disassemble
-  Decoder:= TDisassembler.Create(CodeArray, DisassemblerMap, MemOffset, Options.Bit32);
-//  Decoder.IsDisassembled:=True;
-  Decoder.CAJ.Add(Options.Address - MemOffset);
-  Decoder.CAJ.Process(Options.Address - MemOffset + Options.Size - 1);
-  if not Decoder.Disassemble(Options.Recursive) then begin
-    Decoder.Free;
-    Decoder:= nil;
-    result:= false;
-    Exit;
-  end;
-//  Statistics:=Decoder.Statistics;
+    Disassembler.Disassemble(Options.Recursive);
+  //  Statistics:=Disassembler.Statistics;
 
-  // Process all disassembled blocks
-  ProgressData.Name:= ProcessText.PreparingOutput;
-  ProgressData.Position:= 0;
-  ProgressData.Maximum:= Decoder.BlockCount - 1;
+    // Process all disassembled blocks
+    ProgressData.Name:= ProcessText.PreparingOutput;
+    ProgressData.Position:= 0;
+    ProgressData.Maximum:= Disassembler.BlockCount;
 
-  NewLines:= TStringList.Create;
-  for BlockIndex:=0 to Decoder.BlockCount - 1 do begin
-    Inc(ProgressData.Position);
-    NewLines.Clear;
-    CodeIndex:= Decoder.Blocks[BlockIndex].Address;
-    while CodeIndex < Decoder.Blocks[BlockIndex].Address + Decoder.Blocks[BlockIndex].Size do begin
-      // References
-      for ReferenceIndex:=0 to (Decoder.Disassembled[CodeIndex].ReferCount - 1) do
-        Newlines.Add(Decoder.Disassembled[CodeIndex].Refer[ReferenceIndex]);
+    NewLines:= TStringList.Create;
+    for BlockIndex:=0 to Disassembler.BlockCount - 1 do begin
+      Inc(ProgressData.Position);
+      if ProgressData.ErrorStatus = errUserTerminated then
+        raise EUserTerminatedProcess.Create('');
 
-      // Instruction
-      Dec(DisassemblerMap[CodeIndex], dfNewInstr);
-      Inc(DisassemblerMap[CodeIndex], dfInstruction);
+      NewLines.Clear;
+      CodeIndex:= Disassembler.Blocks[BlockIndex].Address;
+      while CodeIndex < Disassembler.Blocks[BlockIndex].Address + Disassembler.Blocks[BlockIndex].Size do begin
+        if (DisassemblerMap[CodeIndex] <> 0) and ((DisassemblerMap[CodeIndex] and dfNewInstr) = 0) then // otestovat ci to funguje tak ako ma
+          Continue;
+        // References
+        for ReferenceIndex:=0 to (Disassembler.Disassembled[CodeIndex].ReferCount - 1) do
+          Newlines.Add(Disassembler.Disassembled[CodeIndex].Refer[ReferenceIndex]);
 
-      Line:= IntToHex(Decoder.Disassembled[CodeIndex].Address + fMemOffset, 8) + StringRightPad(Decoder.Disassembled[CodeIndex].parsed, 1 + ilMaxParsedLength + 1, ' ');
+        // Instruction
+        DisassemblerMap[CodeIndex]:= (DisassemblerMap[CodeIndex] AND Byte(255 - dfNewInstr));
+        DisassemblerMap[CodeIndex]:= (DisassemblerMap[CodeIndex] OR Byte(dfInstruction));
+  //      Dec(DisassemblerMap[CodeIndex], dfNewInstr);
+  //      Inc(DisassemblerMap[CodeIndex], dfInstruction);
 
-      if Decoder.Disassembled[CodeIndex].prefix <> '' then
-        Line:=Line + Decoder.Disassembled[CodeIndex].prefix + ' ';
-      Line:=Line + Decoder.Disassembled[CodeIndex].name + ' ' + Decoder.Disassembled[CodeIndex].operandy;
-      Newlines.Add(Line);
+        Newlines.Add(Disassembler.Disassembled[CodeIndex].Disassembled);
 
-      Inc(CodeIndex, Length(Decoder.Disassembled[CodeIndex].parsed) div 2);
+        Inc(CodeIndex);
+      end;
+
+      ReplaceLines(GetPosition(Disassembler.Blocks[BlockIndex].Address + MemOffset), Disassembler.Blocks[BlockIndex].Address, Disassembler.Blocks[BlockIndex].Size, NewLines);
     end;
 
-    ReplaceLines(GetPosition(Decoder.Blocks[BlockIndex].Address + MemOffset), Decoder.Blocks[BlockIndex].Address, Decoder.Blocks[BlockIndex].Size, NewLines);
+    // Compute LastItem
+    CodeIndex:= CodeSize - 1;
+    while (((DisassemblerMap[CodeIndex] and dfInstruction) = 0) and (DisassemblerMap[CodeIndex] <> 0)) do
+      Dec(CodeIndex);
+    fLastItem:= CodeIndex;
+
+  finally
+    NewLines.Free;
+    Disassembler.Free;
   end;
-  NewLines.Free;
-
-  // Compute LastItem
-  CodeIndex:= CodeSize - 1;
-  while (((DisassemblerMap[CodeIndex] and dfInstruction) = 0) and (DisassemblerMap[CodeIndex] <> 0)) do
-    Dec(CodeIndex);
-  fLastItem:= CodeIndex;
-
-  Decoder.Free;
-  Decoder:= nil;
-  Result:= true;
 end;
 
 
 
-function TCodeSection.DisassembleAll(Options: TDisassembleOptions): boolean;               // Disasseblovanie, hladanie skokov, spracovanie vystupu...
+procedure TCodeSection.DisassembleAll(Options: TDisassembleOptions);               // Disasseblovanie, hladanie skokov, spracovanie vystupu...
 var
   i,j,k: integer;
 
@@ -332,207 +352,198 @@ var
   Position: cardinal; // Position of exported function's entry point in Disassembled
 
   ReferenceIndex: integer; // Index of instruction references
-  Line: string;         // retazec, do ktoreho sa pridavaju jednotlive casti intstruckie, nakoniec je zapisany do pola Disassembled (priprava vystupu)
   CodeIndex: cardinal;
 
   ImportSection: TImportSection;
   ExportSection: TExportSection;
-
-  procedure CancelDisassemblying;
-  begin
-    Decoder.Free;
-    Decoder:=nil;
-    fDisassembled.Free;
-    fDisassembled:=nil;
-    Result:=false;
-  end;
+  Disassembler: TDisassembler;
 
 begin
   // Empty section is considered already disassembled
-  if CodeSize = 0 then begin
-    result:= true;        // tu mozno treba este nieco pridat
+  if CodeSize = 0 then
     Exit;
-  end;
 
-  ImportSection:= (ExecFile as TExecutableFile).ImportSection;
-  ExportSection:= (ExecFile as TExecutableFile).ExportSection;
+  Disassembler:= nil;
 
-  ProgressData.Name:= ProcessText.Disassemblying + IntToStr(CodeSectionIndex);
+  try
 
-  Decoder:= TDisassembler.Create(CodeArray, DisassemblerMap, MemOffset, Bit32);
+    ImportSection:= (ExecFile as TExecutableFile).ImportSection;
+    ExportSection:= (ExecFile as TExecutableFile).ExportSection;
 
-  if (ExecFile as TExecutableFile).ExeFormat = ffNE then
-    if ImportSection <> nil then begin
-      for i:=0 to Integer(ImportSection.ModulCount) - 1 do begin
-        for j:=0 to Integer(ImportSection.Moduls[i].FunctionCount) - 1 do begin
-          for k:=0 to Length(ImportSection.Moduls[i].Functions[j].Occurs)-1 do begin
-            if ImportSection.Moduls[i].Functions[j].Occurs[k].SectionIndex = SectionIndex then begin
-              Decoder.CAJ.Add(ImportSection.Moduls[i].Functions[j].Occurs[k].Address);
-            end;
-          end;
-        end;
-      end;
-    end;
+    ProgressData.Name:= ProcessText.Disassembling + IntToStr(CodeSectionIndex);
 
-  // Add exported functions' entry points to Decoder.CAJ
-  if ExportSection <> nil then begin
-    Decoder.CAJ.Capacity:=Decoder.CAJ.Capacity + ExportSection.functioncount;
-    for i:=0 to ExportSection.FunctionCount-1 do
-      if SectionIndex = ExportSection.functions[i].section then
-        Decoder.CAJ.Add(ExportSection.functions[i].CodeSectionOffset);
-  end;
+    Disassembler:= TDisassembler.Create(CodeArray, DisassemblerMap, MemOffset, Bit32);
 
-  // Add program's entry point to Decoder.CAJ if present
-  if fHasEntryPoint then
-    Decoder.CAJ.Add(EntryPointAddress);
-
-  Decoder.CAJ.Process(CodeSize);
-
-
-  // Disassemble !!!
-  if not Decoder.DisassembleAll then begin
-    CancelDisassemblying;
-    Exit;
-  end;
-//  Statistics:=Decoder.Statistics;
-
-
-  // Vyhladanie EntryPoint-u a jeho zapisanie do pola Decoder.Disassembled
-  if fHasEntryPoint then begin
-    with Decoder.Disassembled[EntryPointAddress] do begin
-      Inc(ReferCount, 3);
-      SetLength(refer, ReferCount);
-      refer[Refercount-3]:= '';
-      refer[Refercount-2]:= 'Program Entry point';
-      refer[Refercount-1]:= '';
-    end;
-//    Inc(Statistics.References);
-//    Inc(Statistics.Blanks,2);
-  end;
-
-  // Process imported functions (if execfile is PE file)
-  if (ImportSection <> nil) then begin
-    case (ExecFile as TExecutableFile).ExeFormat of
-
-      ffPE: begin
-        for i:=0 to Length(Decoder.Imported)-1 do begin
-          // Priprava parametrov pre GetModulAndFunction
-          IndexAddressStr:=Decoder.Disassembled[Decoder.Imported[i]].operandy;
-          IndexAddressStr:=Copy(IndexAddressStr, 10, 8);
-          IndexAddress:=cardinal(StrToIntDef('$'+IndexAddressStr, 0));
-          if IndexAddress = 0 then
-            Continue;
-          CallInstrAddress:=Decoder.Disassembled[Decoder.Imported[i]].Address + MemOffset;
-          FunctionFromModul:=ImportSection.AddFunctionOccurence(IndexAddress, CallInstrAddress, SectionIndex);
-          if FunctionFromModul <> '' then begin
-//            Inc(Statistics.References);
-//            Inc(Statistics.Blanks);
-            with Decoder.Disassembled[Decoder.Imported[i]] do begin
-              Inc(ReferCount,2);
-              SetLength(Refer, ReferCount);
-              refer[ReferCount-2]:= '';
-              refer[ReferCount-1]:= 'Imported function '''+FunctionFromModul + ''' used';
-            end;
-          end;
-        end;
-      end;
-
-      ffNE: begin
-        for i:=0 to ImportSection.ModulCount - 1 do begin
-          for j:=0 to integer(ImportSection.Moduls[i].FunctionCount) - 1 do begin
-            for k:=0 to Length(ImportSection.Moduls[i].Functions[j].Occurs) - 1 do begin
+    if (ExecFile as TExecutableFile).ExeFormat = ffNE then
+      if ImportSection <> nil then begin
+        for i:=0 to Integer(ImportSection.ModulCount) - 1 do begin
+          for j:=0 to Integer(ImportSection.Moduls[i].FunctionCount) - 1 do begin
+            for k:=0 to Length(ImportSection.Moduls[i].Functions[j].Occurs)-1 do begin
               if ImportSection.Moduls[i].Functions[j].Occurs[k].SectionIndex = SectionIndex then begin
-                with Decoder.Disassembled[ImportSection.Moduls[i].Functions[j].Occurs[k].Address] do begin
-                  Inc(ReferCount, 2);
-                  SetLength(Refer, ReferCount);
-                  refer[ReferCount-2]:= '';
-                  if ImportSection.Moduls[i].Functions[j].ByOrdinal then
-                    refer[ReferCount-1]:= 'Imported function ''' + IntToHex(ImportSection.Moduls[i].Functions[j].Ordinal, 4) + '''(Ordinal) from ''' + ImportSection.Moduls[i].Name + ''' used'
-                  else
-                    refer[ReferCount-1]:= 'Imported function ''' + ImportSection.Moduls[i].Functions[j].Name + ''' from ''' + ImportSection.Moduls[i].Name + ''' used';
-                end;
+                Disassembler.CAJ.Add(ImportSection.Moduls[i].Functions[j].Occurs[k].Address);
               end;
             end;
           end;
         end;
       end;
 
+    // Add exported functions' entry points to Disassembler.CAJ
+    if ExportSection <> nil then begin
+      Disassembler.CAJ.Capacity:=Disassembler.CAJ.Capacity + ExportSection.functioncount;
+      for i:=0 to ExportSection.FunctionCount-1 do
+        if SectionIndex = ExportSection.functions[i].section then
+          Disassembler.CAJ.Add(ExportSection.functions[i].CodeSectionOffset);
     end;
-  end;
 
-  // Process exported functions
-  if ExportSection <> nil then begin
-    for i:=0 to ExportSection.FunctionCount-1 do begin
-      if ExportSection.functions[i].section = SectionIndex then begin
-//        Inc(Statistics.References);
-//        Inc(Statistics.Blanks);
+    // Add program's entry point to Disassembler.CAJ if present
+    if fHasEntryPoint then
+      Disassembler.CAJ.Add(EntryPointAddress);
 
-        Position:=ExportSection.functions[i].CodeSectionOffset;
-        with Decoder.Disassembled[Position] do begin
-          Inc(ReferCount, 2);
-          SetLength(refer, ReferCount);
-          refer[ReferCount-2]:='';
-          if (ExportSection.Functions[i].Name <> '') then
-            refer[ReferCount-1]:= 'Exported function ''' + ExportSection.functions[i].name + ''''
-          else
-            refer[ReferCount-1]:= 'Exported function ' + 'ordinal: ''' + IntToStr(ExportSection.functions[i].ordinal) + '''';
+    Disassembler.CAJ.Process(CodeSize);
+
+
+    // Disassemble !!!
+    Logger.Info('Start: Disassemble');
+    Disassembler.DisassembleAll;
+    Logger.Info('Finish: Disassemble');
+    //  Statistics:=Disassembler.Statistics;
+
+
+    // Vyhladanie EntryPoint-u a jeho zapisanie do pola Disassembler.Disassembled
+    if fHasEntryPoint then begin
+      with Disassembler.Disassembled[EntryPointAddress] do begin
+        Inc(ReferCount, 3);
+        SetLength(refer, ReferCount);
+        refer[Refercount-3]:= '';
+        refer[Refercount-2]:= 'Program Entry point';
+        refer[Refercount-1]:= '';
+      end;
+    //    Inc(Statistics.References);
+    //    Inc(Statistics.Blanks,2);
+    end;
+
+    // Process imported functions (if execfile is PE file)
+    if (ImportSection <> nil) then begin
+      case (ExecFile as TExecutableFile).ExeFormat of
+
+        ffPE: begin
+          for i:=0 to Length(Disassembler.Imported)-1 do begin
+            // Priprava parametrov pre GetModulAndFunction
+            IndexAddressStr:=Disassembler.Disassembled[Disassembler.Imported[i]].Disassembled;
+            IndexAddressStr:=Copy(IndexAddressStr, ilInstructionMnemonicIndex + 3 + 10 + Math.IfThen(Disassembler.Disassembled[Disassembler.Imported[i]].Disassembled[ilInstructionMnemonicIndex] = 'C', 1, 0), 8);
+            IndexAddress:=cardinal(StrToIntDef('$'+IndexAddressStr, 0));
+            if IndexAddress = 0 then
+              Continue;
+            CallInstrAddress:= StrToInt('$' + LeftStr(Disassembler.Disassembled[Disassembler.Imported[i]].Disassembled, 8));
+            FunctionFromModul:=ImportSection.AddFunctionOccurence(IndexAddress, CallInstrAddress, SectionIndex);
+            if FunctionFromModul <> '' then begin
+    //            Inc(Statistics.References);
+    //            Inc(Statistics.Blanks);
+              with Disassembler.Disassembled[Disassembler.Imported[i]] do begin
+                Inc(ReferCount,2);
+                SetLength(Refer, ReferCount);
+                refer[ReferCount-2]:= '';
+                refer[ReferCount-1]:= 'Imported function '''+FunctionFromModul + ''' used';
+              end;
+            end;
+          end;
+        end;
+
+        ffNE: begin
+          for i:=0 to ImportSection.ModulCount - 1 do begin
+            for j:=0 to integer(ImportSection.Moduls[i].FunctionCount) - 1 do begin
+              for k:=0 to Length(ImportSection.Moduls[i].Functions[j].Occurs) - 1 do begin
+                if ImportSection.Moduls[i].Functions[j].Occurs[k].SectionIndex = SectionIndex then begin
+                  with Disassembler.Disassembled[ImportSection.Moduls[i].Functions[j].Occurs[k].Address] do begin
+                    Inc(ReferCount, 2);
+                    SetLength(Refer, ReferCount);
+                    refer[ReferCount-2]:= '';
+                    if ImportSection.Moduls[i].Functions[j].ByOrdinal then
+                      refer[ReferCount-1]:= 'Imported function ''' + IntToHex(ImportSection.Moduls[i].Functions[j].Ordinal, 4) + '''(Ordinal) from ''' + ImportSection.Moduls[i].Name + ''' used'
+                    else
+                      refer[ReferCount-1]:= 'Imported function ''' + ImportSection.Moduls[i].Functions[j].Name + ''' from ''' + ImportSection.Moduls[i].Name + ''' used';
+                  end;
+                end;
+              end;
+            end;
+          end;
+        end;
+
+      end;
+    end;
+
+    // Process exported functions
+    if ExportSection <> nil then begin
+      for i:=0 to ExportSection.FunctionCount-1 do begin
+        if ExportSection.functions[i].section = SectionIndex then begin
+    //        Inc(Statistics.References);
+    //        Inc(Statistics.Blanks);
+
+          Position:=ExportSection.functions[i].CodeSectionOffset;
+          with Disassembler.Disassembled[Position] do begin
+            Inc(ReferCount, 2);
+            SetLength(refer, ReferCount);
+            refer[ReferCount-2]:='';
+            if (ExportSection.Functions[i].Name <> '') then
+              refer[ReferCount-1]:= 'Exported function ''' + ExportSection.functions[i].name + ''''
+            else
+              refer[ReferCount-1]:= 'Exported function ' + 'ordinal: ''' + IntToStr(ExportSection.functions[i].ordinal) + '''';
+          end;
         end;
       end;
     end;
-  end;
 
-  // Set Disassembled string list
+    // Set Disassembled string list
 
-//  Inc(Statistics.Blanks);                             // prazdny riadok na zaciatku
+    //  Inc(Statistics.Blanks);                             // prazdny riadok na zaciatku
 
-  ProgressData.Name:= ProcessText.PreparingOutput + IntToStr(CodeSectionIndex);
-  ProgressData.Position:= 0;
-  ProgressData.Maximum:= CodeSize - 1;
+    ProgressData.Name:= ProcessText.PreparingOutput + IntToStr(CodeSectionIndex);
+    ProgressData.Position:= 0;
+    ProgressData.Maximum:= CodeSize - 1;
 
-  fDisassembled:=TTatraDASStringList.Create;
+    fDisassembled.Add('');  // prazdny riadok na zaciatku
 
-  fDisassembled.Add('');  // prazdny riadok na zaciatku
+    Logger.Info('Start: Preparing output');
 
-  Logger.Info('Output preparing started');
+    for i:= 0 to CodeSize - 1 do begin
+      Inc(ProgressData.Position);
+      if ProgressData.ErrorStatus = errUserTerminated then
+        raise EUserTerminatedProcess.Create('');
 
-  for i:= 0 to CodeSize - 1 do begin
-    Inc(ProgressData.Position);
+      // Continue if current address does not contain an instruction
+      if (DisassemblerMap[i] <> 0) and ((DisassemblerMap[i] and dfNewInstr) = 0) then
+        Continue;
 
-    // Continue if current address does not contain an instruction
-    if (DisassemblerMap[i] <> 0) and ((DisassemblerMap[i] and dfNewInstr) = 0) then
-      Continue;
+      // Update current address' metainfo from NewInstruction to Instruction
+      if (DisassemblerMap[i] and dfNewInstr) <> 0 then begin
+        Dec(DisassemblerMap[i], dfNewInstr);
+        Inc(DisassemblerMap[i], dfInstruction);
+      end;
 
-    // Update current address' metainfo from NewInstruction to Instruction
-    if (DisassemblerMap[i] and dfNewInstr) <> 0 then begin
-      Dec(DisassemblerMap[i], dfNewInstr);
-      Inc(DisassemblerMap[i], dfInstruction);
+      // Proccess instruction's references
+      for ReferenceIndex:=0 to (Disassembler.Disassembled[i].refercount - 1) do
+        Disassembled.Add(Disassembler.Disassembled[i].refer[ReferenceIndex]);
+
+      Disassembled.Add(Disassembler.Disassembled[i].Disassembled);
     end;
+    Logger.Info('Finish: Preparing output');
 
-    // Proccess instruction's references
-    for ReferenceIndex:=0 to (Decoder.Disassembled[i].refercount - 1) do
-      Disassembled.Add(Decoder.Disassembled[i].refer[ReferenceIndex]);
+    // Compute LastItem
+    CodeIndex:= CodeSize - 1;
+    while (((DisassemblerMap[CodeIndex] and dfInstruction) = 0) and (DisassemblerMap[CodeIndex] <> 0)) do
+      Dec(CodeIndex);
+    fLastItem:= CodeIndex;
+    fIsDisassembled:= true;
 
-    // Create intruction line of Disassembled from particles
-    Line:= IntToHex(Decoder.Disassembled[i].Address + fMemOffset, 8) + StringRightPad(Decoder.Disassembled[i].parsed, 1 + ilMaxParsedLength + 1, ' ');
-
-    if Decoder.Disassembled[i].prefix <> '' then
-      Line:=Line + Decoder.Disassembled[i].prefix + ' ';
-    Line:=Line + Decoder.Disassembled[i].name + ' ' + Decoder.Disassembled[i].operandy;
-
-    Disassembled.Add(Line);
+  except
+    on E: Exception do begin
+      Logger.Fatal('CodeSection.Disassemble: ' + E.Message);
+      fIsDisassembled:= false;
+      Disassembler.Free;
+      raise;
+    end;
   end;
-  Logger.Info('Output preparing finished');
-
-  // Compute LastItem
-  CodeIndex:= CodeSize - 1;
-  while (((DisassemblerMap[CodeIndex] and dfInstruction) = 0) and (DisassemblerMap[CodeIndex] <> 0)) do
-    Dec(CodeIndex);
-  fLastItem:= CodeIndex;
-
-  fIsDisassembled:= true;
-  Decoder.Free;
-  Decoder:=nil;
-  Result:=True;
+  Disassembler.Free;
 end;
 
 
@@ -545,37 +556,27 @@ end;
 
 
 function TCodeSection.SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean;
-type TSaveInstruction = (siNone, siAddr, siPar, siDis, siAddr_Par, siPar_Dis, siAddr_Dis, siAll);
-var si: TSaveInstruction;
-    i,j: cardinal;
-    TargetAddress: boolean;
-    temp,buf,adresa: cardinal;
-    temps: string;
-    reladresa: integer;
-    DisasmCount: cardinal;
+type
+  TSaveInstruction = (siNone, siAddr, siPar, siDis, siAddr_Par, siPar_Dis, siAddr_Dis, siAll);
+var
+  si: TSaveInstruction;
+  LineIndex: integer;
+  Line: string;
+
+  IsTargetAddress: boolean;
+  TargetAddress: cardinal;
+  InsertIndex: integer;
+  buf, adresa: cardinal;
+  InstructionStr: string;
+  RelativeAddress: integer;
+  DisasmCount: cardinal;
 begin
   inherited SaveToFile(DHF, DAS, SaveOptions);
 
-  if (soProject in SaveOptions) or (soDisassembly in SaveOptions) then begin
-  // Zapis do suboru "*.das"
-    Writeln(DAS,'------------------------------');
-    Writeln(DAS,'Code Section Number: '  + IntToStr(CodeSectionIndex));
-    Writeln(DAS,'Number of lines: ' + IntToStr(Disassembled.Count));
-
-    ProgressData.Maximum := Disassembled.Count;
-    ProgressData.Position := 0;
-    ProgressData.Name := ProcessText.SavingDAS + IntToStr(CodeSectionIndex);
-    for i := 0 to Disassembled.Count - 1 do begin
-      WriteLn(DAS, Disassembled[i]);
-      Inc(ProgressData.Position);
-     end;
-    Writeln(DAS);
-  end;
-
-  // Zapis do suboru "*.dhf"
+  // DHF project file
   if soProject in SaveOptions then begin
-
-// Staticke data
+    Logger.Info('Start: Saving DHF - code section ' + IntToStr(CodeSectionIndex));
+    // Static data
     DHF.Write(fCodeSectionIndex, 4);
     DHF.Write(fBit32, 4);
     DHF.Write(fFileOffset, 4);
@@ -583,10 +584,9 @@ begin
     DHF.Write(fMemOffset, 4);
     DHF.Write(fMemSize, 4);
     DHF.Write(fCodeSize, 4);
-
     DHF.Write(fHasEntryPoint, 1);
     DHF.Write(EntryPointAddress, 4);
-// Dynamicke data
+    // Dynamic data
     DHF.Write(InstructionLineCount, 4);
     DHF.Write(DataLineCount, 4);
     DHF.Write(ReferenceLineCount, 4);
@@ -597,17 +597,155 @@ begin
     DisasmCount:= Disassembled.Count;
     DHF.Write(DisasmCount, 4);
     DHF.Write(InstructionsCount, 4);
-// Polia
+    // Arrays
     DHF.Write(CodeArray[0], CodeSize);
     DHF.Write(DisassemblerMap[0], CodeSize);
   end;
 
-  if not (soProject in SaveOptions) and not (soDisassembly in SaveOptions) and not (soNASM in SaveOptions) then begin
-    ProgressData.Name:= ProcessText.SavingDAS + IntToStr(CodeSectionIndex);
-    ProgressData.Position:= 0;
-    ProgressData.Maximum:= Disassembled.Count;
+  // DAS file
 
-    si:=siNone;
+  Logger.Info('Start: Saving DAS - code section ' + IntToStr(CodeSectionIndex));
+  ProgressData.Name:= ProcessText.SavingDAS + IntToStr(CodeSectionIndex);
+  ProgressData.Position:= 0;
+  ProgressData.Maximum:= Disassembled.Count;
+  Writeln(DAS, '; ********************************************');
+  Writeln(DAS, '; Code Section Number: '  + IntToStr(CodeSectionIndex));
+  Writeln(DAS, '; ********************************************');
+
+
+  // Standard DAS file
+  if (soProject in SaveOptions) or (soDisassembly in SaveOptions) then begin
+    for LineIndex:= 0 to Disassembled.Count - 1 do begin
+      WriteLn(DAS, Disassembled[LineIndex]);
+      Inc(ProgressData.Position);
+      if ProgressData.ErrorStatus = errUserTerminated then
+        raise EUserTerminatedProcess.Create('');
+     end;
+    Writeln(DAS);
+  end
+
+
+  // NASM compilable DAS file
+  else if soNASM in SaveOptions then begin
+    case Bit32 of
+      true:  Writeln(DAS, 'BITS 32');
+      false: Writeln(DAS, 'BITS 16');
+    end;
+    Writeln(DAS);
+
+    IsTargetAddress:= false;
+    for LineIndex:=0 to Disassembled.Count - 1 do begin
+      Inc(ProgressData.Position);
+      if ProgressData.ErrorStatus = errUserTerminated then
+        raise EUserTerminatedProcess.Create('');
+
+      Line:= Disassembled[LineIndex];
+
+      // Empty line
+      if Length(Line) = 0 then begin
+        WriteLn(DAS);
+        Continue;
+      end;
+
+      case Line[2] of
+
+        // Jump reference
+        'u': begin
+               WriteLn(DAS, ';' + Line);
+               IsTargetAddress:= true;
+             end;
+
+        // Call reference
+        'a': begin
+               WriteLn(DAS, ';' + Line);
+               IsTargetAddress:= true;
+             end;
+
+        // Loop reference
+        'o': begin
+               WriteLn(DAS, ';' + Line);
+               IsTargetAddress:= true;
+             end;
+
+        // Exported function
+        'x': WriteLn(DAS, ';' + Line);
+
+        // Imported function
+        'm': WriteLn(DAS, ';' + Line);
+
+        // Program entry point
+        'r': WriteLn(DAS, ';' + Line);
+
+      else begin
+        // Create new label from address if it is target of s jump, call or loop instruction
+        if IsTargetAddress then begin
+          WriteLn(DAS, '_0x' + LeftStr(Line, 8) + ':');
+          IsTargetAddress:= false;
+        end;
+        InstructionStr:= Copy(Line, ilInstructionMnemonicIndex, maxInt);
+
+        // control flow instruction
+        //   - insert appropriate NASM keyword and change target address to label by adding "_"
+        if GetTargetAddress(Line, TargetAddress) then begin
+          InsertIndex:= 1;
+          while InstructionStr[InsertIndex] <> ' ' do
+            Inc(InsertIndex);
+          Inc(InsertIndex);
+
+          RelativeAddress:= Integer(TargetAddress - (GetLineAddress(Line) + GetLineBytes(Line)));
+
+          // same segment, relative JMP, Jxx, CALL
+          if (RelativeAddress < -128) or (RelativeAddress > 127) then
+            Writeln(DAS, '  ' + InsertStr('near _', InstructionStr, InsertIndex))
+          // short (-127 .. 128) JMP, Jxx, JxCXZ, LOOP
+          else
+            // JMP - must use "short" to use short range JMP
+            if InstructionStr[2] = 'M' then
+              Writeln(DAS, '  ' + InsertStr('short _', InstructionStr, InsertIndex))
+            // Jxx, JxCXZ, LOOP
+            else
+              Writeln(DAS, '  ' + InsertStr('_', InstructionStr, InsertIndex))
+        end
+
+
+        else begin
+//          parsed8:=StrToInt('$'+Line[10]+Line[11]);
+              if InstructionStr<>'' then
+              case InstructionStr[1] of
+                'b': InstructionStr:='db '+TrimRight(Copy(InstructionStr, 6, 5));
+                'w': InstructionStr:='dw '+Copy(InstructionStr,6,7);
+                'd': case InstructionStr[2] of
+                       'w':InstructionStr:='dd '+Copy(InstructionStr, 7, 11);
+                       'o':InstructionStr:='dq '+Copy(InstructionStr, 8, 30);
+                     end;
+                'q': begin
+                       adresa:= GetLineAddress(Line);
+                       buf:= Cardinal(CodeArray[adresa]);
+                       Writeln(DAS, '  ' + 'dd 0x'+IntToHex(buf, 8));
+                       buf:= Cardinal(CodeArray[adresa]);
+
+                       InstructionStr:= 'dd 0x' + IntToHex(buf, 8);
+                     end;
+                's': InstructionStr:= 'dd ' + Copy(InstructionStr, 8, 30);
+                'e': InstructionStr:= 'dt ' + Copy(InstructionStr, 10, 30);
+                'p': begin
+                       adresa:= GetLineAddress(Line);
+                       InstructionStr:= 'db 0x'+IntToHex(CodeArray[adresa], 2)+','+Copy(InstructionStr, 9, 255);
+                     end;
+                'c': InstructionStr:= 'db '+ Copy(InstructionStr, 9, 255) + ',0x00';
+              end;
+              Writeln(DAS, '  ' + InstructionStr);
+        end;
+      end;
+      end;
+    end;
+    Writeln(DAS);
+  end
+
+
+  // Custom DAS file
+  else begin
+    si:= siNone;
     if (soAddress in SaveOptions) and (soParsed in SaveOptions) and (soDisassembled in SaveOptions) then si:=siAll
     else if (soAddress in SaveOptions) and (soParsed in SaveOptions) then si:=siAddr_Par
     else if (soParsed in SaveOptions) and (soDisassembled in SaveOptions) then si:=siPar_Dis
@@ -616,164 +754,56 @@ begin
     else if (soParsed in SaveOptions) then si:=siPar
     else if (soDisassembled in SaveOptions) then si:=siDis;
 
-    Append(DAS);
-    Writeln(DAS,'------------------------------');
-    Writeln(DAS,'Code Section Number: ' + IntToStr(CodeSectionIndex));
-//    Writeln(DAS,'Number of lines: '+IntToStr(PocetDisassembled));       nema zmysel (pocet naozaj zapisanych riadkov je stale iny
-
-    for i:=0 to Disassembled.Count - 1 do begin
+    for LineIndex:= 0 to Disassembled.Count - 1 do begin
       Inc(ProgressData.Position);
+      if ProgressData.ErrorStatus = errUserTerminated then
+        raise EUserTerminatedProcess.Create('');
 
-      if Disassembled[i]='' then begin WriteLn; Continue; end;
-      case Disassembled[i][2] of
-        'u': if soJump in SaveOptions then writeln(DAS,Disassembled[i]);
-        'a': if soCall in SaveOptions then writeln(DAS,Disassembled[i]);
-        'x': if soExport in SaveOptions then writeln(DAS,Disassembled[i]);
-        'm': if soImport in SaveOptions then writeln(DAS,Disassembled[i]);
-        'r': if soEntryPoint in SaveOptions then writeln(DAS,Disassembled[i]);
-      else begin
-        case si of
-          siAll: writeln(DAS,Disassembled[i]);
-          siAddr: writeln(DAS,LeftStr(Disassembled[i],8));
-          siPar: writeln(DAS,TrimRight(Copy(Disassembled[i],10,22)));
-          siDis: writeln(DAS,Copy(Disassembled[i],34,20));
-          siAddr_Par: writeln(DAS,TrimRight(LeftStr(Disassembled[i],33)));
-          siPar_Dis: writeln(DAS,Copy(Disassembled[i],10,55));
-          siAddr_Dis: writeln(DAS,LeftStr(Disassembled[i],8) + ' ' + Copy(Disassembled[i],34,20));
-        end;
-      end;
-      end;
-    end;
-    Writeln(DAS);
-  end;
-
-  if soNASM in SaveOptions then begin
-    ProgressData.Name:= ProcessText.SavingDAS + IntToStr(CodeSectionIndex);
-    ProgressData.Position:= 0;
-    ProgressData.Maximum:= Disassembled.Count;
-
-    Append(DAS);
-    Writeln(DAS,'; ------------------------------');
-    Writeln(DAS,'; Code Section Number: ' + IntToStr(CodeSectionIndex));
-    Writeln(DAS);
-    case Bit32 of
-      true:  Writeln(DAS,'BITS 32');
-      false: Writeln(DAS,'BITS 16');
-    end;
-    Writeln(DAS);
-//    Writeln(DAS,'Number of lines: '+IntToStr(PocetDisassembled));       nema zmysel (pocet naozaj zapisanych riadkov je stale iny
-
-    TargetAddress:= false;
-    for i:=0 to Disassembled.Count - 1 do begin
-      Inc(ProgressData.Position);
-
-      // Empty line
-      if Disassembled[i]='' then begin
+      Line:= Disassembled[LineIndex];
+      if Line = '' then begin
         WriteLn(DAS);
         Continue;
       end;
-
-      case Disassembled[i][2] of
-
-        // Jump reference
-        'u': begin
-               WriteLn(DAS, ';' + Disassembled[i]);
-               TargetAddress:=true;
-             end;
-
-        // Call reference
-        'a': begin
-               WriteLn(DAS, ';' + Disassembled[i]);
-               TargetAddress:=true;
-             end;
-
-        // Loop reference
-        'o': begin
-               WriteLn(DAS, ';' + Disassembled[i]);
-               TargetAddress:=true;
-             end;
-
-        // Exported function
-        'x': WriteLn(DAS, ';' + Disassembled[i]);
-
-        // Imported function
-        'm': WriteLn(DAS, ';' + Disassembled[i]);
-
-        // Program entry point
-        'r': WriteLn(DAS, ';' + Disassembled[i]);
-
-      else begin
-       // Create new label from address if it is target of any instruction
-        if TargetAddress then begin
-          WriteLn(DAS, '_0x' + LeftStr(Disassembled[i], 8) + ':');
-          TargetAddress:= false;
-        end;
-        temps:=Copy(Disassembled[i], 34, 100);
-
-        if GetTargetAddress(Disassembled[i],temp) then begin
-          j:=1;
-          while temps[j]<>' ' do inc(j);
-          inc(j);
-          reladresa:= temp - (GetLineAddress(Disassembled[i])+GetLineBytes(Disassembled[i]));
-          if (reladresa < -128) or (reladresa > 127) then
-            Writeln(DAS,'  '+InsertStr('near _',temps,j))
-          else
-            if temps[2]='M' then Writeln(DAS,'  '+InsertStr('short _',temps,j))
-            else Writeln(DAS,'  '+InsertStr('_',temps,j))
-        end
+      case Line[2] of
+        'u': if not (soJump in SaveOptions) then Line:= '';
+        'a': if not (soCall in SaveOptions) then Line:= '';
+        'x': if not (soExport in SaveOptions) then Line:= '';
+        'm': if not (soImport in SaveOptions) then Line:= '';
+        'r': if not (soEntryPoint in SaveOptions) then Line:= '';
         else begin
-//          parsed8:=StrToInt('$'+disassembled[i][10]+disassembled[i][11]);
-              if temps<>'' then
-              case temps[1] of
-                'b': temps:='db '+TrimRight(Copy(temps,6,5));
-                'w': temps:='dw '+Copy(temps,6,7);
-                'd': case temps[2] of
-                       'w':temps:='dd '+Copy(temps,7,11);
-                       'o':temps:='dq '+Copy(temps,8,30);
-                     end;
-                'q': begin
-                       adresa:=GetLineAddress(Disassembled[i]);
-{
-                       CodeStream.Position:=adresa;
-                       CodeStream.Read(buf,4);
-                       Writeln(DAS,'  '+'dd 0x'+IntToHex(buf,8));
-                       CodeStream.Read(buf,4);
-}
-                       buf:=Cardinal(CodeArray[adresa]);
-                       Writeln(DAS,'  '+'dd 0x'+IntToHex(buf,8));
-                       buf:=Cardinal(CodeArray[adresa]);
-
-                       temps:='dd 0x'+IntToHex(buf,8);
-                     end;
-                's': temps:='dd '+Copy(temps,8,30);
-                'e': temps:='dt '+Copy(temps,10,30);
-                'p': begin
-                       adresa:=GetLineAddress(Disassembled[i]);
-                       temps:='db 0x'+IntToHex(CodeArray[adresa],2)+','+Copy(temps,9,255);
-                     end;
-                'c': temps:='db '+ Copy(temps,9,255)+',0x00';
-              end;
-              Writeln(DAS,'  '+temps);
+          case si of
+            siAll: ;
+            siAddr:     Line:= LeftStr(Line, ilMaxAddressLength);
+            siPar:      Line:= TrimRight(Copy(Line, ilMaxAddressLength + 2, ilMaxParsedLength));
+            siDis:      Line:= Copy(Line, ilInstructionMnemonicIndex, MaxInt);
+            siAddr_Par: Line:= TrimRight(LeftStr(Line, ilInstructionMnemonicIndex - 1));
+            siPar_Dis:  Line:= Copy(Line, ilMaxAddressLength + 2, MaxInt);
+            siAddr_Dis: Line:= LeftStr(Line, ilMaxAddressLength) + ' ' + Copy(Line, ilInstructionMnemonicIndex, MaxInt);
+          end;
         end;
       end;
-      end;
+      WriteLn(DAS, Line);
     end;
-    Writeln(DAS);
+    WriteLn(DAS);
   end;
-  result:=true;
+  Logger.Info('Finish: Saving DAS - code section ' + IntToStr(CodeSectionIndex));
+
+  result:= true;
 end;
 
 
 
 function TCodeSection.LoadFromFile(DHF: TStream; var DAS: TextFile): boolean;
 var
-  line: string;
-  i: integer;
+  Line: string;
+  LineIndex: integer;
   DisasmCount: cardinal;
 begin
   inherited LoadFromFile(DHF, DAS);
-  // DHF subor:
-  // Staticke data
+
+  // DHF project file:
+
+  // Static data
   DHF.Read(fCodeSectionIndex, 4);
   DHF.Read(fBit32, 4);
   DHF.Read(fFileOffset, 4);
@@ -781,10 +811,9 @@ begin
   DHF.Read(fMemOffset, 4);
   DHF.Read(fMemSize, 4);
   DHF.Read(fCodeSize, 4);
-
   DHF.Read(fHasEntryPoint, 1);
   DHF.Read(fEntryPointAddress,4);
-  // Dynamicke data
+  // Dynamic data
   DHF.Read(InstructionLineCount, 4);
   DHF.Read(DataLineCount, 4);
   DHF.Read(ReferenceLineCount, 4);
@@ -794,36 +823,43 @@ begin
   DHF.Read(fIsDisassembled, 1);
   DHF.Read(DisasmCount, 4);
   DHF.Read(InstructionsCount, 4);
-
-  // Polia
+  // Arrays
   SetLength(CodeArray, CodeSize);
   DHF.Read(CodeArray[0], CodeSize);
-
   SetLength(DisassemblerMap, CodeSize);
   DHF.Read(DisassemblerMap[0], CodeSize);
-
   CodeStream:= TMyMemoryStream.Create;
   CodeStream.SetMemory(Pointer(CodeArray), CodeSize);
 
-  // Nacitanie DAS suboru
+  // DAS file
 
-  Readln(DAS, line);
-  Readln(DAS, line);
-  Readln(DAS, line);
-
-  fDisassembled:= TTatraDASStringList.Create;
-  fDisassembled.Capacity:= DisasmCount;
   ProgressData.Position:= 0;
   ProgressData.Maximum:= DisasmCount;
   ProgressData.Name := ProcessText.LoadingDAS + IntToStr(CodeSectionIndex);
-  for i:=0 to DisasmCount - 1 do begin
-    ProgressData.Position:= i;
-    ReadLn(DAS, line);
-    fDisassembled.Add(line);
+  Readln(DAS);
+  Readln(DAS);
+  Readln(DAS);
+
+  fDisassembled:= TTatraDASStringList.Create;
+  fDisassembled.Capacity:= DisasmCount;
+  try
+    for LineIndex:= 0 to DisasmCount - 1 do begin
+      ProgressData.Position:= LineIndex;
+      if ProgressData.ErrorStatus = errUserTerminated then
+        raise EUserTerminatedProcess.Create('');
+      ReadLn(DAS, line);
+      fDisassembled.Add(line);
+    end;
+  except
+    on E: EInOutError do
+      if E.ErrorCode <> 100 then
+        raise;
+    else
+      raise;
   end;
+
   ProgressData.Position:= 0;
   ProgressData.Finished:= true;
-
   result:=true;
 end;
 
@@ -915,7 +951,8 @@ begin
 end;
 
 
-function TCodeSection.GetLineFromDataEx(PData: Pointer; DataType: cardinal; Signed: boolean; StartAddress: cardinal; Count: integer): TStrings;
+// StartAddress is memory address
+function TCodeSection.GetLineFromDataEx(PData: Pointer; DataType: cardinal; Signed: boolean; const StartAddress: cardinal; Count: integer): TStrings;
 var
   Address: cardinal;
   ItemSize: integer;
@@ -1041,7 +1078,7 @@ end;
 
 function GetLineAddress(line: string): cardinal;
 begin
-  result:=cardinal(StrToIntDef('$' + LeftStr(line, 8), -1));
+  result:= cardinal(StrToIntDef('$' + LeftStr(line, 8), -1));
 end;
 
 
@@ -1065,7 +1102,8 @@ function GetTargetAddress(Line: string; var Address: cardinal): boolean;
 
   function HexToAddress(Index: integer): boolean;
   begin
-    if (Line[Index] <> '0') or (Line[Index + 1] <> 'x') then begin
+    // Exit if target address does not begin with '0x' or if it is far pointer (0x????:?...)
+    if (Line[Index] <> '0') or (Line[Index + 1] <> 'x') or (Line[Index+6] = ':') then begin
       result:= false;
       Exit;
     end;
@@ -1081,11 +1119,11 @@ function GetTargetAddress(Line: string; var Address: cardinal): boolean;
 var
   Index: integer;
 begin
+  result:= false;
+
   // Este to nie je spravne osetrene!!!
-  if Length(Line) < 43 then begin
-    result:= false;
+  if Length(Line) < ilInstructionMnemonicIndex + 10 then
     Exit;
-  end;
 
   Index:= ilInstructionMnemonicIndex;
 

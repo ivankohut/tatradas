@@ -6,11 +6,16 @@ uses
   Classes, Contnrs,
   SysUtils;
 
+
+const
+  LoggerTimeStampFormat = 'yyyy-mm-dd hh:nn:ss:zzz';  
+
 type
 
   TLoggerListener = class
     procedure WriteMessage(msg: string); virtual; abstract;
   end;
+
 
   TLogger = class
   private
@@ -23,6 +28,7 @@ type
     destructor Destroy; override;
     procedure Info(Msg: string);
     procedure Warning(Msg: string);
+    procedure Fatal(Msg: string);
 
     procedure AddListener(Listener: TLoggerListener);
     procedure RemoveListener(Listener: TLoggerListener);
@@ -43,42 +49,64 @@ type
 var
   Logger: TLogger;
 
+
 implementation
+
 
 constructor TLogger.Create;
 begin
   fListeners:= TObjectList.Create;
 end;
 
-destructor TLogger.Destroy; 
+
+
+destructor TLogger.Destroy;
 begin
   fListeners.OwnsObjects:= true;
   fListeners.Free;
 end;
 
+
+
 procedure TLogger.WriteMessage(msg: string);
 var
   ListenerIndex: integer;
+  TimeStampStr: string;
 begin
-  msg:= '[' + DateTimeToStr(Now) + ']   ' + msg;
+  DateTimeToString(TimeStampStr, LoggerTimeStampFormat, Now);
+  msg:= '[' + TimeStampStr + ']   ' + msg;
   for ListenerIndex:= 0 to fListeners.Count - 1 do
     (fListeners[ListenerIndex] as TLoggerListener).WriteMessage(msg);
 end;
+
+
 
 procedure TLogger.Info(Msg: string);
 begin
   WriteMessage('INFO - ' + msg);
 end;
 
+
+
 procedure TLogger.Warning(Msg: string);
 begin
   WriteMessage('WARNING - ' + msg);
 end;
 
+
+
+procedure TLogger.Fatal(Msg: string);
+begin
+  WriteMessage('FATAL - ' + msg);
+end;
+
+
+
 procedure TLogger.AddListener(Listener: TLoggerListener);
 begin
   fListeners.Add(Listener);
 end;
+
 
 
 procedure TLogger.RemoveListener(Listener: TLoggerListener);
@@ -87,18 +115,17 @@ begin
 end;
 
 
-
-
 { TTextFileLoggerListener }
+
 
 constructor TTextFileLoggerListener.Create(AFilename: string);
 begin
   try
     AssignFile(fLogFile, AFilename);
     if FileExists(AFilename) then
-      Append(fLogFile)
+      System.Append(fLogFile)
     else
-      Rewrite(fLogFile);
+      System.Rewrite(fLogFile);
 
   except
     CloseFile(fLogFile);
@@ -106,11 +133,15 @@ begin
   end;
 end;
 
+
+
 destructor TTextFileLoggerListener.Destroy;
 begin
   CloseFile(fLogFile);
   inherited Destroy;
 end;
+
+
 
 procedure TTextFileLoggerListener.WriteMessage(msg: string);
 begin
@@ -118,13 +149,11 @@ begin
 end;
 
 
-
-
+  
 initialization
   Logger:= TLogger.Create;
 
 finalization
   Logger.Free;
-
 
 end.

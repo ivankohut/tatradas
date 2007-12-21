@@ -4,14 +4,17 @@ interface
 
 uses
   Classes,
+  SysUtils,
 
   procmat,
-  disassembler,
+  DisassemblerUnit,
+  DisassemblerTypes,
   CodeSectionUnit,
   ExecFileManagerUnit,
   ExecFileUnit;
 
 type
+
 
   TDisassembleThread = class(TThread)
   private
@@ -22,6 +25,7 @@ type
     constructor Create(AExecFile: TExecutableFile);
   end;
 
+
   TDisassemblePartThread = class(TThread)
   private
     fCodeSection: TCodeSection;
@@ -31,6 +35,7 @@ type
   public
     constructor Create(ACodeSection: TCodeSection; AOptions: TDisassembleOptions);
   end;
+
 
   TSaveThread = class(TThread)
   private
@@ -44,6 +49,7 @@ type
     constructor Create(Manager: TExecFileManager; AExecFile: TExecutableFile; AFileName: string; ASaveOptions: TSaveOptions);
   end;
 
+
   TLoadThread = class(TThread)
   private
     fManager: TExecFileManager;
@@ -55,7 +61,7 @@ type
   end;
 
 
-implementation
+Implementation
 
 
 { TDisassembleThread }
@@ -71,7 +77,14 @@ end;
 
 procedure TDisassembleThread.Execute;
 begin
-  fExecFile.Disassemble;
+  try
+    fExecFile.Disassemble;
+  except
+    on EUserTerminatedProcess do
+      ProgressData.ErrorStatus:= errUserTerminated;
+    on Exception do
+      ProgressData.ErrorStatus:= errUnspecified;
+  end;
   ProgressData.Finished:= true;
 end;
 
@@ -90,7 +103,14 @@ end;
 
 procedure TDisassemblePartThread.Execute;
 begin
-  fCodeSection.DisassemblePart(fOptions);
+  try
+    fCodeSection.DisassemblePart(fOptions);
+  except
+    on EUserTerminatedProcess do
+      ProgressData.ErrorStatus:= errUserTerminated;
+    on Exception do
+      ProgressData.ErrorStatus:= errUnspecified;
+  end;
   ProgressData.Finished:= true;
 end;
 
@@ -111,7 +131,14 @@ end;
 
 procedure TSaveThread.Execute;
 begin
-  fManager.SaveExecFileToFile(fExecFile, fFileName, fSaveOptions);
+  try
+    fManager.SaveExecFileToFile(fExecFile, fFileName, fSaveOptions);
+  except
+    on EUserTerminatedProcess do
+      ProgressData.ErrorStatus:= errUserTerminated;
+    on Exception do
+      ProgressData.ErrorStatus:= errUnspecified;
+  end;
   ProgressData.Finished:= true;
 end;
 
@@ -130,7 +157,14 @@ end;
 
 procedure TLoadThread.Execute;
 begin
-  ProgressData.Result:= Pointer(fManager.LoadExecFileFromFile(fFileName));
+  try
+    ProgressData.Result:= Pointer(fManager.LoadExecFileFromFile(fFileName));
+  except
+    on EUserTerminatedProcess do
+      ProgressData.ErrorStatus:= errUserTerminated;
+    on Exception do
+      ProgressData.ErrorStatus:= errUnspecified;
+  end;
   ProgressData.Finished:= true;
 end;
 

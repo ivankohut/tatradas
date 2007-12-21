@@ -1,20 +1,21 @@
-unit CallsAndJumpsTableUnit; 
+unit CallsAndJumpsTableUnit;
 
 interface
 
 uses
-  Classes, 
-  SysUtils, 
-  Math, 
-  
+  Classes,
+  SysUtils,
+  Math,
+  Types,
+
+  DisassemblerTypes,
   procmat;
-  
-{$INCLUDE 'disassembler.inc'}
+
 
 type
 
 { TCallsAndJumps }
-  
+
   TCaJEntry = record
     start,finish: cardinal;
   end;
@@ -24,13 +25,13 @@ type
     Current: array of TCaJEntry;
     Next: array of cardinal;
     fNextCount: integer;
-    fDisassemblerMap: TByteDynamicArray;
+    fDisassemblerMap: TByteDynArray;
     function GetCount: integer;
     function GetCapacity: integer;
     function GetData(index: integer):tcajentry;
     procedure SetCapacity(aCapacity: integer);
   public
-    constructor Create(var aDisassemblerMap: TByteDynamicArray); overload;
+    constructor Create(var aDisassemblerMap: TByteDynArray); overload;
 
     procedure Add(address: cardinal);                              // pridanie do buducich
     procedure Process(lastAddress: cardinal);                      // spracovanie buducich -> na aktualne
@@ -43,7 +44,7 @@ implementation
 
 { TCallsAndJumps }
 
-constructor TCallsAndJumps.Create(var aDisassemblerMap: TByteDynamicArray);
+constructor TCallsAndJumps.Create(var aDisassemblerMap: TByteDynArray);
 begin
   fDisassemblerMap:=aDisassemblerMap;
 end;
@@ -82,10 +83,10 @@ procedure TCallsAndJumps.Add(address: cardinal);
 begin
   if (fDisassemblerMap[address] and dfPart) <> 0 then
     Exit;
-    
+
   if Capacity <= fNextCount then
     Capacity:=Capacity + 10;
-    
+
   next[fNextCount]:=address;
   Inc(fNextCount);
 end;
@@ -94,7 +95,7 @@ end;
 
 procedure TCallsAndJumps.Process(lastAddress: cardinal);
 var
-  pom: TCardinalDynamicArray;
+  pom: TCardinalDynArray;
 
   procedure MergeCAS(a1,a2,b1,b2:cardinal);
   var zac,i,pocet: integer;

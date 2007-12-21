@@ -7,8 +7,8 @@ interface
 uses
 {$IFDEF MSWINDOWS}
   Windows,
-  Controls, Forms, Dialogs, ShellAPI,
-  StdCtrls, ComCtrls, ImgList, Menus, ExtCtrls, Grids,
+  Controls, Forms, Dialogs, ShellAPI,  ActnList,
+  Graphics, StdCtrls, ComCtrls, ImgList, Menus, ExtCtrls, Grids,
 {$ENDIF}
 {$IFDEF LINUX}
   QDialogs, QImgList, QMenus, QTypes, QGraphics,
@@ -19,12 +19,12 @@ uses
   IniFiles,
   Contnrs,
 
-  
+  SynEdit,
+
   ButtonsX,
   TranslatorUnit,
   StringRes,
   procmat,
-  SynEdit,
   SectionUnit,
   TabFrameTemplateUnit,
   FileTabFrameUnit,
@@ -33,7 +33,8 @@ uses
   ExecFileUnit,
   CodeSectionUnit,
   HexEditFormUnit,
-  ProgressThreads, ActnList, Graphics;
+  LoggerUnit,
+  ProgressThreads;
 
 
 type
@@ -53,7 +54,7 @@ type
     About1: TMenuItem;
     FindText1: TMenuItem;
     Searchagain1: TMenuItem;
-    ImageList1: TImageList;
+    MenuImageList: TImageList;
     OpenProject1: TMenuItem;
     CloseFile1: TMenuItem;
     SaveProjectSaveDialog: TSaveDialog;
@@ -131,15 +132,16 @@ type
     InsertComment: TMenuItem;
     EmptyLine: TMenuItem;
     HexEditor1: TMenuItem;
-    ActionList1: TActionList;
+    MainActionList: TActionList;
     actGoToEntryPoint: TAction;
-    Action2: TAction;
     OpenProjectOpenDialog: TOpenDialog;
     actFollowJump: TAction;
+    actReturnJump: TAction;
+    actGoToAddress: TAction;
 
     procedure OpenClick(Sender: TObject);
     procedure DisassembleClick(Sender: TObject);
-    procedure ProjectClick(Sender: TObject);
+    procedure OpenProjectClick(Sender: TObject);
     procedure SaveClick(Sender: TObject);
     procedure CloseFileClick(Sender: TObject);
     procedure ExitClick(Sender: TObject);
@@ -158,9 +160,9 @@ type
     procedure FindDialog1Find(Sender: TObject);
     procedure PageControl1Change(Sender: TObject);
     procedure actGotoEntrypointExecute(Sender: TObject);
-    procedure Gotoaddress1Click(Sender: TObject);
-    procedure FollowJUMPCALL1Click(Sender: TObject);
-    procedure ReturnfromJUMPCALL1Click(Sender: TObject);
+    procedure actGotoAddressExecute(Sender: TObject);
+    procedure actFollowJUMPCALLExecute(Sender: TObject);
+    procedure actReturnfromJUMPCALLExecute(Sender: TObject);
     procedure Calculator1Click(Sender: TObject);
     procedure Options1Click(Sender: TObject);
 
@@ -176,16 +178,18 @@ type
     procedure ChangeSDataClick(Sender: TObject);
     procedure ChangeFDataClick(Sender: TObject);
     procedure HexEditor1Click(Sender: TObject);
+    procedure ProjectModified(Sender: TObject);
 
 private
-    fopenfilepath:string;
+    fopenfilepath: string;
     fOpenProjectPath: string;
     fSaveProjectPath: string;
+    fModified: boolean;
 
     function GetActivePageType: TPageType; // remove candidate
-
+    function GetActiveFrame: TTabFrameTemplate;
+    procedure SetModified(AModified: boolean);
 public
-    Modified: boolean;
     ExecFile: TExecutableFile;
 
 public
@@ -198,7 +202,6 @@ public
     sINI: TMemINIFile;
 
 //    ActivePage: TTabSheetTemplate;
-    ActiveFrame: TTabFrameTemplate;
 
     function GetSectionsTabSheet(ASection: TSection): TTabSheetTemplate;
 
@@ -212,7 +215,8 @@ public
 
 
     property ActivePageType: TPageType read GetActivePageType;
-
+    property ActiveFrame: TTabFrameTemplate read GetActiveFrame;
+    property Modified: boolean read fModified write SetModified;
   end;
 
 
@@ -220,7 +224,7 @@ var
   MainForm: TMainForm;
   ExecFileManager: TExecFileManager;
 
-  
+
 implementation
 
 
@@ -294,20 +298,26 @@ end;
 
 procedure TMainForm.DisassembleClick(Sender: TObject);
 var
-  i: integer;
+  PageIndex, SectionIndex: integer;
 begin
   ProgressForm.Execute(TDisassembleThread.Create(ExecFile));
   if ProgressData.ErrorStatus = errNone then begin
     SaveMyButton.Enabled:= true;
     Save1.Enabled:= true;
-    // Remove code frames
-    //   ????
-    
+    Modified:= true;
+
+    // Clear old code tabs
+    for PageIndex := PageControl1.PageCount - 1 downto 0 do
+      if (PageControl1.Pages[PageIndex] as TTabSheetTemplate).PageType = ttCode then
+        PageControl1.Pages[PageIndex].Free;
+
     // Create section tabs and frames
-    for i := 0 to ExecFile.Sections.Count - 1 do
-      if ExecFile.Sections[i].Typ = stCode then
-        if (ExecFile.Sections[i] as TCodeSection).IsDisassembled then
-          TTabSheetTemplate.Create(ExecFile.Sections[i]);
+    for SectionIndex:= 0 to ExecFile.Sections.Count - 1 do
+      if ExecFile.Sections[SectionIndex].Typ = stCode then
+        if (ExecFile.Sections[SectionIndex] as TCodeSection).IsDisassembled then begin
+          TTabSheetTemplate.Create(ExecFile.Sections[SectionIndex]);
+          ((PageControl1.Pages[PageControl1.PageCount-1] as TTabSheetTemplate).Frame as TCodeTabFrame).OnChangeDisassembled:= ProjectModified;
+        end;
   end
   else begin
     SaveMyButton.Enabled:= false;
@@ -349,7 +359,7 @@ end;
 
 
 
-procedure TMainForm.ProjectClick(Sender: TObject);
+procedure TMainForm.OpenProjectClick(Sender: TObject);
 var
   ErrorMessage: string;
   i: integer;
@@ -383,6 +393,8 @@ begin
       errBadFormat: begin
         ErrorMessage:= 'File is corrupted: ';
       end;
+      errUnspecified:
+        ErrorMessage:= 'An error occured. Process stopped.';
     end;
     MessageDlg(ErrorMessage + '"' + OpenProjectOpenDialog.FileName + '"', mtError, [mbOK], 0);
     Exit;
@@ -391,21 +403,23 @@ begin
   // Create file and section tabs and frames
   TTabSheetTemplate.CreateFileTab(ExecFile);
   // Load non-code sections
-  for i := 0 to ExecFile.Sections.Count - 1 do 
+  for i := 0 to ExecFile.Sections.Count - 1 do
     if ExecFile.Sections[i].typ <> stCode then
       TTabSheetTemplate.Create(ExecFile.Sections[i]);
   // Load code sections
-  for i := 0 to ExecFile.Sections.Count - 1 do 
+  for i := 0 to ExecFile.Sections.Count - 1 do
     if ExecFile.Sections[i].typ = stCode then
-      if (ExecFile.Sections[i] as TCodeSection).IsDisassembled then
+      if (ExecFile.Sections[i] as TCodeSection).IsDisassembled then begin
         TTabSheetTemplate.Create(ExecFile.Sections[i]);
+        ((PageControl1.Pages[PageControl1.PageCount-1] as TTabSheetTemplate).Frame as TCodeTabFrame).OnChangeDisassembled:= ProjectModified;
+      end;
+
+  Modified:= false;
 
   DisassembleMyButton.Enabled:= false;
   SaveMyButton.Enabled:= true;
   Save1.Enabled:= true;
   CloseFile1.Enabled:= true;
-
-  Caption:= TatraDASFullNameVersion + ' - ' + ExecFile.FileName;
 end;
 
 
@@ -431,8 +445,8 @@ begin
     PageControl1.Pages[0].Free;
 
   ExecFile.Free;
-  ExecFile:=nil;
-
+  ExecFile:= nil;
+  Modified:= false;
   DisassembleMyButton.Enabled:= false;
   Disassemble1.Enabled:= false;
   CloseFile1.Enabled:= false;
@@ -446,7 +460,7 @@ end;
 
 
 
-procedure TMainForm.ExitClick(Sender: TObject);                
+procedure TMainForm.ExitClick(Sender: TObject);
 begin
   Close;
 end;
@@ -489,11 +503,11 @@ end;
 
 procedure TMainForm.FormCreate(Sender: TObject);      // Inicializacia
 begin
-  DoubleBuffered:=true;
+  DoubleBuffered:= true;
 
   Image1.Picture.Bitmap.LoadFromResourceName(hinstance,'buttons_background');
 
-  OpenMyButton:=TIvanSpeedButton.Create(self);
+  OpenMyButton:= TIvanSpeedButton.Create(self);
   OpenMyButton.Parent:=self;
   OpenMyButton.ObrMimo.LoadFromResourceName(hinstance,'open1');
   OpenMyButton.ObrNad.LoadFromResourceName(hinstance,'open2');
@@ -501,7 +515,7 @@ begin
   OpenMyButton.OnClick:=OpenClick;
   OpenMyButton.Glyph:=OpenMyButton.ObrMimo;
 
-  DisassembleMyButton:=TIvanSpeedButton.Create(self);
+  DisassembleMyButton:= TIvanSpeedButton.Create(self);
   DisassembleMyButton.Parent:=self;
   DisassembleMyButton.ObrMimo.LoadFromResourceName(hinstance,'disassemble1');
   DisassembleMyButton.ObrNad.LoadFromResourceName(hinstance,'disassemble2');
@@ -511,15 +525,15 @@ begin
   DisassembleMyButton.Enabled:=false;
 
 
-  ProjectMyButton:=TIvanSpeedButton.Create(self);
+  ProjectMyButton:= TIvanSpeedButton.Create(self);
   ProjectMyButton.Parent:=self;
   ProjectMyButton.ObrMimo.LoadFromResourceName(hinstance,'project1');
   ProjectMyButton.ObrNad.LoadFromResourceName(hinstance,'project2');
   ProjectMyButton.Left:=220;
-  ProjectMyButton.OnClick:=ProjectClick;
+  ProjectMyButton.OnClick:= OpenProjectClick;
   ProjectMyButton.Glyph:=ProjectMyButton.ObrMimo;
 
-  SaveMyButton:=TIvanSpeedButton.Create(self);
+  SaveMyButton:= TIvanSpeedButton.Create(self);
   SaveMyButton.Parent:=self;
   SaveMyButton.ObrMimo.LoadFromResourceName(hinstance,'save1');
   SaveMyButton.ObrNad.LoadFromResourceName(hinstance,'save2');
@@ -547,13 +561,13 @@ begin
 //  Width:= INI.ReadInteger('Settings','Width',500);
 //  CurrentLanguage:= sINI.ReadString('Settings','Language','eng');
 // osetrit ak sa podari zmenit jazyk
-  Translator:= TTranslator.Create(ExtractFilePath(Application.ExeName)+sINI.ReadString('Settings','LanguageFolder','\languages'),Language1, ImageList1);
+  Translator:= TTranslator.Create(ExtractFilePath(Application.ExeName) + sINI.ReadString('Settings', 'LanguageFolder', PathDelim + 'languages'), Language1, MenuImageList);
   if not Translator.ChangeLanguage(sINI.ReadString('Settings','Language','en')) then
     if not Translator.ChangeLanguage('en') then begin
        ShowMessage(NoLanguageFilesStr);
        Application.Terminate;
     end;
-  
+
   fOpenFilePath:= sINI.ReadString('Paths','OpenFile','');
   fOpenProjectPath:= sINI.ReadString('Paths','OpenProject','');
   fSaveProjectPath:= sINI.ReadString('Paths','SaveProject','');
@@ -561,6 +575,9 @@ begin
 //  OptionsForm.LoadSettings(sINI); - treba volat ked uz je OptionsForm vytvoreny
 
   ExecFileManager:=TExecFileManager.Create;
+
+//  Logger.AddListener(TTextFileLoggerListener.Create('disasm.log'));
+  Logger.Info('----- START -----');
 end;
 
 //==============================================================================
@@ -573,7 +590,8 @@ end;
 
 
 procedure TMainForm.Translate;    // Zmena jazyka prostredia
-var i:integer;
+var
+  BookMarkIndex: integer;
 begin
 // Zmena popisov komponent
 
@@ -609,15 +627,15 @@ begin
 
   ToggleBookmarks.Caption:= Translator.TranslateControl('Code','ToggleBookmark');
   ToggleBookmarks.Hint:= Translator.TranslateControl('Code','MainToggleBookmarkHint');
-  for i:=0 to 9 do begin
-    ToggleBookmarks.Items[i].Caption:= Translator.TranslateControl('Code','Bookmark')+' '+IntToStr(i);
-    ToggleBookmarks.Items[i].Hint:= Translator.TranslateControl('Code','ToggleBookmarkHint')+' '+IntToStr(i);
+  for BookMarkIndex:= 0 to 9 do begin
+    ToggleBookmarks.Items[BookMarkIndex].Caption:= Translator.TranslateControl('Code', 'Bookmark') + ' ' + IntToStr(BookMarkIndex);
+    ToggleBookmarks.Items[BookMarkIndex].Hint:= Translator.TranslateControl('Code', 'ToggleBookmarkHint') + ' ' + IntToStr(BookMarkIndex);
   end;
-  GotoBookmarks.Caption:= Translator.TranslateControl('Code','GotoBookmark');
-  GotoBookmarks.Hint:= Translator.TranslateControl('Code','MainGotoBookmarkHint');
-  for i:=0 to 9 do begin
-    GotoBookmarks.Items[i].Caption:= Translator.TranslateControl('Code','Bookmark')+' '+IntToStr(i);
-    GotoBookmarks.Items[i].Hint:= Translator.TranslateControl('Code','GotoBookmarkHint')+' '+IntToStr(i);
+  GotoBookmarks.Caption:= Translator.TranslateControl('Code', 'GotoBookmark');
+  GotoBookmarks.Hint:= Translator.TranslateControl('Code', 'MainGotoBookmarkHint');
+  for BookMarkIndex:= 0 to 9 do begin
+    GotoBookmarks.Items[BookMarkIndex].Caption:= Translator.TranslateControl('Code', 'Bookmark') + ' ' + IntToStr(BookMarkIndex);
+    GotoBookmarks.Items[BookMarkIndex].Hint:= Translator.TranslateControl('Code', 'GotoBookmarkHint') + ' ' + IntToStr(BookMarkIndex);
   end;
 
   ChangeToUnsigned.Caption:= Translator.TranslateControl('Code','ChangeToUnsigned');
@@ -649,8 +667,7 @@ begin
 
   // [LabelCaption]
 
-  ProcessText.Disassemblying:= Translator.TranslateControl('LabelCaption','Disassemblying');
-  ProcessText.Indentifying:= Translator.TranslateControl('LabelCaption','Identifyingjumps');
+  ProcessText.Disassembling:= Translator.TranslateControl('LabelCaption','Disassembling');
   ProcessText.PreparingOutput:= Translator.TranslateControl('LabelCaption','Preparingoutput');
   ProcessText.LoadingDAS:= Translator.TranslateControl('LabelCaption','LoadingDAS');
   ProcessText.LoadingDHF:= Translator.TranslateControl('LabelCaption','LoadingDHF');
@@ -722,55 +739,57 @@ end;
 
 procedure TMainForm.PageControl1Change(Sender: TObject);
 begin
-  ActiveFrame:=(PageControl1.ActivePage as TTabSheetTemplate).Frame;
   if ActivePageType = ttCode then begin
-    Goto1.Enabled:=True;
-    Search1.Enabled:=True;
-    Edit1.Enabled:=True;
+    Goto1.Enabled:= True;
+    Search1.Enabled:= True;
+    Edit1.Enabled:= True;
     with (ActiveFrame as TCodeTabFrame) do begin
-      GotoEntrypoint1.Enabled:= GotoEntryPointButton.Enabled;
-      FollowJUMPCALL1.Enabled:= FollowButton.Enabled;
-      ReturnfromJUMPCALL1.Enabled:= ReturnButton.Enabled;
+      UpdateActions;
     end;
   end
   else begin
-    Goto1.Enabled:=False;
-    Search1.Enabled:=False;
-    Edit1.Enabled:=False;
+    Goto1.Enabled:= False;
+    Search1.Enabled:= False;
+    Edit1.Enabled:= False;
   end;
 end;
+
+
+
+function TMainForm.GetActiveFrame: TTabFrameTemplate;
+begin
+  result:= (PageControl1.ActivePage as TTabSheetTemplate).Frame;
+end;
+
+
 
 procedure TMainForm.actGotoEntrypointExecute(Sender: TObject);
 begin
-  with ActiveFrame as TCodeTabFrame do begin
-    if GotoEntryPointButton.Enabled then
-      GotoEntryPointButtonClick(self);
-  end;
+ (ActiveFrame as TCodeTabFrame).GotoEntryPointButtonClick(self);
 end;
 
-procedure TMainForm.Gotoaddress1Click(Sender: TObject);
+
+
+procedure TMainForm.actGotoAddressExecute(Sender: TObject);
 begin
-  with ActiveFrame as TCodeTabFrame do begin
-    if GotoAddressButton.Enabled then
-      GotoAddressButtonClick(self);
-  end;
+  (ActiveFrame as TCodeTabFrame).GotoAddressButtonClick(self);
 end;
 
-procedure TMainForm.FollowJUMPCALL1Click(Sender: TObject);
+
+
+procedure TMainForm.actFollowJUMPCALLExecute(Sender: TObject);
 begin
-  with ActiveFrame as TCodeTabFrame do begin
-    if FollowButton.Enabled then
-      FollowButtonClick(self);
-  end;
+  (ActiveFrame as TCodeTabFrame).FollowButtonClick(self);
 end;
 
-procedure TMainForm.ReturnfromJUMPCALL1Click(Sender: TObject);
+
+
+procedure TMainForm.actReturnfromJUMPCALLExecute(Sender: TObject);
 begin
-  with ActiveFrame as TCodeTabFrame do begin
-    if ReturnButton.Enabled then
-      ReturnButtonClick(self);
-  end;
+  (ActiveFrame as TCodeTabFrame).ReturnButtonClick(self);
 end;
+
+
 
 procedure TMainform.SetOpenFilePath(path: string);
 begin
@@ -918,12 +937,35 @@ end;
 
 
 
+procedure TMainForm.ProjectModified(Sender: TObject);
+begin
+  Modified:= true;
+end;
+
+
+
+procedure TMainForm.SetModified(AModified: boolean);
+begin
+  fModified:= AModified;
+  if ExecFile <> nil then begin
+    if fModified then
+      Caption:= TatraDASFullNameVersion + ' - ' + ExecFile.FileName + '*'
+    else
+      Caption:= TatraDASFullNameVersion + ' - ' + ExecFile.FileName;
+  end
+  else
+    Caption:= TatraDASFullNameVersion;
+end;
+
+
+
 initialization
-  ProcessText.Disassemblying:='Disassemblying...';
-  ProcessText.Indentifying:='Identifying jumps and calls...';
-  ProcessText.PreparingOutput:='Preparing output...';
-  ProcessText.LoadingDAS:='Loading DAS file - Code Section #';
-  ProcessText.LoadingDHF:='Loading DHF file - Code Section #';
-  ProcessText.SavingDAS:='Saving DAS file - Code Section #';
-  ProcessText.SavingDHF:='Saving DHF file - Code Section #';
-end.                                        // KONIEC 'UNIT1'
+  ProcessText.Disassembling:= 'Disassembling...';
+  ProcessText.PreparingOutput:= 'Preparing output...';
+  ProcessText.LoadingDAS:= 'Loading DAS file - Code Section #';
+  ProcessText.LoadingDHF:= 'Loading DHF file - Code Section #';
+  ProcessText.SavingDAS:= 'Saving DAS file - Code Section #';
+  ProcessText.SavingDHF:= 'Saving DHF file - Code Section #';
+
+
+end.

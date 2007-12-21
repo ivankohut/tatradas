@@ -9,7 +9,7 @@ E=0
 F=0
 G=1
 H=1
-I=0
+I=1
 J=0
 K=0
 L=1
@@ -47,7 +47,7 @@ PackageDLLOutputDir=
 PackageDCPOutputDir=
 SearchPath=../third/synedit;../third/mphexeditor
 Packages=vcl;rtl;vclx;vclshlctrls;VclSmp;direct
-Conditionals=
+Conditionals=NOTHREADS
 DebugSourceDirs=
 UsePackages=0
 [Parameters]
@@ -81,13 +81,17 @@ OriginalFilename=
 ProductName=
 ProductVersion=1.0.0.0
 Comments=
+[HistoryLists\hlConditionals]
+Count=1
+Item0=NOTHREADS
 [HistoryLists\hlUnitAliases]
 Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
 [HistoryLists\hlSearchPath]
-Count=2
+Count=3
 Item0=../third/synedit;../third/mphexeditor
-Item1=../third/synedit
+Item1=$(DELPHI)\Lib\Debug;../third/synedit;../third/mphexeditor
+Item2=../third/synedit
 [HistoryLists\hlOutputDirectorry]
 Count=2
 Item0=../

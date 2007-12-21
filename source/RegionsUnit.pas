@@ -64,7 +64,7 @@ end;
 
 function CompareRegions(Region1, Region2: Pointer): integer;
 begin
-  result:= CompareValue(TRegion(Region1).Offset, TRegion(Region2).Offset);
+  result:=CompareValue(TRegion(Region1).Offset, TRegion(Region2).Offset);
 end;
 
 
@@ -122,11 +122,14 @@ end;
 
 
 procedure TRegions.SaveToFile(DHF: TStream);
-var i: integer;
+var
+  RegionIndex: integer;
+  RegionsCount: integer;
 begin
-  DHF.Write(fRegions.Count, 4);
-  for i:= 0 to Count - 1 do begin
-    with (fRegions[i] as TRegion) do begin
+  RegionsCount:= fRegions.Count;
+  DHF.Write(RegionsCount, 4);
+  for RegionIndex:= 0 to Count - 1 do begin
+    with (fRegions[RegionIndex] as TRegion) do begin
       StreamWriteAnsiString(DHF, Name);
       DHF.Write(Offset, 4);
       DHF.Write(Size, 4);

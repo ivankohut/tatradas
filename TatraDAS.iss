@@ -1,6 +1,6 @@
 [Setup]
 AppName=TatraDAS
-AppVerName=TatraDAS 2.9.7
+AppVerName=TatraDAS 2.9.8
 AppPublisher=Ivan Kohút
 AppPublisherURL=http://tatradas.sourceforge.net
 AppSupportURL=http://tatradas.sourceforge.net
@@ -10,11 +10,11 @@ DefaultGroupName=TatraDAS
 AllowNoIcons=yes
 SolidCompression=yes
 FlatComponentsList=no
-OutputBaseFilename=tdas297
+OutputBaseFilename=tdas298
 
 [Languages]
 Name: "en"; MessagesFile: "compiler:Default.isl"
-Name: "sk"; MessagesFile: "Slovak-4.2.2-Ivan.isl"
+Name: "sk"; MessagesFile: "compiler:Languages\Slovak.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "Create a &desktop icon"; GroupDescription: "Additional icons:"
@@ -22,7 +22,7 @@ Name: "quicklaunchicon"; Description: "Create a &Quick Launch icon"; GroupDescri
 
 [Files]
 Source: "TatraDAS.exe"; DestDir: "{app}"; Flags: ignoreversion; 
-Source: "TatraDAS.chm"; DestDir: "{app}"; Flags: ignoreversion; 
+Source: "doc\TatraDAS.chm"; DestDir: "{app}"; Flags: ignoreversion;
 Source: "languages\LangENG.ini"; DestDir: "{app}\languages"; Flags: ignoreversion;
 Source: "languages\LangSVK.ini"; DestDir: "{app}\languages"; Flags: ignoreversion;
 Source: "languages\en.ico"; DestDir: "{app}\languages"; Flags: ignoreversion;

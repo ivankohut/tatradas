@@ -3,35 +3,36 @@ program TatraDAS;
 {$INCLUDE 'delver.inc'}
 
 {%File 'TatraDASHighlighter.msg'}
-{%File 'misc\tatradas.rc'}
+{%File 'res\tatradas.rc'}
 
 {$IFDEF GUI_B}
   {$IFDEF MSWINDOWS}
-    {$R 'misc\tatradas.res' 'misc\tatradas.rc'}
+    {$R 'res\tatradas.res' 'res\tatradas.rc'}
   {$ENDIF}
   {$IFDEF LINUX}
-    {$R 'misc/tatradas.res' 'misc/tatradas.rc'}
+    {$R 'res/tatradas.res' 'res/tatradas.rc'}
   {$ENDIF}
 {$ENDIF}
 
 uses
-{$IFDEF MSWINDOWS}
-  Windows,
-  {$IFDEF GUI_B}
-    Forms,
-    SynEdit,
+  {$IFDEF MSWINDOWS}
+    {$IFDEF GUI_B}
+      Windows,
+      Forms,
+      SynEdit,
+    {$ENDIF}
   {$ENDIF}
-{$ENDIF}
-{$IFDEF LINUX}
-  {$IFDEF GUI_B}
-    QForms,
-    SynEdit,
+
+  {$IFDEF LINUX}
+    {$IFDEF GUI_B}
+      QForms,
+      SynEdit,
+    {$ENDIF}
   {$ENDIF}
-{$ENDIF}
 
   {$IFDEF FPC}
-    Crt,
-    {$IFNDEF MSWINDOWS}
+    {$IFDEF LINUX}
+      Crt,
       cthreads,
     {$ENDIF}
   {$ENDIF}
@@ -39,7 +40,7 @@ uses
   {$IFDEF MSWINDOWS}
     {$IFDEF DELPHI}
       {$IFDEF CONSOLE}
-        Crt in 'misc\win32\crt.pp',
+        //Crt in 'misc\win32\crt.pp',
       {$ENDIF}
     {$ENDIF}
   {$ENDIF}
@@ -49,9 +50,6 @@ uses
   StrUtils,
   procmat in 'procmat.pas',
   StringUtilities in 'StringUtilities.pas',
-  VersionUnit in 'VersionUnit.pas',
-  CallsAndJumpsTableUnit in 'CallsAndJumpsTableUnit.pas',
-  disassembler in 'disassembler.pas',
   ExecFileManagerUnit in 'ExecFileManagerUnit.pas',
   ExecFileUnit in 'ExecFileUnit.pas',
   SectionUnit in 'SectionUnit.pas',
@@ -61,16 +59,17 @@ uses
 {$IFDEF MSWINDOWS}
 
   // Misc. units
-  StringRes in 'misc\StringRes.pas',
+  StringRes in 'res\StringRes.pas',
   LoggerUnit in 'misc\LoggerUnit.pas',
 
 {$IFDEF GUI_B}
-  TatraDASHighlighter in 'misc\TatraDASHighlighter.pas',
+  TatraDASHighlighter in 'res\TatraDASHighlighter.pas',
   ButtonsX in 'misc\ButtonsX.pas',
+  myedits in 'misc\myedits.pas',
   TranslatorUnit in 'TranslatorUnit.pas',
+  VersionUnit in 'VersionUnit.pas',
 
   // Forms' units
-  TatraDASFormUnit in 'TatraDASFormUnit.pas',
   MainFormUnit in 'MainFormUnit.pas' {MainForm},
   HexEditFormUnit in 'forms\HexEditFormUnit.pas' {HexEditForm},
   CalculatorUnit in 'forms\CalculatorUnit.pas' {Calculator},
@@ -96,6 +95,15 @@ uses
   TatraDAS_SynEditStringList in 'misc\TatraDAS_SynEditStringList.pas',
 {$ENDIF}
 
+  // Disassembler units
+  DisassemblerUnit in 'disasm\DisassemblerUnit.pas',
+  DisassemblerUtils in 'disasm\DisassemblerUtils.pas',
+  DisassemblerTypes in 'disasm\DisassemblerTypes.pas',
+  x86DisassemblerTypes in 'disasm\x86DisassemblerTypes.pas',
+  x86Instructions in 'disasm\x86Instructions.pas',
+  DisassembledBlocksUnit in 'disasm\DisassembledBlocksUnit.pas',
+  CallsAndJumpsTableUnit in 'disasm\CallsAndJumpsTableUnit.pas',
+
   // Executable formats' units
   MZFileUnit in 'exefiles\MZFileUnit.pas',
   COMFileUnit in 'exefiles\COMFileUnit.pas',
@@ -116,16 +124,17 @@ uses
 
 {$IFDEF LINUX}
   // Misc. units
-  StringRes in 'misc/StringRes.pas',
+  StringRes in 'res/StringRes.pas',
   LoggerUnit in 'misc/LoggerUnit.pas',
 
 {$IFDEF GUI_B}
   ButtonsX in 'misc/ButtonsX.pas',
+  myedits in 'misc/myedits.pas',
   TranslatorUnit in 'TranslatorUnit.pas',
-  TatraDASHighlighter in 'misc/TatraDASHighlighter.pas',
+  TatraDASHighlighter in 'res/TatraDASHighlighter.pas',
+  VersionUnit in 'VersionUnit.pas',
 
   // Forms' units
-  TatraDASFormUnit in 'TatraDASFormUnit.pas',
   MainFormUnit in 'MainFormUnit.pas' {MainForm},
   HexEditFormUnit in 'forms/HexEditFormUnit.pas' {HexEditForm},
   CalculatorUnit in 'forms/CalculatorUnit.pas' {Calculator},
@@ -142,6 +151,14 @@ uses
 {$ELSE}
   TatraDAS_SynEditStringList in 'misc/TatraDAS_SynEditStringList.pas',
 {$ENDIF}
+  // Disassembler units
+  DisassemblerUnit in 'disasm/DisassemblerUnit.pas',
+  DisassemblerUtils in 'disasm/DisassemblerUtils.pas',
+  DisassemblerTypes in 'disasm/DisassemblerTypes.pas',
+  x86DisassemblerTypes in 'disasm/x86DisassemblerTypes.pas',
+  x86Instructions in 'disasm/x86Instructions.pas',
+  DisassembledBlocksUnit in 'disasm/DisassembledBlocksUnit.pas',
+  CallsAndJumpsTableUnit in 'disasm/CallsAndJumpsTableUnit.pas',
 
   // Sections' units
   CodeSectionUnit in 'sections/CodeSectionUnit.pas',
@@ -228,11 +245,13 @@ begin
         Write('.');
         Inc(ProgressCharsCount);
       end;
-      {$IFDEF FPC OR MSWINDOWS}
-      SavedXPosition:= WhereX;
-      GotoXY(MaxProgressNameLength + 2 + 20 + 1, WhereY);
-      Write(Round(100 * ProgressData.Position / ProgressData.Maximum), '%');
-      GotoXY(SavedXPosition, WhereY);
+      {$IFDEF FPC}
+       {$IFDEF LINUX}
+        SavedXPosition:= WhereX;
+        GotoXY(MaxProgressNameLength + 2 + 20 + 1, WhereY);
+        Write(Round(100 * ProgressData.Position / ProgressData.Maximum), '%');
+        GotoXY(SavedXPosition, WhereY);
+       {$ENDIF}
       {$ENDIF}
     end;
     Sleep(100);
@@ -248,46 +267,47 @@ var
   ExecFileManager: TExecFileManager;
   ExecFile: TExecutableFile;
   SaveOptions: TSaveOptions;
-
 begin
   ExecFileManager:= TExecFileManager.Create;
+  ExecFile:= nil;
+  try
+    // Create ExecFile
+    ExecFile:= ExecFileManager.CreateNewExecFile(ExpandFilename(InputFileName));
+    if ProgressData.ErrorStatus <> errNone then
+      raise ETatraDASException.Create('');
 
-  // Create ExecFile
-  ExecFile:= ExecFileManager.CreateNewExecFile(ExpandFilename(InputFileName));
-  if ProgressData.ErrorStatus <> errNone then begin
-    case ProgressData.ErrorStatus of
-      errOpen: Writeln('Unable to open file ''' + ExpandFilename(InputFileName) + '''.');
-      else
-        Writeln('Unknown error !');
-    end;
+    // Disassemble it
+    Writeln;
+    Writeln('CS_n  =  Code Section number ''n''.');
+    Writeln;
+    ExecuteProgress(TDisassembleThread.Create(ExecFile));
+    if ProgressData.ErrorStatus <> errNone then
+      raise ETatraDASException.Create('');
+
+    // Save result to file
+    SaveOptions:= [soDisassembly];
+    ExecuteProgress(TSaveThread.Create(ExecFileManager, ExecFile, OutputFileName, SaveOptions));
+    RenameFile(ChangeFileExt(OutputFileName, '.das'), OutputFileName);
+    WriteLn;
+    WriteLn;
+    WriteLn('Disassembling finished, result saved to file ''', OutputFileName, '''.');
+
+  finally
     ExecFile.Free;
-    Exit;
+    ExecFileManager.Free;
   end;
-
-  // Disassemble it
-  Writeln;
-  Writeln('CS_n <=> Code Section No.');
-  Writeln;
-  ExecuteProgress(TDisassembleThread.Create(ExecFile));
-
-  // Save result to file
-  SaveOptions:= [soDisassembly];
-  ExecuteProgress(TSaveThread.Create(ExecFileManager, ExecFile, OutputFileName, SaveOptions));
-  RenameFile(ChangeFileExt(OutputFileName, '.das'), OutputFileName);
-  WriteLn;
-  WriteLn;
-  WriteLn('Disassemblying finished, result saved to ''', OutputFileName, '''.');
-
-  ExecFile.Free;
-  ExecFileManager.Free;
 end;
 
 
 var
   ProgramIdentification: string;
+  ErrorMessage: string;
 
 begin
-  ProcessText.Disassemblying:= 'Disassemblying CS_';
+  Logger.AddListener(TTextFileLoggerListener.Create('disasm.log'));
+  Logger.Info('----- START -----');
+
+  ProcessText.Disassembling:= 'Disassembling CS_';
   ProcessText.PreparingOutput:='Preparing output CS_';
   ProcessText.LoadingDAS:= 'Loading DAS file - Code Section #';
   ProcessText.LoadingDHF:= 'Loading DHF file - Code Section #';
@@ -296,19 +316,36 @@ begin
 
 
   ProgramIdentification:= TatraDASFullNameVersion + ' - console version, Ivan Kohut (c) 2007';
+  WriteLn(DupeString('-', Length(ProgramIdentification)));
   WriteLn(ProgramIdentification);
   WriteLn(DupeString('-', Length(ProgramIdentification)));
   Writeln;
 
-  case ParamCount of
-    2: begin
-         RunDisassembler(ParamStr(1), ParamStr(2));
-       end;
-    else begin
-      ShowUsage;
-    end;
-  end;
+  if ParamCount = 2 then
+    try
+      RunDisassembler(ParamStr(1), ParamStr(2));
+    except
+      on ETatraDASException do begin
+        case ProgressData.ErrorStatus of
+          errOpen:
+            ErrorMessage:= 'Unable to open file ''' + ExpandFilename(ParamStr(1)) + '''.';
+          errUnknownFormat:
+            ErrorMessage:= 'Unknown file format.';
+          errUnspecified:
+            ErrorMessage:= 'An error occured. Process stopped.';
+        end;
+        WriteLn(ErrorMessage);
+        Logger.Fatal(ErrorMessage);
+      end
+      else
+        Logger.Fatal('Unhandled exception occured.');
+    end
 
+  else
+    ShowUsage;
+
+  Logger.Info('----- DONE ------');
+  Logger.Info('');
 end.
 
 {$ENDIF}

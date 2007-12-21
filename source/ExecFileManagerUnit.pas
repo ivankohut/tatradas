@@ -101,7 +101,7 @@ begin
     end;
    {$ELSE}
     ffUnknown: begin
-      ProgressData.ErrorStatus:=errUnknownFormat;
+      ProgressData.ErrorStatus:= errUnknownFormat;
       Exit;
     end;
    {$ENDIF}
@@ -233,7 +233,6 @@ var
     DAS: TextFile;
     ProjectVersion: cardinal;
     ProjectExecFileFormat: TExecFileFormat;
-    UselessLine: string;
 begin
   result:= nil;
   DHF_FileName:= aFileName;
@@ -268,8 +267,8 @@ begin
 
       AssignFile(DAS, DAS_FileName);
       Reset(DAS);
-      Readln(DAS, UselessLine);
-      Readln(DAS, UselessLine);
+      Readln(DAS);
+      Readln(DAS);
 
       if not result.LoadFromFile(DHF, DAS) then begin
         result.Free;

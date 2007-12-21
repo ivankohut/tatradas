@@ -12,7 +12,7 @@ uses
   procmat;
 
 type
-  TSectionType = (stCode, stImport, stExport, stRelocation, stResource, stDummy);
+  TSectionType = (stCode, stImport, stExport, stRelocation, stResource);
 
   TSection = class
    private
