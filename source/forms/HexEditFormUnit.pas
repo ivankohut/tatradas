@@ -95,7 +95,7 @@ begin
     if MainForm.ExecFile.FullPath = HexEdit.FileName then begin
        RegionIndex:= MainForm.ExecFile.Regions.GetIndexFromOffset(HexEdit.GetCursorPos);
        if RegionIndex <> -1 then begin
-         RegionOffset:= HexEdit.GetCursorPos - MainForm.ExecFile.Regions[RegionIndex].Offset;
+         RegionOffset:= cardinal(HexEdit.GetCursorPos) - MainForm.ExecFile.Regions[RegionIndex].Offset;
          StatusBar1.Panels[1].Text:=SectionStr + ': ' + MainForm.ExecFile.Regions[RegionIndex].Name;
          StatusBar1.Panels[2].Text:=SectionOffsetStr + ': '+IntToHex(RegionOffset, 8);
        end  

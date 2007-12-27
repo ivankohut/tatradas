@@ -24,7 +24,7 @@ type
     VersionLabel: TLabel;
     LicenseLabel: TLabel;
     OKButton: TButton;
-    AuthorLabel: TLabel;
+    ProgrammingLabel: TLabel;
     ActionList1: TActionList;
     BrowseURL1: TBrowseURL;
     Panel2: TPanel;
@@ -32,10 +32,12 @@ type
     Panel3: TPanel;
     URLLabel: TLabel;
     GraphicsLabel: TLabel;
-    AuthorData: TLabel;
+    ProgrammingDataLabel: TLabel;
     GraphicsDataLabel: TLabel;
     LicenseDataLabel: TLabel;
-    DateLabel: TLabel;
+    ReleaseDateLabel: TLabel;
+    CompilerLabel: TLabel;
+    CompilerDataLabel: TLabel;
     procedure OKButtonClick(Sender: TObject);
     procedure URLLabelMouseMove(Sender: TObject; Shift: TShiftState; X,Y: Integer);
     procedure URLLabelMouseLeave(Sender: TObject);
@@ -43,6 +45,7 @@ type
     procedure FormActivate(Sender: TObject);
 
     procedure Translate;
+    procedure FormCreate(Sender: TObject);
   end;
 
 var
@@ -85,13 +88,14 @@ end;
 
 procedure TAboutBox.Translate;
 begin
-  Caption:= Translator.TranslateControl('AboutBoxForm','Caption');
-  AuthorLabel.Caption:= Translator.TranslateControl('AboutBoxForm','AutorLabel');
-  GraphicsLabel.Caption:= Translator.TranslateControl('AboutBoxForm','GraphicsLabel');
-  VersionLabel.Caption:= Translator.TranslateControl('AboutBoxForm','VersionLabel') + ' ' + ShortTatraDASVersion;
-  DateLabel.Caption:= Translator.TranslateControl('AboutBoxForm','DateLabel') + ' ' + TatraDASDate + ' (DMY)'; // + ' (DD.MM.YYYY)';
-  LicenseLabel.Caption:= Translator.TranslateControl('AboutBoxForm','LicenseLabel');
-  URLLabel.Hint:= Translator.TranslateControl('AboutBoxForm','URLLabelHint');
+  Caption:= Translator.TranslateControl('AboutBoxForm', 'Caption');
+  ProgrammingLabel.Caption:= Translator.TranslateControl('AboutBoxForm', 'ProgrammingLabel');
+  GraphicsLabel.Caption:= Translator.TranslateControl('AboutBoxForm', 'GraphicsLabel');
+  VersionLabel.Caption:= Translator.TranslateControl('AboutBoxForm', 'VersionLabel') + ' ' + ShortTatraDASVersion;
+  ReleaseDateLabel.Caption:= Translator.TranslateControl('AboutBoxForm', 'ReleaseDateLabel') + ' ' + TatraDASDate + ' (DMY)'; // + ' (DD.MM.YYYY)';
+  LicenseLabel.Caption:= Translator.TranslateControl('AboutBoxForm', 'LicenseLabel');
+  URLLabel.Hint:= Translator.TranslateControl('AboutBoxForm', 'URLLabelHint');
+  CompilerLabel.Caption := Translator.TranslateControl('AboutBoxForm', 'CompilerLabel');
 end;
 
 
@@ -99,8 +103,18 @@ end;
 procedure TAboutBox.FormActivate(Sender: TObject);
 begin
   VersionLabel.Left:= (Panel1.Width - VersionLabel.Width) div 2;
-  DateLabel.Left:= (Panel1.Width - DateLabel.Width) div 2;
+  ReleaseDateLabel.Left:= (Panel1.Width - ReleaseDateLabel.Width) div 2;
 end;
 
+
+
+procedure TAboutBox.FormCreate(Sender: TObject);
+var
+  FormatSettings: TFormatSettings;
+begin
+  GetLocaleFormatSettings(0, FormatSettings);
+  FormatSettings.DecimalSeparator := '.'; 
+  CompilerDataLabel.Caption := CompilerDataLabel.Caption + ' ' + FloatToStrF(CompilerVersion, ffFixed, 5, 1, FormatSettings);
+end;
 
 end.

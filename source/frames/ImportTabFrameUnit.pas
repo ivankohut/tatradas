@@ -22,13 +22,17 @@ uses
 
 type
   TImportTabFrame = class(TTabFrameTemplate)
-    ModulComboBox: TComboBox;
+    OccurHintLabel: TLabel;
+    Panel1: TPanel;
     FunctionListView: TListView;
+    Panel2: TPanel;
+    AddressListBox: TListBox;
+    FunctionCallsLabel: TLabel;
+    Splitter1: TSplitter;
+    Panel3: TPanel;
+    ModulComboBox: TComboBox;
     ModulLabel: TLabel;
     FunctionLabel: TLabel;
-    AddressListBox: TListBox;
-    OccurHintLabel: TLabel;
-    OccurLabel: TLabel;
     constructor Create(AOwner: TComponent; ASection: TSection); overload; override;
     procedure ModulComboBoxChange(Sender: TObject);
     procedure FunctionListViewSelectItem(Sender: TObject; Item: TListItem; Selected: Boolean);
@@ -141,7 +145,7 @@ begin
   with (Tab.Frame as TCodeTabFrame) do begin
     GotoPosition(GetPosition(Address), soBeginning);
   end;
-  MainForm.PageControl1.ActivePage:= Tab;
+  MainForm.MainPageControl.ActivePage:= Tab;
 end;
 
 
@@ -165,7 +169,7 @@ begin
   with (Tab.Frame as TCodeTabFrame) do begin
     GotoPosition(GetPosition(Address), soBeginning);
   end;
-  MainForm.PageControl1.ActivePage:=Tab;
+  MainForm.MainPageControl.ActivePage:=Tab;
 end;
 
 
@@ -176,7 +180,7 @@ begin
   Caption:= Translator.TranslateControl('Import', 'Caption');
   ModulLabel.Caption:= Translator.TranslateControl('Import', 'ModulLabel');
   FunctionLabel.Caption:= Translator.TranslateControl('Import', 'FunctionLabel');
-  OccurLabel.Caption:= Translator.TranslateControl('Import', 'OccurLabel');
+  FunctionCallsLabel.Caption:= Translator.TranslateControl('Import', 'FunctionCallsLabel');
   OccurHintLabel.Caption:= Translator.TranslateControl('Import', 'OccurHintLabel');
 
   FunctionListView.Columns.Items[0].Caption:= Translator.TranslateControl('Import', 'FunctionListNumber');

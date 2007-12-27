@@ -18,6 +18,7 @@ uses
   Classes,
   IniFiles,
   Contnrs,
+  StrUtils,
 
   SynEdit,
 
@@ -41,7 +42,7 @@ type
 
   TMainForm = class(TForm, ITranslatable)
     OpenFileOpenDialog: TOpenDialog;
-    PageControl1: TPageControl;
+    MainPageControl: TPageControl;
     MainMenu1: TMainMenu;
     File1: TMenuItem;
     OpenFile1: TMenuItem;
@@ -138,6 +139,7 @@ type
     actFollowJump: TAction;
     actReturnJump: TAction;
     actGoToAddress: TAction;
+    Panel1: TPanel;
 
     procedure OpenClick(Sender: TObject);
     procedure DisassembleClick(Sender: TObject);
@@ -158,7 +160,7 @@ type
     procedure Translate;
 
     procedure FindDialog1Find(Sender: TObject);
-    procedure PageControl1Change(Sender: TObject);
+    procedure MainPageControlChange(Sender: TObject);
     procedure actGotoEntrypointExecute(Sender: TObject);
     procedure actGotoAddressExecute(Sender: TObject);
     procedure actFollowJUMPCALLExecute(Sender: TObject);
@@ -180,7 +182,7 @@ type
     procedure HexEditor1Click(Sender: TObject);
     procedure ProjectModified(Sender: TObject);
 
-private
+  private
     fopenfilepath: string;
     fOpenProjectPath: string;
     fSaveProjectPath: string;
@@ -189,15 +191,15 @@ private
     function GetActivePageType: TPageType; // remove candidate
     function GetActiveFrame: TTabFrameTemplate;
     procedure SetModified(AModified: boolean);
-public
+  public
     ExecFile: TExecutableFile;
 
-public
+  public
     OpenMyButton: TIvanSpeedButton;
     DisassembleMyButton: TIvanSpeedButton;
     ProjectMyButton: TIvanSpeedButton;
     SaveMyButton: TIvanSpeedButton;
-    HelpMyButton: TIvanSpeedButton;
+    //HelpMyButton: TIvanSpeedButton;
 
     sINI: TMemINIFile;
 
@@ -277,15 +279,15 @@ begin
     Exit;
   end;
 
-  Modified:=false;
+  Modified := false;
 
   // Create section tabs and frames
   TTabSheetTemplate.CreateFileTab(ExecFile);
   for i := 0 to ExecFile.Sections.Count - 1 do
     if ExecFile.Sections[i].Typ <> stCode then
       TTabSheetTemplate.Create(ExecFile.Sections[i]);
-  PageControl1.ActivePageIndex:= 0;
-  PageControl1Change(nil);
+  MainPageControl.ActivePageIndex:= 0;
+  MainPageControlChange(nil);
 
   HexEditor1.Enabled:= true;
   CloseFile1.Enabled:= true;
@@ -301,22 +303,24 @@ var
   PageIndex, SectionIndex: integer;
 begin
   ProgressForm.Execute(TDisassembleThread.Create(ExecFile));
+//  ExecFile.Disassemble; = non-thread way
+
   if ProgressData.ErrorStatus = errNone then begin
     SaveMyButton.Enabled:= true;
     Save1.Enabled:= true;
     Modified:= true;
 
     // Clear old code tabs
-    for PageIndex := PageControl1.PageCount - 1 downto 0 do
-      if (PageControl1.Pages[PageIndex] as TTabSheetTemplate).PageType = ttCode then
-        PageControl1.Pages[PageIndex].Free;
+    for PageIndex := MainPageControl.PageCount - 1 downto 0 do
+      if (MainPageControl.Pages[PageIndex] as TTabSheetTemplate).PageType = ttCode then
+        MainPageControl.Pages[PageIndex].Free;
 
     // Create section tabs and frames
     for SectionIndex:= 0 to ExecFile.Sections.Count - 1 do
       if ExecFile.Sections[SectionIndex].Typ = stCode then
         if (ExecFile.Sections[SectionIndex] as TCodeSection).IsDisassembled then begin
           TTabSheetTemplate.Create(ExecFile.Sections[SectionIndex]);
-          ((PageControl1.Pages[PageControl1.PageCount-1] as TTabSheetTemplate).Frame as TCodeTabFrame).OnChangeDisassembled:= ProjectModified;
+          ((MainPageControl.Pages[MainPageControl.PageCount-1] as TTabSheetTemplate).Frame as TCodeTabFrame).OnChangeDisassembled:= ProjectModified;
         end;
   end
   else begin
@@ -411,7 +415,7 @@ begin
     if ExecFile.Sections[i].typ = stCode then
       if (ExecFile.Sections[i] as TCodeSection).IsDisassembled then begin
         TTabSheetTemplate.Create(ExecFile.Sections[i]);
-        ((PageControl1.Pages[PageControl1.PageCount-1] as TTabSheetTemplate).Frame as TCodeTabFrame).OnChangeDisassembled:= ProjectModified;
+        ((MainPageControl.Pages[MainPageControl.PageCount-1] as TTabSheetTemplate).Frame as TCodeTabFrame).OnChangeDisassembled:= ProjectModified;
       end;
 
   Modified:= false;
@@ -428,21 +432,21 @@ function TMainForm.CloseMainFile: boolean;
 begin
   // nothing to close
   if ExecFile = nil then begin
-    result:=true;
+    result := true;
     Exit;
   end;
 
-  result:=false;
+  result := false;
   if Modified then begin
-    case MessageDlg(FileModifiedStr,mtConfirmation,mbYesNoCancel,0) of
+    case MessageDlg(AnsiReplaceStr(FileModifiedStr, '<project>', '''' + ExecFile.FileName + ''''), mtConfirmation, mbYesNoCancel, 0) of
       mrYes: SaveClick(nil);
       mrNo: ;
       mrCancel: Exit;
     end;
   end;
 
-  while PageControl1.PageCount > 0 do
-    PageControl1.Pages[0].Free;
+  while MainPageControl.PageCount > 0 do
+    MainPageControl.Pages[0].Free;
 
   ExecFile.Free;
   ExecFile:= nil;
@@ -542,6 +546,7 @@ begin
   SaveMyButton.Glyph:=SaveMyButton.ObrMimo;
   SaveMyButton.Enabled:=false;
 
+{ Keep commented until english documentation becomes available
   HelpMyButton:=TIvanSpeedButton.Create(self);
   HelpMyButton.Parent:=self;
   HelpMyButton.ObrMimo.LoadFromResourceName(hinstance,'help1');
@@ -549,7 +554,7 @@ begin
   HelpMyButton.Left:=400;
   HelpMyButton.OnClick:=Help2Click;
   HelpMyButton.Glyph:=HelpMyButton.ObrMimo;
-
+}
   Caption:=TatraDASFullNameVersion;
   StatusBar2.Panels[1].Text:=TatraDASFullNameVersion;
 ///  ProcessLabel.Caption:='';
@@ -585,7 +590,7 @@ end;
 
 procedure TMainForm.Help2Click(Sender: TObject);      // Spustenie helpu
 begin
-  ShellExecute(Application.Handle, Pchar('open'), Pchar('hh.exe'), Pchar(ExtractFilePath(Application.ExeName) + 'TatraDAS.chm'), nil, sw_show);
+  ShellExecute(Application.Handle, Pchar('open'), Pchar('hh.exe'), Pchar(ExtractFilePath(Application.ExeName) + 'doc' + PathDelim + 'TatraDAS.chm'), nil, sw_show);
 end;
 
 
@@ -600,7 +605,7 @@ begin
   ProjectMyButton.ChangeCaption(Translator.TranslateControl('ButtonCaption','OpenDisasm'));
   DisassembleMyButton.ChangeCaption(Translator.TranslateControl('ButtonCaption','Disassemble'));
   SaveMyButton.ChangeCaption(Translator.TranslateControl('ButtonCaption','SaveDisasm'));
-  HelpMyButton.ChangeCaption(Translator.TranslateControl('ButtonCaption','Help'));
+  //HelpMyButton.ChangeCaption(Translator.TranslateControl('ButtonCaption','Help'));
 
   // [MenuCaption]
   File1.Caption:= Translator.TranslateControl('MenuCaption','file');
@@ -686,7 +691,7 @@ begin
   ProjectMyButton.Hint:= Translator.TranslateControl('ButtonHint','OpenDisasm');
   DisassembleMyButton.Hint:= Translator.TranslateControl('ButtonHint','Disassemble');
   SaveMyButton.Hint:= Translator.TranslateControl('ButtonHint','SaveDisasm');
-  HelpMyButton.Hint:= Translator.TranslateControl('ButtonHint','Help');
+  //HelpMyButton.Hint:= Translator.TranslateControl('ButtonHint','Help');
 //  StopMyButton.Hint:= Translator.TranslateControl('ButtonHint','StopDisasm');
 
 //[MenuHint]
@@ -731,13 +736,13 @@ end;
 
 procedure TMainForm.FindDialog1Find(Sender: TObject); // Vyhladavanie retazca
 begin
-  ((PageControl1.ActivePage as TTabSheetTemplate).Frame as TCodeTabFrame).FindString(FindDialog1.FindText, FindDialog1.Options);
+  ((MainPageControl.ActivePage as TTabSheetTemplate).Frame as TCodeTabFrame).FindString(FindDialog1.FindText, FindDialog1.Options);
   FindDialog1.CloseDialog;
 end;
 
 
 
-procedure TMainForm.PageControl1Change(Sender: TObject);
+procedure TMainForm.MainPageControlChange(Sender: TObject);
 begin
   if ActivePageType = ttCode then begin
     Goto1.Enabled:= True;
@@ -758,7 +763,7 @@ end;
 
 function TMainForm.GetActiveFrame: TTabFrameTemplate;
 begin
-  result:= (PageControl1.ActivePage as TTabSheetTemplate).Frame;
+  result:= (MainPageControl.ActivePage as TTabSheetTemplate).Frame;
 end;
 
 
@@ -921,7 +926,7 @@ end;
 
 function TMainForm.GetActivePageType: TPageType;
 begin
-  result:=(PageControl1.ActivePage as TTabSheetTemplate).PageType;
+  result:=(MainPageControl.ActivePage as TTabSheetTemplate).PageType;
 end;
 
 
@@ -930,9 +935,9 @@ var
   i: integer;
 begin
   result:= nil;
-  for i:=0 to PageControl1.PageCount - 1 do
-    if (PageControl1.Pages[i] as TTabSheetTemplate).IsHavingSection(ASection) then
-      result:= PageControl1.Pages[i] as TTabSheetTemplate;
+  for i:=0 to MainPageControl.PageCount - 1 do
+    if (MainPageControl.Pages[i] as TTabSheetTemplate).IsHavingSection(ASection) then
+      result:= MainPageControl.Pages[i] as TTabSheetTemplate;
 end;
 
 

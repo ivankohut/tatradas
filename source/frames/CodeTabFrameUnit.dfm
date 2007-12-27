@@ -209,8 +209,6 @@ inherited CodeTabFrame: TCodeTabFrame
         Caption = 'QWORD (64 bits)'
         OnClick = ChangeToUnsignedDataClick
       end
-      object TMenuItem
-      end
     end
     object Changetosigneddata2: TMenuItem
       Caption = 'Change to signed data'

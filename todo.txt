@@ -37,13 +37,13 @@ TO DO list (TatraDAS)
   - vyhodit tie, na ktore odkazuje nahradzovany kod
   - porozmyslat nad volanim beginupdate/endupdate niekde vyssie
 - AV - TatraFPC.exe  - disasemble, change everything to byte data, disasm at 0x0041B4FD
+- detekovat imported o uroven volania skor "call x, x: jump [0x...]"
 
 2.9.8 todo list:
   - problemy:
       mozno je to OK - pe import lookup table NULL error
       usporiadanie GUI prvkov na FileTabFrame
       framy si nepamataju svoju velkost
-      advancedinfogrid by sa nemal zvacsovat donekonecna (presiahnut formular)
 - Fat32.dll - v 32 bit rezime,
    - disasm na 0xF7 zamrzne
    - po stlaceni zrusit vlakno stale bezi

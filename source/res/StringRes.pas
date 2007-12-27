@@ -11,7 +11,7 @@ var
   CouldNotFindDASFileStr: string = 'Could not find project DAS file';
   ProjectFilterStr: string = 'Disassembled file ';
   SaveDisassemblyFilterStr: string = 'Disassembled file ';
-  FileModifiedStr: string = 'File has been modified. Do you want to save changes ?';
+  FileModifiedStr: string = 'Project <project> has has been modified. Do you want to save changes ?';
 
 // Address
   InvalidAddressStr: string = 'Invalid address';

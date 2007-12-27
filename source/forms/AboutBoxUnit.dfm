@@ -1,9 +1,9 @@
 object AboutBox: TAboutBox
   Left = 438
-  Top = 165
+  Top = 142
   BorderStyle = bsDialog
   Caption = 'About'
-  ClientHeight = 425
+  ClientHeight = 448
   ClientWidth = 225
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -14,13 +14,14 @@ object AboutBox: TAboutBox
   OldCreateOrder = True
   Position = poScreenCenter
   OnActivate = FormActivate
+  OnCreate = FormCreate
   PixelsPerInch = 96
   TextHeight = 13
   object Panel1: TPanel
     Left = 8
     Top = 8
     Width = 209
-    Height = 209
+    Height = 241
     BevelInner = bvRaised
     BevelOuter = bvLowered
     ParentColor = True
@@ -28,8 +29,8 @@ object AboutBox: TAboutBox
     object ProductName: TLabel
       Left = 5
       Top = 10
-      Width = 145
-      Height = 16
+      Width = 200
+      Height = 20
       Caption = 'TatraDAS disassembler'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clActiveCaption
@@ -42,7 +43,7 @@ object AboutBox: TAboutBox
     object VersionLabel: TLabel
       Left = 26
       Top = 48
-      Width = 65
+      Width = 80
       Height = 13
       Alignment = taCenter
       Caption = 'Version: 2.9.4'
@@ -57,7 +58,7 @@ object AboutBox: TAboutBox
     end
     object LicenseLabel: TLabel
       Left = 16
-      Top = 176
+      Top = 160
       Width = 46
       Height = 13
       Caption = 'License:  '
@@ -69,42 +70,42 @@ object AboutBox: TAboutBox
       ParentFont = False
       IsControl = True
     end
-    object AuthorLabel: TLabel
+    object ProgrammingLabel: TLabel
       Left = 16
-      Top = 128
+      Top = 112
       Width = 54
       Height = 13
       Caption = 'Created by:'
     end
     object GraphicsLabel: TLabel
       Left = 16
-      Top = 152
+      Top = 136
       Width = 59
       Height = 13
       Caption = 'Graphics by:'
     end
-    object AuthorData: TLabel
+    object ProgrammingDataLabel: TLabel
       Left = 112
-      Top = 128
+      Top = 112
       Width = 52
       Height = 13
       Caption = 'Ivan Kohut'
     end
     object GraphicsDataLabel: TLabel
       Left = 112
-      Top = 152
+      Top = 136
       Width = 60
       Height = 13
       Caption = 'Maros Kohut'
     end
     object LicenseDataLabel: TLabel
       Left = 112
-      Top = 176
+      Top = 160
       Width = 63
       Height = 13
       Caption = 'GNU GPL v2'
     end
-    object DateLabel: TLabel
+    object ReleaseDateLabel: TLabel
       Left = 40
       Top = 80
       Width = 89
@@ -119,10 +120,26 @@ object AboutBox: TAboutBox
       ParentFont = False
       Layout = tlCenter
     end
+    object CompilerLabel: TLabel
+      Left = 16
+      Top = 208
+      Width = 60
+      Height = 13
+      Caption = 'Compiled by:'
+    end
+    object CompilerDataLabel: TLabel
+      Left = 112
+      Top = 200
+      Width = 89
+      Height = 33
+      AutoSize = False
+      Caption = 'Borland Delphi Compiler ver.'
+      WordWrap = True
+    end
   end
   object OKButton: TButton
     Left = 79
-    Top = 380
+    Top = 412
     Width = 75
     Height = 25
     Caption = 'OK'
@@ -133,7 +150,7 @@ object AboutBox: TAboutBox
   end
   object Panel2: TPanel
     Left = 8
-    Top = 224
+    Top = 256
     Width = 209
     Height = 89
     BevelInner = bvRaised
@@ -1615,7 +1632,7 @@ object AboutBox: TAboutBox
   end
   object Panel3: TPanel
     Left = 8
-    Top = 320
+    Top = 352
     Width = 209
     Height = 41
     BevelInner = bvRaised

@@ -22,7 +22,7 @@ Name: "quicklaunchicon"; Description: "Create a &Quick Launch icon"; GroupDescri
 
 [Files]
 Source: "TatraDAS.exe"; DestDir: "{app}"; Flags: ignoreversion; 
-Source: "doc\TatraDAS.chm"; DestDir: "{app}"; Flags: ignoreversion;
+;Source: "doc\TatraDAS.chm"; DestDir: "{app}"; Flags: ignoreversion;
 Source: "languages\LangENG.ini"; DestDir: "{app}\languages"; Flags: ignoreversion;
 Source: "languages\LangSVK.ini"; DestDir: "{app}\languages"; Flags: ignoreversion;
 Source: "languages\en.ico"; DestDir: "{app}\languages"; Flags: ignoreversion;

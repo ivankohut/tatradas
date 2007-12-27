@@ -286,8 +286,8 @@ begin
   end;
 
   // Translate all frames
-  for i:=0 to MainForm.PageControl1.PageCount - 1 do
-    (MainForm.PageControl1.Pages[i] as TTabSheetTemplate).Frame.Translate;
+  for i:=0 to MainForm.MainPageControl.PageCount - 1 do
+    (MainForm.MainPageControl.Pages[i] as TTabSheetTemplate).Frame.Translate;
 
 end;
 

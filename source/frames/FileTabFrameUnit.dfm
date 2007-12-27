@@ -24,6 +24,8 @@ inherited FileTabFrame: TFileTabFrame
         Height = 129
         Align = alTop
         Caption = 'File Overview'
+        Constraints.MaxHeight = 129
+        Constraints.MinHeight = 129
         Constraints.MinWidth = 220
         TabOrder = 0
         DesignSize = (
@@ -71,7 +73,7 @@ inherited FileTabFrame: TFileTabFrame
           Width = 457
           Height = 21
           Anchors = [akLeft, akTop, akRight]
-          BiDiMode = bdRightToLeft
+          BiDiMode = bdLeftToRight
           ParentBiDiMode = False
           ReadOnly = True
           TabOrder = 0
@@ -108,11 +110,10 @@ inherited FileTabFrame: TFileTabFrame
       end
       object ObjectListView: TListView
         Left = 0
-        Top = -38
+        Top = 137
         Width = 569
-        Height = 299
-        Align = alBottom
-        Anchors = [akLeft, akTop, akRight, akBottom]
+        Height = 124
+        Align = alClient
         Columns = <
           item
             Caption = 'Nr.'
@@ -147,11 +148,20 @@ inherited FileTabFrame: TFileTabFrame
         TabOrder = 1
         ViewStyle = vsReport
       end
+      object Panel2: TPanel
+        Left = 0
+        Top = 129
+        Width = 569
+        Height = 8
+        Align = alTop
+        BevelOuter = bvNone
+        TabOrder = 2
+      end
     end
     object AdvancedInfoPanel: TPanel
       Left = 585
       Top = 8
-      Width = 173
+      Width = 184
       Height = 261
       Align = alClient
       BevelOuter = bvNone
@@ -161,7 +171,7 @@ inherited FileTabFrame: TFileTabFrame
       object MoreInfoLabel: TLabel
         Left = 0
         Top = 0
-        Width = 173
+        Width = 184
         Height = 13
         Align = alTop
         Caption = 'More information:'
@@ -170,7 +180,7 @@ inherited FileTabFrame: TFileTabFrame
       object AdvancedInfoGrid: TStringGrid
         Left = 0
         Top = 13
-        Width = 173
+        Width = 184
         Height = 248
         Align = alClient
         ColCount = 2

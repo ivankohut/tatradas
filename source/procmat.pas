@@ -55,8 +55,8 @@ const
   fdCustom = 'Custom file format';
 
   // TatraDAS version constants
-  TatraDASVersion: cardinal = $00029700;
-  TatraDASDate: string = '02. 09. 2007';
+  TatraDASVersion: cardinal = $00029800;
+  TatraDASDate: string = '27. 12. 2007';
   TatraDASProjectVersion = $00030002;
   ShortTatraDASVersion: string = '2.9.8';
   TatraDASFullName: string = 'TatraDAS disassembler';

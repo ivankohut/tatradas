@@ -32,5 +32,20 @@ begin
 end;
 
 
+function WordToHex(var Data): string;
+var
+  w: cardinal;
+begin
+  SetLength(result, 4);
+  w := cardinal(Data);
+  result[4] := HexDigits[w and 15];
+  w := w shr 4;
+  result[3] := HexDigits[w and 15];
+  w := w shr 4;
+  result[2] := HexDigits[w and 15];
+  w := w shr 4;
+  result[1] := HexDigits[w and 15];
+end;
+
 
 end.

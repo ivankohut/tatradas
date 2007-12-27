@@ -700,7 +700,7 @@ begin
     LineIndex,
     StartOffset,
     ItemSize*NewLinesCount,
-    fSection.GetLineFromDataEx(Addr(fSection.CodeArray[StartOffset]), Options.DataType, Options.Signed, StartAddress, NewLinesCount)
+    fSection.GetLineFromDataEx(fSection.CodeArray[StartOffset], Options.DataType, Options.Signed, StartAddress, NewLinesCount)
   );
   if Assigned(fOnChangeDisassembled) then
     fOnChangeDisassembled(plocha);

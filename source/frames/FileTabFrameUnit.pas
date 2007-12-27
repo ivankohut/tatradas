@@ -39,6 +39,7 @@ type
     AdvancedInfoPanel: TPanel;
     AdvancedInfoGrid: TStringGrid;
     MoreInfoLabel: TLabel;
+    Panel2: TPanel;
     procedure AdvancedInfoPanelResize(Sender: TObject);
 
   protected

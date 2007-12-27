@@ -17,4 +17,6 @@ find ./ -name "*.exe" -print | xargs /bin/rm -f
 find ./ -name "*.EXE" -print | xargs /bin/rm -f
 
 find ./ -name "*.*~" -print | xargs /bin/rm -f
+find ./ -name "*.das" -print | xargs /bin/rm -f
+find ./ -name "*.DAS" -print | xargs /bin/rm -f
 

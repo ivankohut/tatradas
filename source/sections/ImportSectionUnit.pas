@@ -131,7 +131,8 @@ begin
   FunctionFound:= false;
   ModulIndex:= -1;
   FunctionIndex:= -1;
-
+  result := ''; // does not work correctly without this command
+  
   // Find function and its modul
   for ModIndex:=0 to ModulCount - 1 do
     for FunIndex:=0 to Moduls[ModIndex].FunctionCount - 1 do

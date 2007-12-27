@@ -6,3 +6,5 @@ del /S *.ddp  rem Delphi diagram portfolio files
 del /S *.s    rem FPC assembler files
 del /S *.a    rem FPC ? files
 del /S *.exe  rem Executable files
+del /S *.das  rem Disassembled text
+del /S *.log  rem Logs

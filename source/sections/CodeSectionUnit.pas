@@ -90,7 +90,7 @@ type
        function GetPosition(MemAddress: cardinal): cardinal; // Get position in Disassembled from Address (memory address)
        function FindAddressableLine(Position: cardinal): cardinal; // forward search, returns $FFFFFFFF if reaches end of Disassembled
        procedure ClearDisassembled;
-       function GetLineFromDataEx(PData: Pointer; DataType: cardinal; Signed: boolean; const StartAddress: cardinal; Count: integer): TStrings; // StartAddress is memory address
+       function GetLineFromDataEx(var InputData; DataType: cardinal; Signed: boolean; const StartAddress: cardinal; Count: integer): TStrings; // StartAddress is memory address
        procedure ReplaceLines(StartLineIndex, StartAddress, ByteCount: cardinal; NewLines: TStrings);
 
        function SaveToFile  (DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
@@ -237,7 +237,7 @@ begin
     DisassemblerMap[PreCodeIndex - MemOffset]:= dfNone;
 
   PreLines.AddStrings(GetLineFromDataEx(
-    Addr(CodeArray[GetLineAddress(Disassembled[StartLineIndex]) - MemOffset]),
+    CodeArray[GetLineAddress(Disassembled[StartLineIndex]) - MemOffset],
     dtByte,
     false,
     GetLineAddress(Disassembled[StartLineIndex]),
@@ -260,7 +260,7 @@ begin
   // Konverzia zvysnych bytov na datovy typ "byte"
   for RestCodeIndex:=1 to Address - AfterAddress do
     DisassemblerMap[AfterAddress + RestCodeIndex - 1]:= dfNone;
-  NewLines.AddStrings(GetLineFromDataEx(Addr(CodeArray[AfterAddress]), dtByte, false, AfterAddress + MemOffset, Address - AfterAddress));
+  NewLines.AddStrings(GetLineFromDataEx(CodeArray[AfterAddress], dtByte, false, AfterAddress + MemOffset, Address - AfterAddress));
 
   // Actual replace
   Disassembled.BeginUpdate;
@@ -434,8 +434,9 @@ begin
             IndexAddress:=cardinal(StrToIntDef('$'+IndexAddressStr, 0));
             if IndexAddress = 0 then
               Continue;
-            CallInstrAddress:= StrToInt('$' + LeftStr(Disassembler.Disassembled[Disassembler.Imported[i]].Disassembled, 8));
-            FunctionFromModul:=ImportSection.AddFunctionOccurence(IndexAddress, CallInstrAddress, SectionIndex);
+
+            CallInstrAddress := Disassembler.Imported[i] + fMemOffset;
+            FunctionFromModul := ImportSection.AddFunctionOccurence(IndexAddress, CallInstrAddress, SectionIndex);
             if FunctionFromModul <> '' then begin
     //            Inc(Statistics.References);
     //            Inc(Statistics.Blanks);
@@ -952,7 +953,7 @@ end;
 
 
 // StartAddress is memory address
-function TCodeSection.GetLineFromDataEx(PData: Pointer; DataType: cardinal; Signed: boolean; const StartAddress: cardinal; Count: integer): TStrings;
+function TCodeSection.GetLineFromDataEx(var InputData; DataType: cardinal; Signed: boolean; const StartAddress: cardinal; Count: integer): TStrings;
 var
   Address: cardinal;
   ItemSize: integer;
@@ -963,8 +964,10 @@ var
 begin
   ItemSize:= DataTypeSizes[DataType];
   Address:= StartAddress;
-  DataPtr:= PData;
+  DataPtr:= @InputData;
   result:= TStringList.Create;
+  if Count < 1 then
+    Exit;
   result.Capacity:= Count;
 
   for LineIndex:= 0 to Count - 1 do begin

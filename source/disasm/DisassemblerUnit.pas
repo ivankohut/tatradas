@@ -39,16 +39,15 @@ type
     CodeSize: cardinal;
     fStatistics: TStatistics;
     fBit32: boolean;
-    // pocetadries:cardinal;
-    modrm:tmodrm;
-    sib:TSib;
-    i:cardinal;                          // Uchovava poziciu v poli CODE
-    j:cardinal;                          // Pomocne premenne
+    ModRM: TModRM;
+    SIB: TSIB;
+    i: cardinal;                          // Uchovava poziciu v poli CODE
+    j: cardinal;                          // Pomocne premenne
     operand32, address32:boolean;        // Uchovava 16/32bit stav instrukcie
 
     OperandSize: TSize;
-    AddressSize: TSize;
-    genreg16:boolean;
+    //AddressSize: TSize;
+    genreg16: boolean;
     SegmentOverride: string;
 
     InstrAddress: cardinal; // address of current instruction in "code" array
@@ -67,17 +66,18 @@ type
 
     fBlocks: TDisassembledBlocks;
 
-    function SpracujParameter(a:TParameter):string;
-    function LoadModRM(a:byte):TModRM;
-    function SpracujModRM(a:modrmparametertype; b:modrmparametersize):string;
-    function LoadSIB(a:byte):TSIB;
-    function SpracujSIB:string;
-    function SpracujImmediate(a:ModRMParameterSize):string;
-    function SpracujRelative(a:ModRMParameterSize):string;
-    function SpracujOffset(a:ModRMParameterSize):string;
-    function SpracujGenReg:string;
+    function SpracujParameter(a:TParameter): string;
+    function LoadModRM(a:byte): TModRM;
+    function SpracujModRM(a: TModRMParameterType; b: TModRMParameterSize): string;
+    function LoadSIB(a:byte): TSIB;
+    function SpracujSIB: string;
+    function SpracujImmediate(a: TModRMParameterSize): string;
+    function SpracujRelative(a: TModRMParameterSize): string;
+    function SpracujOffset(a: TModRMParameterSize): string;
+    function SpracujGenReg: string;
 
-    function DisassembleBlock(Start, Finish: cardinal):boolean;
+    procedure DisassemblerCycle;
+    function DisassembleBlock(Start, Finish: cardinal): boolean;
 
     function GetDisassembledBlock(Index: integer): TDisassembledBlock;
     function GetBlockCount: integer;
@@ -85,20 +85,18 @@ type
   public
     CAJ: TCallsAndJumps;
 
-    Disassembled: array of TDisassembledItem;  // Vystup disassemblovania
+    Disassembled: array of TDisassembledItem;
     Imported: array of cardinal;
 
     constructor Create(SectionCode: TByteDynArray; var DisassemblerMap: TByteDynArray; MemOffset: cardinal; Bit32: boolean);
 
-    function DisassembleAll: boolean;
-    function Disassemble(Recursive: boolean): boolean;
+    procedure DisassembleAll;
+    procedure Disassemble(Recursive: boolean);
 
     property Statistics: TStatistics read fStatistics;
     property Blocks[Index: integer]: TDisassembledBlock read GetDisassembledBlock;
     property BlockCount: integer read GetBlockCount;
   end;
-
-//    function XLoadModRM(a:byte):TModRM; register; external 'tdaslib.dll' name 'XLoadModRM';  pokus s DLL
 
 
 Implementation
@@ -219,26 +217,29 @@ const xmm_register:array[0..7] of string[4] = (
                                               );
 
 
-function ByteToSignedHex(a:byte):string;
+
+function ByteToSignedHex(AValue: byte): string;
 begin
-  if abs(shortint(a))=a then result:='+0x'+inttohex(a,2)
-  else result:='-0x'+inttohex(abs(shortint(a)),2);
+  if AValue <= 127 then
+    result := '+0x' + IntToHex(AValue, 2)
+  else
+    result := '-0x' + IntToHex(Abs(Shortint(AValue)), 2);
 end;
 
 
 
 {
   Nacita ModRM do struktury TModRM
-  ModRM = 2 + 3 + 3 bity (moder + regop + rm)
+  ModRM = 2 + 3 + 3 bits (Moder + RegOp + RM)
   Pouzivam assembler, lebo operatory "shl" a "shr" v Delphi pracuju s typom integer (4 bajty) a my potrebujeme 1 bajt
   Parametre:
     EAX - self
     EDX - ModRM byte
     ECX - adresa vysledku
 }
-function TDisassembler.LoadModRM(a:byte): TModRM;
+function TDisassembler.LoadModRM(a: byte): TModRM;
 asm
-  and edx,$000000FF // DL <- FullSIB
+  and edx,$000000FF // DL <- Full ModRM
   mov dh,dl
   shr dh,6          // DH <- Moder
   mov [ecx],edx
@@ -260,8 +261,7 @@ end;
     EDX - SIB byte
     ECX - adresa vysledku
 }
-
-function TDisassembler.LoadSIB(a: byte): TSIB; // EDI <- self(asi), EDX <- a
+function TDisassembler.LoadSIB(a: byte): TSIB;
 asm
   and edx,$000000FF // DL <- Full SIB
   mov dh,dl
@@ -276,17 +276,17 @@ end;
 
 
 
-function TDisassembler.SpracujSIB:string;
+function TDisassembler.SpracujSIB: string;
 begin
-  inc(i);
-  sib:=loadsib(code[i]);
-  if not((modrm.moder=0)and(sib.base=5)) then begin
-//    result:=result+fourbyte_register[sib.base];
-    result:=fourbyte_register[sib.base];
+  Inc(i);
+  sib := LoadSIB(code[i]);
+  if not ((ModRM.Moder = 0) and (SIB.Base = 5)) then begin
+    result := fourbyte_register[sib.base];
 
-    if sib.index<>4 then begin
-      result:=result + '+' + fourbyte_register[sib.index];
-      if sib.scale<>0 then result:=result+'*'+inttostr(round(intpower(2,sib.scale)));
+    if SIB.Index <> 4 then begin
+      result := result + '+' + fourbyte_register[sib.index];
+      if SIB.Scale <> 0 then
+        result := result + '*' + IntToStr(Round(IntPower(2, SIB.Scale)));
     end;
   end
   else begin
@@ -294,23 +294,24 @@ begin
     result:= '0x' + IntToHex(cardinal((@code[i])^), 8);
     Inc(i, 3);
 
-    if sib.index <> 4 then begin
-      result:=result + '+' + fourbyte_register[sib.index];
-      if sib.scale<>0 then result:=result+'*'+inttostr(round(intpower(2,sib.scale)));
+    if SIB.index <> 4 then begin
+      result := result + '+' + fourbyte_register[SIB.Index];
+      if SIB.scale <> 0 then
+        result := result + '*' + IntToStr(Round(IntPower(2, SIB.scale)));
     end;
   end;
 end;
 
 
 
-function TDisassembler.SpracujModRM(a:modrmparametertype; b:modrmparametersize):string;
+function TDisassembler.SpracujModRM(a: TModRMParameterType; b: TModRMParameterSize):string;
 begin
   result:='';
 
-  if not modrm.loaded then begin
-    inc(i);
-    modrm:=loadmodrm(code[i]);
-    modrm.loaded:=true;
+  if not ModRM.Loaded then begin
+    Inc(i);
+    ModRM := LoadModRM(code[i]);
+    ModRM.Loaded := true;
   end;
 
   case address32 of
@@ -318,58 +319,59 @@ begin
              case a of
                GReg: begin
                        case b of
-                         onebyte: result:=onebyte_register[modrm.regop];
-                         twobyte: result:=twobyte_register[modrm.regop];
-                         twoorfour: if operand32 then result:=fourbyte_register[modrm.regop]
+                         OneByte: result:=onebyte_register[modrm.regop];
+                         TwoByte: result:=twobyte_register[modrm.regop];
+                         TwoOrFour: if operand32 then result:=fourbyte_register[modrm.regop]
                                     else result:=twobyte_register[modrm.regop];
-                         fourbyte: result:=fourbyte_register[modrm.regop];
-                         mmx: result:=mmx_register[modrm.regop];
-                         xmm: result:=xmm_register[modrm.regop];
+                         FourByte: result:=fourbyte_register[modrm.regop];
+                         MMX: result:=mmx_register[modrm.regop];
+                         XMM: result:=xmm_register[modrm.regop];
                        end;
                      end;
 
               Reg: begin
                      if modrm.moder = 3 then
                        case b of
-                         onebyte: result:=onebyte_register[modrm.rm];
-                         twobyte: result:=twobyte_register[modrm.rm];
-                         twoorfour: if operand32 then result:=fourbyte_register[modrm.rm]
+                         OneByte: result:=onebyte_register[modrm.rm];
+                         TwoByte: result:=twobyte_register[modrm.rm];
+                         TwoOrFour: if operand32 then result:=fourbyte_register[modrm.rm]
                                     else result:=twobyte_register[modrm.rm];
-                         fourbyte: result:=fourbyte_register[modrm.rm];
-                         mmx: result:=mmx_register[modrm.rm];
-                         xmm: result:=xmm_register[modrm.rm];
+                         FourByte: result:=fourbyte_register[modrm.rm];
+                         MMX: result:=mmx_register[modrm.rm];
+                         XMM: result:=xmm_register[modrm.rm];
                        end
-                     else result:='Invalid parameter';
+                     else
+                       result := 'Invalid parameter';
                    end;
 
                Mem: begin
                           case modrm.moder of
-                            0:begin
-                                result:='[' + SegmentOverride;
-                                if modrm.rm=6 then begin
-                                  inc(i,2);
-                                  result:=result+'0x'+inttohex(code[i],2)+inttohex(code[i-1],2);
-                                end
-                                else result:=result+modrm16bitaddress_register[modrm.rm];
-                                result:=result+']';
-                              end;
-                            1:begin
+                            0: begin
+                                 result := '[' + SegmentOverride;
+                                 if ModRM.RM = 6 then begin
+                                   Inc(i,2);
+                                   result := result + '0x' + IntToHex(code[i],2) + IntToHex(code[i-1],2);
+                                 end
+                                 else
+                                   result:=result + modrm16bitaddress_register[modrm.rm];
+                                 result:=result+']';
+                               end;
+                            1: begin
                                 inc(i);
-//                                result:='[' + SegmentOverride + modrm16bitaddress_register[modrm.rm]+'0x'+ByteToSignedHex(code[i])+']';
                                 result:='[' + SegmentOverride + modrm16bitaddress_register[modrm.rm]+ByteToSignedHex(code[i])+']';
-                              end;
-                            2:begin
+                               end;
+                            2: begin
                                 inc(i,2);
                                 result:='[' + SegmentOverride + modrm16bitaddress_register[modrm.rm]+'+'+'0x'+inttohex(code[i],2)+inttohex(code[i-1],2)+']';
-                              end;
+                               end;
                             3:result:='Invalid parameter!';
                           end;
                           case OperandSize of
-                            szByte: result:='byte '+result;
-                            szWord: result:='word '+result;
-                            szDword: result:='dword '+result;
-                            szQword: result:='qword '+result;
-                            szTword: result:='tword '+result;
+                            szByte: result:='byte ' + result;
+                            szWord: result:='word ' + result;
+                            szDword: result:='dword ' + result;
+                            szQword: result:='qword ' + result;
+                            szTword: result:='tword ' + result;
                           end;
                         end;
 
@@ -396,16 +398,19 @@ begin
                                 case b of
                                   onebyte: result:=onebyte_register[modrm.rm];
                                   twobyte: result:=twobyte_register[modrm.rm];
-                                  twoorfour: if operand32 then result:=fourbyte_register[modrm.rm]
-                                           else result:=twobyte_register[modrm.rm];
+                                  twoorfour:
+                                    if operand32 then
+                                      result := fourbyte_register[modrm.rm]
+                                    else
+                                      result := twobyte_register[modrm.rm];
                                   fourbyte: result:=fourbyte_register[modrm.rm];
                                   FourOrSix: if operand32 then result:=fourbyte_register[modrm.rm]
                                            else result:=twobyte_register[modrm.rm];
-                                  mmx: result:=mmx_register[modrm.rm];
-                                  xmm: result:=xmm_register[modrm.rm];
-                                  R32_M16: result:=fourbyte_register[modrm.rm];
-                                  R128_M32: result:=xmm_register[modrm.rm];
-                                  R128_M64: result:=xmm_register[modrm.rm];
+                                  mmx: result := mmx_register[modrm.rm];
+                                  xmm: result := xmm_register[modrm.rm];
+                                  R32_M16: result := fourbyte_register[modrm.rm];
+                                  R128_M32: result := xmm_register[modrm.rm];
+                                  R128_M64: result := xmm_register[modrm.rm];
                                 end;
                               end;
                           end;
@@ -501,16 +506,17 @@ begin
                          case modrm.moder of
                            0: begin
                                 result:='[' + SegmentOverride;
-                                case modrm.rm of
+                                case ModRM.RM of
                                   5: begin
                                     Inc(i);
-                                    result:=result + '0x' + IntToHex(cardinal((@code[i])^), 8);
+                                    result := result + '0x' + IntToHex(cardinal((@code[i])^), 8);
                                     Inc(i, 3);
                                   end;
-                                  4: result:=result+spracujsib;
-                                else result:=result+fourbyte_register[modrm.rm];
+                                  4: result := result + SpracujSIB;
+                                  else
+                                    result := result + fourbyte_register[modrm.rm];
                                 end;
-                                result:=result+']';
+                                result := result + ']';
                                 case OperandSize of
                                   szByte: result:='byte '+result;
                                   szWord: result:='word '+result;
@@ -522,10 +528,12 @@ begin
                               end;
                            1: begin
                                 result:='[' + SegmentOverride;
-                                if modrm.rm = 4 then result:=result + spracujsib
-                                else result:=result + fourbyte_register[modrm.rm];
-                                inc(i);
-                                result:=result+ByteToSignedHex(code[i])+']';
+                                if modrm.rm = 4 then
+                                  result := result + SpracujSIB
+                                else
+                                  result := result + fourbyte_register[modrm.rm];
+                                Inc(i);
+                                result := result + ByteToSignedHex(code[i])+']';
 
                                 case OperandSize of
                                   szByte: result:='byte '+result;
@@ -569,7 +577,7 @@ begin
                        end; // end of RegMem
               sreg: begin
                       case b of
-                        twobyte: result:=segment_register[modrm.regop];
+                        TwoByte: result := segment_register[modrm.regop];
                       end;
                     end;
               creg: begin
@@ -588,122 +596,97 @@ begin
 end; // End of ModRM
 
 
-function TDisassembler.SpracujImmediate(a:ModRMParameterSize):string;
+
+function TDisassembler.SpracujImmediate(a: TModRMParameterSize):string;
 var
-  immediate: cardinal;
-  immediate2: word;
-  parsed: cardinal;
-  parsed2: word;
-  parsedcount: byte;
+  Immediate: cardinal;
+  SegmentImmediate: word;
+  ParsedCount: integer;
 begin
-  result:='';
- asm
-  push esi
-  push ebx
-  mov esi,self       // pointer na instanciu TDisassembler
-  mov ebx,[esi].i    // index v poli code
-  inc ebx
-  mov eax,[esi].code // adresa pola code
-  add eax,ebx        // adresa prvku pola v pamati
-  xor ecx,ecx        // vysledny immediate
-  xor edx,edx        // vysledny PARSED
-// Case
-  cmp a,OneByte           // ONE BYTE
-  jne @CheckTwobyte
-  movzx ecx,byte[eax]     // parameter instrukcie -> ECX
-  mov edx,ecx
-  mov parsedcount,2       // pocet cifier PARSED
-  jmp @EndCase
+  asm
+    push esi
+    push ebx
+    mov esi,self       // pointer na instanciu TDisassembler
+    mov ebx,[esi].i    // index v poli code
+    inc ebx
+    mov eax,[esi].code // adresa pola code
+    add eax,ebx        // adresa prvku pola v pamati
+    xor ecx,ecx        // vysledny immediate
+  // Case
+    cmp a,OneByte           // ONE BYTE
+    jne @CheckTwobyte
+    movzx ecx,byte[eax]     // parameter instrukcie -> ECX
+    jmp @EndCase
 
-@CheckTwobyte:
-  cmp a,TwoByte           // TWO BYTE
-  jne @CheckTwoOrFour
+  @CheckTwobyte:
+    cmp a,TwoByte           // TWO BYTE
+    jne @CheckTwoOrFour
 
-@_16:
-  movzx ecx,word ptr[eax]
-  mov dl,ch
-  mov dh,cl
-  mov parsedcount,4
-  inc ebx
-  jmp @EndCase
+  @_16:
+    movzx ecx,word ptr[eax]
+    inc ebx
+    jmp @EndCase
 
-@CheckTwoOrFour:
-  cmp a,TwoOrFour
-  jne @CheckFourOrSix
-  cmp byte ptr [esi].operand32,0
-  je @_16
+  @CheckTwoOrFour:
+    cmp a,TwoOrFour
+    jne @CheckFourOrSix
+    cmp byte ptr [esi].operand32,0
+    je @_16
 
-@_32:
-  mov ecx,[eax] //  predtym: mov ecx,cardinal ptr [eax]
+  @_32:
+    mov ecx,[eax] //  predtym: mov ecx,cardinal ptr [eax]
+    add ebx,3
+    jmp @EndCase
 
-  mov edx,ecx
-  bswap edx
-  mov parsedcount,8
-  add ebx,3
-  jmp @EndCase
+  @CheckFourOrSix:
+    cmp byte ptr [esi].operand32,0
+    je @_16_16
 
-@CheckFourOrSix:
-  cmp byte ptr [esi].operand32,0
-  je @_16_16
+  @_16_32:
+    mov ecx,[eax] // predtym: mov ecx,cardinal ptr [eax]
+    add eax,4
+    add ebx,4
+    jmp @_segment
 
-@_16_32:
-  mov ecx,[eax] // predtym: mov ecx,cardinal ptr [eax]
-  mov edx,ecx
-  bswap edx
-  mov parsedcount,8
-  add eax,4
-  add ebx,4
-  jmp @_segment
+  @_16_16:
+  //  movzx ecx,word ptr [eax]
+    mov cx, word ptr [eax]
+    add eax,2
+    add ebx,2
 
-@_16_16:
-//  movzx ecx,word ptr [eax]
-  mov cx, word ptr [eax]
+  @_segment:
+  //  movzx edx,word ptr [eax]
+    mov dx,[eax]
 
-  mov dl,ch
-  mov dh,cl
-  mov parsedcount,4
-  add eax,2
-  add ebx,2
+    mov SegmentImmediate,dx
+    inc ebx
 
-@_segment:
-  mov edi,ebx              // zalohujeme EBX do EDI
-//  movzx ebx,word ptr [eax]
-  mov bx,[eax]
+  @EndCase:
+    mov immediate,ecx
+    mov ecx,ebx // save value of new "i" to ECX
+    sub ebx,[esi].i // compute and set ParsedCount
+    shl ebx,1
+    mov ParsedCount,ebx
+    mov [esi].i,ecx // set new "i"
 
-  mov immediate2,bx
-  bswap ebx                // vymenime byty v EBX
-  shr ebx,16               // a posunieme doprava o 2 byty
-  mov parsed2,bx
-  mov ebx,edi              // obnovime EBX z EDI
-  inc ebx
-
-@EndCase:
-  mov immediate,ecx
-  mov parsed,edx
-  mov [esi].i,ebx
-
-  pop ebx
-  pop esi
- end;
-  if a = fourorsix then begin
-    result:= '0x'+IntToHex(immediate2,4) + ':';
-  result:=result + '0x'+IntToHex(immediate,parsedcount);
-  end
+    pop ebx
+    pop esi
+  end;
+  if a = FourOrSix then
+    result:= '0x' + IntToHex(SegmentImmediate, 4) + ':' + '0x' + IntToHex(Immediate, ParsedCount)
   else
-//    result:=result + '0x'+IntToHex(immediate,parsedcount);
-
-// kvoli kompatibilite s NASM:
-    case parsedcount of
-      2: result:=result + 'byte 0x'+IntToHex(immediate, 2);
-      4: result:=result + 'word 0x'+IntToHex(immediate, 4);
-      8: result:=result + 'dword 0x'+IntToHex(immediate, 8);
+    // was: result:=result + '0x'+IntToHex(immediate,parsedcount);
+    // because of NASM compatibility:
+    case ParsedCount of
+      2: result := 'byte 0x' + IntToHex(Immediate, 2);
+      4: result := 'word 0x' + IntToHex(Immediate, 4);
+      8: result := 'dword 0x' + IntToHex(Immediate, 8);
     end;
-
 end;
 
 
 
-function TDisassembler.SpracujRelative(a:modrmparametersize):string;
+function TDisassembler.SpracujRelative(a: TModRMParameterSize):string;
 var
   address: integer;
   parsed: cardinal;
@@ -782,8 +765,8 @@ begin
 
   if address < 0 then result:='-0x' + IntToHex(Abs(address),8)            // skok na zapornu adresu (treba este zohladnit MemOffset !!!)
   else begin
-    result:='0x' + IntToHex(address + fMemOffset, 8);
-    if address > CodeSize-1 then Exit                             // skok za koniec kodovej sekcie
+    result:='0x' + IntToHex(cardinal(address) + fMemOffset, 8);
+    if cardinal(address) > CodeSize-1 then Exit                             // skok za koniec kodovej sekcie
     else begin
       CAJ.Add(address);
       Inc(Disassembled[address].refercount);
@@ -819,7 +802,7 @@ end;
 
 
 
-function TDisassembler.SpracujOffset(a:modrmparametersize):string;
+function TDisassembler.SpracujOffset(a: TModRMParameterSize):string;
 begin
   Inc(i);
   if address32 then begin
@@ -860,10 +843,9 @@ end;
 constructor TDisassembler.Create(SectionCode: TByteDynArray; var DisassemblerMap: TByteDynArray; MemOffset: cardinal; Bit32: boolean);
 begin
   code:= SectionCode;
-  CodeSize:= Length(code)-CodeArrayReserve;
+  CodeSize:= Length(code) - CodeArrayReserve;
   DisasmMap:= DisassemblerMap;
-  SetLength(Disassembled, CodeSize);             // Inicializacia premennych
-//  ProgressFunction:=prog;
+  SetLength(Disassembled, CodeSize);
   CAJ:= TCallsAndJumps.Create(DisasmMap);
   fBlocks:= TDisassembledBlocks.Create;
   fMemOffset:= MemOffset;
@@ -886,88 +868,71 @@ end;
 
 
 
-function TDisassembler.Disassemble(Recursive: boolean): boolean;
+procedure TDisassembler.DisassemblerCycle;
 var
-  i: integer;
+  CAJIndex: Integer;
 begin
-  if Recursive then
-    while CAJ.count > 0 do begin
-      for i:=0 to CAJ.Count-1 do
-        DisassembleBlock(CAJ[i].start,CAJ[i].finish);
-      CAJ.Process(CodeSize);
-    end
-  else
-    DisassembleBlock(CAJ[0].start, CAJ[0].finish);
-
-  result:=true; // ???
+  while CAJ.Count > 0 do begin
+    for CAJIndex := 0 to CAJ.Count - 1 do begin
+      DisassembleBlock(CAJ[CAJIndex].start, CAJ[CAJIndex].finish);
+    end;
+    CAJ.Process(CodeSize);
+  end;
 end;
 
 
 
-function TDisassembler.DisassembleAll: boolean;
-var
-  i: integer;
-  CodeIndex: cardinal;
+procedure TDisassembler.Disassemble(Recursive: boolean);
+begin
+  if Recursive then
+    DisassemblerCycle
+  else
+    DisassembleBlock(CAJ[0].start, CAJ[0].finish);
+end;
 
+
+
+procedure TDisassembler.DisassembleAll;
+var
+  CodeIndex: cardinal;
+  HexAddressIndex: integer;
   Line: string[ilInstructionMnemonicIndex + 12 + 1];
   SpaceIndex: integer;
   MemAddress: cardinal;
 begin
-  result:=false;
-
   ProgressData.Maximum:= CodeSize;
   ProgressData.Position:= 0;
 
   //****************************************************************************
   // 1. Phase - Disassemble
   //****************************************************************************
-  
+
   Logger.Info('TDisassembler.DisassembleAll - Phase 1');
-  while CAJ.Count > 0 do begin
-    for i:=0 to CAJ.Count-1 do begin
-{
-  Ked je zapnuty Range Checking, tak
-  metoda DisassembleBlock pri subore 'pohlad.exe' (aj inych) zmeni register EDI, ktory sluzi na pocitanie v cykle "for",
-  preto treba register EDI ulozit na zasobnik a potom ho znova vybrat
-}
-{$IFDEF DELPHI}
-      asm
-        push edi
-      end;
-{$ENDIF}
-      if not DisassembleBlock(CAJ[i].start, CAJ[i].finish) then Exit;
-{$IFDEF DELPHI}
-      asm
-        pop edi
-      end;
-{$ENDIF}
-    end;
-    CAJ.Process(CodeSize);
-  end;
+  DisassemblerCycle;
 
   //****************************************************************************
   // 2. faza - najdenie zaciatkov procedur pomocou standartnych instrukcii
   //****************************************************************************
 
   Logger.Info('TDisassembler.DisassembleAll - Phase 2a');
-  if CodeSize >=3 then begin
-    for i:=0 to CodeSize-3 do                     // nespracovany byty kodu
-      if DisasmMap[i] = dfNone then begin
-        case code[i] of
-          $55:       // PUSH BP
+  if CodeSize >= 3 then begin
+    for CodeIndex := 0 to CodeSize - 3 do
+      if DisasmMap[CodeIndex] = dfNone then begin
+        case code[CodeIndex] of
+          $55:       // PUSH (E)BP
             asm
               mov eax,self
               mov eax,[eax].code
-              add eax,i
+              add eax,CodeIndex
               inc eax
               mov ax,[eax]
-              cmp ax,$EC8B  // 8BEC = MOV (E)BP,(E)SP
+              cmp ax,$EC8B  // 8B EC = MOV (E)BP,(E)SP
               je @nasiel
-              cmp ax,$E589  // 89E5 = MOV (E)BP,(E)SP
+              cmp ax,$E589  // 89 E5 = MOV (E)BP,(E)SP
               je @nasiel
               jmp @koniec
             @nasiel:
-              mov edx,i
+              mov edx,CodeIndex
               mov eax,self
               mov eax,[eax].CAJ
               call TCallsAndJumps.Add
@@ -980,46 +945,32 @@ begin
   // Disassemblovanie najdenych procedur a kodu na ktory sa odkazuju
   Logger.Info('TDisassembler.DisassembleAll - Phase 2b');
   CAJ.Process(CodeSize);
-  while CAJ.Count > 0 do begin
-    for i:=0 to CAJ.Count-1 do begin
-      if not DisassembleBlock(CAJ[i].start, CAJ[i].finish) then Exit;
-    end;
-    CAJ.Process(CodeSize);
-  end;
-  
+  DisassemblerCycle;
+
   //****************************************************************************
   // 3. Phase - Transform non-disassembled bytee to UNSIGNED BYTE data
   //****************************************************************************
-  
+
   Logger.Info('TDisassembler.DisassembleAll - Phase 3');
- 
-  // Set the static parts of the Line string  
-  Line[9]:= ' ';
-  for SpaceIndex:= 12 to ilInstructionMnemonicIndex - 1 do
-    Line[SpaceIndex] := ' ';
-  Line[ilInstructionMnemonicIndex] := 'b';
-  Line[ilInstructionMnemonicIndex + 1] := 'y';
-  Line[ilInstructionMnemonicIndex + 2] := 't';
-  Line[ilInstructionMnemonicIndex + 3] := 'e';
-  Line[ilInstructionMnemonicIndex + 4] := ' ';
-  Line[ilInstructionMnemonicIndex + 5] := '0';
-  Line[ilInstructionMnemonicIndex + 6] := 'x';
-  Line[ilInstructionMnemonicIndex + 9] := ' ';
-  Line[ilInstructionMnemonicIndex + 10] := '''';
-  Line[ilInstructionMnemonicIndex + 12] := '''';
-  
+
+  // Set the static parts of the Line string
+  Line := #0#0#0#0#0#0#0#0 + ' ' + #0#0;
+  for SpaceIndex:= 3 to ilMaxParsedLength do
+    Line := Line  + ' ';
+  Line := Line + ' ' + 'byte 0x' + #0#0 + ' ''' + #0 + '''';
+
   // Find all non-disassembled bytes and make then "byte data"
-  for CodeIndex := 0 to CodeSize-1 do
-    if DisasmMap[CodeIndex] = dfNone then begin     // nespracovany byty kodu
+  for CodeIndex := 0 to CodeSize - 1 do
+    if DisasmMap[CodeIndex] = dfNone then begin
       Inc(ProgressData.Position);
 
-      // Address 
+      // Address
       MemAddress:= CodeIndex + fMemOffset;
-      for i:=1 to 8 do begin
-        Line[9 - i]:= HexDigits[MemAddress and 15];
+      for HexAddressIndex := 1 to 8 do begin
+        Line[9 - HexAddressIndex]:= HexDigits[MemAddress and 15];
         MemAddress:= MemAddress shr 4;
       end;
-      
+
       // Parsed TheByte
       Line[10]:= HexDigits[(code[CodeIndex] shr 4) and 15];
       Line[11]:= HexDigits[code[CodeIndex] and 15];
@@ -1031,24 +982,22 @@ begin
         SetLength(Line, ilInstructionMnemonicIndex + 12);
         Line[ilInstructionMnemonicIndex + 11] := Chr(code[CodeIndex]);
       end
-      else begin
+      else
         SetLength(Line, ilInstructionMnemonicIndex + 8);
-      end;  
 
       Disassembled[CodeIndex].Disassembled := Line;
-      
+
 //      Inc(DisasmMap[CodeIndex],dfData);
       Inc(fStatistics.Data);
     end;
 
-
   // Vypocet statistickych udajov
   Logger.Info('TDisassembler.DisassembleAll - Statistics');
   fStatistics.InstructionBytes:= CodeSize - fStatistics.Data;
-  i:=integer(CodeSize)-1;
-  while (((DisasmMap[i] and dfNewInstr)=0) and (DisasmMap[i]<>0)) do dec(i);
-  fStatistics.LastItem:=i;
-  Result:=true;
+  CodeIndex := CodeSize - 1;
+  while (((DisasmMap[CodeIndex] and dfNewInstr) = 0) and (DisasmMap[CodeIndex] <> 0)) do
+    Dec(CodeIndex);
+  fStatistics.LastItem := CodeIndex;
 end;
 
 
@@ -1072,11 +1021,22 @@ var
     k: cardinal;
     KoniecBloku: boolean;
 
-
+  Line: string[50 + ilInstructionMnemonicIndex];
+  MemAddress: cardinal;
+  HexAddressIndex, ParsedIndex, SpaceIndex, LineIndex: integer;
+  LastParsedIndex: integer;
+  TheByte: byte;
 begin
   i:= Start;
   InstrAddress:= i;
   KoniecBloku:= false;
+
+
+  LastParsedIndex := 0;
+  Line[9] := ' ';
+  for SpaceIndex := 10 to procmat.ilInstructionMnemonicIndex - 1 do
+    Line[SpaceIndex] := ' ';
+
 
   try
 
@@ -1214,7 +1174,7 @@ XADD, and XCHG.
             else ;
           end;
           ModRM:= LoadModRM(code[i+1]);
-          Inc(j, ModRM.regop);
+          Inc(j, ModRM.RegOp);
           Vparam:= GroupOBOInstruction_set[j].param;
           Vpc:= GroupOBOInstruction_set[j].pc;
           InstructionName := GroupOBOInstruction_set[j].name;
@@ -1469,7 +1429,7 @@ XADD, and XCHG.
 
       // Vlozenie specifikatora velkosti pre instrukcie MOVZX a MOVSX
       // Nieco podobne by sa mozno zislo aj pre PUNPCKxxx instrukcie
-      if (code[InstrAddress]=$0F) then
+      if (code[InstrAddress] = $0F) then
         case code[InstrAddress+1] of
           // MOVZX
           $B6: InstructionOperands:= InsertStr('byte ',InstructionOperands, Pos(',',InstructionOperands)+1);
@@ -1487,6 +1447,57 @@ XADD, and XCHG.
         KoniecBloku:=true;
       end
       else begin
+
+        { Construct instruction line of Disassembled from its parts }
+
+        SetLength(Line, ilInstructionMnemonicIndex - 1);
+
+        // Address
+        MemAddress:= InstrAddress + fMemOffset;
+        for HexAddressIndex := 1 to 8 do begin
+          Line[9 - HexAddressIndex]:= HexDigits[MemAddress and 15];
+          MemAddress:= MemAddress shr 4;
+        end;
+
+        // Parsed
+        for ParsedIndex := 0 to (i - InstrAddress) do begin
+          TheByte := code[InstrAddress + ParsedIndex];
+          Line[10 + 2*ParsedIndex] := HexDigits[(TheByte shr 4) and 15];
+          Line[10 + 2*ParsedIndex + 1] := HexDigits[TheByte and 15];
+        end;
+
+        // Spaces
+        for SpaceIndex := 10 + 2*(i - InstrAddress + 1) to LastParsedIndex do
+          Line[SpaceIndex] := ' ';
+
+        LastParsedIndex := 9 + 2*(i - InstrAddress + 1);
+
+        // Prefix
+        LineIndex := ilInstructionMnemonicIndex;
+        if InstructionPrefix <> '' then begin
+          for ParsedIndex := 1 to Length(InstructionPrefix) do
+            Line[procmat.ilInstructionMnemonicIndex - 1 + ParsedIndex] := InstructionPrefix[ParsedIndex];
+          Inc(LineIndex, Length(InstructionPrefix));
+          Line[LineIndex] := ' ';
+          Inc(LineIndex);
+        end;
+
+        // Name
+        for ParsedIndex := 1 to Length(InstructionName) do
+          Line[LineIndex - 1 + ParsedIndex] := InstructionName[ParsedIndex];
+        Inc(LineIndex, Length(InstructionName));
+        Line[LineIndex] := ' ';
+        Inc(LineIndex);
+
+        // Operands
+        for ParsedIndex := 1 to Length(InstructionOperands) do
+          Line[LineIndex - 1 + ParsedIndex] := InstructionOperands[ParsedIndex];
+        Inc(LineIndex, Length(InstructionOperands) - 1);
+
+        SetLength(Line, LineIndex);
+        Disassembled[InstrAddress].Disassembled := Line;
+
+{
         // Create intruction line of Disassembled from particles
         Disassembled[InstrAddress].Disassembled :=
           IntToHex(InstrAddress + fMemOffset, 8) + ' ' +
@@ -1494,6 +1505,7 @@ XADD, and XCHG.
           IfThen(InstructionPrefix <> '', InstructionPrefix + ' ') +
           InstructionName + ' ' +
           InstructionOperands;
+}
 
         // prida kazdemu bajtu aktualnej instrukcie flag dfPart, t.j. ze je sucastou nejakej instruckie
         for k := InstrAddress to i do
@@ -1522,85 +1534,86 @@ XADD, and XCHG.
         'DisassembleBlock(0x' + IntToHex(start, 8) + ', 0x' + IntToHex(finish, 8) + '): ' +
         E.Message + ' [InstrAddress = 0x' + IntToHex(InstrAddress, 8) + '; CodeIndex = 0x' + IntToHex(i, 8) + ']'
       );
+
       raise;
     end;
   end;
 
   fBlocks.Add(start, i - start);
   result:=true;
-end;   // End of Disassemble
+end;
 
 
 
 function TDisassembler.SpracujParameter(a:Tparameter):string;
 begin
-      case a of
-        MODb: result:=Spracujmodrm(regmem, onebyte);
-        MODw: result:=SpracujModrm(regmem, twobyte);
-        MODv: result:=SpracujModrm(regmem, twoorfour);
-        MODd: result:=SpracujModrm(regmem, fourbyte);
-        MODp: result:=SpracujModrm(regmem, fourorsix);
-        MODq: result:=SpracujModrm(regmem, mmx);
-        MODdq: result:=SpracujModRM(regmem, xmm);
+  case a of
+    MODb: result:=Spracujmodrm(regmem, onebyte);
+    MODw: result:=SpracujModrm(regmem, twobyte);
+    MODv: result:=SpracujModrm(regmem, twoorfour);
+    MODd: result:=SpracujModrm(regmem, fourbyte);
+    MODp: result:=SpracujModrm(regmem, fourorsix);
+    MODq: result:=SpracujModrm(regmem, mmx);
+    MODdq: result:=SpracujModRM(regmem, xmm);
 
-        GREGb: result:=SpracujModrm(greg,onebyte);
-        GREGw: result:=SpracujModrm(greg,twobyte);
-        GREGv: result:=SpracujModrm(greg,twoorfour);
-        GREGd: result:=SpracujModrm(greg,fourbyte);
-        GREGq: result:=SpracujModrm(greg,mmx);
-        GREGdq: result:=SpracujModrm(greg,xmm);
+    GREGb: result:=SpracujModrm(greg,onebyte);
+    GREGw: result:=SpracujModrm(greg,twobyte);
+    GREGv: result:=SpracujModrm(greg,twoorfour);
+    GREGd: result:=SpracujModrm(greg,fourbyte);
+    GREGq: result:=SpracujModrm(greg,mmx);
+    GREGdq: result:=SpracujModrm(greg,xmm);
 
-        SREGw: result:=SpracujModrm(sreg,twobyte);
-        CREGd: result:=SpracujModrm(creg,fourbyte);
-        DREGd: result:=SpracujModrm(dreg,fourbyte);
-        TREGd: result:=SpracujModrm(treg,fourbyte);
+    SREGw: result:=SpracujModrm(sreg,twobyte);
+    CREGd: result:=SpracujModrm(creg,fourbyte);
+    DREGd: result:=SpracujModrm(dreg,fourbyte);
+    TREGd: result:=SpracujModrm(treg,fourbyte);
 
-        IMMb: result:=Spracujimmediate(onebyte);
-        IMMv: result:=spracujimmediate(twoorfour);
-        IMMw: result:=spracujimmediate(twobyte);
-        IMMp: result:=spracujimmediate(fourorsix);
+    IMMb: result:=Spracujimmediate(onebyte);
+    IMMv: result:=spracujimmediate(twoorfour);
+    IMMw: result:=spracujimmediate(twobyte);
+    IMMp: result:=spracujimmediate(fourorsix);
 
-        RELb: result:=spracujrelative(onebyte);
-        RELv: result:=spracujrelative(twoorfour);
-        RELw: result:=spracujrelative(twobyte);
+    RELb: result:=spracujrelative(onebyte);
+    RELv: result:=spracujrelative(twoorfour);
+    RELw: result:=spracujrelative(twobyte);
 
-        OFFb: result:=spracujoffset(onebyte);
-        OFFv: result:=spracujoffset(twoorfour);
+    OFFb: result:=spracujoffset(onebyte);
+    OFFv: result:=spracujoffset(twoorfour);
 
-        ax: result:=spracujgenreg+'AX';
-        bx: result:=spracujgenreg+'BX';
-        cx: result:=spracujgenreg+'CX';
-        dx: result:=spracujgenreg+'DX';
-        si: result:=spracujgenreg+'SI';
-        di: result:=spracujgenreg+'DI';
-        bp: result:=spracujgenreg+'BP';
-        sp: result:=spracujgenreg+'SP';
-        al: result:='AL';
-        bl: result:='BL';
-        cl: result:='CL';
-        dl: result:='DL';
-        ah: result:='AH';
-        bh: result:='BH';
-        ch: result:='CH';
-        dh: result:='DH';
-        DS: result:='DS';
-        ES: result:='ES';
-        SS: result:='SS';
-        CS: result:='CS';
-        statDX: result:='DX';
+    ax: result:=spracujgenreg+'AX';
+    bx: result:=spracujgenreg+'BX';
+    cx: result:=spracujgenreg+'CX';
+    dx: result:=spracujgenreg+'DX';
+    si: result:=spracujgenreg+'SI';
+    di: result:=spracujgenreg+'DI';
+    bp: result:=spracujgenreg+'BP';
+    sp: result:=spracujgenreg+'SP';
+    al: result:='AL';
+    bl: result:='BL';
+    cl: result:='CL';
+    dl: result:='DL';
+    ah: result:='AH';
+    bh: result:='BH';
+    ch: result:='CH';
+    dh: result:='DH';
+    DS: result:='DS';
+    ES: result:='ES';
+    SS: result:='SS';
+    CS: result:='CS';
+    statDX: result:='DX';
 
-        M32: result:=SpracujModRM(mem,fourbyte);
-        M64: result:=SpracujModRM(mem,mmx);
-        M128: result:=SpracujModRM(mem,xmm);
-        R32: result:=SpracujModRM(reg, fourbyte);
-        R64: result:=SpracujModRM(reg, mmx);
-        R128: result:=SpracujModRM(reg, xmm);
-        REG32_M16: result:=SpracujModRM(regmem,R32_M16);
-        XMM_M32: result:=SpracujModRM(regmem,R128_M32);
-        XMM_M64: result:=SpracujModRM(regmem,R128_M64);
+    M32: result:=SpracujModRM(mem,fourbyte);
+    M64: result:=SpracujModRM(mem,mmx);
+    M128: result:=SpracujModRM(mem,xmm);
+    R32: result:=SpracujModRM(reg, fourbyte);
+    R64: result:=SpracujModRM(reg, mmx);
+    R128: result:=SpracujModRM(reg, xmm);
+    REG32_M16: result:=SpracujModRM(regmem,R32_M16);
+    XMM_M32: result:=SpracujModRM(regmem,R128_M32);
+    XMM_M64: result:=SpracujModRM(regmem,R128_M64);
 
-        n1: result:='1';
-      end;
+    n1: result:='1';
+  end;
 end;
 
 

@@ -16,12 +16,12 @@ uses
 
 type
   TResourceTabFrame = class(TTabFrameTemplate)
-  protected
-    function GetSection: TSection; override;
-
   private
     fSection: TResourceSection;
+  protected
+    function GetSection: TSection; override;
   public
+    procedure Translate; override;
     constructor Create(AOwner: TComponent; ASection: TSection); overload; override;
   end;
 
@@ -32,11 +32,14 @@ implementation
 
 {$R *.dfm}
 
+
 constructor TResourceTabFrame.Create(AOwner: TComponent; ASection: TSection);
 begin
   inherited;
   fSection:=aSection as TResourceSection;
 end;
+
+
 
 function TResourceTabFrame.GetSection: TSection;
 begin
@@ -44,5 +47,10 @@ begin
 end;
 
 
+
+procedure TResourceTabFrame.Translate;
+begin
+
+end;
 
 end.

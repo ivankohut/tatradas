@@ -304,7 +304,7 @@ var
   ErrorMessage: string;
 
 begin
-  Logger.AddListener(TTextFileLoggerListener.Create('disasm.log'));
+//  Logger.AddListener(TTextFileLoggerListener.Create('disasm.log'));
   Logger.Info('----- START -----');
 
   ProcessText.Disassembling:= 'Disassembling CS_';

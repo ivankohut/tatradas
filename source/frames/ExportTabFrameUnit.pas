@@ -106,7 +106,7 @@ begin
   with (Tab.Frame as TCodeTabFrame) do begin
     GotoPosition(GetPosition(Address), soBeginning);
   end;
-  MainForm.PageControl1.ActivePage:=Tab;
+  MainForm.MainPageControl.ActivePage:=Tab;
 end;
 
 

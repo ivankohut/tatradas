@@ -28,18 +28,17 @@ object MainForm: TMainForm
     Stretch = True
     Transparent = True
   end
-  object PageControl1: TPageControl
+  object MainPageControl: TPageControl
     Left = 0
-    Top = 104
+    Top = 92
     Width = 773
-    Height = 559
-    Align = alBottom
-    Anchors = [akLeft, akTop, akRight, akBottom]
+    Height = 571
+    Align = alClient
     Constraints.MinHeight = 300
     Constraints.MinWidth = 565
     HotTrack = True
     TabOrder = 0
-    OnChange = PageControl1Change
+    OnChange = MainPageControlChange
   end
   object StatusBar2: TStatusBar
     Left = 0
@@ -53,12 +52,20 @@ object MainForm: TMainForm
       end
       item
         Alignment = taCenter
-        Text = 'TatraDAS disassembler 2.9.7'
+        Text = 'TatraDAS disassembler 2.9.8'
         Width = 50
       end>
     ParentShowHint = False
     ShowHint = True
-    SimplePanel = False
+  end
+  object Panel1: TPanel
+    Left = 0
+    Top = 83
+    Width = 773
+    Height = 9
+    Align = alTop
+    BevelOuter = bvNone
+    TabOrder = 2
   end
   object OpenFileOpenDialog: TOpenDialog
     Filter = 
@@ -444,6 +451,7 @@ object MainForm: TMainForm
         Hint = 'Spusti'#357' pomocn'#237'ka pre TatraDAS'
         ImageIndex = 11
         ShortCut = 112
+        Visible = False
         OnClick = Help2Click
       end
       object N2: TMenuItem

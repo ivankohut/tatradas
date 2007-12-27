@@ -77,9 +77,9 @@ constructor TTabSheetTemplate.Create(ASection: TSection);
 begin
   if aSection = nil then
     raise Exception.Create('TTabSheetTemplate.Create: Section = nil');
-  inherited Create(MainForm.PageControl1);
-  PageControl:=MainForm.PageControl1;
-  PageIndex:=PageControl.PageCount-1;
+  inherited Create(MainForm.MainPageControl);
+  PageControl := MainForm.MainPageControl;
+  PageIndex := PageControl.PageCount - 1;
   case aSection.typ of
     stCode: Frame:= TCodeTabFrame.Create(self, ASection);
     stExport: Frame:= TExportTabFrame.Create(self, ASection);
@@ -97,9 +97,9 @@ end;
 
 constructor TTabSheetTemplate.CreateFileTab(aExecFile: TExecutableFile);
 begin
-  inherited Create(MainForm.PageControl1);
-  PageControl:=MainForm.PageControl1;
-  PageIndex:=0;
+  inherited Create(MainForm.MainPageControl);
+  PageControl := MainForm.MainPageControl;
+  PageIndex := 0;
   case aExecFile.ExeFormat of
     ffCOM: Frame:= TCOMFileTabFrame.Create(self, aExecFile);
     ffMZ: Frame:= TMZFileTabFrame.Create(self, aExecFile);
@@ -166,11 +166,13 @@ begin
     if Section = nil then
       raise Exception.Create('TTabSheetTemplate.Create: Section = nil');
     case Section.typ of
-      stCode: result:=ttCode;
-      stImport: result:=ttImport;
-      stExport: result:=ttExport;
-      stRelocation: result:=ttRelocation;
-      stResource: result:=ttResource;
+      stCode: result := ttCode;
+      stImport: result := ttImport;
+      stExport: result := ttExport;
+      stRelocation: result := ttRelocation;
+      stResource: result := ttResource;
+      else
+        raise Exception.Create('Illegal state');
     end;
   end;  
 end;
