@@ -38,6 +38,12 @@ TO DO list (TatraDAS)
   - porozmyslat nad volanim beginupdate/endupdate niekde vyssie
 - AV - TatraFPC.exe  - disasemble, change everything to byte data, disasm at 0x0041B4FD
 - detekovat imported o uroven volania skor "call x, x: jump [0x...]"
+- 64 bit (pozor na instrukciu MOVD/Q, PEXTRD/Q, PINSRD/Q, CMPXCH8B/16B)
+- instrukcie pre virtualizaciu
+- refaktorizacia a kontrola FPU instrukcii
+- refaktorizacia GROUP instrukcii
+- nerekurzivne disassemblovanie
+- vacsie moznosti z konzoly 
 
 2.9.8 todo list:
   - problemy:

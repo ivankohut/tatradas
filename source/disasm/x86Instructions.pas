@@ -7,6 +7,8 @@ uses
   x86DisassemblerTypes;
 
 type
+  PSIMDInstruction = ^TSIMDInstruction;
+
   TInstruction = record        // Hlavny typ instrukcie
     name:string[20];           // Meno instrukcie(mnemonic)
     opcode: byte{word};              // Operacny kod
@@ -16,6 +18,14 @@ type
     pc:byte;                   // Pocet operandov(parametrov)
       param: TParam;           // Operandy(parametre) instrukcie
     mmx1,mmx2,mmx3,mmx4:word;       // Indexy MMX instrukcii v tabulke instrukcii MMX(+SSE,+SSE2)
+    SIMD, SIMD_66, SIMD_F2, SIMD_F3: PSIMDInstruction;       // Indexy MMX instrukcii v tabulke instrukcii MMX(+SSE,+SSE2)
+  end;
+
+  TSIMDInstruction = record
+    Name: string[20];
+    Opcode: word;
+    OperandsCount: byte;
+    Operands: TParam;
   end;
 
   TMMXInstruction = record
@@ -34,6 +44,7 @@ type
         name32: string[10];
     pc:byte;
       param: Tparam;
+    SIMD, SIMD_66, SIMD_F2, SIMD_F3: PSIMDInstruction;       // Indexy MMX instrukcii v tabulke instrukcii MMX(+SSE,+SSE2)
   end;
 
   TFPUInstruction = record
@@ -54,7 +65,8 @@ type
     p66,p67:boolean;
   end;
 
-  TGroupInstruction_set = array[0..7]of TInstruction;
+  TGroupInstruction_set = array [0..7] of TInstruction; // vo final verzii bude TInstruction
+  TGroupInstructions = array [0..7] of TGroupInstruction; // vo final verzii bude TInstruction
 
 const
   PocetOBOInstrukcii = 256;
@@ -64,11 +76,8 @@ const
   PocetFPUInstrukcii = 73;
   PocetMMXInstrukcii = 260; //47;
   Pocet3DNowInstrukcii = 24;
-  Prefix=[$F0,$F2,$F3,
-      $2E,$26,$3E,$36,$64,$65,
-      $66,$67];
-
   UndefinedFPUInstructionIndex = PocetFPUInstrukcii;
+
 
 {
  Instrukcie skokove:
@@ -401,7 +410,7 @@ const
                                (name: 'CLD'; opcode: $FC; param:()),
                                (name: 'STD'; opcode: $FD),
                                (name: 'group4'; opcode: $FE),
-                               (name: 'group5'; opcode: $FE)
+                               (name: 'group5'; opcode: $FE) // nemalo tu byt nahodou $FF - nie, $FE znamena ze je group instr., nie opcode
 
                                          );
 
@@ -693,6 +702,7 @@ const
 //                               (name: ''; opcode: $),
                                            );
 
+(*
 const GroupOBOInstruction_set:array[0..PocetOBOGroupInstrukcii-1] of TGroupInstruction = (
 
 // Group 1
@@ -899,6 +909,10 @@ const GroupTBOInstruction_set:array[1..PocetTBOGroupInstrukcii] of TGroupInstruc
 //                               (name: ''; opcode: $; secopcode: ; pc:2; param: (p1: MODv; p2: IMMb)),
 
                                                                    );
+*)
+
+{$I x86Instructions_SIMD.inc}
+{$I x86Instructions_Group.inc}
 
 const FPUInstruction_set:array[1..PocetFPUInstrukcii] of TFPUInstruction = (
                               // first byte $D8
@@ -1080,6 +1094,7 @@ const FPUINstructionNames:array[0..63]of string[10] = (
   ('FIADD'), ('FIMUL'), ('FICOM'), ('FICOMP'), ('FISUB'),  ('FISUBR'), ('FIDIV'),  ('FIDIVR'),
   ('FILD'),  ('???'),   ('FIST'),  ('FISTP'),  ('FBLD'),   ('FILD'),   ('FBSTP'),  ('FISTP')
                                 );
+
 
 const MMXInstruction_set:array[0..PocetMMXInstrukcii]of TMMXInstruction = (
 // 0..9
@@ -1403,6 +1418,8 @@ const MMXInstruction_set:array[0..PocetMMXInstrukcii]of TMMXInstruction = (
 //                               (name: ''; opcode: $; pc:2; param: (p1:q ;p2:q)),
 
                                                 );
+
+
 const _3DNowInstruction_set:array [1..Pocet3DNowInstrukcii] of TInstruction = (
 
                                (name: 'PI2FW'; opcode: $0C; pc:2; param: (p1:GREGq ;p2:MODq)),
@@ -1437,7 +1454,16 @@ const _3DNowInstruction_set:array [1..Pocet3DNowInstrukcii] of TInstruction = (
 //                               (name: ''; opcode: $; pc:2; param: (p1:q ;p2:q)),
 
                                        );
-
+(*
+{$I x86Instructions_SIMD.inc}
+{$I x86Instructions_Group.inc}
+{$I x86Instructions_OneByteOpcode.inc}
+{$I x86Instructions_TwoByteOpcode.inc}
+{$I x86Instructions_ThreeByteOpcode_38.inc}
+{$I x86Instructions_ThreeByteOpcode_3A.inc}
+{$I x86Instructions_x87.inc}
+{$I x86Instructions_3DNow.inc}
+*)
 implementation
 
 end.

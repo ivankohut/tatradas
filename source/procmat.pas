@@ -58,7 +58,7 @@ const
   TatraDASVersion: cardinal = $00029800;
   TatraDASDate: string = '27. 12. 2007';
   TatraDASProjectVersion = $00030002;
-  ShortTatraDASVersion: string = '2.9.8';
+  ShortTatraDASVersion: string = '2.9.9';
   TatraDASFullName: string = 'TatraDAS disassembler';
   TatraDASFullNameVersion: string = 'TatraDAS disassembler 2.9.8';
 

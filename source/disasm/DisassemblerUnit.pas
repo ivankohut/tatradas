@@ -1026,6 +1026,10 @@ var
   HexAddressIndex, ParsedIndex, SpaceIndex, LineIndex: integer;
   LastParsedIndex: integer;
   TheByte: byte;
+
+  GroupMapIndex: Integer;
+  GroupInstruction: TGroupInstruction;
+  SIMDInstruction: TSIMDInstruction;
 begin
   i:= Start;
   InstrAddress:= i;
@@ -1154,6 +1158,27 @@ XADD, and XCHG.
 
         // OneByte Opcode Group Instructions
         $FE: begin
+          ModRM := LoadModRM(code[i+1]);
+          GroupMapIndex := 0;
+          while GroupMapIndex < cOneByteOpcodeGroupMapSize do begin
+            if OneByteOpcodeGroupMap[GroupMapIndex].Opcode = code[i] then begin
+              if ModRM.Moder <> 3 then
+                GroupInstruction := OneByteOpcodeGroupMap[GroupMapIndex].GroupMem^[ModRM.RegOp]
+              else
+                GroupInstruction := OneByteOpcodeGroupMap[GroupMapIndex].GroupReg^[ModRM.RegOp];
+              Break;
+            end
+            else
+              Inc(GroupMapIndex);
+          end;
+          if GroupInstruction.OpCode = $D6 then
+            raise EUndefinedOpcodeException.Create('Group instruction');
+
+          Vparam:= GroupInstruction.param;
+          Vpc:= GroupInstruction.pc;
+          InstructionName := GroupInstruction.Name;
+
+          {
           case code[i] of
             $80: j:=0;
             $81: j:=8;
@@ -1180,6 +1205,7 @@ XADD, and XCHG.
           InstructionName := GroupOBOInstruction_set[j].name;
           if GroupOBOInstruction_set[j].opcode = $D6 then
             raise EUndefinedOpcodeException.Create('Group instruction');
+          }
         end;
 
         // FPU Instructions
@@ -1220,8 +1246,44 @@ XADD, and XCHG.
           inc(i);
           case TBOInstruction_set[code[i]].opcode of
 
-            // tu treba este osetrit nedifinovane opcody:
-            $FE: begin            // Group opcode instruction
+            // Group opcode instruction
+            $FE: begin
+              ModRM := LoadModRM(code[i+1]);
+              GroupMapIndex := 0;
+              while GroupMapIndex < cTwoByteOpcodeGroupMapSize do begin
+                if TwoByteOpcodeGroupMap[GroupMapIndex].Opcode = code[i] then begin
+                  if ModRM.Moder <> 3 then
+                    GroupInstruction := TwoByteOpcodeGroupMap[GroupMapIndex].GroupMem^[ModRM.RegOp]
+                  else
+                    GroupInstruction := TwoByteOpcodeGroupMap[GroupMapIndex].GroupReg^[ModRM.RegOp];
+                  Break;
+                end
+                else
+                  Inc(GroupMapIndex);
+              end;
+              if GroupInstruction.OpCode = $D6 then
+                raise EUndefinedOpcodeException.Create('Group instruction');
+
+              // SIMD instructions
+              if GroupInstruction.Opcode = $60 then begin
+                if prefixes.p66 then SIMDInstruction := GroupInstruction.SIMD_66^
+                else if prefixes.pF2 then SIMDInstruction := GroupInstruction.SIMD_F2^
+                else if prefixes.pF3 then SIMDInstruction := GroupInstruction.SIMD_F3^
+                else SIMDInstruction := GroupInstruction.SIMD^;
+
+                Vparam := SIMDInstruction.Operands;
+                Vpc := SIMDInstruction.OperandsCount;
+                InstructionName := SIMDInstruction.name;
+              end
+              // Ordinary instructions
+              else begin
+                Vparam := GroupInstruction.param;
+                Vpc := GroupInstruction.pc;
+                InstructionName := GroupInstruction.name;
+              end;
+
+
+              {
               j:=0;
               modrm:=loadmodrm(code[i+1]);
               case code[i] of
@@ -1270,7 +1332,9 @@ XADD, and XCHG.
                   Vpc:=GroupTBOInstruction_set[j].pc;
                   InstructionName:=GroupTBOinstruction_set[j].name;
                 end;
+
               end;
+              }
             end;
 
             // MMX, SSE, SSE2 opcode instruction

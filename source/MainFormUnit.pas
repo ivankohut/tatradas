@@ -302,8 +302,8 @@ procedure TMainForm.DisassembleClick(Sender: TObject);
 var
   PageIndex, SectionIndex: integer;
 begin
-  ProgressForm.Execute(TDisassembleThread.Create(ExecFile));
-//  ExecFile.Disassemble; = non-thread way
+//  ProgressForm.Execute(TDisassembleThread.Create(ExecFile));
+  ExecFile.Disassemble; //= non-thread way
 
   if ProgressData.ErrorStatus = errNone then begin
     SaveMyButton.Enabled:= true;
@@ -581,7 +581,7 @@ begin
 
   ExecFileManager:=TExecFileManager.Create;
 
-//  Logger.AddListener(TTextFileLoggerListener.Create('disasm.log'));
+  Logger.AddListener(TTextFileLoggerListener.Create('disasm.log'));
   Logger.Info('----- START -----');
 end;
 

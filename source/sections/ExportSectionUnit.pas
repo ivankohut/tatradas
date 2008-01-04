@@ -1,6 +1,6 @@
 unit ExportSectionUnit;
 
-{$INCLUDE 'DELVER.INC'}
+{$INCLUDE 'delver.inc'}
 
 interface
 

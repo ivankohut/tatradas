@@ -110,11 +110,12 @@ end;
 
 procedure TAboutBox.FormCreate(Sender: TObject);
 var
-  FormatSettings: TFormatSettings;
+  DecSepar: Char;
 begin
-  GetLocaleFormatSettings(0, FormatSettings);
-  FormatSettings.DecimalSeparator := '.'; 
-  CompilerDataLabel.Caption := CompilerDataLabel.Caption + ' ' + FloatToStrF(CompilerVersion, ffFixed, 5, 1, FormatSettings);
+  DecSepar := DecimalSeparator;
+  DecimalSeparator := '.';
+  CompilerDataLabel.Caption := CompilerDataLabel.Caption + ' ' + FloatToStrF(CompilerVersion, ffFixed, 5, 1);
+  DecimalSeparator := DecSepar;
 end;
 
 end.
