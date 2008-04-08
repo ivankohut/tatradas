@@ -315,7 +315,7 @@ begin
   ProcessText.SavingDHF:= 'Saving DHF file CS_';// - Code Section #';
 
 
-  ProgramIdentification:= TatraDASFullNameVersion + ' - console version, Ivan Kohut (c) 2007';
+  ProgramIdentification:= TatraDASFullNameVersion + ' - console version, Ivan Kohut (c) 2008';
   WriteLn(DupeString('-', Length(ProgramIdentification)));
   WriteLn(ProgramIdentification);
   WriteLn(DupeString('-', Length(ProgramIdentification)));

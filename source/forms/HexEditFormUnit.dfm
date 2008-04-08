@@ -14,7 +14,8 @@ object HexEditForm: THexEditForm
   Font.Style = []
   OldCreateOrder = False
   OnClose = FormClose
-  OnShow = FormShow
+  OnCreate = FormCreate
+  OnDestroy = FormDestroy
   DesignSize = (
     803
     461)
@@ -156,12 +157,12 @@ object HexEditForm: THexEditForm
     TabOrder = 0
     OnClick = SaveAsButtonClick
   end
-  object Panel1: TPanel
+  object HexEditPanel: TPanel
     Left = 8
     Top = 8
     Width = 665
     Height = 425
-    Caption = 'Panel1'
+    Caption = 'HexEditPanel'
     TabOrder = 1
   end
   object StatusBar1: TStatusBar
@@ -199,7 +200,7 @@ object HexEditForm: THexEditForm
     TabOrder = 3
     OnClick = GotoAddressButtonClick
   end
-  object SaveDialog1: TSaveDialog
+  object HexEditSaveDialog: TSaveDialog
     Left = 16
     Top = 16
   end

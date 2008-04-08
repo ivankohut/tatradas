@@ -42,7 +42,8 @@ implementation
 
 uses
   MainFormUnit,
-  CodeTabFrameUnit;
+  CodeTabFrameUnit,
+  DateUtils;
 
 {$R *.dfm}
 
@@ -51,24 +52,32 @@ constructor TExportTabFrame.Create(AOwner: TComponent; ASection: TSection);
 var
   ListItem: TListItem;
   i: integer;
+
+  tt: TDateTime;
 begin
   inherited;
-  fSection:=ASection as TExportSection;
-  Caption:='Export';
-  fGotoEnabled:=false;
+  fSection := ASection as TExportSection;
+  Caption := 'Export';
+  fGotoEnabled := false;
 
-  for i:=0 to fSection.FunctionCount-1 do begin
+  FunctionListView.Items.BeginUpdate;
+//  tt := Now;
+  FunctionListView.Items.Count := fSection.FunctionCount;
+
+  for i := 0 to fSection.FunctionCount - 1 do begin
     ListItem:=FunctionListView.Items.Add;
     ListItem.Data:= Pointer(i);
-    ListItem.Caption:=IntToStr(i+1)+'.';
+    ListItem.Caption:= IntToStr(i+1)+'.';
     with fSection.functions[i] do begin
       ListItem.SubItems.Add(Name);
       ListItem.SubItems.Add(IntToStr(Section));
       ListItem.SubItems.Add(IntToHex(CodeSectionOffset, 8));
       ListItem.SubItems.Add(IntToHex(MemOffset, 8));
       ListItem.SubItems.Add(IntToHex(ordinal, 8));
-    end;  
+    end;
   end;
+//  showMessage(IntToStr(MilliSecondsBetween(Now, tt)));
+  FunctionListView.Items.EndUpdate;
 end;
 
 

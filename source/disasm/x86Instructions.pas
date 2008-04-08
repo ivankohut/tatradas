@@ -7,18 +7,26 @@ uses
   x86DisassemblerTypes;
 
 type
+
+  // "Instruction set" for instructions will maybe be used in future versions
+  TInstructionSet = (isGenPur, isMMX, isSSE, isSSE2, isSSE3, isSSSE3, isSSE4, is3DNow, is3DNowExt, isFPU, isFPUStateMng, isTestReg);  // isVMX, is64bit
+
+  TInstructionType = (itUndefined, itOrdinary, itSIMD, itFPU, itGroup);
+
   PSIMDInstruction = ^TSIMDInstruction;
 
   TInstruction = record        // Hlavny typ instrukcie
     name:string[20];           // Meno instrukcie(mnemonic)
-    opcode: byte{word};              // Operacny kod
+    typ: TInstructionType;
+    opcode: byte;              // Operacny kod
       AddOp:boolean;           // Name16 and  name32 depends on Address(true) or Operand(false) size attribut
         name16: string[10];
         name32: string[10];
     pc:byte;                   // Pocet operandov(parametrov)
       param: TParam;           // Operandy(parametre) instrukcie
-    mmx1,mmx2,mmx3,mmx4:word;       // Indexy MMX instrukcii v tabulke instrukcii MMX(+SSE,+SSE2)
-    SIMD, SIMD_66, SIMD_F2, SIMD_F3: PSIMDInstruction;       // Indexy MMX instrukcii v tabulke instrukcii MMX(+SSE,+SSE2)
+//    mmx1,mmx2,mmx3,mmx4: word;       // Indexy MMX instrukcii v tabulke instrukcii MMX(+SSE,+SSE2)
+    SIMD, SIMD_66, SIMD_F2, SIMD_F3: PSIMDInstruction;
+    InstrSet: TInstructionSet;
   end;
 
   TSIMDInstruction = record
@@ -26,6 +34,7 @@ type
     Opcode: word;
     OperandsCount: byte;
     Operands: TParam;
+    InstrSet: TInstructionSet;
   end;
 
   TMMXInstruction = record
@@ -35,48 +44,37 @@ type
       param: Tparam;
   end;
 
-  TGroupInstruction = record
-    name:string[20];
-    opcode: byte;//word;
-    SecOpcode:byte;
-      AddOp:boolean;
-        name16: string[10];
-        name32: string[10];
-    pc:byte;
-      param: Tparam;
-    SIMD, SIMD_66, SIMD_F2, SIMD_F3: PSIMDInstruction;       // Indexy MMX instrukcii v tabulke instrukcii MMX(+SSE,+SSE2)
-  end;
 
-  TFPUInstruction = record
-    name:string[20];
-    opcode:byte;
-    par:TFPUParameter;
-  end;
-
-  TFPUInstructionEx = record
-    name:string[20];
-    opcode:byte;
+  TFPUAInstruction = record
+    name: string[20];
     par: TSize;
   end;
 
-  TPrefixes = record
-    pF0,pF2,pF3:boolean;
-    p2E,p36,p3E,p26,p64,p65:boolean;
-    p66,p67:boolean;
+  TFPUBInstruction = record
+    name: string[20];
+    par: string;
   end;
 
-  TGroupInstruction_set = array [0..7] of TInstruction; // vo final verzii bude TInstruction
-  TGroupInstructions = array [0..7] of TGroupInstruction; // vo final verzii bude TInstruction
+  TFPUInstructionGroup = array [$C0..$FF] of TFPUBInstruction;
+
+
+
+  TPrefixes = record
+    pF0, pF2, pF3: boolean;
+    p2E, p36, p3E, p26, p64, p65: boolean;
+    p66, p67: boolean;
+  end;
+
+  TGroupInstructions = array [0..7] of TInstruction;
 
 const
   PocetOBOInstrukcii = 256;
   PocetTBOInstrukcii = 256;
   PocetOBOGroupInstrukcii = 128;
   PocetTBOGroupInstrukcii = 30;
-  PocetFPUInstrukcii = 73;
+  //PocetFPUInstrukcii = 73;
   PocetMMXInstrukcii = 260; //47;
   Pocet3DNowInstrukcii = 24;
-  UndefinedFPUInstructionIndex = PocetFPUInstrukcii;
 
 
 {
@@ -101,41 +99,6 @@ const
 // Opcode $66 - Instruction Prefix
 // Opcode $D6 - Undefined Opcode
 // Other opcodes - OneByte Opcode Instruction
-
-
-       Group12: TGroupInstruction_set = (
-                               (name: ''; opcode: $0; ),
-                               (name: ''; opcode: $0; ),
-                               (name: 'mmx'; opcode: $60; mmx1:243; mmx2:244),
-                               (name: ''; opcode: $0; ),
-                               (name: 'mmx'; opcode: $60; mmx1:245; mmx2:246),
-                               (name: ''; opcode: $0; ),
-                               (name: 'mmx'; opcode: $60; mmx1:247; mmx2:248),
-                               (name: ''; opcode: $0; )
-                                        );
-
-       Group13: TGroupInstruction_set = (
-                               (name: ''; opcode: $0; ),
-                               (name: ''; opcode: $0; ),
-                               (name: 'mmx'; opcode: $60; mmx1:249; mmx2:250),
-                               (name: ''; opcode: $0; ),
-                               (name: 'mmx'; opcode: $60; mmx1:251; mmx2:252),
-                               (name: ''; opcode: $0; ),
-                               (name: 'mmx'; opcode: $60; mmx1:253; mmx2:254),
-                               (name: ''; opcode: $0; )
-                                        );
-
-       Group14: TGroupInstruction_set = (
-                               (name: ''; opcode: $0; ),
-                               (name: ''; opcode: $0; ),
-                               (name: 'mmx'; opcode: $60; mmx1:255; mmx2:256),
-                               (name: 'mmx'; opcode: $60; mmx2:257),
-                               (name: ''; opcode: $0; ),
-                               (name: ''; opcode: $0; ),
-                               (name: 'mmx'; opcode: $60; mmx1:258; mmx2:259),
-                               (name: 'mmx'; opcode: $60; mmx2:260)
-                                        );
-//                               (name: ''; opcode: $; pc:2; param: (p1:; p2:)),
 
 
        OBOInstruction_set:array[0..PocetOBOInstrukcii-1] of TInstruction = (
@@ -413,7 +376,7 @@ const
                                (name: 'group5'; opcode: $FE) // nemalo tu byt nahodou $FF - nie, $FE znamena ze je group instr., nie opcode
 
                                          );
-
+(*
 const
 
 // Opcode $FE - Group Instruction
@@ -701,759 +664,13 @@ const
 //                               (name: 'group'; opcode: $FE),
 //                               (name: ''; opcode: $),
                                            );
-
-(*
-const GroupOBOInstruction_set:array[0..PocetOBOGroupInstrukcii-1] of TGroupInstruction = (
-
-// Group 1
-                               (name: 'ADD'; opcode: $80; secopcode:0; pc:2; param: (p1:MODb; p2: IMMb)),
-                               (name: 'OR';  opcode: $80; secopcode:1; pc:2; param: (p1:MODb; p2: IMMb)),
-                               (name: 'ADC'; opcode: $80; secopcode:2; pc:2; param: (p1:MODb; p2: IMMb)),
-                               (name: 'SBB'; opcode: $80; secopcode:3; pc:2; param: (p1:MODb; p2: IMMb)),
-                               (name: 'AND'; opcode: $80; secopcode:4; pc:2; param: (p1:MODb; p2: IMMb)),
-                               (name: 'SUB'; opcode: $80; secopcode:5; pc:2; param: (p1:MODb; p2: IMMb)),
-                               (name: 'XOR'; opcode: $80; secopcode:6; pc:2; param: (p1:MODb; p2: IMMb)),
-                               (name: 'CMP'; opcode: $80; secopcode:7; pc:2; param: (p1:MODb; p2: IMMb)),
-
-                               (name: 'ADD'; opcode: $81; secopcode:0; pc:2; param: (p1:MODv; p2: IMMv)),
-                               (name: 'OR';  opcode: $81; secopcode:1; pc:2; param: (p1:MODv; p2: IMMv)),
-                               (name: 'ADC'; opcode: $81; secopcode:2; pc:2; param: (p1:MODv; p2: IMMv)),
-                               (name: 'SBB'; opcode: $81; secopcode:3; pc:2; param: (p1:MODv; p2: IMMv)),
-                               (name: 'AND'; opcode: $81; secopcode:4; pc:2; param: (p1:MODv; p2: IMMv)),
-                               (name: 'SUB'; opcode: $81; secopcode:5; pc:2; param: (p1:MODv; p2: IMMv)),
-                               (name: 'XOR'; opcode: $81; secopcode:6; pc:2; param: (p1:MODv; p2: IMMv)),
-                               (name: 'CMP'; opcode: $81; secopcode:7; pc:2; param: (p1:MODv; p2: IMMv)),
-
-                               (name: 'ADD'; opcode: $82; secopcode:0; pc:2; param: (p1:MODb; p2: IMMb)),
-                               (name: 'OR';  opcode: $82; secopcode:1; pc:2; param: (p1:MODb; p2: IMMb)),
-                               (name: 'ADC'; opcode: $82; secopcode:2; pc:2; param: (p1:MODb; p2: IMMb)),
-                               (name: 'SBB'; opcode: $82; secopcode:3; pc:2; param: (p1:MODb; p2: IMMb)),
-                               (name: 'AND'; opcode: $82; secopcode:4; pc:2; param: (p1:MODb; p2: IMMb)),
-                               (name: 'SUB'; opcode: $82; secopcode:5; pc:2; param: (p1:MODb; p2: IMMb)),
-                               (name: 'XOR'; opcode: $82; secopcode:6; pc:2; param: (p1:MODb; p2: IMMb)),
-                               (name: 'CMP'; opcode: $82; secopcode:7; pc:2; param: (p1:MODb; p2: IMMb)),
-
-                               (name: 'ADD'; opcode: $83; secopcode:0; pc:2; param: (p1:MODv; p2: IMMb)),
-                               (name: 'OR';  opcode: $83; secopcode:1; pc:2; param: (p1:MODv; p2: IMMb)),
-                               (name: 'ADC'; opcode: $83; secopcode:2; pc:2; param: (p1:MODv; p2: IMMb)),
-                               (name: 'SBB'; opcode: $83; secopcode:3; pc:2; param: (p1:MODv; p2: IMMb)),
-                               (name: 'AND'; opcode: $83; secopcode:4; pc:2; param: (p1:MODv; p2: IMMb)),
-                               (name: 'SUB'; opcode: $83; secopcode:5; pc:2; param: (p1:MODv; p2: IMMb)),
-                               (name: 'XOR'; opcode: $83; secopcode:6; pc:2; param: (p1:MODv; p2: IMMb)),
-                               (name: 'CMP'; opcode: $83; secopcode:7; pc:2; param: (p1:MODv; p2: IMMb)),
-
-// Group 2
-                               (name: 'ROL'; opcode: $C0; secopcode: 0; pc:2; param: (p1:MODb; p2: IMMb)),
-                               (name: 'ROR'; opcode: $C0; secopcode: 1; pc:2; param: (p1:MODb; p2: IMMb)),
-                               (name: 'RCL'; opcode: $C0; secopcode: 2; pc:2; param: (p1:MODb; p2: IMMb)),
-                               (name: 'RCR'; opcode: $C0; secopcode: 3; pc:2; param: (p1:MODb; p2: IMMb)),
-                                // podla intelu SAL = SHL, podla Compa SAL = C0 ??110???
-                               (name: 'SHL'; opcode: $C0; secopcode: 4; pc:2; param: (p1:MODb; p2: IMMb)),
-                               (name: 'SHR'; opcode: $C0; secopcode: 5; pc:2; param: (p1:MODb; p2: IMMb)),
-                               (name: 'SAL'; opcode: $C0; secopcode: 6; pc:2; param: (p1:MODb; p2: IMMb)),
-                               (name: 'SAR'; opcode: $C0; secopcode: 7; pc:2; param: (p1:MODb; p2: IMMb)),
-
-                               (name: 'ROL'; opcode: $C1; secopcode: 0; pc:2; param: (p1:MODv; p2: IMMb)),
-                               (name: 'ROR'; opcode: $C1; secopcode: 1; pc:2; param: (p1:MODv; p2: IMMb)),
-                               (name: 'RCL'; opcode: $C1; secopcode: 2; pc:2; param: (p1:MODv; p2: IMMb)),
-                               (name: 'RCR'; opcode: $C1; secopcode: 3; pc:2; param: (p1:MODv; p2: IMMb)),
-                               (name: 'SHL'{/SAL}; opcode: $C1; secopcode: 4; pc:2; param: (p1:MODv; p2: IMMb)),
-                               (name: 'SHR'; opcode: $C1; secopcode: 5; pc:2; param: (p1:MODv; p2: IMMb)),
-                               (name: 'undefined opcode!'; opcode: $D6; secopcode: 6),
-                               (name: 'SAR'; opcode: $C1; secopcode: 7; pc:2; param: (p1:MODv; p2: IMMb)),
-
-                               (name: 'ROL'; opcode: $D0; secopcode: 0; pc:2; param: (p1:MODb; p2: n1)),
-                               (name: 'ROR'; opcode: $D0; secopcode: 1; pc:2; param: (p1:MODb; p2: n1)),
-                               (name: 'RCL'; opcode: $D0; secopcode: 2; pc:2; param: (p1:MODb; p2: n1)),
-                               (name: 'RCR'; opcode: $D0; secopcode: 3; pc:2; param: (p1:MODb; p2: n1)),
-                               (name: 'SHL'{/SAL}; opcode: $D0; secopcode: 4; pc:2; param: (p1:MODb; p2: n1)),
-                               (name: 'SHR'; opcode: $D0; secopcode: 5; pc:2; param: (p1:MODb; p2: n1)),
-                               (name: 'undefined opcode!'; opcode: $D6; secopcode: 6),
-                               (name: 'SAR'; opcode: $D0; secopcode: 7; pc:2; param: (p1:MODb; p2: n1)),
-
-                               (name: 'ROL'; opcode: $D1; secopcode: 0; pc:2; param: (p1:MODv; p2: n1)),
-                               (name: 'ROR'; opcode: $D1; secopcode: 1; pc:2; param: (p1:MODv; p2: n1)),
-                               (name: 'RCL'; opcode: $D1; secopcode: 2; pc:2; param: (p1:MODv; p2: n1)),
-                               (name: 'RCR'; opcode: $D1; secopcode: 3; pc:2; param: (p1:MODv; p2: n1)),
-                               (name: 'SHL'{/SAL}; opcode: $D1; secopcode: 4; pc:2; param: (p1:MODv; p2: n1)),
-                               (name: 'SHR'; opcode: $D1; secopcode: 5; pc:2; param: (p1:MODv; p2: n1)),
-                               (name: 'undefined opcode!'; opcode: $D6; secopcode: 6),
-                               (name: 'SAR'; opcode: $D1; secopcode: 7; pc:2; param: (p1:MODv; p2: n1)),
-
-                               (name: 'ROL'; opcode: $D2; secopcode: 0; pc:2; param: (p1:MODb; p2: CL)),
-                               (name: 'ROR'; opcode: $D2; secopcode: 1; pc:2; param: (p1:MODb; p2: CL)),
-                               (name: 'RCL'; opcode: $D2; secopcode: 2; pc:2; param: (p1:MODb; p2: CL)),
-                               (name: 'RCR'; opcode: $D2; secopcode: 3; pc:2; param: (p1:MODb; p2: CL)),
-                               (name: 'SHL'{/SAL}; opcode: $D2; secopcode: 4; pc:2; param: (p1:MODb; p2: CL)),
-                               (name: 'SHR'; opcode: $D2; secopcode: 5; pc:2; param: (p1:MODb; p2: CL)),
-                               (name: 'undefined opcode!'; opcode: $D6; secopcode: 6),
-                               (name: 'SAR'; opcode: $D2; secopcode: 7; pc:2; param: (p1:MODb; p2: CL)),
-
-                               (name: 'ROL'; opcode: $D3; secopcode: 0; pc:2; param: (p1:MODv; p2: CL)),
-                               (name: 'ROR'; opcode: $D3; secopcode: 1; pc:2; param: (p1:MODv; p2: CL)),
-                               (name: 'RCL'; opcode: $D3; secopcode: 2; pc:2; param: (p1:MODv; p2: CL)),
-                               (name: 'RCR'; opcode: $D3; secopcode: 3; pc:2; param: (p1:MODv; p2: CL)),
-                               (name: 'SHL'{/SAL}; opcode: $D3; secopcode: 4; pc:2; param: (p1:MODv; p2: CL)),
-                               (name: 'SHR'; opcode: $D3; secopcode: 5; pc:2; param: (p1:MODv; p2: CL)),
-                               (name: 'undefined opcode!'; opcode: $D6; secopcode: 6),
-                               (name: 'SAR'; opcode: $D3; secopcode: 7; pc:2; param: (p1:MODv; p2: CL)),
-
-// Group 3
-
-                               (name: 'TEST'; opcode: $F6; secopcode: 0; pc:2; param: (p1:MODb; p2: IMMb)),
-                               (name: 'undefined opcode!'; opcode: $D6; secopcode: 1),
-                               (name: 'NOT'; opcode: $F6; secopcode: 2; pc:1; param: (p1:MODb)),
-                               (name: 'NEG'; opcode: $F6; secopcode: 3; pc:1; param: (p1:MODb)),
-                               (name: 'MUL'; opcode: $F6; secopcode: 4; pc:1; param: (p1:MODb)),
-                               (name: 'IMUL'; opcode: $F6; secopcode: 5; pc:1; param: (p1:MODb)),
-                               (name: 'DIV'; opcode: $F6; secopcode: 6; pc:1; param: (p1:MODb)),
-                               (name: 'IDIV'; opcode: $F6; secopcode: 7; pc:1; param: (p1:MODb)),
-
-                               (name: 'TEST'; opcode: $F7; secopcode: 0; pc:2; param: (p1:MODv; p2: IMMv)),
-                               (name: 'undefined opcode!'; opcode: $D6; secopcode: 1),
-                               (name: 'NOT'; opcode: $F7; secopcode: 2; pc:1; param: (p1:MODv)),
-                               (name: 'NEG'; opcode: $F7; secopcode: 3; pc:1; param: (p1:MODv)),
-                               (name: 'MUL'; opcode: $F7; secopcode: 4; pc:1; param: (p1:MODv)),
-                               (name: 'IMUL'; opcode: $F7; secopcode: 5; pc:1; param: (p1:MODv)),
-                               (name: 'DIV'; opcode: $F7; secopcode: 6; pc:1; param: (p1:MODv)),
-                               (name: 'IDIV'; opcode: $F7; secopcode: 7; pc:1; param: (p1:MODv)),
-
-// Group 4
-
-                               (name: 'INC'; opcode: $FE; secopcode: 0; pc:1; param: (p1:MODb)),
-                               (name: 'DEC'; opcode: $FE; secopcode: 1; pc:1; param: (p1:MODb)),
-                               (name: 'undefined opcode!'; opcode: $D6; secopcode: 2),
-                               (name: 'undefined opcode!'; opcode: $D6; secopcode: 3),
-                               (name: 'undefined opcode!'; opcode: $D6; secopcode: 4),
-                               (name: 'undefined opcode!'; opcode: $D6; secopcode: 5),
-                               (name: 'undefined opcode!'; opcode: $D6; secopcode: 6),
-                               (name: 'undefined opcode!'; opcode: $D6; secopcode: 7),
-
-// Group 5
-                               (name: 'INC'; opcode: $FF; secopcode: 0; pc:1; param: (p1:MODv)),
-                               (name: 'DEC'; opcode: $FF; secopcode: 1; pc:1; param: (p1:MODv)),
-             {calln}                  (name: 'CALL'; opcode: $FF; secopcode: 2; pc:1; param: (p1:MODv)),
-             {callf}                  (name: 'CALL'; opcode: $FF; secopcode: 3; pc:1; param: (p1:MODp)),
-                               (name: 'JMP'{N}; opcode: $FF; secopcode: 4; pc:1; param: (p1:MODv)),
-                               (name: 'JMP'{F}; opcode: $FF; secopcode: 5; pc:1; param: (p1:MODp)),
-                               (name: 'PUSH'; opcode: $FF; secopcode: 6; pc:1; param: (p1:MODv)),
-                               (name: 'undefined opcode!'; opcode: $D6; secopcode: 7),
-
-// Group 11
-                               (name: 'MOV'; opcode: $C6; secopcode: 0; pc:2; param: (p1:MODb; p2:IMMb)),
-                               (name: 'undefined opcode!'; opcode: $D6; secopcode: 1),
-                               (name: 'undefined opcode!'; opcode: $D6; secopcode: 2),
-                               (name: 'undefined opcode!'; opcode: $D6; secopcode: 3),
-                               (name: 'undefined opcode!'; opcode: $D6; secopcode: 4),
-                               (name: 'undefined opcode!'; opcode: $D6; secopcode: 5),
-                               (name: 'undefined opcode!'; opcode: $D6; secopcode: 6),
-                               (name: 'undefined opcode!'; opcode: $D6; secopcode: 7),
-
-                               (name: 'MOV'; opcode: $C7; secopcode: 0; pc:2; param: (p1:MODv; p2:IMMv)),
-                               (name: 'undefined opcode!'; opcode: $D6; secopcode: 1),
-                               (name: 'undefined opcode!'; opcode: $D6; secopcode: 2),
-                               (name: 'undefined opcode!'; opcode: $D6; secopcode: 3),
-                               (name: 'undefined opcode!'; opcode: $D6; secopcode: 4),
-                               (name: 'undefined opcode!'; opcode: $D6; secopcode: 5),
-                               (name: 'undefined opcode!'; opcode: $D6; secopcode: 6),
-                               (name: 'undefined opcode!'; opcode: $D6; secopcode: 7)
-
-
-//                               (name: ''; opcode: $; secopcode: ; pc:2; param: (p1: MODb)),
-
-                               );
-
-const GroupTBOInstruction_set:array[1..PocetTBOGroupInstrukcii] of TGroupInstruction = (
-
-// Group 6
-                               (name: 'SLDT'; opcode: $00; secopcode: 0; pc:1; param: (p1: MODv)),
-                               (name: 'STR'; opcode: $00; secopcode: 1; pc:1; param: (p1: MODv)),
-                               (name: 'LLDT'; opcode: $00; secopcode: 2; pc:1; param: (p1: MODw)),
-                               (name: 'LTR'; opcode: $00; secopcode: 3; pc:1; param: (p1: MODw)),
-                               (name: 'VERR'; opcode: $00; secopcode: 4; pc:1; param: (p1: MODw)),
-                               (name: 'VERW'; opcode: $00; secopcode: 5; pc:1; param: (p1: MODw)),
-
-// Group 7
-                               (name: 'SGDT'; opcode: $01; secopcode: 0; pc:1; param: (p1: MODv)),
-                               (name: 'SIDT'; opcode: $01; secopcode: 1; pc:1; param: (p1: MODv)),
-                               (name: 'LGDT'; opcode: $01; secopcode: 2; pc:1; param: (p1: MODv)),
-                               (name: 'LIDT'; opcode: $01; secopcode: 3; pc:1; param: (p1: MODv)),
-                               (name: 'SMSW'; opcode: $01; secopcode: 4; pc:1; param: (p1: MODw)),
-                               (name: 'LMSW'; opcode: $01; secopcode: 6; pc:1; param: (p1: MODw)),
-                               (name: 'INVLPG'; opcode: $01; secopcode: 7; pc:1; param: (p1: MODb)),
-
-// Group 8
-                               (name: 'BT'; opcode: $BA; secopcode: 4; pc:2; param: (p1: MODv; p2: IMMb)),
-                               (name: 'BTS'; opcode: $BA; secopcode: 5; pc:2; param: (p1: MODv; p2: IMMb)),
-                               (name: 'BTR'; opcode: $BA; secopcode: 6; pc:2; param: (p1: MODv; p2: IMMb)),
-                               (name: 'BTC'; opcode: $BA; secopcode: 7; pc:2; param: (p1: MODv; p2: IMMb)),
-
-// Group 9
-                               (name: 'CMPXCHG8B'; opcode: $C7; secopcode: 1; pc:1; param: (p1: MODv)),
-// Group 15
-
-                               (name: 'FXSAVE'; opcode: $AE; secopcode:0; pc:0),
-                               (name: 'FXSTOR'; opcode: $AE; secopcode:1; pc:0),
-                               (name: 'LDMXCSR'; opcode: $AE; secopcode:2; pc:0),
-                               (name: 'STMXCSR'; opcode: $AE; secopcode:3; pc:0),
-                               (name: 'LFENCE'; opcode: $AE; secopcode:5; pc:0),
-                               (name: 'MFENCE'; opcode: $AE; secopcode:6; pc:0),
-                               (name: 'CLFLUSH'; opcode: $AE; secopcode:7; pc:0),
-                               (name: 'SFENCE'; opcode: $AE; secopcode:7; pc:0),
-// Group 16
-                               (name: 'PREFETCHNTA'; opcode: $18; secopcode:0; pc:0),
-                               (name: 'PREFETCHT0'; opcode: $18; secopcode:1; pc:0),
-                               (name: 'PREFETCHT1'; opcode: $18; secopcode:2; pc:0),
-                               (name: 'PREFETCHT2'; opcode: $18; secopcode:3; pc:0)
-
-//                               (name: ''; opcode: $; secopcode: ; pc:2; param: (p1: MODv; p2: IMMb)),
-
-                                                                   );
 *)
-
 {$I x86Instructions_SIMD.inc}
 {$I x86Instructions_Group.inc}
+{$I x86Instructions_3DNow.inc}
+{$I x86Instructions_TwoByteOpcode.inc}
+{$I x86Instructions_x87.inc}
 
-const FPUInstruction_set:array[1..PocetFPUInstrukcii] of TFPUInstruction = (
-                              // first byte $D8
-                               (name: 'FADD'; opcode: $C0; par: st1),
-                               (name: 'FMUL'; opcode: $C8; par: st1),
-                               (name: 'FCOM'; opcode: $D0; par: st1),
-                               (name: 'FCOMP'; opcode: $D8; par: st1),
-                               (name: 'FSUB'; opcode: $E0; par: st1),
-                               (name: 'FSUBR'; opcode: $E8; par: st1),
-                               (name: 'FDIV'; opcode: $F0; par: st1),
-                               (name: 'FDIVR'; opcode: $F8; par: st1),
-// 0 + 8
-                            // $D9
-                               (name: 'FLD'; opcode: $C0; par: st1),
-                               (name: 'FXCH'; opcode: $C8; par: st1),
-                               (name: 'FNOP'; opcode: $D0; par: none),
-                               (name: 'FCHS'; opcode: $E0; par: none),
-                               (name: 'FABS'; opcode: $E1; par: none),
-                               (name: 'FTST'; opcode: $E4; par: none),
-                               (name: 'FXAM'; opcode: $E5; par: none),
-                               (name: 'FLD1'; opcode: $E8; par: none),
-                               (name: 'FLDL2T'; opcode: $E9; par: none),
-                               (name: 'FLDL2E'; opcode: $EA; par: none),
-                               (name: 'FLDPI'; opcode: $EB; par: none),
-                               (name: 'FLDLG2'; opcode: $EC; par: none),
-                               (name: 'FLDLN2'; opcode: $ED; par: none),
-                               (name: 'FLDZ'; opcode: $EE; par: none),
-                               (name: 'F2XM1'; opcode: $F0; par: none),
-                               (name: 'FYL2X'; opcode: $F1; par: none),
-                               (name: 'FPTAN'; opcode: $F2; par: none),
-                               (name: 'FPATAN'; opcode: $F3; par: none),
-                               (name: 'FXTRACT'; opcode: $F4; par: none),
-                               (name: 'FPREM1'; opcode: $F5; par: none),
-                               (name: 'FDECSTP'; opcode: $F6; par: none),
-                               (name: 'FINCSTP'; opcode: $F7; par: none),
-                               (name: 'FPREM'; opcode: $F8; par: none),
-                               (name: 'FYL2XP1'; opcode: $F9; par: none),
-                               (name: 'FSQRT'; opcode: $FA; par: none),
-                               (name: 'FSINCOS'; opcode: $FB; par: none),
-                               (name: 'FRNDINT'; opcode: $FC; par: none),
-                               (name: 'FSCALE'; opcode: $FD; par: none),
-                               (name: 'FSIN'; opcode: $FE; par: none),
-                               (name: 'FCOS'; opcode: $FF; par: none),
-// 8 + 30 = 38
-                           // $DA
-                               (name: 'FCMOVB'; opcode: $C0; par: st1),
-                               (name: 'FCMOVE'; opcode: $C8; par: st1),
-                               (name: 'FCMOVBE'; opcode: $D0; par: st1),
-                               (name: 'FCMOVU'; opcode: $D8; par: st1),
-                               (name: 'FUCOMPP'; opcode: $E9; par: none),
-// 38 + 5 = 43
-                             //DB
-                               (name: 'FCMOVNB'; opcode: $C0; par: st1),
-                               (name: 'FCMOVNE'; opcode: $C8; par: st1),
-                               (name: 'FCMOVNBE'; opcode: $D0; par: st1),
-                               (name: 'FCMOVNU'; opcode: $D8; par: st1),
-                               (name: 'FCLEX'; opcode: $E2; par: none),
-                               (name: 'FINIT'; opcode: $E3; par: none),
-                               (name: 'FUCOMI'; opcode: $E8; par: st1),
-                               (name: 'FCOMI'; opcode: $F0; par: st1),
-// 43 + 8 = 51
-                            // $DC
-                               (name: 'FADD'; opcode: $C0; par: st2),
-                               (name: 'FMUL'; opcode: $C8; par: st2),
-                               (name: 'FSUBR'; opcode: $E0; par: st2),
-                               (name: 'FSUB'; opcode: $E8; par: st2),
-                               (name: 'FDIVR'; opcode: $F0; par: st2),
-                               (name: 'FDIV'; opcode: $F8; par: st2),
-// 51 + 6 = 57
-                            //DD
-                               (name: 'FFREE'; opcode: $C0; par: st3),
-                               (name: 'FST'; opcode: $D0; par: st3),
-                               (name: 'FSTP'; opcode: $D8; par: st3),
-                               (name: 'FUCOM'; opcode: $E0; par: st2),
-                               (name: 'FUCOMP'; opcode: $E8; par: st3),
-// 57 + 5 = 62
-                            // $DE
-                               (name: 'FADDP'; opcode: $C0; par: st2),
-                               (name: 'FMULP'; opcode: $C8; par: st2),
-                               (name: 'FCOMPP'; opcode: $D9; par: none),
-                               (name: 'FSUBRP'; opcode: $E0; par: st2),
-                               (name: 'FSUBP'; opcode: $E8; par: st2),
-                               (name: 'FDIVRP'; opcode: $F0; par: st2),
-                               (name: 'FDIVP'; opcode: $F8; par: st2),
-// 62 + 7 = 69
-                             // $DF
-                               (name: 'FSTSW AX'; opcode: $E0; par: none),
-                               (name: 'FUCOMIP'; opcode: $E8; par: st1),
-                               (name: 'FCOMIP'; opcode: $F0; par: st1),
-// 69 + 3 = 72
-                               (name: 'undefined opcode'; opcode: $00; par: none)
-
-                             );
-
-const FPUInstructions:array[0..63]of TFPUInstructionEx = (
-
-// D8
-                               (name: 'FADD'; opcode: $0; par: szDword),
-                               (name: 'FMUL'; opcode: $0; par: szDword),
-                               (name: 'FCOM'; opcode: $0; par: szDword),
-                               (name: 'FCOMP'; opcode: $0; par: szDword),
-                               (name: 'FSUB'; opcode: $0; par: szDword),
-                               (name: 'FSUBR'; opcode: $0; par: szDword),
-                               (name: 'FDIV'; opcode: $0; par: szDword),
-                               (name: 'FDIVR'; opcode: $0; par: szDword),
-// D9
-                               (name: 'FLD'; opcode: $0; par: szDword),
-                               (name: 'undefined opcode!'; opcode: $D6; ),
-                               (name: 'FST'; opcode: $0; par: szDword),
-                               (name: 'FSTP'; opcode: $0; par: szDword),
-                               (name: 'FLDENV'; opcode: $0; par: szEmpty),
-                               (name: 'FLDCW'; opcode: $0; par: szEmpty),
-                               (name: 'FSTENV'; opcode: $0; par: szEmpty),
-                               (name: 'FSTCW'; opcode: $0; par: szEmpty),
-// DA
-                               (name: 'FIADD'; opcode: $0; par: szDword),
-                               (name: 'FIMUL'; opcode: $0; par: szDword),
-                               (name: 'FICOM'; opcode: $0; par: szDword),
-                               (name: 'FICOMP'; opcode: $0; par: szDword),
-                               (name: 'FISUB'; opcode: $0; par: szDword),
-                               (name: 'FISUBR'; opcode: $0; par: szDword),
-                               (name: 'FIDIV'; opcode: $0; par: szDword),
-                               (name: 'FIDIVR'; opcode: $0; par: szDword),
-// DB
-                               (name: 'FILD'; opcode: $0; par: szDword),
-                               (name: 'undefined opcode!'; opcode: $D6;),
-                               (name: 'FIST'; opcode: $0; par: szDword),
-                               (name: 'FISTP'; opcode: $0; par: szDword),
-                               (name: 'undefined opcode!'; opcode: $D6;),
-                               (name: 'FLD'; opcode: $0; par: szTword),
-                               (name: 'undefined opcode!'; opcode: $D6;),
-                               (name: 'FSTP'; opcode: $0; par: szTword),
-// DC
-                               (name: 'FADD'; opcode: $0; par: szQword),
-                               (name: 'FMUL'; opcode: $0; par: szQword),
-                               (name: 'FCOM'; opcode: $0; par: szQword),
-                               (name: 'FCOMP'; opcode: $0; par: szQword),
-                               (name: 'FSUB'; opcode: $0; par: szQword),
-                               (name: 'FSUBR'; opcode: $0; par: szQword),
-                               (name: 'FDIV'; opcode: $0; par: szQword),
-                               (name: 'FDIVR'; opcode: $0; par: szQword),
-// DD
-                               (name: 'FLD'; opcode: $0; par: szQword),
-                               (name: 'undefined opcode!'; opcode: $D6;),
-                               (name: 'FST'; opcode: $0; par: szQword),
-                               (name: 'FSTP'; opcode: $0; par: szQword),
-                               (name: 'FRSTOR'; opcode: $0; par: szEmpty),
-                               (name: 'undefined opcode!'; opcode: $D6;),
-                               (name: 'FSAVE'; opcode: $0; par: szEmpty),
-                               (name: 'FSTSW'; opcode: $0; par: szEmpty),
-// DE
-                               (name: 'FIADD'; opcode: $0; par: szWord),
-                               (name: 'FIMUL'; opcode: $0; par: szWord),
-                               (name: 'FICOM'; opcode: $0; par: szWord),
-                               (name: 'FICOMP'; opcode: $0; par: szWord),
-                               (name: 'FISUB'; opcode: $0; par: szWord),
-                               (name: 'FISUBR'; opcode: $0; par: szWord),
-                               (name: 'FIDIV'; opcode: $0; par: szWord),
-                               (name: 'FIDIVR'; opcode: $0; par: szWord),
-// DF
-                               (name: 'FILD'; opcode: $0; par: szWord),
-                               (name: 'undefined opcode!'; opcode: $D6; ),
-                               (name: 'FIST'; opcode: $0; par: szWord),
-                               (name: 'FISTP'; opcode: $0; par: szWord),
-                               (name: 'FBLD'; opcode: $0; par: szTword),
-                               (name: 'FILD'; opcode: $0; par: szQword),
-                               (name: 'FBSTP'; opcode: $0; par: szTword),
-                               (name: 'FISTP'; opcode: $0; par: szQword)
-
-                                                         );
-
-const FPUINstructionNames:array[0..63]of string[10] = (
-  ('FADD'),  ('FMUL'),  ('FCOM'),  ('FCOMP'),  ('FSUB'),   ('FSUBR'),  ('FDIV'),   ('FDIVR'),
-  ('FLD'),   ('???'),   ('FST'),   ('FSTP'),   ('FLDENV'), ('FLDCW'),  ('FSTENV'), ('FSTCW'),
-  ('FIADD'), ('FIMUL'), ('FICOM'), ('FICOMP'), ('FISUB'),  ('FISUBR'), ('FIDIV'),  ('FIDIVR'),
-  ('FILD'),  ('???'),   ('FIST'),  ('FISTP'),  ('???'),    ('FLD'),    ('???'),    ('FSTP'),
-  ('FADD'),  ('FMUL'),  ('FCOM'),  ('FCOMP'),  ('FSUB'),   ('FSUBR'),  ('FDIV'),   ('FDIVR'),
-  ('FLD'),   ('???'),   ('FST'),   ('FSTP'),   ('FRSTOR'), ('???'),    ('FSAVE'),  ('FSTSW'),
-  ('FIADD'), ('FIMUL'), ('FICOM'), ('FICOMP'), ('FISUB'),  ('FISUBR'), ('FIDIV'),  ('FIDIVR'),
-  ('FILD'),  ('???'),   ('FIST'),  ('FISTP'),  ('FBLD'),   ('FILD'),   ('FBSTP'),  ('FISTP')
-                                );
-
-
-const MMXInstruction_set:array[0..PocetMMXInstrukcii]of TMMXInstruction = (
-// 0..9
-                               (name: 'PADDB'; opcode: $0; pc:2; param: (p1:GREGq; p2:MODq)),
-                               (name: 'PADDW'; opcode: $0; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PADDD'; opcode: $0; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PADDSB'; opcode: $0; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PADDSW'; opcode: $0; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PADDUSB'; opcode: $0; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PADDUSW'; opcode: $0; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PSUBB'; opcode: $0; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PSUBW'; opcode: $0; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PSUBD'; opcode: $0; pc:2; param: (p1:GREGq ;p2:MODq)),
-// 10..19
-                               (name: 'PSUBSB'; opcode: $0; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PSUBSW'; opcode: $0; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PSUBUSB'; opcode: $D8; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PSUBUSW'; opcode: $D9; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PMULLW'; opcode: $D5; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PMULHW'; opcode: $E5; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PMADDWD'; opcode: $0; pc:2; param: (p1:GREGq ;p2:MODq)),
-
-                               (name: 'PCMPEQB'; opcode: $74; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PCMPEQW'; opcode: $75; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PCMPEQD'; opcode: $76; pc:2; param: (p1:GREGq ;p2:MODq)),
-// 20..29
-                               (name: 'PCMPGTB'; opcode: $64; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PCMPGTW'; opcode: $65; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PCMPGTD'; opcode: $66; pc:2; param: (p1:GREGq ;p2:MODq)),
-
-                               (name: 'PACKSSWB'; opcode: $63; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PACKSSDW'; opcode: $6B; pc:2; param: (p1:GREGq ;p2:MODd)),
-                               (name: 'PACKUSWB'; opcode: $67; pc:2; param: (p1:GREGq ;p2:MODq)),
-
-                               (name: 'PUNPCKHBW'; opcode: $68; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PUNPCKHWD'; opcode: $69; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PUNPCKHDQ'; opcode: $6A; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PUNPCKLBW'; opcode: $60; pc:2; param: (p1:GREGq ;p2:MODq)),
-// 30..39
-                               (name: 'PUNPCKLWD'; opcode: $61; pc:2; param: (p1:GREGq ;p2:MODd)),
-                               (name: 'PUNPCKLDQ'; opcode: $62; pc:2; param: (p1:GREGq ;p2:MODd)),
-
-                               (name: 'PAND'; opcode: $DB; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PANDN'; opcode: $DF; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'POR'; opcode: $EB; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PXOR'; opcode: $EF; pc:2; param: (p1:GREGq ;p2:MODq)),
-
-                               (name: 'PSLLW'; opcode:$F1 ; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PSLLD'; opcode:$F2 ; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PSLLQ'; opcode:$F3 ; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PSRLW'; opcode:$D1 ; pc:2; param: (p1:GREGq ;p2:MODq)),
-// 40..47
-                               (name: 'PSRLD'; opcode:$D2 ; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PSRLQ'; opcode:$D3 ; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PSRAW'; opcode:$E1 ; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PSRAD'; opcode:$E2 ; pc:2; param: (p1:GREGq ;p2:MODq)),
-
-                               (name: 'MOVD'; opcode: $6E; pc:2; param: (p1:GREGd ;p2:MODd)),
-                               (name: 'MOVD'; opcode: $7E; pc:2; param: (p1:MODd ;p2:GREGd)),
-//                               (name: 'MOVD'; opcode: $; pc:; param: (p1: ;p2:)),
-                               (name: 'MOVQ'; opcode: $6F; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'MOVQ'; opcode: $7F; pc:2; param: (p1:MODq ;p2:GREGq)),
-//                               (name: 'MOVQ'; opcode: $; pc:; param: (p1: ;p2:))
-
-
-// SSE & SSE2 Instructions ...
-
-// 48..49
-                               (name: 'MOVUPS'; opcode: $10; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'MOVSS'; opcode: $10; pc:2; param: (p1:GREGdq ;p2:XMM_M32)),
-// 50..59
-                               (name: 'MOVUPD'; opcode: $10; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'MOVSD'; opcode: $10; pc:2; param: (p1:GREGdq ;p2:XMM_M64)),
-                               (name: 'MOVUPS'; opcode: $11; pc:2; param: (p1:MODdq ;p2:GREGdq)),
-                               (name: 'MOVSS'; opcode: $11; pc:2; param: (p1:XMM_M32 ;p2:GREGdq)),
-                               (name: 'MOVUPD'; opcode: $11; pc:2; param: (p1:MODdq ;p2:GREGdq)),
-                               (name: 'MOVSD'; opcode: $11; pc:2; param: (p1:XMM_M64 ;p2:GREGdq)),
-                               (name: 'MOVLPS'; opcode: $12; pc:2; param: (p1:GREGdq ;p2:M64)),     // rovnaky opcode s MOVHLPS !
-                               (name: 'MOVLPD'; opcode: $12; pc:2; param: (p1:GREGdq ;p2:M64)),
-                               (name: 'MOVHLPS'; opcode: $12; pc:2; param: (p1:GREGdq ;p2:R128)),   // rovnaky opcode s MOVLPS  !
-                               (name: 'MOVLPS'; opcode: $13; pc:2; param: (p1:M64 ;p2:GREGdq)),
-                               (name: 'MOVLPD'; opcode: $13; pc:2; param: (p1:M64 ;p2:GREGdq)),
-// 60..69 +1 atd...
-                               (name: 'UNPCKLPS'; opcode: $14; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'UNPCKLPD'; opcode: $14; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'UNPCKHPS'; opcode: $15; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'UNPCKHPD'; opcode: $15; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'MOVHPS'; opcode: $16; pc:2; param: (p1:GREGdq ;p2:M64)),     // rovnaky opcode s MOVLHPS
-                               (name: 'MOVHPD'; opcode: $16; pc:2; param: (p1:GREGdq ;p2:M64)),
-                               (name: 'MOVLHPS'; opcode: $16; pc:2; param: (p1:GREGdq ;p2:R128)),   // rovnaky opcode s MOVHPS
-                               (name: 'MOVHPS'; opcode: $17; pc:2; param: (p1:M64 ;p2:GREGdq)),
-                               (name: 'MOVHPD'; opcode: $17; pc:2; param: (p1:M64 ;p2:GREGdq)),
-
-                               (name: 'MOVAPS'; opcode: $28; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-// 70..79
-                               (name: 'MOVAPD'; opcode: $28; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'MOVAPS'; opcode: $29; pc:2; param: (p1:MODdq ;p2:GREGdq)),
-                               (name: 'MOVAPD'; opcode: $29; pc:2; param: (p1:MODdq ;p2:GREGdq)),
-                               (name: 'CVTPI2PS'; opcode: $2A; pc:2; param: (p1:GREGdq ;p2:MODq)),
-                               (name: 'CVTSI2SS'; opcode: $2A; pc:2; param: (p1:GREGdq ;p2:MODd)),
-                               (name: 'CVTPI2PD'; opcode: $2A; pc:2; param: (p1:GREGdq ;p2:MODq)),
-                               (name: 'CVTSI2SD'; opcode: $2A; pc:2; param: (p1:GREGdq ;p2:MODd)),
-                               (name: 'MOVNTPS'; opcode: $2B; pc:2; param: (p1:M128 ;p2:GREGdq)),
-                               (name: 'MOVNTPD'; opcode: $2B; pc:2; param: (p1:M128 ;p2:GREGdq)),
-                               (name: 'CVTTPS2PI'; opcode: $2C; pc:2; param: (p1:GREGq ;p2:XMM_M32)),
-// 80..89
-                               (name: 'CVTTSS2SI'; opcode: $2C; pc:2; param: (p1:GREGd ;p2:XMM_M32)),
-                               (name: 'CVTTPD2PI'; opcode: $2C; pc:2; param: (p1:GREGq ;p2:MODdq)),
-                               (name: 'CVTTSD2SI'; opcode: $2C; pc:2; param: (p1:GREGd ;p2:XMM_M64)),
-                               (name: 'CVTPS2PI'; opcode: $2D; pc:2; param: (p1:GREGq ;p2:XMM_M64)),
-                               (name: 'CVTSS2SI'; opcode: $2D; pc:2; param: (p1:GREGd ;p2:XMM_M32)),
-                               (name: 'CVTPD2PI'; opcode: $2D; pc:2; param: (p1:GREGq ;p2:MODdq)),
-                               (name: 'CVTSD2SI'; opcode: $2D; pc:2; param: (p1:GREGd ;p2:XMM_M64)),
-                               (name: 'UCOMISS'; opcode: $2E; pc:2; param: (p1:GREGdq ;p2:XMM_M32)),
-                               (name: 'UCOMISD'; opcode: $2E; pc:2; param: (p1:GREGdq ;p2:XMM_M64)),
-                               (name: 'COMISS'; opcode: $2F; pc:2; param: (p1:GREGdq ;p2:XMM_M32)),
-// 90..99
-                               (name: 'COMISD'; opcode: $2F; pc:2; param: (p1:GREGdq ;p2:XMM_M64)),
-
-                               (name: 'MOVMSKPS'; opcode: $50; pc:2; param: (p1:R32 ;p2:GREGdq)),
-                               (name: 'MOVMSKPD'; opcode: $50; pc:2; param: (p1:R32 ;p2:GREGdq)),
-                               (name: 'SQRTPS'; opcode: $51; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'SQRTSS'; opcode: $51; pc:2; param: (p1:GREGdq ;p2:XMM_M32)),
-                               (name: 'SQRTPD'; opcode: $51; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'SQRTSD'; opcode: $51; pc:2; param: (p1:GREGdq ;p2:XMM_M64)),
-                               (name: 'RSQRTPS'; opcode: $52; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'RSQRTSS'; opcode: $52; pc:2; param: (p1:GREGdq ;p2:XMM_M32)),
-                               (name: 'RCPPS'; opcode: $53; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-// 100..109
-                               (name: 'RCPSS'; opcode: $53; pc:2; param: (p1:GREGdq ;p2:XMM_M32)),
-                               (name: 'ANDPS'; opcode: $54; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'ANDPD'; opcode: $54; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'ANDNPS'; opcode: $55; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'ANDNPD'; opcode: $55; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'ORPS'; opcode: $56; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'ORPD'; opcode: $56; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'XORPS'; opcode: $57; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'XORPD'; opcode: $57; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-
-                               (name: 'ADDPS'; opcode: $58; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-// 110..119
-                               (name: 'ADDSS'; opcode: $58; pc:2; param: (p1:GREGdq ;p2:XMM_M32)),
-                               (name: 'ADDPD'; opcode: $58; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'ADDSD'; opcode: $58; pc:2; param: (p1:GREGdq ;p2:XMM_M64)),
-                               (name: 'MULPS'; opcode: $59; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'MULSS'; opcode: $59; pc:2; param: (p1:GREGdq ;p2:XMM_M32)),
-                               (name: 'MULPD'; opcode: $59; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'MULSD'; opcode: $59; pc:2; param: (p1:GREGdq ;p2:XMM_M64)),
-                               (name: 'CVTPS2PD'; opcode: $5A; pc:2; param: (p1:GREGdq ;p2:XMM_M64)),
-                               (name: 'CVTSS2SD'; opcode: $5A; pc:2; param: (p1:GREGdq ;p2:XMM_M32)),
-                               (name: 'CVTPD2PS'; opcode: $5A; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-// 120..129
-                               (name: 'CVTSD2SS'; opcode: $5A; pc:2; param: (p1:GREGdq ;p2:XMM_M64)),
-                               (name: 'CVTDQ2PS'; opcode: $5B; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'CVTPS2DQ'; opcode: $5B; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'CVTTPS2DQ'; opcode: $5B; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'SUBPS'; opcode: $5C; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'SUBSS'; opcode: $5C; pc:2; param: (p1:GREGdq ;p2:XMM_M32)),
-                               (name: 'SUBPD'; opcode: $5C; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'SUBSD'; opcode: $5C; pc:2; param: (p1:GREGdq ;p2:XMM_M64)),
-                               (name: 'MINPS'; opcode: $5D; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'MINSS'; opcode: $5D; pc:2; param: (p1:GREGdq ;p2:XMM_M32)),
-// 130..139
-                               (name: 'MINPD'; opcode: $5D; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'MINSD'; opcode: $5D; pc:2; param: (p1:GREGdq ;p2:XMM_M64)),
-                               (name: 'DIVPS'; opcode: $5E; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'DIVSS'; opcode: $5E; pc:2; param: (p1:GREGdq ;p2:XMM_M32)),
-                               (name: 'DIVPD'; opcode: $5E; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'DIVSD'; opcode: $5E; pc:2; param: (p1:GREGdq ;p2:XMM_M64)),
-                               (name: 'MAXPS'; opcode: $5F; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'MAXSS'; opcode: $5F; pc:2; param: (p1:GREGdq ;p2:XMM_M32)),
-                               (name: 'MAXPD'; opcode: $5F; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'MAXSD'; opcode: $5F; pc:2; param: (p1:GREGdq ;p2:XMM_M64)),
-// 140..149
-                               (name: 'PUNPCKLBW'; opcode: $60; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PUNPCKLWD'; opcode: $61; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PUNPCKLDQ'; opcode: $62; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PACKSSWB'; opcode: $63; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PCMPGTB'; opcode: $64; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PCMPGTW'; opcode: $65; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PCMPGTD'; opcode: $66; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PACKUSWB'; opcode: $67; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PUNPCKHBW'; opcode: $68; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PUNPCKHWD'; opcode: $69; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-// 150..159
-                               (name: 'PUNPCKHDQ'; opcode: $6A; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PACKSSDW'; opcode: $6B; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PUNPCKLQDQ'; opcode: $6C; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PUNPCKHQD'; opcode: $6D; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'MOVD'; opcode: $6E; pc:2; param: (p1:GREGdq ;p2:MODd)),
-                               (name: 'MOVDQA'; opcode: $6F; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'MOVDQU'; opcode: $6F; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-
-                               (name: 'PSHUFW'; opcode: $70; pc:3; param: (p1:GREGq ;p2:MODq; p3:IMMb)),
-                               (name: 'PSHUFD'; opcode: $70; pc:3; param: (p1:GREGdq ;p2:MODdq; p3:IMMb)),
-                               (name: 'PSHUFHW'; opcode: $70; pc:3; param: (p1:GREGdq ;p2:MODdq; p3:IMMb)),
-// 160..169
-                               (name: 'PSHUFLW'; opcode: $70; pc:3; param: (p1:GREGdq ;p2:MODdq; p3:IMMb)),
-                               (name: 'PCMPEQB'; opcode: $74; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PCMPEQW'; opcode: $75; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PCMPEQD'; opcode: $76; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'MOVD'; opcode: $7E; pc:2; param: (p1:MODd ;p2:GREGdq)),
-                               (name: 'MOVQ'; opcode: $7E; pc:2; param: (p1:GREGdq ;p2:XMM_M64)),
-                               (name: 'MOVDQA'; opcode: $7F; pc:2; param: (p1:MODdq ;p2:GREGdq)),
-                               (name: 'MOVDQU'; opcode: $7F; pc:2; param: (p1:MODdq ;p2:GREGdq)),
-
-                               (name: 'CMPPS'; opcode: $C2; pc:2; param: (p1:GREGdq ;p2:MODdq ;p3:IMMb)),
-                               (name: 'CMPSS'; opcode: $C2; pc:2; param: (p1:GREGdq ;p2:XMM_M32 ;p3:IMMb)),
-// 170..179
-                               (name: 'CMPPD'; opcode: $C2; pc:2; param: (p1:GREGdq ;p2:MODdq ;p3:IMMb)),
-                               (name: 'CMPSD'; opcode: $C2; pc:2; param: (p1:GREGdq ;p2:XMM_M64 ;p3:IMMb)),
-                               (name: 'MOVNTI'; opcode: $C3; pc:2; param: (p1:M32 ;p2:GREGd)),
-                               (name: 'PINSRW'; opcode: $C4; pc:2; param: (p1:GREGq ;p2:REG32_M16 ;p3:IMMb)),
-                               (name: 'PINSRW'; opcode: $C4; pc:2; param: (p1:GREGdq ;p2:REG32_M16 ;p3:IMMb)),
-                               (name: 'PEXTRW'; opcode: $C5; pc:2; param: (p1:GREGd ;p2:GREGq ;p3:IMMb)),     // Vzdy prisluchajuce registre !!!
-                               (name: 'PEXTRW'; opcode: $C5; pc:2; param: (p1:GREGd ;p2:GREGdq ;p3:IMMb)),    // Vzdy prisluchajuce registre !!!
-                               (name: 'SHUFPS'; opcode: $C6; pc:2; param: (p1:GREGdq ;p2:MODdq ;p3:IMMb)),
-                               (name: 'SHUFPD'; opcode: $C6; pc:2; param: (p1:GREGdq ;p2:MODdq ;p3:IMMb)),
-
-                               (name: 'PSRLW'; opcode: $D1; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-// 180..189
-                               (name: 'PSRLD'; opcode: $D2; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PSRLQ'; opcode: $D3; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PADDQ'; opcode: $D4; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PADDQ'; opcode: $D4; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PMULLW'; opcode: $D5; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'MOVQ'; opcode: $D6; pc:2; param: (p1:XMM_M64 ;p2:GREGDq)),
-                               (name: 'MOVQ2DQ'; opcode: $D6; pc:2; param: (p1:GREGdq ;p2:MODq)),
-                               (name: 'MOVDQ2Q'; opcode: $D6; pc:2; param: (p1:GREGq ;p2:MODDq)),
-                               (name: 'PMOVMSKB'; opcode: $D7; pc:2; param: (p1:GREGd ;p2:GREGq)),     // Vzdy prisluchajuce registre !!!
-                               (name: 'PMOVMKSB'; opcode: $D7; pc:2; param: (p1:GREGd ;p2:GREGdq)),    // Vzdy prisluchajuce registre !!!
-// 190..199
-                               (name: 'PSUBUSB'; opcode: $D8; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PSUBUSW'; opcode: $D9; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PMINUB'; opcode: $DA; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PMINUB'; opcode: $DA; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PAND'; opcode: $DB; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PADDUSB'; opcode: $DC; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PADDUSW'; opcode: $DD; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PMAXUB'; opcode: $DE; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PMAXUB'; opcode: $DE; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PANDN'; opcode: $DF; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-// 200..209
-                               (name: 'PAVGB'; opcode: $E0; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PAVGB'; opcode: $E0; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PSRAW'; opcode: $E1; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PSRAD'; opcode: $E2; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PAVGW'; opcode: $E3; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PAVGW'; opcode: $E3; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PMULHUW'; opcode: $E4; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PMULHUW'; opcode: $E4; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PMULHW'; opcode: $E5; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'CVTPD2DQ'; opcode: $E6; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-// 210..219
-                               (name: 'CVTTPD2DQ'; opcode: $E6; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'CVTDQ2PD'; opcode: $E6; pc:2; param: (p1:GREGdq ;p2:XMM_M64)),
-                               (name: 'MOVNTQ'; opcode: $E7; pc:2; param: (p1:M64 ;p2:GREGq)),
-                               (name: 'MOVNTDQ'; opcode: $E7; pc:2; param: (p1:M128 ;p2:GREGdq)),
-                               (name: 'PSUBSB'; opcode: $E8; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PSUBSW'; opcode: $E9; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PMINSW'; opcode: $EA; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PMINSW'; opcode: $EA; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'POR'; opcode: $EB; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PADDSB'; opcode: $EC; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-// 220..229
-                               (name: 'PADDSW'; opcode: $ED; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PMAXSW'; opcode: $EE; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PMAXSW'; opcode: $EE; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PXOR'; opcode: $EF; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-
-                               (name: 'PSLLW'; opcode: $F1; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PSLLD'; opcode: $F2; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PSLLQ'; opcode: $F3; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PMULUDQ'; opcode: $F4; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PMULUDQ'; opcode: $F4; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-//                               (name: 'PMADDWD'; opcode: $F5; pc:2; param: (p1:GREGq ;p2:MODq)),
-// 230..239  odteraz je spravne cislo
-                               (name: 'PMADDWD'; opcode: $F5; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PSADBW'; opcode: $F6; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PSADBW'; opcode: $F6; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'MASKMOVQ'; opcode: $F7; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'MASKMOVDQU'; opcode: $F7; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PSUBB'; opcode: $F8; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PSUBW'; opcode: $F9; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PSUBD'; opcode: $FA; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PSUBQ'; opcode: $FB; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PSUBQ'; opcode: $FB; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-// 240..242
-                               (name: 'PADDB'; opcode: $FC; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PADDW'; opcode: $FD; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-                               (name: 'PADDD'; opcode: $FE; pc:2; param: (p1:GREGdq ;p2:MODdq)),
-
-// GROUP INSTRUCTIONS
-
-// 243..249
-                   // GROUP 12:
-                               (name: 'PSRLW'; opcode: $0; pc:2; param: (p1:R64 ;p2:IMMb)),
-                               (name: 'PSRLW'; opcode: $0; pc:2; param: (p1:R128 ;p2:IMMb)),
-                               (name: 'PSRAW'; opcode: $0; pc:2; param: (p1:R64 ;p2:IMMb)),
-                               (name: 'PSRAW'; opcode: $0; pc:2; param: (p1:R128 ;p2:IMMb)),
-                               (name: 'PSLLW'; opcode: $0; pc:2; param: (p1:R64 ;p2:IMMb)),
-                               (name: 'PSLLW'; opcode: $0; pc:2; param: (p1:R128 ;p2:IMMb)),
-                   // GROUP 13:
-                               (name: 'PSRLD'; opcode: $0; pc:2; param: (p1:R64 ;p2:IMMb)),
-// 250..259
-                               (name: 'PSRLD'; opcode: $0; pc:2; param: (p1:R128 ;p2:IMMb)),
-                               (name: 'PSRAD'; opcode: $0; pc:2; param: (p1:R64 ;p2:IMMb)),
-                               (name: 'PSRAD'; opcode: $0; pc:2; param: (p1:R128 ;p2:IMMb)),
-                               (name: 'PSLLD'; opcode: $0; pc:2; param: (p1:R64 ;p2:IMMb)),
-                               (name: 'PSLLD'; opcode: $0; pc:2; param: (p1:R128 ;p2:IMMb)),
-                   // GROUP 14:
-                               (name: 'PSRLQ'; opcode: $0; pc:2; param: (p1:R64 ;p2:IMMb)),
-                               (name: 'PSRLQ'; opcode: $0; pc:2; param: (p1:R128 ;p2:IMMb)),
-                               (name: 'PSRLDQ'; opcode: $0; pc:2; param: (p1:R128 ;p2:IMMb)),
-                               (name: 'PSLLQ'; opcode: $0; pc:2; param: (p1:R64 ;p2:IMMb)),
-                               (name: 'PSLLQ'; opcode: $0; pc:2; param: (p1:R128 ;p2:IMMb)),
-// 260.
-                               (name: 'PSLLDQ'; opcode: $0; pc:2; param: (p1:R128 ;p2:IMMb))
-
-
-//                               (name: ''; opcode: $; pc:2; param: (p1:q ;p2:q)),
-
-                                                );
-
-
-const _3DNowInstruction_set:array [1..Pocet3DNowInstrukcii] of TInstruction = (
-
-                               (name: 'PI2FW'; opcode: $0C; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PI2FD'; opcode: $0D; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PF2IW'; opcode: $1C; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PF2ID'; opcode: $1D; pc:2; param: (p1:GREGq ;p2:MODq)),
-
-                               (name: 'PFNACC'; opcode: $8A; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PFPNACC'; opcode: $8E; pc:2; param: (p1:GREGq ;p2:MODq)),
-
-                               (name: 'PFCMPGE'; opcode: $90; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PFMIN'; opcode: $94; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PFRCP'; opcode: $96; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PFRSQRT'; opcode: $97; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PFSUB'; opcode: $9A; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PFADD'; opcode: $9E; pc:2; param: (p1:GREGq ;p2:MODq)),
-
-                               (name: 'PFCMPGT'; opcode: $A0; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PFMAX'; opcode: $A4; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PFRCPIT1'; opcode: $A6; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PFRSQIT1'; opcode: $A7; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PFSUBR'; opcode: $AA; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PFACC'; opcode: $AE; pc:2; param: (p1:GREGq ;p2:MODq)),
-
-                               (name: 'PFCMPEQ'; opcode: $B0; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PFMUL'; opcode: $B4; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PFRCPIT2'; opcode: $B6; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PMULHRW'; opcode: $B7; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PSWAPD'; opcode: $BB; pc:2; param: (p1:GREGq ;p2:MODq)),
-                               (name: 'PAVGUSB'; opcode: $BF; pc:2; param: (p1:GREGq ;p2:MODq))
-
-//                               (name: ''; opcode: $; pc:2; param: (p1:q ;p2:q)),
-
-                                       );
 (*
 {$I x86Instructions_SIMD.inc}
 {$I x86Instructions_Group.inc}
@@ -1464,6 +681,7 @@ const _3DNowInstruction_set:array [1..Pocet3DNowInstrukcii] of TInstruction = (
 {$I x86Instructions_x87.inc}
 {$I x86Instructions_3DNow.inc}
 *)
+
 implementation
 
 end.

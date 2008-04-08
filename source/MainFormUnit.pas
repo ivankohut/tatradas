@@ -438,7 +438,7 @@ begin
 
   result := false;
   if Modified then begin
-    case MessageDlg(AnsiReplaceStr(FileModifiedStr, '<project>', '''' + ExecFile.FileName + ''''), mtConfirmation, mbYesNoCancel, 0) of
+    case MessageDlg(AnsiReplaceStr(ProjectModifiedStr, '<project>', '''' + ExecFile.FileName + ''''), mtConfirmation, mbYesNoCancel, 0) of
       mrYes: SaveClick(nil);
       mrNo: ;
       mrCancel: Exit;
@@ -911,15 +911,8 @@ end;
 
 
 procedure TMainForm.HexEditor1Click(Sender: TObject);
-var ff:integer;
 begin
-  ff:=FileOpen(ExecFile.Fullpath,fmOpenReadWrite);
-  if ff = -1 then begin
-    ShowMessage(CouldNotOpenReadWriteFileStr);
-    Exit;
-  end;
-  FileClose(ff);
-  HexEditForm.Show;
+  HexEditForm.OpenAndLoad(MainForm.ExecFile.FullPath);
 end;
 
 

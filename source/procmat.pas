@@ -55,12 +55,12 @@ const
   fdCustom = 'Custom file format';
 
   // TatraDAS version constants
-  TatraDASVersion: cardinal = $00029800;
+  TatraDASVersion: cardinal = $00029900;
   TatraDASDate: string = '27. 12. 2007';
   TatraDASProjectVersion = $00030002;
   ShortTatraDASVersion: string = '2.9.9';
   TatraDASFullName: string = 'TatraDAS disassembler';
-  TatraDASFullNameVersion: string = 'TatraDAS disassembler 2.9.8';
+  TatraDASFullNameVersion: string = 'TatraDAS disassembler 2.9.9 devel';
 
 
   TranslateErrorStr = 'TRANS ERROR';
@@ -135,6 +135,7 @@ type
 
   ETatraDASException = class (Exception);
   EUserTerminatedProcess = class (ETatraDASException);
+  EIllegalState = class (ETatraDASException);
 
   TMyMemoryStream = class(TMemoryStream)
     procedure SetMemory(Ptr: pointer; Size: LongInt);

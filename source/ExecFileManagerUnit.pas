@@ -66,6 +66,7 @@ function TExecFileManager.CreateNewExecFile(aFileName: TFileName): TExecutableFi
 var
   FileFormat: TExecFileFormat;
   InputFile: TFileStream;
+  CustomFileParameters: TCustomFileParameters;
 begin
   ProgressData.ErrorStatus:= errNone;
   result:=nil;
@@ -93,7 +94,7 @@ begin
       UnknownFileFormatForm.FileName:= ExtractFileName(aFileName);
       UnknownFileFormatForm.FileSize:= InputFile.Size;
       if UnknownFileFormatForm.ShowModal = mrOK then
-        result:=TCustomFile.Create(InputFile, aFileName, UnknownFileFormatForm.Parameters)
+        result := TCustomFile.Create(InputFile, aFileName, UnknownFileFormatForm.Parameters)
       else begin
         ProgressData.ErrorStatus:= errCanceled;
         Exit;
@@ -101,8 +102,15 @@ begin
     end;
    {$ELSE}
     ffUnknown: begin
+      CustomFileParameters.EntryPoint := 0;
+      CustomFileParameters.StartOffset := 0;
+      CustomFileParameters.Size := InputFile.Size;
+      CustomFileParameters.Bit32 := true;
+      result := TCustomFile.Create(InputFile, aFileName, CustomFileParameters);
+      {
       ProgressData.ErrorStatus:= errUnknownFormat;
       Exit;
+      }
     end;
    {$ENDIF}
   end;

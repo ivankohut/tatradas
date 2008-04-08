@@ -1,6 +1,4 @@
 { TODO:
-    zamysliet sa nad permanentnym HexEdit-om
-  DONE:
 }
 unit HexEditFormUnit;
 
@@ -16,6 +14,7 @@ uses
   SysUtils,
   Classes,
   IniFiles,
+  StrUtils,
 
   MPHexEditor,
 
@@ -27,8 +26,8 @@ uses
 type
   THexEditForm = class(TForm, ITranslatable)
     SaveAsButton: TButton;
-    Panel1: TPanel;
-    SaveDialog1: TSaveDialog;
+    HexEditPanel: TPanel;
+    HexEditSaveDialog: TSaveDialog;
     StatusBar1: TStatusBar;
     GotoAddressButton: TButton;
     UnsignedWordLabel: TLabel;
@@ -48,13 +47,14 @@ type
     UnsignedWordDataLabel: TLabel;
     UnsignedDwordDataLabel: TLabel;
     procedure SaveAsButtonClick(Sender: TObject);
-
     procedure HexEditChangePosition(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
-    procedure FormShow(Sender: TObject);
     procedure GotoAddressButtonClick(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
+    procedure FormDestroy(Sender: TObject);
   public
     HexEdit: TMPHexEditor;
+    procedure OpenAndLoad(aFileName: string);
     procedure Translate;
   end;
 
@@ -66,15 +66,37 @@ implementation
 
 {$R *.dfm}
 
-uses MainFormUnit, GotoAddressFormUnit, ExecFileUnit;
+uses
+  MainFormUnit, GotoAddressFormUnit, ExecFileUnit;
+
+
+
+procedure THexEditForm.OpenAndLoad(aFileName: string);
+begin
+  try
+    HexEdit.LoadFromFile(aFileName);
+  except
+    on EFOpenError do
+      MessageDlg(CouldNotOpenReadWriteFileStr, mtError, [mbOk], 0);
+    else
+      raise;
+  end;
+  Caption := 'HexEditor - ' + MainForm.ExecFile.FileName;
+  Show;
+end;
+
+
 
 procedure THexEditForm.SaveAsButtonClick(Sender: TObject);
 begin
-  SaveDialog1.Execute;
-  if SaveDialog1.FileName = '' then Exit;
-  HexEdit.SaveToFile(SaveDialog1.FileName);
-  HexEdit.Modified:=false;
+  HexEditSaveDialog.Execute;
+  if HexEditSaveDialog.FileName = '' then
+    Exit;
+  HexEdit.SaveToFile(HexEditSaveDialog.FileName);
+  HexEdit.Modified := false;
 end;
+
+
 
 procedure THexEditForm.HexEditChangePosition(Sender: TObject);
 var
@@ -82,76 +104,90 @@ var
   RegionOffset: cardinal;
   Buffer: cardinal;
 begin
-  Buffer:=0;
-  HexEdit.ReadBuffer(Buffer,HexEdit.GetCursorPos,4);
-  UnsignedByteDataLabel.Caption:=IntToHex(byte(Buffer),2);
-  UnsignedWordDataLabel.Caption:=IntToHex(word(Buffer),4);
-  UnsignedDwordDataLabel.Caption:=IntToHex(Buffer,8);
-  SignedByteDataLabel.Caption:=IntToSignedHex(shortint(Buffer),2);
-  SignedWordDataLabel.Caption:=IntToSignedHex(smallint(Buffer),4);
-  SignedDwordDataLabel.Caption:=IntToSignedHex(integer(Buffer),8);
-  StatusBar1.Panels[0].Text:=FileOffsetStr + ': '+HexEdit.GetOffsetString(HexEdit.GetCursorPos);
+  Buffer := 0;
+  HexEdit.ReadBuffer(Buffer, HexEdit.GetCursorPos, Min(4, HexEdit.DataSize - HexEdit.GetCursorPos));
+  UnsignedByteDataLabel.Caption := IntToHex(byte(Buffer), 2);
+  UnsignedWordDataLabel.Caption := IntToHex(word(Buffer), 4);
+  UnsignedDwordDataLabel.Caption := IntToHex(Buffer, 8);
+  SignedByteDataLabel.Caption := IntToSignedHex(shortint(Buffer), 2);
+  SignedWordDataLabel.Caption := IntToSignedHex(smallint(Buffer), 4);
+  SignedDwordDataLabel.Caption := IntToSignedHex(integer(Buffer), 8);
+  StatusBar1.Panels[0].Text := FileOffsetStr + ': ' + HexEdit.GetOffsetString(HexEdit.GetCursorPos);
   if MainForm.ExecFile <> nil then
     if MainForm.ExecFile.FullPath = HexEdit.FileName then begin
-       RegionIndex:= MainForm.ExecFile.Regions.GetIndexFromOffset(HexEdit.GetCursorPos);
+       RegionIndex := MainForm.ExecFile.Regions.GetIndexFromOffset(HexEdit.GetCursorPos);
        if RegionIndex <> -1 then begin
          RegionOffset:= cardinal(HexEdit.GetCursorPos) - MainForm.ExecFile.Regions[RegionIndex].Offset;
-         StatusBar1.Panels[1].Text:=SectionStr + ': ' + MainForm.ExecFile.Regions[RegionIndex].Name;
-         StatusBar1.Panels[2].Text:=SectionOffsetStr + ': '+IntToHex(RegionOffset, 8);
-       end  
+         StatusBar1.Panels[1].Text := SectionStr + ': ' + MainForm.ExecFile.Regions[RegionIndex].Name;
+         StatusBar1.Panels[2].Text := SectionOffsetStr + ': ' + IntToHex(RegionOffset, 8);
+       end
        else begin
-         StatusBar1.Panels[1].Text:=SectionStr + ': ' + 'unused space';
-         StatusBar1.Panels[2].Text:=SectionOffsetStr + ': ';
+         StatusBar1.Panels[1].Text := SectionStr + ': ' + 'unused space';
+         StatusBar1.Panels[2].Text := SectionOffsetStr + ': ';
        end;
     end;
 end;
 
-procedure THexEditForm.FormClose(Sender: TObject;
-  var Action: TCloseAction);
+
+
+procedure THexEditForm.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
-  if HexEdit = nil then Exit;
   if HexEdit.Modified then begin
-    case MessageDlg(FileModifiedStr,mtWarning,[mbYes,mbNo,mbCancel],0) of
+    case MessageDlg(AnsiReplaceStr(FileModifiedStr, '<filename>', '''' + ExtractFileName(HexEdit.FileName) + ''''), mtWarning, [mbYes, mbNo, mbCancel], 0) of
       mrYes: SaveAsButtonClick(self);
       mrNo: ;
       mrCancel: begin
-        Action:=caNone;
+        Action := caNone;
         Exit;
       end;
     end;
   end;
-  HexEdit.Free;
-  HexEdit:=nil;
-  Action:=caHide;
+  HexEdit.CreateEmptyFile('');
+  Action := caHide;
 end;
 
-procedure THexEditForm.FormShow(Sender: TObject);
-begin
-  HexEdit:=TMPHexEditor.Create(Panel1);
-  HexEdit.Parent:=Panel1;
-  HexEdit.Align:=alClient;
-  HexEdit.OnSelectionChanged:=HexEditChangePosition;
-  Panel1.Anchors:=[akLeft,akTop,akRight,akBottom];
-  HexEdit.LoadFromFile(MainForm.ExecFile.FullPath);
-  Caption:='HexEditor - ' + MainForm.ExecFile.FileName;
-  StatusBar1.Panels[3].Text:=TatraDASFullNameVersion;
-end;
+
 
 procedure THexEditForm.GotoAddressButtonClick(Sender: TObject);
 begin
   GotoAddressForm.GotoAddressEdit.Text:= '';
   GotoAddressForm.MaxAddress:= NonNegative(HexEdit.DataSize - 1);
   if GotoAddressForm.ShowModal = mrOK then
-    HexEdit.Seek(GotoAddressForm.address, 0);
+    HexEdit.Seek(GotoAddressForm.Address, 0);
   HexEdit.SetFocus;
 end;
 
+
+
 procedure THexEditForm.Translate;
 begin
-  SaveAsButton.Caption:= Translator.TranslateControl('HexEditForm','SaveAsButton');
-  GotoAddressButton.Caption:= Translator.TranslateControl('HexEditForm','GotoAddressButton');
-  UnsignedLabel.Caption:= Translator.TranslateControl('HexEditForm','UnsignedLabel');
-  SignedLabel.Caption:= Translator.TranslateControl('HexEditForm','SignedLabel');
+  SaveAsButton.Caption:= Translator.TranslateControl('HexEditForm', 'SaveAsButton');
+  GotoAddressButton.Caption:= Translator.TranslateControl('HexEditForm', 'GotoAddressButton');
+  UnsignedLabel.Caption:= Translator.TranslateControl('HexEditForm', 'UnsignedLabel');
+  SignedLabel.Caption:= Translator.TranslateControl('HexEditForm', 'SignedLabel');
 end;
+
+
+
+procedure THexEditForm.FormCreate(Sender: TObject);
+begin
+  HexEdit := TMPHexEditor.Create(HexEditPanel);
+  HexEdit.Parent := HexEditPanel;
+  HexEdit.Align := alClient;
+  HexEdit.OnSelectionChanged := HexEditChangePosition;
+  HexEditPanel.Anchors := [akLeft, akTop, akRight, akBottom];
+  StatusBar1.Panels[3].Text := TatraDASFullNameVersion;
+end;
+
+
+
+procedure THexEditForm.FormDestroy(Sender: TObject);
+begin
+  HexEdit.Free;
+  HexEdit := nil;
+end;
+
+
+
 
 end.

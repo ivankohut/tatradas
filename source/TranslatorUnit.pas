@@ -322,7 +322,8 @@ begin
   CouldNotOpenReadWriteFileStr:= Translator.TranslateControl('Texty','CouldNotOpenReadWrite');
   ProjectFilterStr:= Translator.TranslateControl('Texty','ProjectFilter');
   SaveDisassemblyFilterStr:= Translator.TranslateControl('Texty','SaveDisassemblyFilter');
-  FileModifiedStr:= Translator.TranslateControl('Texty','FileModified');
+  FileModifiedStr:= Translator.TranslateControl('Texty', 'FileModified');
+  ProjectModifiedStr:= Translator.TranslateControl('Texty', 'ProjectModified');
 
   InvalidAddressStr:= Translator.TranslateControl('Texty','InvalidAddress');
   InvalidStartOffsetStr:= Translator.TranslateControl('Texty','InvalidStartOffset');

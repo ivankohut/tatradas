@@ -101,6 +101,8 @@ type
 
 Implementation
 
+//uses
+//  x86Instructions;
 
 
 const genreg:array[1..8] of string[5]=(
@@ -817,29 +819,6 @@ end;
 
 
 
-procedure FPUNastavPoradie(var a:byte; var b:byte; c:byte);
-type
-  fputyp1 = record
-    pA, pZ: word;
-  end;
-const
-  fpupole: array [1..8] of fputyp1 = (
-                                      (pA: 1; pz: 8),
-                                      (pA: 9; pz: 38),
-                                      (pA: 39; pz: 43),
-                                      (pA: 44; pz: 51),
-                                      (pA: 52; pz: 57),
-                                      (pA: 58; pz: 62),
-                                      (pA: 63; pz: 69),
-                                      (pA: 70; pz: 72)
-                                     );
-begin
-  a:= fpupole[(c mod 8)+1].pA;
-  b:= fpupole[(c mod 8)+1].pZ;
-end;
-
-
-
 constructor TDisassembler.Create(SectionCode: TByteDynArray; var DisassemblerMap: TByteDynArray; MemOffset: cardinal; Bit32: boolean);
 begin
   code:= SectionCode;
@@ -1010,7 +989,6 @@ type
 
 var
     Vparam: TParam;                         // Parametre aktualnej instrukcie
-    o,p: byte;                               // Interval pri FPU instrukciach
     PrefixFlags: TPrefixFlags;
     PrefixStr: string;
     prefixes: TPrefixes;
@@ -1028,8 +1006,22 @@ var
   TheByte: byte;
 
   GroupMapIndex: Integer;
-  GroupInstruction: TGroupInstruction;
+  GroupInstruction: TInstruction;
   SIMDInstruction: TSIMDInstruction;
+  FPUInstrIndex: Integer;
+
+  procedure ProcessSIMDInstruction(var Instruction: TInstruction);
+  begin
+    if prefixes.p66 then SIMDInstruction := Instruction.SIMD_66^
+    else if prefixes.pF2 then SIMDInstruction := Instruction.SIMD_F2^
+    else if prefixes.pF3 then SIMDInstruction := Instruction.SIMD_F3^
+    else SIMDInstruction := Instruction.SIMD^;
+
+    Vparam := SIMDInstruction.Operands;
+    Vpc := SIMDInstruction.OperandsCount;
+    InstructionName := SIMDInstruction.name;
+  end;
+
 begin
   i:= Start;
   InstrAddress:= i;
@@ -1177,67 +1169,26 @@ XADD, and XCHG.
           Vparam:= GroupInstruction.param;
           Vpc:= GroupInstruction.pc;
           InstructionName := GroupInstruction.Name;
-
-          {
-          case code[i] of
-            $80: j:=0;
-            $81: j:=8;
-            $82: j:=16;
-            $83: j:=24;
-            $C0: j:=32;
-            $C1: j:=40;
-            $D0: j:=48;
-            $D1: j:=56;
-            $D2: j:=64;
-            $D3: j:=72;
-            $F6: j:=80;
-            $F7: j:=88;
-            $FE: j:=96;
-            $FF: j:=104;
-            $C6: j:=112;
-            $C7: j:=120;
-            else ;
-          end;
-          ModRM:= LoadModRM(code[i+1]);
-          Inc(j, ModRM.RegOp);
-          Vparam:= GroupOBOInstruction_set[j].param;
-          Vpc:= GroupOBOInstruction_set[j].pc;
-          InstructionName := GroupOBOInstruction_set[j].name;
-          if GroupOBOInstruction_set[j].opcode = $D6 then
-            raise EUndefinedOpcodeException.Create('Group instruction');
-          }
         end;
 
         // FPU Instructions
         $D8: begin
-          if code[i+1] > $BF then  begin
-            FPUNastavPoradie(o, p, code[i]); //o - zaciatok, p - koniec
-            Dec(o);
-            repeat
-              Inc(o);
-              if o > p then begin
-    //--   !!!          o:= UndefinedFPUInstructionIndex; treba sa zamysliet ako to fungovalo v povodnom kode a ci to bolo vobec spravne
-                raise EUndefinedOpcodeException.Create('FPU instruction');
-              end;
-            // toto nie je uplne v poriadku
-            until (FPUInstruction_set[o].opcode = code[i+1])                           // tu //
-              or ((FPUInstruction_set[o].par<>none) and ((FPUInstruction_set[o].opcode+7) >= code[i+1]));
+          if code[i+1] <= $BF then begin
+            ModRM := LoadModRM(code[i+1]);
+            FPUInstrIndex := (code[i] mod 8)*8 + ModRM.RegOp;
+            InstructionName := FPU_A_InstructionSet[FPUInstrIndex].name;
+            if InstructionName = '' then
+              raise EUndefinedOpcodeException.Create('FPU instruction');
 
-            InstructionName:=FPUInstruction_set[o].name;
-            if FPUInstruction_set[o].par<>none then
-            case  FPUInstruction_set[o].par of
-              st1: InstructionOperands:='st0,st' + inttostr(code[i+1] mod 8) + '';
-              st2: InstructionOperands:='st' + inttostr(code[i+1] mod 8) + ',st0';
-              st3: InstructionOperands:='st' + inttostr(code[i+1] mod 8) + '';
-            end;
-            Inc(i);
+            OperandSize := FPU_A_InstructionSet[FPUInstrIndex].par;
+            InstructionOperands := SpracujModRM(mem, twoorfour);
           end
           else begin
-            // tu treba este osetrit nedifinovane opcody:
-            ModRM:= LoadModRM(code[i+1]);
-            InstructionName:=FPUInstructions[(code[i] mod 8)*8 + modrm.regop].name;
-            OperandSize:=FPUInstructions[(code[i] mod 8)*8 + modrm.regop].par;
-            InstructionOperands:= SpracujModRM(mem,twoorfour);
+            InstructionName := FPU_B_InstructionSet[code[i]][code[i+1]].Name;
+            InstructionOperands := FPU_B_InstructionSet[code[i]][code[i+1]].par;
+            if InstructionName = '' then
+              raise EUndefinedOpcodeException.Create('FPU instruction');
+            Inc(i);
           end;
         end;
 
@@ -1246,7 +1197,7 @@ XADD, and XCHG.
           inc(i);
           case TBOInstruction_set[code[i]].opcode of
 
-            // Group opcode instruction
+            // Group instruction
             $FE: begin
               ModRM := LoadModRM(code[i+1]);
               GroupMapIndex := 0;
@@ -1261,122 +1212,59 @@ XADD, and XCHG.
                 else
                   Inc(GroupMapIndex);
               end;
-              if GroupInstruction.OpCode = $D6 then
-                raise EUndefinedOpcodeException.Create('Group instruction');
+              case GroupInstruction.typ of
+                itUndefined: raise EUndefinedOpcodeException.Create('Group instruction');
 
-              // SIMD instructions
-              if GroupInstruction.Opcode = $60 then begin
-                if prefixes.p66 then SIMDInstruction := GroupInstruction.SIMD_66^
-                else if prefixes.pF2 then SIMDInstruction := GroupInstruction.SIMD_F2^
-                else if prefixes.pF3 then SIMDInstruction := GroupInstruction.SIMD_F3^
-                else SIMDInstruction := GroupInstruction.SIMD^;
+                // SIMD group instructions
+                itSIMD: begin
+                  if prefixes.p66 then SIMDInstruction := GroupInstruction.SIMD_66^
+                  else if prefixes.pF2 then SIMDInstruction := GroupInstruction.SIMD_F2^
+                  else if prefixes.pF3 then SIMDInstruction := GroupInstruction.SIMD_F3^
+                  else SIMDInstruction := GroupInstruction.SIMD^;
 
-                Vparam := SIMDInstruction.Operands;
-                Vpc := SIMDInstruction.OperandsCount;
-                InstructionName := SIMDInstruction.name;
-              end
-              // Ordinary instructions
-              else begin
-                Vparam := GroupInstruction.param;
-                Vpc := GroupInstruction.pc;
-                InstructionName := GroupInstruction.name;
-              end;
-
-
-              {
-              j:=0;
-              modrm:=loadmodrm(code[i+1]);
-              case code[i] of
-                $71: begin
-                        if prefixes.p66 then begin
-                          Vparam:=MMXInstruction_set[Group12[modrm.regop].mmx2].param;
-                          Vpc:=MMXInstruction_set[Group12[modrm.regop].mmx2].pc;
-                          InstructionName:=MMXInstruction_set[Group12[modrm.regop].mmx2].name;
-                        end
-                        else begin
-                          Vparam:=MMXInstruction_set[Group12[modrm.regop].mmx1].param;
-                          Vpc:=MMXInstruction_set[Group12[modrm.regop].mmx1].pc;
-                          InstructionName:=MMXInstruction_set[Group12[modrm.regop].mmx1].name;
-                        end;
-                      end;
-                $72: begin
-                        if prefixes.p66 then begin
-                          Vparam:=MMXInstruction_set[Group13[modrm.regop].mmx2].param;
-                          Vpc:=MMXInstruction_set[Group13[modrm.regop].mmx2].pc;
-                          InstructionName:=MMXInstruction_set[Group13[modrm.regop].mmx2].name;
-                        end
-                        else begin
-                          Vparam:=MMXInstruction_set[Group13[modrm.regop].mmx1].param;
-                          Vpc:=MMXInstruction_set[Group13[modrm.regop].mmx1].pc;
-                          InstructionName:=MMXInstruction_set[Group13[modrm.regop].mmx1].name;
-                        end;
-                      end;
-                $73: begin
-                  if prefixes.p66 then begin
-                    Vparam:=MMXInstruction_set[Group14[modrm.regop].mmx2].param;
-                    Vpc:=MMXInstruction_set[Group14[modrm.regop].mmx2].pc;
-                    InstructionName:=MMXInstruction_set[Group14[modrm.regop].mmx2].name;
-                  end
-                  else begin
-                    Vparam:=MMXInstruction_set[Group14[modrm.regop].mmx1].param;
-                    Vpc:=MMXInstruction_set[Group14[modrm.regop].mmx1].pc;
-                    InstructionName:=MMXInstruction_set[Group14[modrm.regop].mmx1].name;
-                  end;
-                end
-
-                else begin
-                  repeat inc(j); until (j=PocetTBOGroupInstrukcii+1) or (code[i]=GroupTBOInstruction_set[j].opcode);
-                  while not(modrm.regop=GroupTBOInstruction_set[j].secopcode) do inc(j);
-                  if (code[i]=$AE) and (modrm.regop=7) and (modrm.moder=3) then inc(j); // CLFLUSH a SFENCE na rovnakej pozicii (pozri OPCODE MAP)
-                  Vparam:=GroupTBOInstruction_set[j].param;
-                  Vpc:=GroupTBOInstruction_set[j].pc;
-                  InstructionName:=GroupTBOinstruction_set[j].name;
+                  Vparam := SIMDInstruction.Operands;
+                  Vpc := SIMDInstruction.OperandsCount;
+                  InstructionName := SIMDInstruction.name;
                 end;
 
+                // Ordinary group instructions
+                itOrdinary: begin
+                  Vparam := GroupInstruction.param;
+                  Vpc := GroupInstruction.pc;
+                  InstructionName := GroupInstruction.name;
+                end;
+
+                else
+                  raise EIllegalState.Create('Illegal instruction type of group instruction');
               end;
-              }
             end;
 
-            // MMX, SSE, SSE2 opcode instruction
+            // SIMD instructions
             $60: begin
-              if prefixes.p66 then begin
-                Vparam:=MMXInstruction_set[TBOInstruction_set[code[i]].mmx2].param;
-                Vpc:=MMXInstruction_set[TBOInstruction_set[code[i]].mmx2].pc;
-                InstructionName:=MMXInstruction_set[TBOInstruction_set[code[i]].mmx2].name;
-              end
-              else
-              if prefixes.pF2 then begin
-                Vparam:=MMXInstruction_set[TBOInstruction_set[code[i]].mmx3].param;
-                Vpc:=MMXInstruction_set[TBOInstruction_set[code[i]].mmx3].pc;
-                InstructionName:=MMXInstruction_set[TBOInstruction_set[code[i]].mmx3].name;
-              end
-              else
-              if prefixes.pF3 then begin
-                Vparam:=MMXInstruction_set[TBOInstruction_set[code[i]].mmx4].param;
-                Vpc:=MMXInstruction_set[TBOInstruction_set[code[i]].mmx4].pc;
-                InstructionName:=MMXInstruction_set[TBOInstruction_set[code[i]].mmx4].name;
-              end
-              else begin
-                Vparam:=MMXInstruction_set[TBOInstruction_set[code[i]].mmx1].param;
-                Vpc:=MMXInstruction_set[TBOInstruction_set[code[i]].mmx1].pc;
-                InstructionName:=MMXInstruction_set[TBOInstruction_set[code[i]].mmx1].name;
-              end;
+              if prefixes.p66 then SIMDInstruction := GroupInstruction.SIMD_66^
+              else if prefixes.pF2 then SIMDInstruction := GroupInstruction.SIMD_F2^
+              else if prefixes.pF3 then SIMDInstruction := GroupInstruction.SIMD_F3^
+              else SIMDInstruction := GroupInstruction.SIMD^;
+
+              Vparam := SIMDInstruction.Operands;
+              Vpc := SIMDInstruction.OperandsCount;
+              InstructionName := SIMDInstruction.name;
             end;
 
             $0F: begin
-              _3DNow_Instruction:=true;
-              Vpc:=2;
-              Vparam.p1:=GREGq;
-              Vparam.p2:=MODq;
+              _3DNow_Instruction := true;
+              Vpc := 2;
+              Vparam.p1 := GREGq;
+              Vparam.p2 := MODq;
             end;
 
             $D6: raise EUndefinedOpcodeException.Create('Two byte instruction');
 
             // Obycajne TwoByte Instructions
             else begin
-              Vparam:=TBOInstruction_set[code[i]].param;
-              Vpc:=TBOInstruction_set[code[i]].pc;
-              InstructionName:=TBOinstruction_set[code[i]].name;
+              Vparam := TBOInstruction_set[code[i]].param;
+              Vpc := TBOInstruction_set[code[i]].pc;
+              InstructionName := TBOinstruction_set[code[i]].name;
             end;
           end;  // End of "case"
         end;
@@ -1387,11 +1275,15 @@ XADD, and XCHG.
             if OBOinstruction_set[code[i]].opcode = $D6 then
               raise EUndefinedOpcodeException.Create('One byte instruction')
             else begin
-              Vparam:=OBOinstruction_set[code[i]].param;
-              Vpc:=OBOinstruction_set[code[i]].pc;
-              if not (OBOinstruction_set[code[i]].AddOp) then InstructionName:=OBOinstruction_set[code[i]].name
-                else if operand32 then InstructionName:=OBOinstruction_set[code[i]].name32
-                  else InstructionName:=OBOinstruction_set[code[i]].name16;
+              Vparam := OBOinstruction_set[code[i]].param;
+              Vpc := OBOinstruction_set[code[i]].pc;
+              if not (OBOinstruction_set[code[i]].AddOp) then
+                InstructionName:=OBOinstruction_set[code[i]].name
+              else
+                if operand32 then
+                  InstructionName:=OBOinstruction_set[code[i]].name32
+                else
+                  InstructionName:=OBOinstruction_set[code[i]].name16;
             end;
           end;
       end;  // End of "case code[i] of"
@@ -1443,19 +1335,12 @@ XADD, and XCHG.
 
       // Detekcia 3DNow! instrukcii
       if _3DNow_Instruction then begin
-        j:=1;
         inc(i);
-        while j <= Pocet3DNowInstrukcii do begin
-          if code[i]=_3DNowInstruction_set[j].opcode then break;
-          inc(j);
-        end;
-        if j <= Pocet3DNowInstrukcii then begin
-          InstructionName:=_3DNowInstruction_set[j].name;
-        end
-        else
+        if _3DNow_InstructionSet[code[i]].opcode = $D6 then
           raise EUndefinedOpcodeException.Create('3DNow! instruction')
+        else
+          InstructionName := _3DNow_InstructionSet[code[i]].Name;
       end;
-      if InstructionName='' then ;
 
   // -- Kvoli testovanie intrukcii je obcas vypnute ukoncovanie bloku:
 
