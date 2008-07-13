@@ -4,18 +4,27 @@ TO DO list (TatraDAS)
 - rozne znakove sady v synedit
 - zdroje (PE, NE, atd) ?
 - paralelne disassemblovanie viacerych sekcii
+- Lazarus GUI
 
 2.9.9
-- porozmyslat na rozdelenim SaveToFile na dve metody (DAS a DHF)
-- translation system
+General
+- nastroj pre dokumentaciu zdrojoveho kodu (komentare na zaciatku metod)
 - errory a vynimky (o.i. ako osetrovat pristup do poli v array propertoch)
 - stringy rozhadzane po suboroch
+- translation system
+
+Disassembler:
 - refactor (rewrite :) ) disassembler, add more instructions (SSE3, SSSE)
-- system na spravu GUI dat (hodnoty formularov) & ich ukladanie do projektoveho suboru
-  - pridat ulozenie bookmarkov v projekte
-- prerobit menu pomocou actions
-- zamysliet sa nad polozkami v menu (a buttonmi na codeframe)
-- textovy progress - dobiehanie do 100%, aj je progress naozaj kratky, tak sa nezobrazi ani jeho nazov
+- 64 bit (pozor na instrukciu MOVD/Q, PEXTRD/Q, PINSRD/Q, CMPXCH8B/16B)
+- instrukcie pre virtualizaciu
+- MOVLPS/MOVHLPS, MOVHPS/MOVLHPS - rovnaky opcode, lisia sa reg/mem adresaciou
+- 0F C2 - CMPxxxx - spravit rozne nazvy instrukcie podla tretieho operandu
+- detekovat imported o uroven volania skor "call x, x: jump [0x...]"
+- nerekurzivne disassemblovanie
+
+Misc
+- procmat - rozdelit na viac unitov ?
+- porozmyslat na rozdelenim SaveToFile na dve metody (DAS a DHF)
 - ELF
     - pochopit a prerobit import
     - pridat inicializaciu Regionov
@@ -28,22 +37,34 @@ TO DO list (TatraDAS)
   - optimalizovat ukladanie do NASM (stringy)
   - najvhodnejsi by bol specialny mod disassemblovania
 - osetrenie viacerych vynimiek v ProgressThreads a nasledne v MainForm-e(GUI) a TatraDAS-e(console)
-- procmat - rozdelit na viac unitov ?
-- vlastny MessageDlg, aby zobrazoval buttony v jazyku TatraDASu
-- nastroj pre dokumentaciu zdrojoveho kodu (komentare na zaciatku metod)
-- drag a drop
 - ReplaceLines
   - nevyhadzovat vsetky bezadresne riadky
   - vyhodit tie, na ktore odkazuje nahradzovany kod
   - porozmyslat nad volanim beginupdate/endupdate niekde vyssie
+
+GUI
+- nutne optimalizovat TExportTabFrame.Create, mozno aj ImportTab - vytvaranie ListItem-ov (C:\Program Files\OpenOffice.org\program\bf_xo680mi.dll)
+- vlastny MessageDlg, aby zobrazoval buttony v jazyku TatraDASu
+- drag a drop
+- zamysliet sa nad polozkami v menu (a buttonmi na codeframe)
+- prerobit menu pomocou actions
+- system na spravu GUI dat (hodnoty formularov) & ich ukladanie do projektoveho suboru
+  - pridat ulozenie bookmarkov v projekte
+
+CLI
+- textovy progress - dobiehanie do 100%, aj je progress naozaj kratky, tak sa nezobrazi ani jeho nazov
+- vacsie moznosti z konzoly
+
+Bugs
 - AV - TatraFPC.exe  - disasemble, change everything to byte data, disasm at 0x0041B4FD
-- detekovat imported o uroven volania skor "call x, x: jump [0x...]"
-- 64 bit (pozor na instrukciu MOVD/Q, PEXTRD/Q, PINSRD/Q, CMPXCH8B/16B)
-- instrukcie pre virtualizaciu
-- refaktorizacia a kontrola FPU instrukcii
+
+DONE:
+- pozriet co pise SVN log
 - refaktorizacia GROUP instrukcii
-- nerekurzivne disassemblovanie
-- vacsie moznosti z konzoly 
+- refaktorizacia a kontrola FPU instrukcii
+- SSSE3
+- 0F 38 xx
+
 
 2.9.8 todo list:
   - problemy:

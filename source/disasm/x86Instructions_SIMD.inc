@@ -501,6 +501,182 @@ const
   simd_PADDD_b: TSIMDInstruction = (name: 'PADDD'; opcode: $FE; OperandsCount: 2; Operands: (p1:GREGdq ;p2:MODdq); InstrSet: isSSE2);
 
 
+//***********************************************************************
+//  Opcode (66, F2, F3) 0F 38 xx
+//***********************************************************************
+
+
+// 0x00
+  simd_PSHUFB_a: TSIMDInstruction = (name: 'PSHUFB'; opcode: $0; OperandsCount: 2; Operands: (p1:GREGq ;p2:MODq); InstrSet: isSSSE3);
+  simd_PSHUFB_b: TSIMDInstruction = (name: 'PSHUFB'; opcode: $0; OperandsCount: 2; Operands: (p1:GREGdq ;p2:MODdq); InstrSet: isSSSE3);
+
+// 0x01
+  simd_PHADDW_a: TSIMDInstruction = (name: 'PHADDW'; opcode: $0; OperandsCount: 2; Operands: (p1:GREGq ;p2:MODq); InstrSet: isSSSE3);
+  simd_PHADDW_b: TSIMDInstruction = (name: 'PHADDW'; opcode: $0; OperandsCount: 2; Operands: (p1:GREGdq ;p2:MODdq); InstrSet: isSSSE3);
+
+// 0x02
+  simd_PHADDD_a: TSIMDInstruction = (name: 'PHADDD'; opcode: $0; OperandsCount: 2; Operands: (p1:GREGq ;p2:MODq); InstrSet: isSSSE3);
+  simd_PHADDD_b: TSIMDInstruction = (name: 'PHADDD'; opcode: $0; OperandsCount: 2; Operands: (p1:GREGdq ;p2:MODdq); InstrSet: isSSSE3);
+
+// 0x03
+  simd_PHADDSW_a: TSIMDInstruction = (name: 'PHADDSW'; opcode: $0; OperandsCount: 2; Operands: (p1:GREGq ;p2:MODq); InstrSet: isSSSE3);
+  simd_PHADDSW_b: TSIMDInstruction = (name: 'PHADDSW'; opcode: $0; OperandsCount: 2; Operands: (p1:GREGdq ;p2:MODdq); InstrSet: isSSSE3);
+
+// 0x04
+  simd_PMADDUBSW_a: TSIMDInstruction = (name: 'PMADDUBSW'; opcode: $0; OperandsCount: 2; Operands: (p1:GREGq ;p2:MODq); InstrSet: isSSSE3);
+  simd_PMADDUBSW_b: TSIMDInstruction = (name: 'PMADDUBSW'; opcode: $0; OperandsCount: 2; Operands: (p1:GREGdq ;p2:MODdq); InstrSet: isSSSE3);
+
+// 0x05
+  simd_PHSUBW_a: TSIMDInstruction = (name: 'PHSUBW'; opcode: $0; OperandsCount: 2; Operands: (p1:GREGq ;p2:MODq); InstrSet: isSSSE3);
+  simd_PHSUBW_b: TSIMDInstruction = (name: 'PHSUBW'; opcode: $0; OperandsCount: 2; Operands: (p1:GREGdq ;p2:MODdq); InstrSet: isSSSE3);
+
+// 0x06
+  simd_PHSUBD_a: TSIMDInstruction = (name: 'PHSUBD'; opcode: $0; OperandsCount: 2; Operands: (p1:GREGq ;p2:MODq); InstrSet: isSSSE3);
+  simd_PHSUBD_b: TSIMDInstruction = (name: 'PHSUBD'; opcode: $0; OperandsCount: 2; Operands: (p1:GREGdq ;p2:MODdq); InstrSet: isSSSE3);
+
+// 0x07
+  simd_PHSUBSW_a: TSIMDInstruction = (name: 'PHSUBSW'; opcode: $0; OperandsCount: 2; Operands: (p1:GREGq ;p2:MODq); InstrSet: isSSSE3);
+  simd_PHSUBSW_b: TSIMDInstruction = (name: 'PHSUBSW'; opcode: $0; OperandsCount: 2; Operands: (p1:GREGdq ;p2:MODdq); InstrSet: isSSSE3);
+
+// 0x08
+  simd_PSIGNB_a: TSIMDInstruction = (name: 'PSIGNB'; opcode: $0; OperandsCount: 2; Operands: (p1:GREGq ;p2:MODq); InstrSet: isSSSE3);
+  simd_PSIGNB_b: TSIMDInstruction = (name: 'PSIGNB'; opcode: $0; OperandsCount: 2; Operands: (p1:GREGdq ;p2:MODdq); InstrSet: isSSSE3);
+
+// 0x09
+  simd_PSIGNW_a: TSIMDInstruction = (name: 'PSIGNW'; opcode: $0; OperandsCount: 2; Operands: (p1:GREGq ;p2:MODq); InstrSet: isSSSE3);
+  simd_PSIGNW_b: TSIMDInstruction = (name: 'PSIGNW'; opcode: $0; OperandsCount: 2; Operands: (p1:GREGdq ;p2:MODdq); InstrSet: isSSSE3);
+
+// 0x0A
+  simd_PSIGND_a: TSIMDInstruction = (name: 'PSIGND'; opcode: $0; OperandsCount: 2; Operands: (p1:GREGq ;p2:MODq); InstrSet: isSSSE3);
+  simd_PSIGND_b: TSIMDInstruction = (name: 'PSIGND'; opcode: $0; OperandsCount: 2; Operands: (p1:GREGdq ;p2:MODdq); InstrSet: isSSSE3);
+
+// 0x0B
+  simd_PMULHRSW_a: TSIMDInstruction = (name: 'PMULHRSW'; opcode: $0; OperandsCount: 2; Operands: (p1:GREGq ;p2:MODq); InstrSet: isSSSE3);
+  simd_PMULHRSW_b: TSIMDInstruction = (name: 'PMULHRSW'; opcode: $0; OperandsCount: 2; Operands: (p1:GREGdq ;p2:MODdq); InstrSet: isSSSE3);
+
+// 0x10
+  simd_PBLENDVB: TSIMDInstruction = (name: 'PBLENDVB'; opcode: $0; OperandsCount: 2; Operands: (p1:GREGdq ;p2:MODdq); InstrSet: isSSSE3);
+
+// 0x14
+  simd_BLENDVPS: TSIMDInstruction = (name: 'BLENDVPS'; opcode: $0; OperandsCount: 2; Operands: (p1:GREGdq ;p2:MODdq); InstrSet: isSSSE3);
+
+// 0x15
+  simd_BLENDVPD: TSIMDInstruction = (name: 'BLENDVPD'; opcode: $0; OperandsCount: 2; Operands: (p1:GREGdq ;p2:MODdq); InstrSet: isSSSE3);
+
+// 0x17
+  simd_PTEST: TSIMDInstruction = (name: 'PTEST'; opcode: $0; OperandsCount: 2; Operands: (p1:GREGdq ;p2:MODdq); InstrSet: isSSSE3);
+
+// 0x1C
+  simd_PABSB_a: TSIMDInstruction = (name: 'PABSB'; opcode: $0; OperandsCount: 2; Operands: (p1:GREGq ;p2:MODq); InstrSet: isSSSE3);
+  simd_PABSB_b: TSIMDInstruction = (name: 'PABSB'; opcode: $0; OperandsCount: 2; Operands: (p1:GREGdq ;p2:MODdq); InstrSet: isSSSE3);
+
+// 0x1D
+  simd_PABSW_a: TSIMDInstruction = (name: 'PABSW'; opcode: $0; OperandsCount: 2; Operands: (p1:GREGq ;p2:MODq); InstrSet: isSSSE3);
+  simd_PABSW_b: TSIMDInstruction = (name: 'PABSW'; opcode: $0; OperandsCount: 2; Operands: (p1:GREGdq ;p2:MODdq); InstrSet: isSSSE3);
+
+// 0x1E
+  simd_PABSD_a: TSIMDInstruction = (name: 'PABSD'; opcode: $0; OperandsCount: 2; Operands: (p1:GREGq ;p2:MODq); InstrSet: isSSSE3);
+  simd_PABSD_b: TSIMDInstruction = (name: 'PABSD'; opcode: $0; OperandsCount: 2; Operands: (p1:GREGdq ;p2:MODdq); InstrSet: isSSSE3);
+
+// 0x20
+  simd_PMOVSXBW: TSIMDInstruction = (name: 'PMOVSXBW'; opcode: $0; OperandsCount: 2; Operands: (p1: GREGdq; p2:XMM_M64); InstrSet: isSSE41);
+
+// 0x21
+  simd_PMOVSXBD: TSIMDInstruction = (name: 'PMOVSXBD'; opcode: $0; OperandsCount: 2; Operands: (p1: GREGdq; p2:XMM_M32); InstrSet: isSSE41);
+
+// 0x22
+  simd_PMOVSXBQ: TSIMDInstruction = (name: 'PMOVSXBQ'; opcode: $0; OperandsCount: 2; Operands: (p1: GREGdq; p2:XMM_M16); InstrSet: isSSE41);
+
+// 0x23
+  simd_PMOVSXWD: TSIMDInstruction = (name: 'PMOVSXWD'; opcode: $0; OperandsCount: 2; Operands: (p1: GREGdq; p2:XMM_M64); InstrSet: isSSE41);
+
+// 0x24
+  simd_PMOVSXWQ: TSIMDInstruction = (name: 'PMOVSXWQ'; opcode: $0; OperandsCount: 2; Operands: (p1: GREGdq; p2:XMM_M32); InstrSet: isSSE41);
+
+// 0x25
+  simd_PMOVSXDQ: TSIMDInstruction = (name: 'PMOVSXDQ'; opcode: $0; OperandsCount: 2; Operands: (p1: GREGdq; p2:XMM_M64); InstrSet: isSSE41);
+
+// 0x28
+  simd_PMULDQ: TSIMDInstruction = (name: 'PMULDQ'; opcode: $0; OperandsCount: 2; Operands: (p1: GREGdq; p2: MODdq); InstrSet: isSSE41);
+
+// 0x29
+  simd_PCMPEQQ: TSIMDInstruction = (name: 'PCMPEQQ'; opcode: $0; OperandsCount: 2; Operands: (p1: GREGdq; p2: MODdq); InstrSet: isSSE41);
+
+// 0x2A
+  simd_MOVNTDQA: TSIMDInstruction = (name: 'MOVNTDQA'; opcode: $0; OperandsCount: 2; Operands: (p1: GREGdq; p2: MODdq); InstrSet: isSSE41);
+
+// 0x2B
+  simd_PACKUSDW: TSIMDInstruction = (name: 'PACKUSDW'; opcode: $0; OperandsCount: 2; Operands: (p1: GREGdq; p2: MODdq); InstrSet: isSSE41);
+
+// 0x30
+  simd_PMOVZXBW: TSIMDInstruction = (name: 'PMOVZXBW'; opcode: $0; OperandsCount: 2; Operands: (p1: GREGdq; p2:XMM_M64); InstrSet: isSSE41);
+
+// 0x31
+  simd_PMOVZXBD: TSIMDInstruction = (name: 'PMOVZXBD'; opcode: $0; OperandsCount: 2; Operands: (p1: GREGdq; p2:XMM_M32); InstrSet: isSSE41);
+
+// 0x32
+  simd_PMOVZXBQ: TSIMDInstruction = (name: 'PMOVZXBQ'; opcode: $0; OperandsCount: 2; Operands: (p1: GREGdq; p2:XMM_M16); InstrSet: isSSE41);
+
+// 0x33
+  simd_PMOVZXWD: TSIMDInstruction = (name: 'PMOVZXWD'; opcode: $0; OperandsCount: 2; Operands: (p1: GREGdq; p2:XMM_M64); InstrSet: isSSE41);
+
+// 0x34
+  simd_PMOVZXWQ: TSIMDInstruction = (name: 'PMOVZXWQ'; opcode: $0; OperandsCount: 2; Operands: (p1: GREGdq; p2:XMM_M32); InstrSet: isSSE41);
+
+// 0x35
+  simd_PMOVZXDQ: TSIMDInstruction = (name: 'PMOVZXDQ'; opcode: $0; OperandsCount: 2; Operands: (p1: GREGdq; p2:XMM_M64); InstrSet: isSSE41);
+
+// 0x37
+  simd_PCMPGTQ: TSIMDInstruction = (name: 'PCMPGTQ'; opcode: $0; OperandsCount: 2; Operands: (p1: GREGdq; p2: MODdq); InstrSet: isSSE42);
+
+// 0x38
+  simd_PMINSB: TSIMDInstruction = (name: 'PMINSB'; opcode: $0; OperandsCount: 2; Operands: (p1: GREGdq; p2: MODdq); InstrSet: isSSE41);
+
+// 0x39
+  simd_PMINSD: TSIMDInstruction = (name: 'PMINSD'; opcode: $0; OperandsCount: 2; Operands: (p1: GREGdq; p2: MODdq); InstrSet: isSSE41);
+
+// 0x3A
+  simd_PMINUW: TSIMDInstruction = (name: 'PMINUW'; opcode: $0; OperandsCount: 2; Operands: (p1: GREGdq; p2: MODdq); InstrSet: isSSE41);
+
+// 0x3B
+  simd_PMINUD: TSIMDInstruction = (name: 'PMINUD'; opcode: $0; OperandsCount: 2; Operands: (p1: GREGdq; p2: MODdq); InstrSet: isSSE41);
+
+// 0x3C
+  simd_PMAXSB: TSIMDInstruction = (name: 'PMAXSB'; opcode: $0; OperandsCount: 2; Operands: (p1: GREGdq; p2: MODdq); InstrSet: isSSE41);
+
+// 0x3D
+  simd_PMAXSD: TSIMDInstruction = (name: 'PMAXSD'; opcode: $0; OperandsCount: 2; Operands: (p1: GREGdq; p2: MODdq); InstrSet: isSSE41);
+
+// 0x3E
+  simd_PMAXUW: TSIMDInstruction = (name: 'PMAXUW'; opcode: $0; OperandsCount: 2; Operands: (p1: GREGdq; p2: MODdq); InstrSet: isSSE41);
+
+// 0x3F
+  simd_PMAXUD: TSIMDInstruction = (name: 'PMAXUD'; opcode: $0; OperandsCount: 2; Operands: (p1: GREGdq; p2: MODdq); InstrSet: isSSE41);
+
+// 0x40
+  simd_PMULLD: TSIMDInstruction = (name: 'PMULLD'; opcode: $0; OperandsCount: 2; Operands: (p1: GREGdq; p2: MODdq); InstrSet: isSSE41);
+
+// 0x41
+  simd_PHMINPOSUW: TSIMDInstruction = (name: 'PHMINPOSUW'; opcode: $0; OperandsCount: 2; Operands: (p1: GREGdq; p2: MODdq); InstrSet: isSSE41);
+
+// 0xF0
+  simd_CRC32_a: TSIMDInstruction = (name: 'CRC32'; opcode: $0; OperandsCount: 2; Operands: (p1: GREGd; p2: MODb); InstrSet: isSSE42);
+
+// 0xF1
+  simd_CRC32_b: TSIMDInstruction = (name: 'CRC32'; opcode: $0; OperandsCount: 2; Operands: (p1: GREGdq; p2: MODv); InstrSet: isSSE42);
+
+//***********************************************************************
+//  Opcode (66, F2, F3) 0F 3A xx
+//***********************************************************************
+
+//TODO
+
+
+// 0x0F
+  simd_PALIGNR_a: TSIMDInstruction = (name: 'PALIGNR'; opcode: $0; OperandsCount: 3; Operands: (p1:GREGq ;p2:MODq; p3: IMMb); InstrSet: isSSSE3);
+  simd_PALIGNR_b: TSIMDInstruction = (name: 'PALIGNR'; opcode: $0; OperandsCount: 3; Operands: (p1:GREGdq ;p2:MODdq; p3: IMMb); InstrSet: isSSSE3);
+
+
 //******************************************************************************
 //  Group SIMD instructions
 //******************************************************************************

@@ -1,3 +1,8 @@
+{ TODO:
+  - trojbatove opcode instrukcie
+  - skontrolovat 1 batjove opcode instrukcie a 2 batjove non-SIMD instrukcie
+}
+
 unit x86Instructions;
 
 interface
@@ -9,7 +14,7 @@ uses
 type
 
   // "Instruction set" for instructions will maybe be used in future versions
-  TInstructionSet = (isGenPur, isMMX, isSSE, isSSE2, isSSE3, isSSSE3, isSSE4, is3DNow, is3DNowExt, isFPU, isFPUStateMng, isTestReg);  // isVMX, is64bit
+  TInstructionSet = (isGenPur, isMMX, isSSE, isSSE2, isSSE3, isSSSE3, isSSE41, isSSE42, is3DNow, is3DNowExt, isFPU, isFPUStateMng, isTestReg);  // isVMX, is64bit
 
   TInstructionType = (itUndefined, itOrdinary, itSIMD, itFPU, itGroup);
 
@@ -92,7 +97,7 @@ const
 
 }
 
-const
+//const
 
 // Opcode $FE - Group Instruction
 // Opcode $D8 - FPU Instruction
@@ -100,7 +105,7 @@ const
 // Opcode $D6 - Undefined Opcode
 // Other opcodes - OneByte Opcode Instruction
 
-
+(*
        OBOInstruction_set:array[0..PocetOBOInstrukcii-1] of TInstruction = (
 // $00-$0F
                                (name: 'ADD'; opcode: $00; pc:2; param: (p1:MODb; p2:GREGb)),
@@ -376,6 +381,10 @@ const
                                (name: 'group5'; opcode: $FE) // nemalo tu byt nahodou $FF - nie, $FE znamena ze je group instr., nie opcode
 
                                          );
+*)
+
+
+
 (*
 const
 
@@ -669,7 +678,9 @@ const
 {$I x86Instructions_Group.inc}
 {$I x86Instructions_3DNow.inc}
 {$I x86Instructions_TwoByteOpcode.inc}
+{$I x86Instructions_ThreeByteOpcode_38.inc}
 {$I x86Instructions_x87.inc}
+{$I x86Instructions_OneByteOpcode.inc}
 
 (*
 {$I x86Instructions_SIMD.inc}

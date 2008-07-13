@@ -48,70 +48,70 @@ const
 
 type
 
-   TCodeSection = class(TSection)
-     private
-       fBit32: boolean;
-       fCodeSize: cardinal;                  // Velkost kodu tejto sekcie v bajtoch
-       fIsDisassembled: boolean;
-       fDisassembled: TTatraDASStringList;
+  TCodeSection = class(TSection)
+    private
+      fBit32: boolean;
+      fCodeSize: cardinal;                  // Velkost kodu tejto sekcie v bajtoch
+      fIsDisassembled: boolean;
+      fDisassembled: TTatraDASStringList;
 
-       fHasEntryPoint: boolean;
-       fEntryPointAddress: cardinal;
+      fHasEntryPoint: boolean;
+      fEntryPointAddress: cardinal;
 
-       fFileOffset: cardinal;
-       fFileSize: cardinal;
-       fMemOffset: cardinal;
-       fMemSize: cardinal;
+      fFileOffset: cardinal;
+      fFileSize: cardinal;
+      fMemOffset: cardinal;
+      fMemSize: cardinal;
 
-       fCodeSectionIndex: integer;             // Cislo sekcie v ramci kodovych sekcii
+      fCodeSectionIndex: integer;             // Cislo sekcie v ramci kodovych sekcii
 
-       InstructionLineCount, DataLineCount, ReferenceLineCount, BlankLineCount: cardinal;
+      InstructionLineCount, DataLineCount, ReferenceLineCount, BlankLineCount: cardinal;
 //       Statistics: TStatistics;
-       InstructionsCount: cardinal;
-       fLastItem: cardinal;
+      InstructionsCount: cardinal;
+      fLastItem: cardinal;
 
-       procedure SetEntryPointAddress(Address: cardinal);
-       function GetMaxAddress: cardinal;
+      procedure SetEntryPointAddress(Address: cardinal);
+      function GetMaxAddress: cardinal;
 
-     public
+    public
 // Polia
-       CodeArray: TByteDynArray;        // Pole obsahujuce kod
-       CodeStream: TMyMemoryStream;         // Stream obsahujuci kod
-       DisassemblerMap: TByteDynArray;
+      CodeArray: TByteDynArray;        // Pole obsahujuce kod
+      CodeStream: TMyMemoryStream;         // Stream obsahujuci kod
+      DisassemblerMap: TByteDynArray;
 
-       constructor Create(InputStream: TStream; aBit32: boolean; aFileOffset, aFileSize, aMemOffset, aMemSize: cardinal; aCodeSectionIndex: integer; aName: string; aExecFile: TObject); overload;
-       constructor Create(ExecFile: TObject); overload;
-       destructor Destroy; override;
+      constructor Create(InputStream: TStream; aBit32: boolean; aFileOffset, aFileSize, aMemOffset, aMemSize: cardinal; aCodeSectionIndex: integer; aName: string; aExecFile: TObject); overload;
+      constructor Create(ExecFile: TObject); overload;
+      destructor Destroy; override;
 
-       procedure DisassembleAll(Options: TDisassembleOptions);
-       procedure DisassemblePart(Options: TDisassembleOptions);
+      procedure DisassembleAll(Options: TDisassembleOptions);
+      procedure DisassemblePart(Options: TDisassembleOptions);
 
-       function IsInSection(MemAddress: cardinal): boolean;
-       function GetPosition(MemAddress: cardinal): cardinal; // Get position in Disassembled from Address (memory address)
-       function FindAddressableLine(Position: cardinal): cardinal; // forward search, returns $FFFFFFFF if reaches end of Disassembled
-       procedure ClearDisassembled;
-       function GetLineFromDataEx(var InputData; DataType: cardinal; Signed: boolean; const StartAddress: cardinal; Count: integer): TStrings; // StartAddress is memory address
-       procedure ReplaceLines(StartLineIndex, StartAddress, ByteCount: cardinal; NewLines: TStrings);
+      function IsInSection(MemAddress: cardinal): boolean;
+      function GetPosition(MemAddress: cardinal): cardinal; // Get position in Disassembled from Address (memory address)
+      function FindAddressableLine(Position: cardinal): cardinal; // forward search, returns $FFFFFFFF if reaches end of Disassembled
+      procedure ClearDisassembled;
+      function GetLineFromDataEx(var InputData; DataType: cardinal; Signed: boolean; const StartAddress: cardinal; Count: integer): TStrings; // StartAddress is memory address
+      procedure ReplaceLines(StartLineIndex, StartAddress, ByteCount: cardinal; NewLines: TStrings);
 
-       function SaveToFile  (DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
-       function LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; overload; override;
+      function SaveToFile  (DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
+      function LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; overload; override;
 
-       property Bit32: boolean read fBit32;
-       property CodeSize: cardinal read fCodeSize;                  // Velkost kodu tejto sekcie v bajtoch
-       property IsDisassembled: boolean read fIsDisassembled;
-       property Disassembled: TTatraDASStringList read fDisassembled;
+      property Bit32: boolean read fBit32;
+      property CodeSize: cardinal read fCodeSize;                  // Velkost kodu tejto sekcie v bajtoch
+      property IsDisassembled: boolean read fIsDisassembled;
+      property Disassembled: TTatraDASStringList read fDisassembled;
 
-       property FileOffset: cardinal read fFileOffset;
-       property FileSize: cardinal read fFileSize;
-       property MemOffset: cardinal read fMemOffset;
-       property MemSize: cardinal read fMemSize;
-       property MaxAddress: cardinal read GetMaxAddress;
-       property LastItem: cardinal read fLastItem;
-       property CodeSectionIndex: integer read fCodeSectionIndex;
+      property FileOffset: cardinal read fFileOffset;
+      property FileSize: cardinal read fFileSize;
+      property MemOffset: cardinal read fMemOffset;
+      property MemSize: cardinal read fMemSize;
+      property MaxAddress: cardinal read GetMaxAddress;
+      property LastItem: cardinal read fLastItem;
+      property CodeSectionIndex: integer read fCodeSectionIndex;
 
-       property EntryPointAddress: cardinal read fEntryPointAddress write SetEntryPointAddress; // currently relative to code section
-       property HasEntryPoint: boolean read fHasEntryPoint;
-     end;
+      property EntryPointAddress: cardinal read fEntryPointAddress write SetEntryPointAddress; // currently relative to code section
+      property HasEntryPoint: boolean read fHasEntryPoint;
+    end;
 
 
 function GetLineAddress(line: string): cardinal;
@@ -488,7 +488,7 @@ begin
             if (ExportSection.Functions[i].Name <> '') then
               refer[ReferCount-1]:= 'Exported function ''' + ExportSection.functions[i].name + ''''
             else
-              refer[ReferCount-1]:= 'Exported function ' + 'ordinal: ''' + IntToStr(ExportSection.functions[i].ordinal) + '''';
+              refer[ReferCount-1]:= 'Exported function ' + 'ordinal: ''0x' + IntToHex(ExportSection.functions[i].ordinal, 8) + '''';
           end;
         end;
       end;

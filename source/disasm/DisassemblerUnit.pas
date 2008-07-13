@@ -58,8 +58,6 @@ type
     InstructionOperands: string[50]; // operands of current instruction
 }
     InstructionName: string; // name of current instruction
-    InstructionPrefix: string; // prefix of current instruction
-    InstructionOperands: string; // operands of current instruction
 
   Vpc: Byte;                              // Pocet parametrov aktualnej instrukcie
     fMemOffset: cardinal;
@@ -995,7 +993,7 @@ var
 
     AsmByte: byte;
     c: cardinal;
-    _3DNow_Instruction: boolean;
+  Is3DNowInstruction: boolean;
     k: cardinal;
     KoniecBloku: boolean;
 
@@ -1006,9 +1004,14 @@ var
   TheByte: byte;
 
   GroupMapIndex: Integer;
-  GroupInstruction: TInstruction;
+  GroupInstruction, OneByteInstruction: TInstruction;
   SIMDInstruction: TSIMDInstruction;
   FPUInstrIndex: Integer;
+
+  // presunute zhora
+  InstructionPrefix: string; // prefix of current instruction
+  InstructionOperands: string; // operands of current instruction
+
 
   procedure ProcessSIMDInstruction(var Instruction: TInstruction);
   begin
@@ -1046,7 +1049,7 @@ begin
     address32:=fBit32;
     SegmentOverride:='';
 
-    _3DNow_Instruction:=false;
+    Is3DNowInstruction:=false;
     vpc:=0;                                 // Vynulovanie poctu operandov pre nasledujucu instrukciu
     genreg16:=false;
     modrm.loaded:=false;
@@ -1146,7 +1149,7 @@ XADD, and XCHG.
 
       j:=0;
 
-      case OBOInstruction_set[code[i]].opcode of
+      case OneByte_InstructionSet[code[i]].opcode of
 
         // OneByte Opcode Group Instructions
         $FE: begin
@@ -1252,7 +1255,7 @@ XADD, and XCHG.
             end;
 
             $0F: begin
-              _3DNow_Instruction := true;
+              Is3DNowInstruction := true;
               Vpc := 2;
               Vparam.p1 := GREGq;
               Vparam.p2 := MODq;
@@ -1272,25 +1275,27 @@ XADD, and XCHG.
         // One byte opcode instructions
         else
           begin
-            if OBOinstruction_set[code[i]].opcode = $D6 then
+            OneByteInstruction :=  OneByte_InstructionSet[code[i]];
+            if OneByteInstruction.opcode = $D6 then
               raise EUndefinedOpcodeException.Create('One byte instruction')
             else begin
-              Vparam := OBOinstruction_set[code[i]].param;
-              Vpc := OBOinstruction_set[code[i]].pc;
-              if not (OBOinstruction_set[code[i]].AddOp) then
-                InstructionName:=OBOinstruction_set[code[i]].name
+              Vparam := OneByteInstruction.param;
+              Vpc := OneByteInstruction.pc;
+              if not OneByteInstruction.AddOp then
+                InstructionName := OneByteInstruction.name
               else
                 if operand32 then
-                  InstructionName:=OBOinstruction_set[code[i]].name32
+                  InstructionName := OneByteInstruction.name32
                 else
-                  InstructionName:=OBOinstruction_set[code[i]].name16;
+                  InstructionName := OneByteInstruction.name16;
             end;
           end;
       end;  // End of "case code[i] of"
 
 
 
-      OperandSize:=szEmpty;
+      // Instructions' parameters processing (except FPU instructions which parameters are processed now)
+      OperandSize := szEmpty;
       case Vpc of                             // Spracovanie parametrov podla ich poctu
         1: begin
             case Vparam.p1 of
@@ -1311,31 +1316,29 @@ XADD, and XCHG.
               MODw: OperandSize:=szWord;
               MODd: OperandSize:=szDword;
             end;
-            InstructionOperands:=SpracujParameter(Vparam.p1);
-            OperandSize:=szEmpty;
-  // Zmysel nasledovneho objasni "fpc_bug.txt"
-  // povodne:
-  //           InstructionOperands:=InstructionOperands + ',' + SpracujParameter(Vparam.p2);
-  //teraz
-            InstructionOperands:=InstructionOperands + ',';
-            InstructionOperands:=InstructionOperands + SpracujParameter(Vparam.p2);
+            // Function "SpracujParameter" has side effects its second calling depends on.
+            // So we must ensure that the first parameter is process before second.
+            // We cannot use "InstructionOperands := SpracujParameter(Vparam.p1) + ',' + SpracujParameter(Vparam.p2);"
+            // because the order of proc/fun calling in such statement is not guaranteed (depends on compiler)
+            InstructionOperands := SpracujParameter(Vparam.p1) + ',';
+            OperandSize := szEmpty;
+            InstructionOperands := InstructionOperands + SpracujParameter(Vparam.p2);
           end;
         3: begin
-  // Zmysel nasledovneho objasni "fpc_bug.txt"
-
-  // povodne:
-  //           InstructionOperands:=SpracujParameter(Vparam.p1)+','+SpracujParameter(Vparam.p2)+','+SpracujParameter(Vparam.p3);
-  // teraz:
-            InstructionOperands:=SpracujParameter(Vparam.p1)+',';
-            InstructionOperands:=InstructionOperands+SpracujParameter(Vparam.p2)+',';
-            InstructionOperands:=InstructionOperands+SpracujParameter(Vparam.p3);
+            // Function "SpracujParameter" has side effects its second calling depends on.
+            // So we must ensure that the first parameter is process before second.
+            // We cannot use "InstructionOperands := SpracujParameter(Vparam.p1) + ',' + SpracujParameter(Vparam.p2) + ',' + SpracujParameter(Vparam.p3);"
+            // because the order of proc/fun calling in such statement is not guaranteed (depends on compiler)
+            InstructionOperands := SpracujParameter(Vparam.p1) + ',';
+            InstructionOperands := InstructionOperands + SpracujParameter(Vparam.p2) + ',';
+            InstructionOperands := InstructionOperands + SpracujParameter(Vparam.p3);
           end;
       end;
 
 
       // Detekcia 3DNow! instrukcii
-      if _3DNow_Instruction then begin
-        inc(i);
+      if Is3DNowInstruction then begin
+        Inc(i);
         if _3DNow_InstructionSet[code[i]].opcode = $D6 then
           raise EUndefinedOpcodeException.Create('3DNow! instruction')
         else
@@ -1344,12 +1347,11 @@ XADD, and XCHG.
 
   // -- Kvoli testovanie intrukcii je obcas vypnute ukoncovanie bloku:
 
-      case InstructionName[1] of                                 //  Instrukcie ukoncujuce blok
-        'J': if InstructionName[2]='M' then KoniecBloku:=true;     // JMP, JMPx
-        'R': if (InstructionName='RET')
-            or (InstructionName='RETN')
-            or (InstructionName='RETF') then KoniecBloku:=true;   // RET, RETx
-        'I': if InstructionName[2]='R' then KoniecBloku:=true;     // IRET, IRETx
+      //  Instrukcie ukoncujuce blok
+      case InstructionName[1] of
+        'J': if InstructionName[2] = 'M' then KoniecBloku := true; // JMP, JMPx
+        'R': if InstructionName[2] = 'E' then KoniecBloku := true; // RET, RETN, RETF
+        'I': if InstructionName[2] = 'R' then KoniecBloku := true; // IRET, IRETx
       end;
 
   // --
@@ -1381,11 +1383,11 @@ XADD, and XCHG.
       if (code[InstrAddress] = $0F) then
         case code[InstrAddress+1] of
           // MOVZX
-          $B6: InstructionOperands:= InsertStr('byte ',InstructionOperands, Pos(',',InstructionOperands)+1);
-          $B7: InstructionOperands:= InsertStr('word ',InstructionOperands, Pos(',',InstructionOperands)+1);
+          $B6: InstructionOperands:= InsertStr('byte ', InstructionOperands, Pos(',', InstructionOperands) + 1);
+          $B7: InstructionOperands:= InsertStr('word ', InstructionOperands, Pos(',', InstructionOperands) + 1);
           // MOVSX
-          $BE: InstructionOperands:= InsertStr('byte ',InstructionOperands, Pos(',',InstructionOperands)+1);
-          $BF: InstructionOperands:= InsertStr('word ',InstructionOperands, Pos(',',InstructionOperands)+1);
+          $BE: InstructionOperands:= InsertStr('byte ', InstructionOperands, Pos(',', InstructionOperands) + 1);
+          $BF: InstructionOperands:= InsertStr('word ', InstructionOperands, Pos(',', InstructionOperands) + 1);
         end;
 
       // Ak je posledny bajt aktual. instrukcie uz sucastou nejakej inej instrukcie alebo je uz mimo bloku,
@@ -1410,7 +1412,7 @@ XADD, and XCHG.
 
         // Parsed
         for ParsedIndex := 0 to (i - InstrAddress) do begin
-          TheByte := code[InstrAddress + ParsedIndex];
+          TheByte := code[InstrAddress + Cardinal(ParsedIndex)];
           Line[10 + 2*ParsedIndex] := HexDigits[(TheByte shr 4) and 15];
           Line[10 + 2*ParsedIndex + 1] := HexDigits[TheByte and 15];
         end;
@@ -1497,46 +1499,46 @@ end;
 function TDisassembler.SpracujParameter(a:Tparameter):string;
 begin
   case a of
-    MODb: result:=Spracujmodrm(regmem, onebyte);
-    MODw: result:=SpracujModrm(regmem, twobyte);
-    MODv: result:=SpracujModrm(regmem, twoorfour);
-    MODd: result:=SpracujModrm(regmem, fourbyte);
-    MODp: result:=SpracujModrm(regmem, fourorsix);
-    MODq: result:=SpracujModrm(regmem, mmx);
+    MODb: result:=SpracujModRM(regmem, onebyte);
+    MODw: result:=SpracujModRM(regmem, twobyte);
+    MODv: result:=SpracujModRM(regmem, twoorfour);
+    MODd: result:=SpracujModRM(regmem, fourbyte);
+    MODp: result:=SpracujModRM(regmem, fourorsix);
+    MODq: result:=SpracujModRM(regmem, mmx);
     MODdq: result:=SpracujModRM(regmem, xmm);
 
-    GREGb: result:=SpracujModrm(greg,onebyte);
-    GREGw: result:=SpracujModrm(greg,twobyte);
-    GREGv: result:=SpracujModrm(greg,twoorfour);
-    GREGd: result:=SpracujModrm(greg,fourbyte);
-    GREGq: result:=SpracujModrm(greg,mmx);
-    GREGdq: result:=SpracujModrm(greg,xmm);
+    GREGb: result:=SpracujModRM(greg,onebyte);
+    GREGw: result:=SpracujModRM(greg,twobyte);
+    GREGv: result:=SpracujModRM(greg,twoorfour);
+    GREGd: result:=SpracujModRM(greg,fourbyte);
+    GREGq: result:=SpracujModRM(greg,mmx);
+    GREGdq: result:=SpracujModRM(greg,xmm);
 
-    SREGw: result:=SpracujModrm(sreg,twobyte);
-    CREGd: result:=SpracujModrm(creg,fourbyte);
-    DREGd: result:=SpracujModrm(dreg,fourbyte);
-    TREGd: result:=SpracujModrm(treg,fourbyte);
+    SREGw: result:=SpracujModRM(sreg,twobyte);
+    CREGd: result:=SpracujModRM(creg,fourbyte);
+    DREGd: result:=SpracujModRM(dreg,fourbyte);
+    TREGd: result:=SpracujModRM(treg,fourbyte);
 
-    IMMb: result:=Spracujimmediate(onebyte);
-    IMMv: result:=spracujimmediate(twoorfour);
-    IMMw: result:=spracujimmediate(twobyte);
-    IMMp: result:=spracujimmediate(fourorsix);
+    IMMb: result:=SpracujImmediate(onebyte);
+    IMMv: result:=SpracujImmediate(twoorfour);
+    IMMw: result:=SpracujImmediate(twobyte);
+    IMMp: result:=SpracujImmediate(fourorsix);
 
-    RELb: result:=spracujrelative(onebyte);
-    RELv: result:=spracujrelative(twoorfour);
-    RELw: result:=spracujrelative(twobyte);
+    RELb: result:=SpracujRelative(onebyte);
+    RELv: result:=SpracujRelative(twoorfour);
+    RELw: result:=SpracujRelative(twobyte);
 
-    OFFb: result:=spracujoffset(onebyte);
-    OFFv: result:=spracujoffset(twoorfour);
+    OFFb: result:=SpracujOffset(onebyte);
+    OFFv: result:=SpracujOffset(twoorfour);
 
-    ax: result:=spracujgenreg+'AX';
-    bx: result:=spracujgenreg+'BX';
-    cx: result:=spracujgenreg+'CX';
-    dx: result:=spracujgenreg+'DX';
-    si: result:=spracujgenreg+'SI';
-    di: result:=spracujgenreg+'DI';
-    bp: result:=spracujgenreg+'BP';
-    sp: result:=spracujgenreg+'SP';
+    ax: result:=SpracujGenReg+'AX';
+    bx: result:=SpracujGenReg+'BX';
+    cx: result:=SpracujGenReg+'CX';
+    dx: result:=SpracujGenReg+'DX';
+    si: result:=SpracujGenReg+'SI';
+    di: result:=SpracujGenReg+'DI';
+    bp: result:=SpracujGenReg+'BP';
+    sp: result:=SpracujGenReg+'SP';
     al: result:='AL';
     bl: result:='BL';
     cl: result:='CL';

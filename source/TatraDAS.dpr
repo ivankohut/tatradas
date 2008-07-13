@@ -50,6 +50,7 @@ uses
   StrUtils,
   procmat in 'procmat.pas',
   StringUtilities in 'StringUtilities.pas',
+  SortingUnit in 'SortingUnit.pas', 
   ExecFileManagerUnit in 'ExecFileManagerUnit.pas',
   ExecFileUnit in 'ExecFileUnit.pas',
   SectionUnit in 'SectionUnit.pas',

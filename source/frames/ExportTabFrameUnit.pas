@@ -1,3 +1,8 @@
+{
+  - Po kliknuti na title riadok by sa mala prilusna bunka znizit (ako button pri kliknuti), aby to naozaj vyzeralo ako po kliku
+  - Optimalizacia triedenia, mozno nejaky BeginUpdate (StringGrid nema a davat to na jednotlive riadky (TStrings) sa mi zda zbytocne
+}
+
 unit ExportTabFrameUnit;
 
 interface
@@ -18,18 +23,28 @@ uses
   procmat,
   ExecFileUnit,
   SectionUnit,
-  ExportSectionUnit;
+  ExportSectionUnit,
+  Grids;
 
 
 type
   TExportTabFrame = class(TTabFrameTemplate)
-    FunctionListView: TListView;
-    procedure FunctionListViewSelectItem(Sender: TObject; Item: TListItem; Selected: Boolean);
-    procedure GotoFunctionClick(Sender: TObject);
-    procedure FunctionListViewColumnClick(Sender: TObject; Column: TListColumn);
+    FunctionStringGrid: TStringGrid;
+    procedure FunctionStringGridMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    procedure FunctionStringGridSelectCell(Sender: TObject; ACol, ARow: Integer; var CanSelect: Boolean);
+    procedure FunctionStringGridDblClick(Sender: TObject);
+
   private
     fGotoEnabled: boolean;
+    fValidGotoClick: boolean;
+    fSortColumn: Integer;
     fSection: TExportSection;
+
+    fSortArray: array of TStrings;
+    function SortGetItem(ItemIndex: Integer): TObject;
+    procedure SortSetItem(ItemIndex: Integer; Item: TObject);
+    function SortCompare(Item1, Item2: Integer): Integer;
+
   protected
     function GetSection: TSection; override;
   public
@@ -40,44 +55,38 @@ type
 
 implementation
 
+
 uses
   MainFormUnit,
   CodeTabFrameUnit,
-  DateUtils;
+  DateUtils, SortingUnit;
 
 {$R *.dfm}
 
 
 constructor TExportTabFrame.Create(AOwner: TComponent; ASection: TSection);
 var
-  ListItem: TListItem;
-  i: integer;
-
-  tt: TDateTime;
+  FunctionIndex: integer;
 begin
   inherited;
   fSection := ASection as TExportSection;
   Caption := 'Export';
   fGotoEnabled := false;
+  FunctionStringGrid.DoubleBuffered := true;
 
-  FunctionListView.Items.BeginUpdate;
-//  tt := Now;
-  FunctionListView.Items.Count := fSection.FunctionCount;
-
-  for i := 0 to fSection.FunctionCount - 1 do begin
-    ListItem:=FunctionListView.Items.Add;
-    ListItem.Data:= Pointer(i);
-    ListItem.Caption:= IntToStr(i+1)+'.';
-    with fSection.functions[i] do begin
-      ListItem.SubItems.Add(Name);
-      ListItem.SubItems.Add(IntToStr(Section));
-      ListItem.SubItems.Add(IntToHex(CodeSectionOffset, 8));
-      ListItem.SubItems.Add(IntToHex(MemOffset, 8));
-      ListItem.SubItems.Add(IntToHex(ordinal, 8));
+  // Naplnenie gridu
+  FunctionStringGrid.RowCount := fSection.FunctionCount + 1;
+  for FunctionIndex := 0 to fSection.FunctionCount - 1 do begin
+    with fSection.functions[FunctionIndex] do begin
+      FunctionStringGrid.Cells[0, FunctionIndex + 1] := IntToStr(FunctionIndex + 1) + '.';
+      FunctionStringGrid.Cells[1, FunctionIndex + 1] := Name;
+      FunctionStringGrid.Cells[2, FunctionIndex + 1] := IntToStr(Section);
+      FunctionStringGrid.Cells[3, FunctionIndex + 1] := IntToHex(CodeSectionOffset, 8);
+      FunctionStringGrid.Cells[4, FunctionIndex + 1] := IntToHex(MemOffset, 8);
+      FunctionStringGrid.Cells[5, FunctionIndex + 1] := IntToHex(ordinal, 8);
+      FunctionStringGrid.Objects[0, FunctionIndex + 1] := TObject(FunctionIndex);
     end;
   end;
-//  showMessage(IntToStr(MilliSecondsBetween(Now, tt)));
-  FunctionListView.Items.EndUpdate;
 end;
 
 
@@ -89,25 +98,15 @@ end;
 
 
 
-procedure TExportTabFrame.FunctionListViewSelectItem(Sender: TObject; Item: TListItem; Selected: Boolean);
-begin
-  fGotoEnabled:=false;
-  if Selected and (Section.ExeCfile as TExecutableFile).IsDisassembled then
-    if (fSection.Functions[Integer(FunctionListView.Selected.Data)].Name <> '! INVALID RVA !') and (fSection.Functions[Integer(FunctionListView.Selected.Data)].Section >= 0) then
-      fGotoEnabled:=true;
-end;
-
-
-
-procedure TExportTabFrame.GotoFunctionClick(Sender: TObject);
+procedure TExportTabFrame.FunctionStringGridDblClick(Sender: TObject);
 var
   FunctionIndex, SectionIndex: integer;
   Address: cardinal;
   Tab: TTabSheetTemplate;
 begin
-  if not fGotoEnabled then Exit;
+  if not (fGotoEnabled and fValidGotoClick) then Exit;
 
-  FunctionIndex:= Integer(FunctionListView.Selected.Data);
+  FunctionIndex := Integer(FunctionStringGrid.Objects[0, FunctionStringGrid.Row]);
   Address:= fSection.Functions[FunctionIndex].MemOffset;
   SectionIndex:= fSection.Functions[FunctionIndex].Section;
 
@@ -115,7 +114,54 @@ begin
   with (Tab.Frame as TCodeTabFrame) do begin
     GotoPosition(GetPosition(Address), soBeginning);
   end;
-  MainForm.MainPageControl.ActivePage:=Tab;
+
+  MainForm.MainPageControl.ActivePage := Tab;
+  if Assigned(MainForm.MainPageControl.OnChange) then // TODO: nezda sa mi, ze treba volat OnChange, malo by sa to dat spravit nejak inak
+    MainForm.MainPageControl.OnChange(nil);
+end;
+
+
+
+procedure TExportTabFrame.FunctionStringGridMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+var
+  RowIndex: Integer;
+begin
+  fValidGotoClick := (FunctionStringGrid.MouseCoord(X, Y).X > 0) and (FunctionStringGrid.MouseCoord(X, Y).Y > 0);
+
+  // Po kliknuti na titulny riadok utriedime riadky podla kliknuteho stlpca
+  if FunctionStringGrid.MouseCoord(X, Y).Y = 0 then begin
+    fSortColumn := FunctionStringGrid.MouseCoord(X, Y).X;
+
+    // Vytvorenie pomocneho pola riadkov pre ucely triedenia
+    SetLength(fSortArray, FunctionStringGrid.RowCount - 1);
+    for RowIndex := 0 to FunctionStringGrid.RowCount - 2 do begin
+      fSortArray[RowIndex] := TStringList.Create;
+      fSortArray[RowIndex].Assign(FunctionStringGrid.Rows[RowIndex + 1]);
+    end;
+
+    // Utriedenie
+    MergeSortObjects(SortCompare, SortGetItem, SortSetItem, 0, FunctionStringGrid.RowCount - 2);
+
+    // Zapis utriedenych riadkov do StringGrid-u
+    for RowIndex := 0 to FunctionStringGrid.RowCount - 2 do begin
+      FunctionStringGrid.Rows[RowIndex + 1].Assign(fSortArray[RowIndex]);
+      fSortArray[RowIndex].Free;
+    end;
+  end;
+end;
+
+
+
+procedure TExportTabFrame.FunctionStringGridSelectCell(Sender: TObject; ACol, ARow: Integer; var CanSelect: Boolean);
+var
+  FunctionIndex: Integer;
+begin
+  fGotoEnabled := false;
+  if (Section.ExeCfile as TExecutableFile).IsDisassembled then begin
+    FunctionIndex := Integer(FunctionStringGrid.Objects[0, FunctionStringGrid.Row]);
+    if (fSection.Functions[FunctionIndex].Name <> '! INVALID RVA !') and (fSection.Functions[FunctionIndex].Section >= 0) then
+      fGotoEnabled := true;
+  end;
 end;
 
 
@@ -123,40 +169,44 @@ end;
 procedure TExportTabFrame.Translate;
 begin
   Caption:= Translator.INI.ReadString('Export','Caption', TranslateErrorStr);
-  FunctionListView.Columns.Items[0].Caption:= Translator.ini.ReadString('Export','FunctionListNumber',TranslateErrorStr);
-  FunctionListView.Columns.Items[1].Caption:= Translator.ini.ReadString('Export','FunctionListName',TranslateErrorStr);
-  FunctionListView.Columns.Items[2].Caption:= Translator.ini.ReadString('Export','FunctionListSection',TranslateErrorStr);
-  FunctionListView.Columns.Items[3].Caption:= Translator.ini.ReadString('Export','FunctionListOffset',TranslateErrorStr);
-  FunctionListView.Columns.Items[4].Caption:= Translator.ini.ReadString('Export','FunctionListAddress',TranslateErrorStr);
-  FunctionListView.Columns.Items[5].Caption:= Translator.ini.ReadString('Export','FunctionListOrdinal',TranslateErrorStr);
+  FunctionStringGrid.Cells[0, 0] := Translator.ini.ReadString('Export', 'FunctionListNumber', TranslateErrorStr);
+  FunctionStringGrid.Cells[1, 0] := Translator.ini.ReadString('Export', 'FunctionListName', TranslateErrorStr);
+  FunctionStringGrid.Cells[2, 0] := Translator.ini.ReadString('Export', 'FunctionListSection', TranslateErrorStr);
+  FunctionStringGrid.Cells[3, 0] := Translator.ini.ReadString('Export', 'FunctionListOffset', TranslateErrorStr);
+  FunctionStringGrid.Cells[4, 0] := Translator.ini.ReadString('Export', 'FunctionListAddress', TranslateErrorStr);
+  FunctionStringGrid.Cells[5, 0] := Translator.ini.ReadString('Export', 'FunctionListOrdinal', TranslateErrorStr);
 end;
 
 
 
-function ExportTabFrameSortListView(Item1, Item2, SortColumn: integer): integer stdcall;
+function TExportTabFrame.SortGetItem(ItemIndex: Integer): TObject;
+begin
+  result := fSortArray[ItemIndex];
+end;
+
+
+
+procedure TExportTabFrame.SortSetItem(ItemIndex: Integer; Item: TObject);
+begin
+  fSortArray[ItemIndex] := TStrings(Item);
+end;
+
+
+
+function TExportTabFrame.SortCompare(Item1, Item2: Integer): Integer;
 var
-  ListItem1, ListItem2: TListItem;
   Num1, Num2: integer;
   Str1, Str2: string;
 begin
-  ListItem1:= TListItem(item1);
-  ListItem2:= TListItem(item2);
+  str1 := fSortArray[Item1][fSortColumn];
+  str2 := fSortArray[Item2][fSortColumn];
 
-  if SortColumn = 0 then begin
-    str1:= ListItem1.Caption;
-    str2:= ListItem2.Caption;
-  end
-  else begin
-    str1:= ListItem1.SubItems[SortColumn-1];
-    str2:= ListItem2.SubItems[SortColumn-1];
-  end;
-
-  case SortColumn of
+  case fSortColumn of
     0: begin
-      num1:= StrToInt(Copy(str1, 1, Length(str1)-1));
-      num2:= StrToInt(Copy(str2, 1, Length(str2)-1));
+      num1 := StrToInt(Copy(str1, 1, Length(str1)-1));
+      num2 := StrToInt(Copy(str2, 1, Length(str2)-1));
       if num1 > num2 then
-        result:= +1
+        result := +1
       else
         if num1 < num2 then
           result:= -1
@@ -190,17 +240,5 @@ begin
       result:= 0;
   end;
 end;
-
-
-
-procedure TExportTabFrame.FunctionListViewColumnClick(Sender: TObject; Column: TListColumn);
-begin
-  inherited;
-  FunctionListView.Items.BeginUpdate;
-  FunctionListView.CustomSort(ExportTabFrameSortListView, Column.Index);
-  FunctionListView.Items.EndUpdate;
-end;
-
-
 
 end.

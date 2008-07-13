@@ -23,7 +23,7 @@ const
     (name: 'mmx'; opcode: $60; SIMD: nil;  SIMD_66: @simd_BLENDPS;  SIMD_F2: nil; SIMD_F3: nil),
     (name: 'mmx'; opcode: $60; SIMD: nil;  SIMD_66: @simd_BLENDPD;  SIMD_F2: nil; SIMD_F3: nil),
     (name: 'mmx'; opcode: $60; SIMD: nil;  SIMD_66: @simd_PBLENDW;  SIMD_F2: nil; SIMD_F3: nil),
-    (name: 'mmx'; opcode: $60; SIMD: @simd_PALIGNR;  SIMD_66: @simd_PALIGNR;  SIMD_F2: nil; SIMD_F3: nil),
+    (name: 'mmx'; opcode: $60; SIMD: @simd_PALIGNR_a;  SIMD_66: @simd_PALIGNR_b;  SIMD_F2: nil; SIMD_F3: nil),
 
   // $10-$1F
     (name: 'undefined opcode!'; opcode: $D6),

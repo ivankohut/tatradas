@@ -1,3 +1,8 @@
+2.9.9
+fix: vynimka pri prechode na koniec(posledne tri bajty) hexeditu, precistenie kodu hexeditForm-u
+
+
+2.9.8
 ~ memory addresses in code sections
 + imported functions in NE files 
 - advanced disassemble - instruction count

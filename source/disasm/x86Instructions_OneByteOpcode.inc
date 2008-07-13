@@ -1,9 +1,10 @@
 {
   x86 One Byte Opcode Instructions
+  TODO: refactoring, checking (este som s tymto nic nerobil po rozdeleni instrukcii do viac suborov)
 }
 const
 
-  OBOInstruction_set: array[0..PocetOBOInstrukcii-1] of TInstruction = (
+  OneByte_InstructionSet: array [0..255] of TInstruction = (
 
   // $00-$0F
     (name: 'ADD'; opcode: $00; pc:2; param: (p1:MODb; p2:GREGb)),
@@ -307,5 +308,5 @@ const
     (name: 'CLD'; opcode: $FC; param:()),
     (name: 'STD'; opcode: $FD),
     (name: 'group4'; opcode: $FE),
-    (name: 'group5'; opcode: $FE)
+    (name: 'group5'; opcode: $FE) // nemalo tu byt nahodou $FF - nie, $FE znamena ze je group instr., nie opcode
   );

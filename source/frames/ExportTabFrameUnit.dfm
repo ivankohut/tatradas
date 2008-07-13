@@ -1,41 +1,35 @@
 inherited ExportTabFrame: TExportTabFrame
+  Width = 671
   inherited Panel: TPanel
-    object FunctionListView: TListView
+    Width = 671
+    object FunctionStringGrid: TStringGrid
       Left = 8
       Top = 8
-      Width = 427
+      Width = 655
       Height = 261
       Align = alClient
-      Columns = <
-        item
-          Caption = 'Number'
-        end
-        item
-          Caption = 'Name'
-          Width = 150
-        end
-        item
-          Caption = 'Section'
-        end
-        item
-          Caption = 'Section offset'
-          Width = 80
-        end
-        item
-          Caption = 'Entrypoint'
-          Width = 80
-        end
-        item
-          Caption = 'Ordinal'
-          Width = 80
-        end>
-      ReadOnly = True
-      RowSelect = True
+      ColCount = 6
+      DefaultColWidth = 48
+      DefaultRowHeight = 16
+      RowCount = 2
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = 'Default'
+      Font.Style = []
+      Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goColSizing, goRowSelect]
+      ParentFont = False
       TabOrder = 0
-      ViewStyle = vsReport
-      OnColumnClick = FunctionListViewColumnClick
-      OnDblClick = GotoFunctionClick
-      OnSelectItem = FunctionListViewSelectItem
+      OnDblClick = FunctionStringGridDblClick
+      OnMouseDown = FunctionStringGridMouseDown
+      OnSelectCell = FunctionStringGridSelectCell
+      ColWidths = (
+        48
+        235
+        81
+        80
+        76
+        76)
     end
   end
 end

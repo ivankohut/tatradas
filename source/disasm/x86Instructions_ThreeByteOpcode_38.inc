@@ -7,19 +7,19 @@ const
   ThreeByteOpcode38_InstructionSet: array [0..255] of TInstruction = (
 
   // $00-$0F
-    (name: 'mmx'; opcode: $60; SIMD: @simd_PSHUFB;    SIMD_66: @simd_PSHUFB;    SIMD_F2: nil; SIMD_F3: nil),
-    (name: 'mmx'; opcode: $60; SIMD: @simd_PHADDW;    SIMD_66: @simd_PHADDW;    SIMD_F2: nil; SIMD_F3: nil),
-    (name: 'mmx'; opcode: $60; SIMD: @simd_PHADDD;    SIMD_66: @simd_PHADDD;    SIMD_F2: nil; SIMD_F3: nil),
-    (name: 'mmx'; opcode: $60; SIMD: @simd_PHADDSW;   SIMD_66: @simd_PHADDSW;   SIMD_F2: nil; SIMD_F3: nil),
-    (name: 'mmx'; opcode: $60; SIMD: @simd_PMADDUBSW; SIMD_66: @simd_PMADDUBSW; SIMD_F2: nil; SIMD_F3: nil),
-    (name: 'mmx'; opcode: $60; SIMD: @simd_PHSUBW;    SIMD_66: @simd_PHSUBW;    SIMD_F2: nil; SIMD_F3: nil),
-    (name: 'mmx'; opcode: $60; SIMD: @simd_PHSUBD;    SIMD_66: @simd_PHSUBD;    SIMD_F2: nil; SIMD_F3: nil),
-    (name: 'mmx'; opcode: $60; SIMD: @simd_PHSUBSW;   SIMD_66: @simd_PHSUBSW;   SIMD_F2: nil; SIMD_F3: nil),
+    (name: 'mmx'; opcode: $60; SIMD: @simd_PSHUFB_a;    SIMD_66: @simd_PSHUFB_b;    SIMD_F2: nil; SIMD_F3: nil),
+    (name: 'mmx'; opcode: $60; SIMD: @simd_PHADDW_a;    SIMD_66: @simd_PHADDW_b;    SIMD_F2: nil; SIMD_F3: nil),
+    (name: 'mmx'; opcode: $60; SIMD: @simd_PHADDD_a;    SIMD_66: @simd_PHADDD_b;    SIMD_F2: nil; SIMD_F3: nil),
+    (name: 'mmx'; opcode: $60; SIMD: @simd_PHADDSW_a;   SIMD_66: @simd_PHADDSW_b;   SIMD_F2: nil; SIMD_F3: nil),
+    (name: 'mmx'; opcode: $60; SIMD: @simd_PMADDUBSW_a; SIMD_66: @simd_PMADDUBSW_b; SIMD_F2: nil; SIMD_F3: nil),
+    (name: 'mmx'; opcode: $60; SIMD: @simd_PHSUBW_a;    SIMD_66: @simd_PHSUBW_b;    SIMD_F2: nil; SIMD_F3: nil),
+    (name: 'mmx'; opcode: $60; SIMD: @simd_PHSUBD_a;    SIMD_66: @simd_PHSUBD_b;    SIMD_F2: nil; SIMD_F3: nil),
+    (name: 'mmx'; opcode: $60; SIMD: @simd_PHSUBSW_a;   SIMD_66: @simd_PHSUBSW_b;   SIMD_F2: nil; SIMD_F3: nil),
 
-    (name: 'mmx'; opcode: $60; SIMD: @simd_PSIGNB;    SIMD_66: @simd_PSIGNB;    SIMD_F2: nil; SIMD_F3: nil),
-    (name: 'mmx'; opcode: $60; SIMD: @simd_PSIGNW;    SIMD_66: @simd_PSIGNW;    SIMD_F2: nil; SIMD_F3: nil),
-    (name: 'mmx'; opcode: $60; SIMD: @simd_PSIGND;    SIMD_66: @simd_PSIGND;    SIMD_F2: nil; SIMD_F3: nil),
-    (name: 'mmx'; opcode: $60; SIMD: @simd_PMULHRSW;  SIMD_66: @simd_PMULHRSW;  SIMD_F2: nil; SIMD_F3: nil),
+    (name: 'mmx'; opcode: $60; SIMD: @simd_PSIGNB_a;    SIMD_66: @simd_PSIGNB_b;    SIMD_F2: nil; SIMD_F3: nil),
+    (name: 'mmx'; opcode: $60; SIMD: @simd_PSIGNW_a;    SIMD_66: @simd_PSIGNW_b;    SIMD_F2: nil; SIMD_F3: nil),
+    (name: 'mmx'; opcode: $60; SIMD: @simd_PSIGND_a;    SIMD_66: @simd_PSIGND_b;    SIMD_F2: nil; SIMD_F3: nil),
+    (name: 'mmx'; opcode: $60; SIMD: @simd_PMULHRSW_a;  SIMD_66: @simd_PMULHRSW_b;  SIMD_F2: nil; SIMD_F3: nil),
     (name: 'undefined opcode!'; opcode: $D6),
     (name: 'undefined opcode!'; opcode: $D6),
     (name: 'undefined opcode!'; opcode: $D6),
@@ -39,9 +39,9 @@ const
     (name: 'undefined opcode!'; opcode: $D6),
     (name: 'undefined opcode!'; opcode: $D6),
     (name: 'undefined opcode!'; opcode: $D6),
-    (name: 'mmx'; opcode: $60; SIMD: @simd_PABSB;  SIMD_66: @simd_PABSB;  SIMD_F2: nil; SIMD_F3: nil),
-    (name: 'mmx'; opcode: $60; SIMD: @simd_PABSW;  SIMD_66: @simd_PABSW;  SIMD_F2: nil; SIMD_F3: nil),
-    (name: 'mmx'; opcode: $60; SIMD: @simd_PABSD;  SIMD_66: @simd_PABSD;  SIMD_F2: nil; SIMD_F3: nil),
+    (name: 'mmx'; opcode: $60; SIMD: @simd_PABSB_a;  SIMD_66: @simd_PABSB_b;  SIMD_F2: nil; SIMD_F3: nil),
+    (name: 'mmx'; opcode: $60; SIMD: @simd_PABSW_a;  SIMD_66: @simd_PABSW_b;  SIMD_F2: nil; SIMD_F3: nil),
+    (name: 'mmx'; opcode: $60; SIMD: @simd_PABSD_a;  SIMD_66: @simd_PABSD_b;  SIMD_F2: nil; SIMD_F3: nil),
     (name: 'undefined opcode!'; opcode: $D6),
 
   // $20-2F
@@ -292,8 +292,8 @@ const
     (name: 'undefined opcode!'; opcode: $D6),
 
   // $FF-$FF
-    (name: 'mmx'; opcode: $60; SIMD: nil;  SIMD_66: nil;  SIMD_F2: @simd_CRC32; SIMD_F3: nil),
-    (name: 'mmx'; opcode: $60; SIMD: nil;  SIMD_66: nil;  SIMD_F2: @simd_CRC32; SIMD_F3: nil),
+    (name: 'mmx'; opcode: $60; SIMD: nil;  SIMD_66: nil;  SIMD_F2: @simd_CRC32_a; SIMD_F3: nil),
+    (name: 'mmx'; opcode: $60; SIMD: nil;  SIMD_66: nil;  SIMD_F2: @simd_CRC32_b; SIMD_F3: nil),
     (name: 'undefined opcode!'; opcode: $D6),
     (name: 'undefined opcode!'; opcode: $D6),
     (name: 'undefined opcode!'; opcode: $D6),
@@ -308,5 +308,5 @@ const
     (name: 'undefined opcode!'; opcode: $D6),
     (name: 'undefined opcode!'; opcode: $D6),
     (name: 'undefined opcode!'; opcode: $D6),
-    (name: 'undefined opcode!'; opcode: $D6),
+    (name: 'undefined opcode!'; opcode: $D6)
   );

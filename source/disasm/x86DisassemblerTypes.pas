@@ -13,7 +13,7 @@ type
     OFFb,         OFFv,
 
     REG32_M16,
-    XMM_M32, XMM_M64,                                           // podobne ako MODdq, skutocna velkost operandu je vsak 32/64 bitov, nie 128 ( XMM_M128 by bolo to iste ako MODdq) 
+    XMM_M16, XMM_M32, XMM_M64,                                  // podobne ako MODdq, skutocna velkost operandu je vsak 32/64 bitov, nie 128 ( XMM_M128 by bolo to iste ako MODdq)
     M32, M64, M128,                                             // prave adresa urcena ModRM (r/m)
     R32, R64, R128,                                             // prave register urceny ModRM (r/m)
 
