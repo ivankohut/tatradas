@@ -173,7 +173,7 @@ begin
 
     StreamSectionCount:=Sections.Count;
     DHF.Write(StreamSectionCount, 4);
-    WriteLn(DAS, ';DisASsembled file, Original file: ' + FileName + '  ' + TatraDASFullNameVersion + ', Ivan Kohut (c) 2007');
+    WriteLn(DAS, ';DisASsembled file, Original file: ' + FileName + '  ' + TatraDASFullNameVersion + ', Ivan Kohut (c) 2008');
     Writeln(DAS);
     for SectionIndex:=0 to Sections.Count-1 do begin
       DHF.Write(Sections[SectionIndex].typ, sizeof(TSectionType));
@@ -184,7 +184,7 @@ begin
 
   // Save disassembled code sections
   else begin
-    WriteLn(DAS, ';DisASsembled file, Original file: ' + FileName + '  ' + TatraDASFullNameVersion + ', Ivan Kohut (c) 2007');
+    WriteLn(DAS, ';DisASsembled file, Original file: ' + FileName + '  ' + TatraDASFullNameVersion + ', Ivan Kohut (c) 2008');
     Writeln(DAS);
     for SectionIndex:=0 to Sections.Count-1 do
       if Sections[SectionIndex].typ = stCode then

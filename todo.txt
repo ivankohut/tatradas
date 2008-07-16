@@ -14,13 +14,14 @@ General
 - translation system
 
 Disassembler:
-- refactor (rewrite :) ) disassembler, add more instructions (SSE3, SSSE)
+- refactor (rewrite :) ) disassembler
 - 64 bit (pozor na instrukciu MOVD/Q, PEXTRD/Q, PINSRD/Q, CMPXCH8B/16B)
 - instrukcie pre virtualizaciu
 - MOVLPS/MOVHLPS, MOVHPS/MOVLHPS - rovnaky opcode, lisia sa reg/mem adresaciou
 - 0F C2 - CMPxxxx - spravit rozne nazvy instrukcie podla tretieho operandu
 - detekovat imported o uroven volania skor "call x, x: jump [0x...]"
 - nerekurzivne disassemblovanie
+- implementovat XMM_M16, REG32_M8
 
 Misc
 - procmat - rozdelit na viac unitov ?
@@ -62,8 +63,9 @@ DONE:
 - pozriet co pise SVN log
 - refaktorizacia GROUP instrukcii
 - refaktorizacia a kontrola FPU instrukcii
-- SSSE3
-- 0F 38 xx
+- SSSE3, SSE41, SSE42
+- zavedeny typ instrukcie (napr. normal alebo undefined), odstranena polozka "opcode"
+
 
 
 2.9.8 todo list:

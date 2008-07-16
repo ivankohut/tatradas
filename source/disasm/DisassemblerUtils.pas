@@ -6,6 +6,7 @@ const
   HexDigits: array[0..15] of char = '0123456789ABCDEF';
 
 function DataToHex(var Data; Count: Integer): string;
+function ByteToSignedHex(AValue: byte): string;
 
 
 implementation
@@ -32,6 +33,7 @@ begin
 end;
 
 
+
 function WordToHex(var Data): string;
 var
   w: cardinal;
@@ -45,6 +47,16 @@ begin
   result[2] := HexDigits[w and 15];
   w := w shr 4;
   result[1] := HexDigits[w and 15];
+end;
+
+
+
+function ByteToSignedHex(AValue: byte): string;
+begin
+  if AValue <= 127 then
+    result := '+0x' + IntToHex(AValue, 2)
+  else
+    result := '-0x' + IntToHex(Abs(Shortint(AValue)), 2);
 end;
 
 

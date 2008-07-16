@@ -127,7 +127,9 @@ uses
   LoggerUnit,
   DateUtils,
   ExecFileUnit,
-  PEFileUnit;
+  PEFileUnit,
+  x86Disassembler
+  ;
 
 
 //******************************************************************************
@@ -285,7 +287,7 @@ begin
   Disassembler:= nil;
   try
     // Disassemble
-    Disassembler:= TDisassembler.Create(CodeArray, DisassemblerMap, MemOffset, Options.Bit32);
+    Disassembler:= Tx86Disassembler.Create(CodeArray, DisassemblerMap, MemOffset, Options.Bit32);
     Disassembler.CAJ.Add(Options.Address - MemOffset);
     Disassembler.CAJ.Process(Options.Address - MemOffset + Options.Size - 1);
 
@@ -372,7 +374,7 @@ begin
 
     ProgressData.Name:= ProcessText.Disassembling + IntToStr(CodeSectionIndex);
 
-    Disassembler:= TDisassembler.Create(CodeArray, DisassemblerMap, MemOffset, Bit32);
+    Disassembler:= Tx86Disassembler.Create(CodeArray, DisassemblerMap, MemOffset, Bit32);
 
     if (ExecFile as TExecutableFile).ExeFormat = ffNE then
       if ImportSection <> nil then begin

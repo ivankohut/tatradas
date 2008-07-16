@@ -50,7 +50,7 @@ uses
   StrUtils,
   procmat in 'procmat.pas',
   StringUtilities in 'StringUtilities.pas',
-  SortingUnit in 'SortingUnit.pas', 
+  SortingUnit in 'SortingUnit.pas',
   ExecFileManagerUnit in 'ExecFileManagerUnit.pas',
   ExecFileUnit in 'ExecFileUnit.pas',
   SectionUnit in 'SectionUnit.pas',
@@ -102,6 +102,7 @@ uses
   DisassemblerTypes in 'disasm\DisassemblerTypes.pas',
   x86DisassemblerTypes in 'disasm\x86DisassemblerTypes.pas',
   x86Instructions in 'disasm\x86Instructions.pas',
+  x86Disassembler in 'disasm\x86Disassembler.pas',
   DisassembledBlocksUnit in 'disasm\DisassembledBlocksUnit.pas',
   CallsAndJumpsTableUnit in 'disasm\CallsAndJumpsTableUnit.pas',
 
@@ -158,6 +159,7 @@ uses
   DisassemblerTypes in 'disasm/DisassemblerTypes.pas',
   x86DisassemblerTypes in 'disasm/x86DisassemblerTypes.pas',
   x86Instructions in 'disasm/x86Instructions.pas',
+  x86Disassembler in 'disasm/x86Disassembler.pas',
   DisassembledBlocksUnit in 'disasm/DisassembledBlocksUnit.pas',
   CallsAndJumpsTableUnit in 'disasm/CallsAndJumpsTableUnit.pas',
 

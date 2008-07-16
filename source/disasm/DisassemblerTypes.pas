@@ -59,6 +59,8 @@ const
   dfCallInstr   = 64;
   dfEntryPoint  = 128;
 
+  PowersOfTwoStr: array [0..7] of string = ('1', '2', '4', '8', '16', '32', '64', '128');
+
 
 implementation
 

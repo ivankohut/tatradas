@@ -21,53 +21,53 @@ const
   // Group 1
 
   Group1_80: TGroupInstructions = (
-    (name: 'ADD'; typ: itOrdinary; pc:2; param: (p1:MODb; p2: IMMb)),
-    (name: 'OR';  typ: itOrdinary; pc:2; param: (p1:MODb; p2: IMMb)),
-    (name: 'ADC'; typ: itOrdinary; pc:2; param: (p1:MODb; p2: IMMb)),
-    (name: 'SBB'; typ: itOrdinary; pc:2; param: (p1:MODb; p2: IMMb)),
-    (name: 'AND'; typ: itOrdinary; pc:2; param: (p1:MODb; p2: IMMb)),
-    (name: 'SUB'; typ: itOrdinary; pc:2; param: (p1:MODb; p2: IMMb)),
-    (name: 'XOR'; typ: itOrdinary; pc:2; param: (p1:MODb; p2: IMMb)),
-    (name: 'CMP'; typ: itOrdinary; pc:2; param: (p1:MODb; p2: IMMb))
+    (name: 'ADD'; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2: IMMb)),
+    (name: 'OR';  typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2: IMMb)),
+    (name: 'ADC'; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2: IMMb)),
+    (name: 'SBB'; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2: IMMb)),
+    (name: 'AND'; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2: IMMb)),
+    (name: 'SUB'; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2: IMMb)),
+    (name: 'XOR'; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2: IMMb)),
+    (name: 'CMP'; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2: IMMb))
   );
 
   Group1_81: TGroupInstructions = (
-    (name: 'ADD'; typ: itOrdinary; pc:2; param: (p1:MODv; p2: IMMv)),
-    (name: 'OR';  typ: itOrdinary; pc:2; param: (p1:MODv; p2: IMMv)),
-    (name: 'ADC'; typ: itOrdinary; pc:2; param: (p1:MODv; p2: IMMv)),
-    (name: 'SBB'; typ: itOrdinary; pc:2; param: (p1:MODv; p2: IMMv)),
-    (name: 'AND'; typ: itOrdinary; pc:2; param: (p1:MODv; p2: IMMv)),
-    (name: 'SUB'; typ: itOrdinary; pc:2; param: (p1:MODv; p2: IMMv)),
-    (name: 'XOR'; typ: itOrdinary; pc:2; param: (p1:MODv; p2: IMMv)),
-    (name: 'CMP'; typ: itOrdinary; pc:2; param: (p1:MODv; p2: IMMv))
+    (name: 'ADD'; typ: itNormal; OperandsCount:2; Operands: (p1:MODv; p2: IMMv)),
+    (name: 'OR';  typ: itNormal; OperandsCount:2; Operands: (p1:MODv; p2: IMMv)),
+    (name: 'ADC'; typ: itNormal; OperandsCount:2; Operands: (p1:MODv; p2: IMMv)),
+    (name: 'SBB'; typ: itNormal; OperandsCount:2; Operands: (p1:MODv; p2: IMMv)),
+    (name: 'AND'; typ: itNormal; OperandsCount:2; Operands: (p1:MODv; p2: IMMv)),
+    (name: 'SUB'; typ: itNormal; OperandsCount:2; Operands: (p1:MODv; p2: IMMv)),
+    (name: 'XOR'; typ: itNormal; OperandsCount:2; Operands: (p1:MODv; p2: IMMv)),
+    (name: 'CMP'; typ: itNormal; OperandsCount:2; Operands: (p1:MODv; p2: IMMv))
   );
 
   Group1_82: TGroupInstructions = (
-    (name: 'ADD'; typ: itOrdinary; pc:2; param: (p1:MODb; p2: IMMb)),
-    (name: 'OR';  typ: itOrdinary; pc:2; param: (p1:MODb; p2: IMMb)),
-    (name: 'ADC'; typ: itOrdinary; pc:2; param: (p1:MODb; p2: IMMb)),
-    (name: 'SBB'; typ: itOrdinary; pc:2; param: (p1:MODb; p2: IMMb)),
-    (name: 'AND'; typ: itOrdinary; pc:2; param: (p1:MODb; p2: IMMb)),
-    (name: 'SUB'; typ: itOrdinary; pc:2; param: (p1:MODb; p2: IMMb)),
-    (name: 'XOR'; typ: itOrdinary; pc:2; param: (p1:MODb; p2: IMMb)),
-    (name: 'CMP'; typ: itOrdinary; pc:2; param: (p1:MODb; p2: IMMb))
+    (name: 'ADD'; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2: IMMb)),
+    (name: 'OR';  typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2: IMMb)),
+    (name: 'ADC'; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2: IMMb)),
+    (name: 'SBB'; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2: IMMb)),
+    (name: 'AND'; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2: IMMb)),
+    (name: 'SUB'; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2: IMMb)),
+    (name: 'XOR'; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2: IMMb)),
+    (name: 'CMP'; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2: IMMb))
   );
 
   Group1_83: TGroupInstructions = (
-    (name: 'ADD'; typ: itOrdinary; pc:2; param: (p1:MODv; p2: IMMb)),
-    (name: 'OR';  typ: itOrdinary; pc:2; param: (p1:MODv; p2: IMMb)),
-    (name: 'ADC'; typ: itOrdinary; pc:2; param: (p1:MODv; p2: IMMb)),
-    (name: 'SBB'; typ: itOrdinary; pc:2; param: (p1:MODv; p2: IMMb)),
-    (name: 'AND'; typ: itOrdinary; pc:2; param: (p1:MODv; p2: IMMb)),
-    (name: 'SUB'; typ: itOrdinary; pc:2; param: (p1:MODv; p2: IMMb)),
-    (name: 'XOR'; typ: itOrdinary; pc:2; param: (p1:MODv; p2: IMMb)),
-    (name: 'CMP'; typ: itOrdinary; pc:2; param: (p1:MODv; p2: IMMb))
+    (name: 'ADD'; typ: itNormal; OperandsCount:2; Operands: (p1:MODv; p2: IMMb)),
+    (name: 'OR';  typ: itNormal; OperandsCount:2; Operands: (p1:MODv; p2: IMMb)),
+    (name: 'ADC'; typ: itNormal; OperandsCount:2; Operands: (p1:MODv; p2: IMMb)),
+    (name: 'SBB'; typ: itNormal; OperandsCount:2; Operands: (p1:MODv; p2: IMMb)),
+    (name: 'AND'; typ: itNormal; OperandsCount:2; Operands: (p1:MODv; p2: IMMb)),
+    (name: 'SUB'; typ: itNormal; OperandsCount:2; Operands: (p1:MODv; p2: IMMb)),
+    (name: 'XOR'; typ: itNormal; OperandsCount:2; Operands: (p1:MODv; p2: IMMb)),
+    (name: 'CMP'; typ: itNormal; OperandsCount:2; Operands: (p1:MODv; p2: IMMb))
   );
 
   // Group 1A
 
   Group1A_8F: TGroupInstructions = (
-    (name: 'POP'; typ: itOrdinary; pc:2; param: (p1:MODb; p2:IMMb)),
+    (name: 'POP'; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2:IMMb)),
     (name: 'undefined opcode!'; typ: itUndefined;),
     (name: 'undefined opcode!'; typ: itUndefined;),
     (name: 'undefined opcode!'; typ: itUndefined;),
@@ -81,101 +81,101 @@ const
   // Group 2
 
   Group2_C0: TGroupInstructions = (
-    (name: 'ROL'; typ: itOrdinary; pc:2; param: (p1:MODb; p2: IMMb)),
-    (name: 'ROR'; typ: itOrdinary; pc:2; param: (p1:MODb; p2: IMMb)),
-    (name: 'RCL'; typ: itOrdinary; pc:2; param: (p1:MODb; p2: IMMb)),
-    (name: 'RCR'; typ: itOrdinary; pc:2; param: (p1:MODb; p2: IMMb)),
+    (name: 'ROL'; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2: IMMb)),
+    (name: 'ROR'; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2: IMMb)),
+    (name: 'RCL'; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2: IMMb)),
+    (name: 'RCR'; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2: IMMb)),
     // podla intelu SAL = SHL, podla Compa SAL = C0 ??110???
-    (name: 'SHL'; typ: itOrdinary; pc:2; param: (p1:MODb; p2: IMMb)),
-    (name: 'SHR'; typ: itOrdinary; pc:2; param: (p1:MODb; p2: IMMb)),
-    (name: 'SAL'; typ: itOrdinary; pc:2; param: (p1:MODb; p2: IMMb)),
-    (name: 'SAR'; typ: itOrdinary; pc:2; param: (p1:MODb; p2: IMMb))
+    (name: 'SHL'; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2: IMMb)),
+    (name: 'SHR'; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2: IMMb)),
+    (name: 'SAL'; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2: IMMb)),
+    (name: 'SAR'; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2: IMMb))
   );
 
   Group2_C1: TGroupInstructions = (
-    (name: 'ROL'; typ: itOrdinary; pc:2; param: (p1:MODv; p2: IMMb)),
-    (name: 'ROR'; typ: itOrdinary; pc:2; param: (p1:MODv; p2: IMMb)),
-    (name: 'RCL'; typ: itOrdinary; pc:2; param: (p1:MODv; p2: IMMb)),
-    (name: 'RCR'; typ: itOrdinary; pc:2; param: (p1:MODv; p2: IMMb)),
-    (name: 'SHL'{/SAL}; typ: itOrdinary; pc:2; param: (p1:MODv; p2: IMMb)),
-    (name: 'SHR'; typ: itOrdinary; pc:2; param: (p1:MODv; p2: IMMb)),
+    (name: 'ROL'; typ: itNormal; OperandsCount:2; Operands: (p1:MODv; p2: IMMb)),
+    (name: 'ROR'; typ: itNormal; OperandsCount:2; Operands: (p1:MODv; p2: IMMb)),
+    (name: 'RCL'; typ: itNormal; OperandsCount:2; Operands: (p1:MODv; p2: IMMb)),
+    (name: 'RCR'; typ: itNormal; OperandsCount:2; Operands: (p1:MODv; p2: IMMb)),
+    (name: 'SHL'{/SAL}; typ: itNormal; OperandsCount:2; Operands: (p1:MODv; p2: IMMb)),
+    (name: 'SHR'; typ: itNormal; OperandsCount:2; Operands: (p1:MODv; p2: IMMb)),
     (name: 'undefined opcode!'; typ: itUndefined;),
-    (name: 'SAR'; typ: itOrdinary; pc:2; param: (p1:MODv; p2: IMMb))
+    (name: 'SAR'; typ: itNormal; OperandsCount:2; Operands: (p1:MODv; p2: IMMb))
   );
 
   Group2_D0: TGroupInstructions = (
-    (name: 'ROL'; typ: itOrdinary; pc:2; param: (p1:MODb; p2: n1)),
-    (name: 'ROR'; typ: itOrdinary; pc:2; param: (p1:MODb; p2: n1)),
-    (name: 'RCL'; typ: itOrdinary; pc:2; param: (p1:MODb; p2: n1)),
-    (name: 'RCR'; typ: itOrdinary; pc:2; param: (p1:MODb; p2: n1)),
-    (name: 'SHL'{/SAL}; typ: itOrdinary; pc:2; param: (p1:MODb; p2: n1)),
-    (name: 'SHR'; typ: itOrdinary; pc:2; param: (p1:MODb; p2: n1)),
+    (name: 'ROL'; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2: n1)),
+    (name: 'ROR'; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2: n1)),
+    (name: 'RCL'; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2: n1)),
+    (name: 'RCR'; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2: n1)),
+    (name: 'SHL'{/SAL}; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2: n1)),
+    (name: 'SHR'; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2: n1)),
     (name: 'undefined opcode!'; typ: itUndefined;),
-    (name: 'SAR'; typ: itOrdinary; pc:2; param: (p1:MODb; p2: n1))
+    (name: 'SAR'; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2: n1))
   );
 
   Group2_D1: TGroupInstructions = (
-    (name: 'ROL'; typ: itOrdinary; pc:2; param: (p1:MODv; p2: n1)),
-    (name: 'ROR'; typ: itOrdinary; pc:2; param: (p1:MODv; p2: n1)),
-    (name: 'RCL'; typ: itOrdinary; pc:2; param: (p1:MODv; p2: n1)),
-    (name: 'RCR'; typ: itOrdinary; pc:2; param: (p1:MODv; p2: n1)),
-    (name: 'SHL'{/SAL}; typ: itOrdinary; pc:2; param: (p1:MODv; p2: n1)),
-    (name: 'SHR'; typ: itOrdinary; pc:2; param: (p1:MODv; p2: n1)),
+    (name: 'ROL'; typ: itNormal; OperandsCount:2; Operands: (p1:MODv; p2: n1)),
+    (name: 'ROR'; typ: itNormal; OperandsCount:2; Operands: (p1:MODv; p2: n1)),
+    (name: 'RCL'; typ: itNormal; OperandsCount:2; Operands: (p1:MODv; p2: n1)),
+    (name: 'RCR'; typ: itNormal; OperandsCount:2; Operands: (p1:MODv; p2: n1)),
+    (name: 'SHL'{/SAL}; typ: itNormal; OperandsCount:2; Operands: (p1:MODv; p2: n1)),
+    (name: 'SHR'; typ: itNormal; OperandsCount:2; Operands: (p1:MODv; p2: n1)),
     (name: 'undefined opcode!'; typ: itUndefined;),
-    (name: 'SAR'; typ: itOrdinary; pc:2; param: (p1:MODv; p2: n1))
+    (name: 'SAR'; typ: itNormal; OperandsCount:2; Operands: (p1:MODv; p2: n1))
   );
 
   Group2_D2: TGroupInstructions = (
-    (name: 'ROL'; typ: itOrdinary; pc:2; param: (p1:MODb; p2: CL)),
-    (name: 'ROR'; typ: itOrdinary; pc:2; param: (p1:MODb; p2: CL)),
-    (name: 'RCL'; typ: itOrdinary; pc:2; param: (p1:MODb; p2: CL)),
-    (name: 'RCR'; typ: itOrdinary; pc:2; param: (p1:MODb; p2: CL)),
-    (name: 'SHL'{/SAL}; typ: itOrdinary; pc:2; param: (p1:MODb; p2: CL)),
-    (name: 'SHR'; typ: itOrdinary; pc:2; param: (p1:MODb; p2: CL)),
+    (name: 'ROL'; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2: CL)),
+    (name: 'ROR'; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2: CL)),
+    (name: 'RCL'; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2: CL)),
+    (name: 'RCR'; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2: CL)),
+    (name: 'SHL'{/SAL}; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2: CL)),
+    (name: 'SHR'; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2: CL)),
     (name: 'undefined opcode!'; typ: itUndefined;),
-    (name: 'SAR'; typ: itOrdinary; pc:2; param: (p1:MODb; p2: CL))
+    (name: 'SAR'; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2: CL))
   );
 
   Group2_D3: TGroupInstructions = (
-    (name: 'ROL'; typ: itOrdinary; pc:2; param: (p1:MODv; p2: CL)),
-    (name: 'ROR'; typ: itOrdinary; pc:2; param: (p1:MODv; p2: CL)),
-    (name: 'RCL'; typ: itOrdinary; pc:2; param: (p1:MODv; p2: CL)),
-    (name: 'RCR'; typ: itOrdinary; pc:2; param: (p1:MODv; p2: CL)),
-    (name: 'SHL'{/SAL}; typ: itOrdinary; pc:2; param: (p1:MODv; p2: CL)),
-    (name: 'SHR'; typ: itOrdinary; pc:2; param: (p1:MODv; p2: CL)),
+    (name: 'ROL'; typ: itNormal; OperandsCount:2; Operands: (p1:MODv; p2: CL)),
+    (name: 'ROR'; typ: itNormal; OperandsCount:2; Operands: (p1:MODv; p2: CL)),
+    (name: 'RCL'; typ: itNormal; OperandsCount:2; Operands: (p1:MODv; p2: CL)),
+    (name: 'RCR'; typ: itNormal; OperandsCount:2; Operands: (p1:MODv; p2: CL)),
+    (name: 'SHL'{/SAL}; typ: itNormal; OperandsCount:2; Operands: (p1:MODv; p2: CL)),
+    (name: 'SHR'; typ: itNormal; OperandsCount:2; Operands: (p1:MODv; p2: CL)),
     (name: 'undefined opcode!'; typ: itUndefined; ),
-    (name: 'SAR'; typ: itOrdinary; pc:2; param: (p1:MODv; p2: CL))
+    (name: 'SAR'; typ: itNormal; OperandsCount:2; Operands: (p1:MODv; p2: CL))
   );
 
   // Group 3
 
   Group3_F6: TGroupInstructions = (
-    (name: 'TEST'; typ: itOrdinary; pc:2; param: (p1:MODb; p2: IMMb)),
+    (name: 'TEST'; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2: IMMb)),
     (name: 'undefined opcode!'; typ: itUndefined;),
-    (name: 'NOT'; typ: itOrdinary; pc:1; param: (p1:MODb)),
-    (name: 'NEG'; typ: itOrdinary; pc:1; param: (p1:MODb)),
-    (name: 'MUL'; typ: itOrdinary; pc:1; param: (p1:MODb)),
-    (name: 'IMUL'; typ: itOrdinary; pc:1; param: (p1:MODb)),
-    (name: 'DIV'; typ: itOrdinary; pc:1; param: (p1:MODb)),
-    (name: 'IDIV'; typ: itOrdinary; pc:1; param: (p1:MODb))
+    (name: 'NOT'; typ: itNormal; OperandsCount:1; Operands: (p1:MODb)),
+    (name: 'NEG'; typ: itNormal; OperandsCount:1; Operands: (p1:MODb)),
+    (name: 'MUL'; typ: itNormal; OperandsCount:1; Operands: (p1:MODb)),
+    (name: 'IMUL'; typ: itNormal; OperandsCount:1; Operands: (p1:MODb)),
+    (name: 'DIV'; typ: itNormal; OperandsCount:1; Operands: (p1:MODb)),
+    (name: 'IDIV'; typ: itNormal; OperandsCount:1; Operands: (p1:MODb))
   );
 
   Group3_F7: TGroupInstructions = (
-    (name: 'TEST'; typ: itOrdinary; pc:2; param: (p1:MODv; p2: IMMv)),
+    (name: 'TEST'; typ: itNormal; OperandsCount:2; Operands: (p1:MODv; p2: IMMv)),
     (name: 'undefined opcode!'; typ: itUndefined;),
-    (name: 'NOT'; typ: itOrdinary; pc:1; param: (p1:MODv)),
-    (name: 'NEG'; typ: itOrdinary; pc:1; param: (p1:MODv)),
-    (name: 'MUL'; typ: itOrdinary; pc:1; param: (p1:MODv)),
-    (name: 'IMUL'; typ: itOrdinary; pc:1; param: (p1:MODv)),
-    (name: 'DIV'; typ: itOrdinary; pc:1; param: (p1:MODv)),
-    (name: 'IDIV'; typ: itOrdinary; pc:1; param: (p1:MODv))
+    (name: 'NOT'; typ: itNormal; OperandsCount:1; Operands: (p1:MODv)),
+    (name: 'NEG'; typ: itNormal; OperandsCount:1; Operands: (p1:MODv)),
+    (name: 'MUL'; typ: itNormal; OperandsCount:1; Operands: (p1:MODv)),
+    (name: 'IMUL'; typ: itNormal; OperandsCount:1; Operands: (p1:MODv)),
+    (name: 'DIV'; typ: itNormal; OperandsCount:1; Operands: (p1:MODv)),
+    (name: 'IDIV'; typ: itNormal; OperandsCount:1; Operands: (p1:MODv))
   );
 
   // Group 4
 
   Group4_FE: TGroupInstructions = (
-    (name: 'INC'; typ: itOrdinary; pc:1; param: (p1:MODb)),
-    (name: 'DEC'; typ: itOrdinary; pc:1; param: (p1:MODb)),
+    (name: 'INC'; typ: itNormal; OperandsCount:1; Operands: (p1:MODb)),
+    (name: 'DEC'; typ: itNormal; OperandsCount:1; Operands: (p1:MODb)),
     (name: 'undefined opcode!'; typ: itUndefined;),
     (name: 'undefined opcode!'; typ: itUndefined;),
     (name: 'undefined opcode!'; typ: itUndefined;),
@@ -187,20 +187,20 @@ const
   // Group 5
 
   Group5_FF: TGroupInstructions = (
-    (name: 'INC'; typ: itOrdinary; pc:1; param: (p1:MODv)),
-    (name: 'DEC'; typ: itOrdinary; pc:1; param: (p1:MODv)),
-{calln} (name: 'CALL'; typ: itOrdinary; pc:1; param: (p1:MODv)),
-{callf} (name: 'CALL'; typ: itOrdinary; pc:1; param: (p1:MODp)),
-    (name: 'JMP'{N}; typ: itOrdinary; pc:1; param: (p1:MODv)),
-    (name: 'JMP'{F}; typ: itOrdinary; pc:1; param: (p1:MODp)),
-    (name: 'PUSH'; typ: itOrdinary; pc:1; param: (p1:MODv)),
+    (name: 'INC'; typ: itNormal; OperandsCount:1; Operands: (p1:MODv)),
+    (name: 'DEC'; typ: itNormal; OperandsCount:1; Operands: (p1:MODv)),
+{calln} (name: 'CALL'; typ: itNormal; OperandsCount:1; Operands: (p1:MODv)),
+{callf} (name: 'CALL'; typ: itNormal; OperandsCount:1; Operands: (p1:MODp)),
+    (name: 'JMP'{N}; typ: itNormal; OperandsCount:1; Operands: (p1:MODv)),
+    (name: 'JMP'{F}; typ: itNormal; OperandsCount:1; Operands: (p1:MODp)),
+    (name: 'PUSH'; typ: itNormal; OperandsCount:1; Operands: (p1:MODv)),
     (name: 'undefined opcode!'; typ: itUndefined;)
   );
 
   // Group 11
 
   Group11_C6: TGroupInstructions = (
-    (name: 'MOV'; typ: itOrdinary; pc:2; param: (p1:MODb; p2:IMMb)),
+    (name: 'MOV'; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2:IMMb)),
     (name: 'undefined opcode!'; typ: itUndefined;),
     (name: 'undefined opcode!'; typ: itUndefined;),
     (name: 'undefined opcode!'; typ: itUndefined;),
@@ -211,7 +211,7 @@ const
   );
 
   Group11_C7: TGroupInstructions = (
-    (name: 'MOV'; typ: itOrdinary; pc:2; param: (p1:MODv; p2:IMMv)),
+    (name: 'MOV'; typ: itNormal; OperandsCount:2; Operands: (p1:MODv; p2:IMMv)),
     (name: 'undefined opcode!'; typ: itUndefined;),
     (name: 'undefined opcode!'; typ: itUndefined;),
     (name: 'undefined opcode!'; typ: itUndefined;),
@@ -222,7 +222,7 @@ const
   );
 
 
-//    (name: ''; opcode: $; secopcode: ; pc:2; param: (p1: MODb)),
+//    (name: ''; opcode: $; secopcode: ; OperandsCount:2; Operands: (p1: MODb)),
 
 
 
@@ -273,12 +273,12 @@ const
   // Group 6
 
   Group6_00: TGroupInstructions = (
-    (name: 'SLDT'; typ: itOrdinary; pc:1; param: (p1: MODv)),
-    (name: 'STR'; typ: itOrdinary; pc:1; param: (p1: MODv)),
-    (name: 'LLDT'; typ: itOrdinary; pc:1; param: (p1: MODw)),
-    (name: 'LTR'; typ: itOrdinary; pc:1; param: (p1: MODw)),
-    (name: 'VERR'; typ: itOrdinary; pc:1; param: (p1: MODw)),
-    (name: 'VERW'; typ: itOrdinary; pc:1; param: (p1: MODw)),
+    (name: 'SLDT'; typ: itNormal; OperandsCount:1; Operands: (p1: MODv)),
+    (name: 'STR'; typ: itNormal; OperandsCount:1; Operands: (p1: MODv)),
+    (name: 'LLDT'; typ: itNormal; OperandsCount:1; Operands: (p1: MODw)),
+    (name: 'LTR'; typ: itNormal; OperandsCount:1; Operands: (p1: MODw)),
+    (name: 'VERR'; typ: itNormal; OperandsCount:1; Operands: (p1: MODw)),
+    (name: 'VERW'; typ: itNormal; OperandsCount:1; Operands: (p1: MODw)),
     (name: 'undefined opcode!'; typ: itUndefined;),
     (name: 'undefined opcode!'; typ: itUndefined;)
   );
@@ -286,14 +286,14 @@ const
   // Group 7
 
   Group7_01_Mem: TGroupInstructions = (
-    (name: 'SGDT'; typ: itOrdinary; pc:1; param: (p1: MODv)),
-    (name: 'SIDT'; typ: itOrdinary; pc:1; param: (p1: MODv)),
-    (name: 'LGDT'; typ: itOrdinary; pc:1; param: (p1: MODv)),
-    (name: 'LIDT'; typ: itOrdinary; pc:1; param: (p1: MODv)),
-    (name: 'SMSW'; typ: itOrdinary; pc:1; param: (p1: MODw)),
+    (name: 'SGDT'; typ: itNormal; OperandsCount:1; Operands: (p1: MODv)),
+    (name: 'SIDT'; typ: itNormal; OperandsCount:1; Operands: (p1: MODv)),
+    (name: 'LGDT'; typ: itNormal; OperandsCount:1; Operands: (p1: MODv)),
+    (name: 'LIDT'; typ: itNormal; OperandsCount:1; Operands: (p1: MODv)),
+    (name: 'SMSW'; typ: itNormal; OperandsCount:1; Operands: (p1: MODw)),
     (name: 'undefined opcode!'; typ: itUndefined;),
-    (name: 'LMSW'; typ: itOrdinary; pc:1; param: (p1: MODw)),
-    (name: 'INVLPG'; typ: itOrdinary; pc:1; param: (p1: MODb))
+    (name: 'LMSW'; typ: itNormal; OperandsCount:1; Operands: (p1: MODw)),
+    (name: 'INVLPG'; typ: itNormal; OperandsCount:1; Operands: (p1: MODb))
   );
 
   Group7_01_Reg: TGroupInstructions = (
@@ -301,9 +301,9 @@ const
     (name: 'undefined opcode!'; typ: itUndefined;),
     (name: 'undefined opcode!'; typ: itUndefined;),
     (name: 'undefined opcode!'; typ: itUndefined;),
-    (name: 'SMSW'; typ: itOrdinary; pc:1; param: (p1: MODw)),
+    (name: 'SMSW'; typ: itNormal; OperandsCount:1; Operands: (p1: MODw)),
     (name: 'undefined opcode!'; typ: itUndefined;),
-    (name: 'LMSW'; typ: itOrdinary; pc:1; param: (p1: MODw)),
+    (name: 'LMSW'; typ: itNormal; OperandsCount:1; Operands: (p1: MODw)),
     (name: 'undefined opcode!'; typ: itUndefined;)
   );
 
@@ -314,17 +314,17 @@ const
     (name: 'undefined opcode!'; typ: itUndefined;),
     (name: 'undefined opcode!'; typ: itUndefined;),
     (name: 'undefined opcode!'; typ: itUndefined;),
-    (name: 'BT'; typ: itOrdinary; pc:2; param: (p1: MODv; p2: IMMb)),
-    (name: 'BTS'; typ: itOrdinary; pc:2; param: (p1: MODv; p2: IMMb)),
-    (name: 'BTR'; typ: itOrdinary; pc:2; param: (p1: MODv; p2: IMMb)),
-    (name: 'BTC'; typ: itOrdinary; pc:2; param: (p1: MODv; p2: IMMb))
+    (name: 'BT'; typ: itNormal; OperandsCount:2; Operands: (p1: MODv; p2: IMMb)),
+    (name: 'BTS'; typ: itNormal; OperandsCount:2; Operands: (p1: MODv; p2: IMMb)),
+    (name: 'BTR'; typ: itNormal; OperandsCount:2; Operands: (p1: MODv; p2: IMMb)),
+    (name: 'BTC'; typ: itNormal; OperandsCount:2; Operands: (p1: MODv; p2: IMMb))
   );
 
   // Group 9
 
   Group9_C7_Mem: TGroupInstructions = (
     (name: 'undefined opcode!'; typ: itUndefined; ),
-    (name: 'CMPXCHG8B'; typ: itOrdinary; pc:1; param: (p1: MODv)),
+    (name: 'CMPXCHG8B'; typ: itNormal; OperandsCount:1; Operands: (p1: MODv)),
     (name: 'undefined opcode!'; typ: itUndefined;),
     (name: 'undefined opcode!'; typ: itUndefined;),
     (name: 'undefined opcode!'; typ: itUndefined;),
@@ -432,14 +432,14 @@ const
   // Group 15
 
   Group15_AE_Mem: TGroupInstructions = (
-    (name: 'FXSAVE'; typ: itOrdinary; pc:0),
-    (name: 'FXSTOR'; typ: itOrdinary; pc:0),
-    (name: 'LDMXCSR'; typ: itOrdinary; pc:0),
-    (name: 'STMXCSR'; typ: itOrdinary; pc:0),
+    (name: 'FXSAVE'; typ: itNormal; OperandsCount:0),
+    (name: 'FXSTOR'; typ: itNormal; OperandsCount:0),
+    (name: 'LDMXCSR'; typ: itNormal; OperandsCount:0),
+    (name: 'STMXCSR'; typ: itNormal; OperandsCount:0),
     (name: 'undefined opcode!'; typ: itUndefined;),
     (name: 'undefined opcode!'; typ: itUndefined;),
     (name: 'undefined opcode!'; typ: itUndefined;),
-    (name: 'CLFLUSH'; typ: itOrdinary; pc:0)
+    (name: 'CLFLUSH'; typ: itNormal; OperandsCount:0)
   );
 
   Group15_AE_Reg: TGroupInstructions = (
@@ -448,18 +448,18 @@ const
     (name: 'undefined opcode!'; typ: itUndefined;),
     (name: 'undefined opcode!'; typ: itUndefined;),
     (name: 'undefined opcode!'; typ: itUndefined;),
-    (name: 'LFENCE'; typ: itOrdinary; pc:0),
-    (name: 'MFENCE'; typ: itOrdinary; pc:0),
-    (name: 'SFENCE'; typ: itOrdinary; pc:0)
+    (name: 'LFENCE'; typ: itNormal; OperandsCount:0),
+    (name: 'MFENCE'; typ: itNormal; OperandsCount:0),
+    (name: 'SFENCE'; typ: itNormal; OperandsCount:0)
   );
 
   // Group 16
 
   Group16_18_Mem: TGroupInstructions = (
-    (name: 'PREFETCHNTA'; typ: itOrdinary; pc:0),
-    (name: 'PREFETCHT0'; typ: itOrdinary; pc:0),
-    (name: 'PREFETCHT1'; typ: itOrdinary; pc:0),
-    (name: 'PREFETCHT2'; typ: itOrdinary; pc:0),
+    (name: 'PREFETCHNTA'; typ: itNormal; OperandsCount:0),
+    (name: 'PREFETCHT0'; typ: itNormal; OperandsCount:0),
+    (name: 'PREFETCHT1'; typ: itNormal; OperandsCount:0),
+    (name: 'PREFETCHT2'; typ: itNormal; OperandsCount:0),
     (name: 'undefined opcode!'; typ: itUndefined;),
     (name: 'undefined opcode!'; typ: itUndefined;),
     (name: 'undefined opcode!'; typ: itUndefined;),
@@ -511,6 +511,6 @@ begin
 end;
 }
 
-//    (name: ''; opcode: $; pc:2; param: (p1: MODv; p2: IMMb)),
+//    (name: ''; opcode: $; OperandsCount:2; Operands: (p1: MODv; p2: IMMb)),
 //    (name: 'mmx'; typ: itSIMD; SIMD: @simd_;     SIMD_66: @simd_;    SIMD_F2: nil;             SIMD_F3: nil),
 
