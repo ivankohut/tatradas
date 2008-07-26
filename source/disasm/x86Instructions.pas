@@ -16,7 +16,7 @@ type
   // "Instruction set" for instructions will maybe be used in future versions
   TInstructionSet = (isGenPur, isMMX, isSSE, isSSE2, isSSE3, isSSSE3, isSSE41, isSSE42, is3DNow, is3DNowExt, isFPU, isFPUStateMng, isTestReg);  // isVMX, is64bit
 
-  TInstructionType = (itNormal, itSIMD, itFPU, itGroup, itTwoByteOpcodeExtension, it3DNowExtension, itUndefined);
+  TInstructionType = (itNone, itNormal, itSIMD, itFPU, itGroup, itTwoByteOpcodeExtension, it3DNowExtension, itUndefined);
 
   PSIMDInstruction = ^TSIMDInstruction;
 

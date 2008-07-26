@@ -174,15 +174,15 @@ const
   simd_MAXSD: TSIMDInstruction = (name: 'MAXSD'; OperandsCount: 2; Operands: (p1:GREGdq ;p2:XMM_M64); InstrSet: isSSE2);
 
 // 0x60
-  simd_PUNPCKLBW_a: TSIMDInstruction = (name: 'PUNPCKLBW'; OperandsCount: 2; Operands: (p1:GREGq ;p2:MODd); InstrSet: isMMX);
+  simd_PUNPCKLBW_a: TSIMDInstruction = (name: 'PUNPCKLBW'; OperandsCount: 2; Operands: (p1:GREGq ;p2:MODq); InstrSet: isMMX);
   simd_PUNPCKLBW_b: TSIMDInstruction = (name: 'PUNPCKLBW'; OperandsCount: 2; Operands: (p1:GREGdq ;p2:MODdq); InstrSet: isSSE2);
 
 // 0x61
-  simd_PUNPCKLWD_a: TSIMDInstruction = (name: 'PUNPCKLWD'; OperandsCount: 2; Operands: (p1:GREGq ;p2:MODd); InstrSet: isMMX);
+  simd_PUNPCKLWD_a: TSIMDInstruction = (name: 'PUNPCKLWD'; OperandsCount: 2; Operands: (p1:GREGq ;p2:MODq); InstrSet: isMMX);
   simd_PUNPCKLWD_b: TSIMDInstruction = (name: 'PUNPCKLWD'; OperandsCount: 2; Operands: (p1:GREGdq ;p2:MODdq); InstrSet: isSSE2);
 
 // 0x62
-  simd_PUNPCKLDQ_a: TSIMDInstruction = (name: 'PUNPCKLDQ'; OperandsCount: 2; Operands: (p1:GREGq ;p2:MODd); InstrSet: isMMX);
+  simd_PUNPCKLDQ_a: TSIMDInstruction = (name: 'PUNPCKLDQ'; OperandsCount: 2; Operands: (p1:GREGq ;p2:MODq); InstrSet: isMMX);
   simd_PUNPCKLDQ_b: TSIMDInstruction = (name: 'PUNPCKLDQ'; OperandsCount: 2; Operands: (p1:GREGdq ;p2:MODdq); InstrSet: isSSE2);
 
 // 0x63
@@ -206,19 +206,19 @@ const
   simd_PACKUSWB_b: TSIMDInstruction = (name: 'PACKUSWB'; OperandsCount: 2; Operands: (p1:GREGdq; p2:MODdq); InstrSet: isSSE2);
 
 // 0x68
-  simd_PUNPCKHBW_a: TSIMDInstruction = (name: 'PUNPCKHBW'; OperandsCount: 2; Operands: (p1:GREGq ;p2:MODd); InstrSet: isMMX);
+  simd_PUNPCKHBW_a: TSIMDInstruction = (name: 'PUNPCKHBW'; OperandsCount: 2; Operands: (p1:GREGq ;p2:MODq); InstrSet: isMMX);
   simd_PUNPCKHBW_b: TSIMDInstruction = (name: 'PUNPCKHBW'; OperandsCount: 2; Operands: (p1:GREGdq ;p2:MODdq); InstrSet: isSSE2);
 
 // 0x69
-  simd_PUNPCKHWD_a: TSIMDInstruction = (name: 'PUNPCKHWD'; OperandsCount: 2; Operands: (p1:GREGq ;p2:MODd); InstrSet: isMMX);
+  simd_PUNPCKHWD_a: TSIMDInstruction = (name: 'PUNPCKHWD'; OperandsCount: 2; Operands: (p1:GREGq ;p2:MODq); InstrSet: isMMX);
   simd_PUNPCKHWD_b: TSIMDInstruction = (name: 'PUNPCKHWD'; OperandsCount: 2; Operands: (p1:GREGdq ;p2:MODdq); InstrSet: isSSE2);
 
 // 0x6A
-  simd_PUNPCKHDQ_a: TSIMDInstruction = (name: 'PUNPCKHDQ'; OperandsCount: 2; Operands: (p1:GREGq ;p2:MODd); InstrSet: isMMX);
+  simd_PUNPCKHDQ_a: TSIMDInstruction = (name: 'PUNPCKHDQ'; OperandsCount: 2; Operands: (p1:GREGq ;p2:MODq); InstrSet: isMMX);
   simd_PUNPCKHDQ_b: TSIMDInstruction = (name: 'PUNPCKHDQ'; OperandsCount: 2; Operands: (p1:GREGdq ;p2:MODdq); InstrSet: isSSE2);
 
 // 0x6B
-  simd_PACKSSDW_a: TSIMDInstruction = (name: 'PACKSSDW'; OperandsCount: 2; Operands: (p1:GREGq ;p2:MODd); InstrSet: isMMX);
+  simd_PACKSSDW_a: TSIMDInstruction = (name: 'PACKSSDW'; OperandsCount: 2; Operands: (p1:GREGq ;p2:MODq); InstrSet: isMMX);
   simd_PACKSSDW_b: TSIMDInstruction = (name: 'PACKSSDW'; OperandsCount: 2; Operands: (p1:GREGdq ;p2:MODdq); InstrSet: isSSE2);
 
 // 0x6C
@@ -228,7 +228,7 @@ const
   simd_PUNPCKHQDQ: TSIMDInstruction = (name: 'PUNPCKHQDQ'; OperandsCount: 2; Operands: (p1:GREGdq ;p2:MODdq); InstrSet: isSSE2);
 
 // 0x6E
-  simd_MOVD_a: TSIMDInstruction = (name: 'MOVD'; OperandsCount: 2; Operands: (p1:GREGd ;p2:MODd); InstrSet: isMMX);
+  simd_MOVD_a: TSIMDInstruction = (name: 'MOVD'; OperandsCount: 2; Operands: (p1:GREGq ;p2:MODd); InstrSet: isMMX);
   simd_MOVD_c: TSIMDInstruction = (name: 'MOVD'; OperandsCount: 2; Operands: (p1:GREGdq ;p2:MODd); InstrSet: isSSE2);
 
 // 0x6F
@@ -273,32 +273,32 @@ const
   simd_MOVDQU_b: TSIMDInstruction = (name: 'MOVDQU'; OperandsCount: 2; Operands: (p1:MODdq ;p2:GREGdq); InstrSet: isSSE2);
 
 // 0xB8
-  simd_POPCNT: TSIMDInstruction = (name: 'POPCNT'; OperandsCount: 2; Operands: (p1:GREGv ;p2:MODv ;p3:IMMb); InstrSet: isSSE42);
+  simd_POPCNT: TSIMDInstruction = (name: 'POPCNT'; OperandsCount: 2; Operands: (p1:GREGv ;p2:MODv); InstrSet: isSSE42);
 
 // 0xC2
-  simd_CMPPS: TSIMDInstruction = (name: 'CMPPS'; OperandsCount: 2; Operands: (p1:GREGdq ;p2:MODdq ;p3:IMMb); InstrSet: isSSE);
-  simd_CMPSS: TSIMDInstruction = (name: 'CMPSS'; OperandsCount: 2; Operands: (p1:GREGdq ;p2:XMM_M32 ;p3:IMMb); InstrSet: isSSE);
-  simd_CMPPD: TSIMDInstruction = (name: 'CMPPD'; OperandsCount: 2; Operands: (p1:GREGdq ;p2:MODdq ;p3:IMMb); InstrSet: isSSE2);
-  simd_CMPSD: TSIMDInstruction = (name: 'CMPSD'; OperandsCount: 2; Operands: (p1:GREGdq ;p2:XMM_M64 ;p3:IMMb); InstrSet: isSSE2);
+  simd_CMPPS: TSIMDInstruction = (name: 'CMPPS'; OperandsCount: 3; Operands: (p1:GREGdq; p2:MODdq; p3:IMMb); InstrSet: isSSE);
+  simd_CMPSS: TSIMDInstruction = (name: 'CMPSS'; OperandsCount: 3; Operands: (p1:GREGdq; p2:XMM_M32; p3:IMMb); InstrSet: isSSE);
+  simd_CMPPD: TSIMDInstruction = (name: 'CMPPD'; OperandsCount: 3; Operands: (p1:GREGdq; p2:MODdq; p3:IMMb); InstrSet: isSSE2);
+  simd_CMPSD: TSIMDInstruction = (name: 'CMPSD'; OperandsCount: 3; Operands: (p1:GREGdq; p2:XMM_M64; p3:IMMb); InstrSet: isSSE2);
 
 // 0xC3
-  simd_MOVNTI: TSIMDInstruction = (name: 'MOVNTI'; OperandsCount: 2; Operands: (p1:M32 ;p2:GREGd); InstrSet: isSSE2);
+  simd_MOVNTI: TSIMDInstruction = (name: 'MOVNTI'; OperandsCount: 2; Operands: (p1:M32; p2:GREGd); InstrSet: isSSE2);
 
 // 0xC4
-  simd_PINSRW_a: TSIMDInstruction = (name: 'PINSRW'; OperandsCount: 2; Operands: (p1:GREGq; p2:REG32_M16 ;p3:IMMb); InstrSet: isSSE);
-  simd_PINSRW_b: TSIMDInstruction = (name: 'PINSRW'; OperandsCount: 2; Operands: (p1:GREGdq; p2:REG32_M16 ;p3:IMMb); InstrSet: isSSE2);
+  simd_PINSRW_a: TSIMDInstruction = (name: 'PINSRW'; OperandsCount: 3; Operands: (p1:GREGq; p2:REG32_M16; p3:IMMb); InstrSet: isSSE);
+  simd_PINSRW_b: TSIMDInstruction = (name: 'PINSRW'; OperandsCount: 3; Operands: (p1:GREGdq; p2:REG32_M16; p3:IMMb); InstrSet: isSSE2);
 
 // 0xC5
-  simd_PEXTRW_a: TSIMDInstruction = (name: 'PEXTRW'; OperandsCount: 2; Operands: (p1:GREGd ;p2:R64 ;p3:IMMb); InstrSet: isSSE);     // Vzdy prisluchajuce registre !!!
-  simd_PEXTRW_b: TSIMDInstruction = (name: 'PEXTRW'; OperandsCount: 2; Operands: (p1:GREGd ;p2:R128 ;p3:IMMb); InstrSet: isSSE2);    // Vzdy prisluchajuce registre !!!
+  simd_PEXTRW_a: TSIMDInstruction = (name: 'PEXTRW'; OperandsCount: 3; Operands: (p1:GREGd; p2:R64; p3:IMMb); InstrSet: isSSE);     // Vzdy prisluchajuce registre !!!
+  simd_PEXTRW_b: TSIMDInstruction = (name: 'PEXTRW'; OperandsCount: 3; Operands: (p1:GREGd; p2:R128; p3:IMMb); InstrSet: isSSE2);    // Vzdy prisluchajuce registre !!!
 
 // 0xC6
-  simd_SHUFPS: TSIMDInstruction = (name: 'SHUFPS'; OperandsCount: 2; Operands: (p1:GREGdq ;p2:MODdq ;p3:IMMb); InstrSet: isSSE);
-  simd_SHUFPD: TSIMDInstruction = (name: 'SHUFPD'; OperandsCount: 2; Operands: (p1:GREGdq ;p2:MODdq ;p3:IMMb); InstrSet: isSSE2);
+  simd_SHUFPS: TSIMDInstruction = (name: 'SHUFPS'; OperandsCount: 3; Operands: (p1:GREGdq; p2:MODdq; p3:IMMb); InstrSet: isSSE);
+  simd_SHUFPD: TSIMDInstruction = (name: 'SHUFPD'; OperandsCount: 3; Operands: (p1:GREGdq; p2:MODdq; p3:IMMb); InstrSet: isSSE2);
 
 // 0xD0
-  simd_ADDSUBPS: TSIMDInstruction = (name: 'ADDSUBPS'; OperandsCount: 2; Operands: (p1:GREGdq ;p2:MODdq); InstrSet: isSSE3);
-  simd_ADDSUBPD: TSIMDInstruction = (name: 'ADDSUBPD'; OperandsCount: 2; Operands: (p1:GREGdq ;p2:MODdq); InstrSet: isSSE3);
+  simd_ADDSUBPS: TSIMDInstruction = (name: 'ADDSUBPS'; OperandsCount: 2; Operands: (p1:GREGdq; p2:MODdq); InstrSet: isSSE3);
+  simd_ADDSUBPD: TSIMDInstruction = (name: 'ADDSUBPD'; OperandsCount: 2; Operands: (p1:GREGdq; p2:MODdq); InstrSet: isSSE3);
 
 // 0xD1
   simd_PSRLW_a: TSIMDInstruction = (name: 'PSRLW'; opcode:$D1 ; OperandsCount: 2; Operands: (p1:GREGq ;p2:MODq); InstrSet: isMMX);

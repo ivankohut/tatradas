@@ -11,7 +11,7 @@ type
 
 
 //******************************************************************************
-// Obe byte opcode group instructions
+// One byte opcode group instructions
 //******************************************************************************
 
 
@@ -262,8 +262,9 @@ const
     (Opcode: $FF; GroupMem: @Group5_FF; GroupReg: @Group5_FF)
   );
 
+
 //******************************************************************************
-// Obe byte opcode group instructions
+// Two byte opcode group instructions
 //******************************************************************************
 
 

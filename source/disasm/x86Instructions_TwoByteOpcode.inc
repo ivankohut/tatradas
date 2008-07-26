@@ -4,7 +4,7 @@
 
 const
 
-  TBOInstruction_set: array [0..255] of TInstruction = (
+  TwoByteOpcode_InstructionSet: array [0..255] of TInstruction = (
 
   // $00-$0F
     (name: 'group'; typ: itGroup),

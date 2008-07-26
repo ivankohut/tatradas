@@ -21,10 +21,10 @@ const
     (name: ''; par: szEmpty),
     (name: 'FST'; par: szDword),
     (name: 'FSTP'; par: szDword),
-    (name: 'FLDENV'; par: szEmpty),
-    (name: 'FLDCW'; par: szEmpty),
-    (name: 'FSTENV'; par: szEmpty),
-    (name: 'FSTCW'; par: szEmpty),
+    (name: 'FLDENV'; par: szEmpty), // TODO: 14/28
+    (name: 'FLDCW'; par: szWord),
+    (name: 'FSTENV'; par: szEmpty), // TODO: 14/28
+    (name: 'FSTCW'; par: szWord),
   // DA
     (name: 'FIADD'; par: szDword),
     (name: 'FIMUL'; par: szDword),
@@ -36,7 +36,7 @@ const
     (name: 'FIDIVR'; par: szDword),
   // DB
     (name: 'FILD'; par: szDword),
-    (name: ''; par: szEmpty),
+    (name: 'FISTTP'; par: szDword), // TODO: SSE3 instruction
     (name: 'FIST'; par: szDword),
     (name: 'FISTP'; par: szDword),
     (name: ''; par: szEmpty),
@@ -54,13 +54,13 @@ const
     (name: 'FDIVR'; par: szQword),
   // DD
     (name: 'FLD'; par: szQword),
-    (name: ''; par: szEmpty),
+    (name: 'FISTTP'; par: szQWord), // TODO: SSE3 instruction
     (name: 'FST'; par: szQword),
     (name: 'FSTP'; par: szQword),
-    (name: 'FRSTOR'; par: szEmpty),
+    (name: 'FRSTOR'; par: szEmpty), // 98/108
     (name: ''; par: szEmpty),
-    (name: 'FSAVE'; par: szEmpty),
-    (name: 'FSTSW'; par: szEmpty),
+    (name: 'FSAVE'; par: szEmpty), // 98/108
+    (name: 'FSTSW'; par: szWord),
   // DE
     (name: 'FIADD'; par: szWord),
     (name: 'FIMUL'; par: szWord),
@@ -72,7 +72,7 @@ const
     (name: 'FIDIVR'; par: szWord),
   // DF
     (name: 'FILD'; par: szWord),
-    (name: ''; par: szEmpty),
+    (name: 'FISTTP'; par: szWord), // TODO: SSE3 instruction
     (name: 'FIST'; par: szWord),
     (name: 'FISTP'; par: szWord),
     (name: 'FBLD'; par: szTword),
@@ -173,14 +173,14 @@ const
 
     (
     // 0xC0
-      (name: 'FLD'; par: 'st0,st0'),
-      (name: 'FLD'; par: 'st0,st1'),
-      (name: 'FLD'; par: 'st0,st2'),
-      (name: 'FLD'; par: 'st0,st3'),
-      (name: 'FLD'; par: 'st0,st4'),
-      (name: 'FLD'; par: 'st0,st5'),
-      (name: 'FLD'; par: 'st0,st6'),
-      (name: 'FLD'; par: 'st0,st7'),
+      (name: 'FLD'; par: 'st0'),
+      (name: 'FLD'; par: 'st1'),
+      (name: 'FLD'; par: 'st2'),
+      (name: 'FLD'; par: 'st3'),
+      (name: 'FLD'; par: 'st4'),
+      (name: 'FLD'; par: 'st5'),
+      (name: 'FLD'; par: 'st6'),
+      (name: 'FLD'; par: 'st7'),
 
     // 0xC8
       (name: 'FXCH'; par: 'st0,st0'),
@@ -549,14 +549,14 @@ const
       (name: 'FSTP'; par: 'st7'),
 
     // 0xE0
-      (name: 'FUCOM'; par: 'st0,st0'),
-      (name: 'FUCOM'; par: 'st1,st0'),
-      (name: 'FUCOM'; par: 'st2,st0'),
-      (name: 'FUCOM'; par: 'st3,st0'),
-      (name: 'FUCOM'; par: 'st4,st0'),
-      (name: 'FUCOM'; par: 'st5,st0'),
-      (name: 'FUCOM'; par: 'st6,st0'),
-      (name: 'FUCOM'; par: 'st7,st0'),
+      (name: 'FUCOM'; par: 'st0'),
+      (name: 'FUCOM'; par: 'st1'),
+      (name: 'FUCOM'; par: 'st2'),
+      (name: 'FUCOM'; par: 'st3'),
+      (name: 'FUCOM'; par: 'st4'),
+      (name: 'FUCOM'; par: 'st5'),
+      (name: 'FUCOM'; par: 'st6'),
+      (name: 'FUCOM'; par: 'st7'),
 
     // 0xE8
       (name: 'FUCOMP'; par: 'st0'),
@@ -717,7 +717,7 @@ const
       (name: ''; par: ''),
 
     // 0xE0
-      (name: 'FSTSW'; par: 'AX'),
+      (name: 'FNSTSW'; par: 'AX'),
       (name: ''; par: ''),
       (name: ''; par: ''),
       (name: ''; par: ''),

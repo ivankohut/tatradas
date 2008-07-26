@@ -1,10 +1,12 @@
 {
   x86 One Byte Opcode Instructions
-  TODO: refactoring, checking (este som s tymto nic nerobil po rozdeleni instrukcii do viac suborov)
+  TODO:
+  - refactoring, checking (este som s tymto nic nerobil po rozdeleni instrukcii do viac suborov)
+  - InstrSet
 }
 const
 
-  OneByte_InstructionSet: array [0..255] of TInstruction = (
+  OneByteOpcode_InstructionSet: array [0..255] of TInstruction = (
 
   // $00-$0F
     (name: 'ADD'; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2:GREGb)),
@@ -173,7 +175,7 @@ const
     (name: 'MOV'; typ: itNormal; OperandsCount:2; Operands: (p1:GREGb; p2:MODb)),
     (name: 'MOV'; typ: itNormal; OperandsCount:2; Operands: (p1:GREGv; p2:MODv)),
     (name: 'MOV'; typ: itNormal; OperandsCount:2; Operands: (p1:MODw; p2:SREGw)),
-    (name: 'LEA'; typ: itNormal; OperandsCount:2; Operands: (p1:GREGv; p2:MODv)),
+    (name: 'LEA'; typ: itNormal; OperandsCount:2; Operands: (p1:GREGv; p2:MMM)),
     (name: 'MOV'; typ: itNormal; OperandsCount:2; Operands: (p1:SREGw; p2:MODw)),
     (name: 'POP'; typ: itNormal; OperandsCount:1; Operands: (p1:MODv)),
 
@@ -261,7 +263,7 @@ const
     (name: 'AAM'; typ: itNormal; OperandsCount:1; Operands: (p1: IMMb)),
     (name: 'AAD'; typ: itNormal; OperandsCount:1; Operands: (p1: IMMb)),
     (name: 'undefined opcode!'; typ: itUndefined; OperandsCount:1; Operands: (p1: IMMb)),
-    (name: 'XLAT/XLATB'; typ: itNormal),
+    (name: 'XLATB'; typ: itNormal; OperandsCount:0),
 
     (name: 'fpu'; typ: itFPU; OperandsCount:1; Operands: (p1: IMMb)),
     (name: 'fpu'; typ: itFPU; OperandsCount:1; Operands: (p1: IMMb)),

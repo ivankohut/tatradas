@@ -23,6 +23,7 @@ uses
   SynEdit,
 
   ButtonsX,
+  FilesUnit,
   TranslatorUnit,
   StringRes,
   procmat,
@@ -140,6 +141,8 @@ type
     actReturnJump: TAction;
     actGoToAddress: TAction;
     Panel1: TPanel;
+    Gotoline1: TMenuItem;
+    actGoToLine: TAction;
 
     procedure OpenClick(Sender: TObject);
     procedure DisassembleClick(Sender: TObject);
@@ -181,6 +184,7 @@ type
     procedure ChangeFDataClick(Sender: TObject);
     procedure HexEditor1Click(Sender: TObject);
     procedure ProjectModified(Sender: TObject);
+    procedure actGoToLineExecute(Sender: TObject);
 
   private
     fopenfilepath: string;
@@ -566,7 +570,7 @@ begin
 //  Width:= INI.ReadInteger('Settings','Width',500);
 //  CurrentLanguage:= sINI.ReadString('Settings','Language','eng');
 // osetrit ak sa podari zmenit jazyk
-  Translator:= TTranslator.Create(ExtractFilePath(Application.ExeName) + sINI.ReadString('Settings', 'LanguageFolder', PathDelim + 'languages'), Language1, MenuImageList);
+  Translator:= TTranslator.Create(AddPathDelimiter(ExtractFilePath(Application.ExeName), true) + sINI.ReadString('Settings', 'LanguageFolder', 'languages'), Language1, MenuImageList);
   if not Translator.ChangeLanguage(sINI.ReadString('Settings','Language','en')) then
     if not Translator.ChangeLanguage('en') then begin
        ShowMessage(NoLanguageFilesStr);
@@ -778,6 +782,13 @@ end;
 procedure TMainForm.actGotoAddressExecute(Sender: TObject);
 begin
   (ActiveFrame as TCodeTabFrame).GotoAddressButtonClick(self);
+end;
+
+
+
+procedure TMainForm.actGoToLineExecute(Sender: TObject);
+begin
+  (ActiveFrame as TCodeTabFrame).GotoLineClick(self);
 end;
 
 

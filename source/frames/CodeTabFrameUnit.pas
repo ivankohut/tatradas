@@ -119,6 +119,7 @@ type
     // Navigation events
     procedure GotoEntryPointButtonClick(Sender: TObject);
     procedure GotoAddressButtonClick(Sender: TObject);
+    procedure GotoLineClick(Sender: TObject);    
     procedure FollowButtonClick(Sender: TObject);
     procedure ReturnButtonClick(Sender: TObject);
     procedure ToggleBookmarkClick(Sender: TObject);
@@ -177,7 +178,7 @@ uses
   ExecFileUnit,
   ExportSectionUnit,
   PEFileUnit,
-  MainFormUnit;
+  MainFormUnit, GotoLineFormUnit;
 
 
 constructor TCodeTabFrame.Create(AOwner: TComponent; ASection: TSection);
@@ -447,6 +448,17 @@ begin
   GotoAddressForm.MaxAddress:= fSection.MaxAddress;
   if GotoAddressForm.ShowModal = mrOK then
     GotoPosition(fSection.GetPosition(GotoAddressForm.Address), soBeginning);
+  plocha.SetFocus;
+end;
+
+
+
+procedure TCodeTabFrame.GotoLineClick(Sender: TObject);    // Premiestnenie na zadane cislo riadka
+begin
+  GotoLineForm.GotoLineEdit.Text := '';
+  GotoLineForm.MaxAddress := fSection.Disassembled.Count;
+  if GotoLineForm.ShowModal = mrOK then
+    GotoPosition(GotoLineForm.Address - 1, soBeginning);
   plocha.SetFocus;
 end;
 

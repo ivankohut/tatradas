@@ -30,7 +30,7 @@ type
     procedure FormActivate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
   private
-    procedure SetMaxAddress(address: cardinal);
+    procedure SetMaxAddress(MaxAddress: cardinal);
     function GetAddress: cardinal;
   public
     GotoAddressEdit: TMyHexEdit;
@@ -48,34 +48,42 @@ uses MainFormUnit, TranslatorUnit, OptionsFormUnit;
 
 {$R *.dfm}
 
-procedure TGoToAddressForm.SetMaxAddress(address: cardinal);
+procedure TGoToAddressForm.SetMaxAddress(MaxAddress: cardinal);
 begin
-  GotoAddressEdit.MaxValue:=address;
+  GotoAddressEdit.MaxValue := MaxAddress;
 end;
+
+
 
 function TGoToAddressForm.GetAddress: cardinal;
 begin
-  result:=GotoAddressEdit.AsCardinal;
+  result := GotoAddressEdit.AsCardinal;
 end;
+
+
 
 procedure TGoToAddressForm.CancelButtonClick(Sender: TObject);
 begin
-  ModalResult:=mrCancel;
+  ModalResult := mrCancel;
 end;
+
+
 
 procedure TGoToAddressForm.OKButtonClick(Sender: TObject);
 begin
-  ModalResult:=mrOK;
+  ModalResult := mrOK;
 end;
+
+
 
 procedure TGoToAddressForm.FormCreate(Sender: TObject);
 begin
-  GotoAddressEdit:=TMyHexEdit.Create(self);
-  GotoAddressEdit.Parent:=self;
-  GotoAddressEdit.Left:=110;
-  GotoAddressEdit.Top:=16;
-  GotoAddressEdit.Width:=121;
-  GotoAddressEdit.Height:=21;
+  GotoAddressEdit := TMyHexEdit.Create(self);
+  GotoAddressEdit.Parent := self;
+  GotoAddressEdit.Left := 110;
+  GotoAddressEdit.Top := 16;
+  GotoAddressEdit.Width := 121;
+  GotoAddressEdit.Height := 21;
 
 // Tu sa spusta prelozenie prostredia na zaciatku behu programu
 // GotoAddressForm musi vznikat ako posledny z formularov
@@ -85,21 +93,29 @@ begin
   OptionsForm.LoadSettings(MainForm.sINI);
 end;
 
+
+
 procedure TGoToAddressForm.FormActivate(Sender: TObject);
 begin
   GotoAddressEdit.SetFocus;
 end;
 
+
+
 procedure TGoToAddressForm.Translate;
 begin
-  Caption:= Translator.TranslateControl('GotoAddressForm','Caption');
-  GotoAddressLabel.Caption:= Translator.TranslateControl('GotoAddressForm','GotoAddressLabel');
-  CancelButton.Caption:= Translator.TranslateControl('Common','CancelButton');
+  Caption := Translator.TranslateControl('GotoAddressForm', 'Caption');
+  GotoAddressLabel.Caption := Translator.TranslateControl('GotoAddressForm', 'GotoAddressLabel');
+  CancelButton.Caption := Translator.TranslateControl('Common', 'CancelButton');
 end;
+
+
 
 procedure TGoToAddressForm.FormDestroy(Sender: TObject);
 begin
   GotoAddressEdit.Free;
 end;
+
+
 
 end.

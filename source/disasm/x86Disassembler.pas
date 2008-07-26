@@ -30,7 +30,6 @@ uses
   StrUtils
   ;
 
-
 type
 
   Tx86Disassembler = class(TDisassembler)
@@ -42,12 +41,8 @@ type
     ModRM: TModRM;
     SIB: TSIB;
     i: cardinal;                          // Uchovava poziciu v poli CODE
-    j: cardinal;                          // Pomocne premenne
     operand32, address32:boolean;        // Uchovava 16/32bit stav instrukcie
 
-    OperandSize: TSize;
-    //AddressSize: TSize;
-    genreg16: boolean;
     SegmentOverride: string;
 
     InstrAddress: cardinal; // address of current instruction in "code" array
@@ -64,12 +59,12 @@ type
 
     function SpracujParameter(a:TParameter): string;
     function LoadModRM(ModRMValue: byte): TModRM;
-    function SpracujModRM(a: TModRMParameterType; b: TModRMParameterSize): string;
+    function SpracujModRM(OperandType: TModRMOperandType; OperandSize: TModRMOperandSize): string;
     function LoadSIB(SIBValue: byte): TSIB;
     function SpracujSIB: string;
-    function SpracujImmediate(a: TModRMParameterSize): string;
-    function SpracujRelative(a: TModRMParameterSize): string;
-    function SpracujOffset(a: TModRMParameterSize): string;
+    function SpracujImmediate(OperandSize: TModRMOperandSize): string;
+    function SpracujRelative(OperandSize: TModRMOperandSize): string;
+    function SpracujOffset: string;
     function SpracujGenReg: string;
 
   protected
@@ -84,124 +79,118 @@ type
 
 Implementation
 
-//uses
-//  x86Instructions;
+
+const
+  ByteRegister: array [0..7] of string[2] = (
+    ('AL'),
+    ('CL'),
+    ('DL'),
+    ('BL'),
+    ('AH'),
+    ('CH'),
+    ('DH'),
+    ('BH')
+  );
+
+  WordRegister: array [0..7] of string[2] = (
+    ('AX'),
+    ('CX'),
+    ('DX'),
+    ('BX'),
+    ('SP'),
+    ('BP'),
+    ('SI'),
+    ('DI')
+  );
+
+  DWordRegister: array [0..7] of string[3] = (
+    ('EAX'),
+    ('ECX'),
+    ('EDX'),
+    ('EBX'),
+    ('ESP'),
+    ('EBP'),
+    ('ESI'),
+    ('EDI')
+  );
+
+  SegmentRegister: array [0..7] of string[2] = (
+    ('ES'),
+    ('CS'),
+    ('SS'),
+    ('DS'),
+    ('FS'),
+    ('GS'),
+    ('??'),
+    ('??')
+  );
+
+  ControlRegister: array [0..7] of string[3] = (
+    ('CR0'),
+    ('???'),
+    ('CR2'),
+    ('CR3'),
+    ('CR4'),
+    ('???'),
+    ('???'),
+    ('???')
+  );
+
+  DebugRegister: array [0..7] of string[3] = (
+    ('DR0'),
+    ('DR1'),
+    ('DR2'),
+    ('DR3'),
+    ('DR4'),
+    ('DR5'),
+    ('DR6'),
+    ('DR7')
+  );
+
+  TestRegister: array [0..7] of string[3] = (
+    ('???'),
+    ('???'),
+    ('???'),
+    ('TR3'),
+    ('TR4'),
+    ('TR5'),
+    ('TR6'),
+    ('TR7')
+  );
+
+  MMXRegister: array [0..7] of string[3] = (
+    ('MM0'),
+    ('MM1'),
+    ('MM2'),
+    ('MM3'),
+    ('MM4'),
+    ('MM5'),
+    ('MM6'),
+    ('MM7')
+  );
+
+  XMMRegister: array [0..7] of string[4] = (
+    ('XMM0'),
+    ('XMM1'),
+    ('XMM2'),
+    ('XMM3'),
+    ('XMM4'),
+    ('XMM5'),
+    ('XMM6'),
+    ('XMM7')
+  );
 
 
-const genreg:array[1..8] of string[5]=(
-                                        ('[EAX]'),
-                                        ('[ECX]'),
-                                        ('[EDX]'),
-                                        ('[EBX]'),
-                                        ('[ESP]'),
-                                        ('[EBP]'),
-                                        ('[ESI]'),
-                                        ('[EDI]')
-                                       );
-const onebyte_register:array[0..7] of string[2]= (
-                                                  ('AL'),
-                                                  ('CL'),
-                                                  ('DL'),
-                                                  ('BL'),
-                                                  ('AH'),
-                                                  ('CH'),
-                                                  ('DH'),
-                                                  ('BH')
-                                                  );
-const TWObyte_register:array[0..7] of string[2]= (
-                                                  ('AX'),
-                                                  ('CX'),
-                                                  ('DX'),
-                                                  ('BX'),
-                                                  ('SP'),
-                                                  ('BP'),
-                                                  ('SI'),
-                                                  ('DI')
-                                                  );
-const FourByte_register:array[0..7] of string[3]= (
-                                                  ('EAX'),
-                                                  ('ECX'),
-                                                  ('EDX'),
-                                                  ('EBX'),
-                                                  ('ESP'),
-                                                  ('EBP'),
-                                                  ('ESI'),
-                                                  ('EDI')
-                                                  );
-const Segment_register:array[0..7] of string[2] = (
-                                                  ('ES'),
-                                                  ('CS'),
-                                                  ('SS'),
-                                                  ('DS'),
-                                                  ('FS'),
-                                                  ('GS'),
-                                                  ('??'),
-                                                  ('??')
-                                                  );
-const Modrm16bitAddress_register:array[0..7] of string = (
-                                                         ('BX+SI'),
-                                                         ('BX+DI'),
-                                                         ('BP+SI'),
-                                                         ('BP+DI'),
-                                                         ('SI'),
-                                                         ('DI'),
-                                                         ('BP'),
-                                                         ('BX')
-                                                         );
-
-const control_register:array[0..7]of string[3] = (
-                                                 ('CR0'),
-                                                 ('???'),
-                                                 ('CR2'),
-                                                 ('CR3'),
-                                                 ('CR4'),
-                                                 ('???'),
-                                                 ('???'),
-                                                 ('???')
-                                                 );
-const debug_register:array[0..7] of string[3] = (
-                                                ('DR0'),
-                                                ('DR1'),
-                                                ('DR2'),
-                                                ('DR3'),
-                                                ('DR4'),
-                                                ('DR5'),
-                                                ('DR6'),
-                                                ('DR7')
-                                                );
-const test_register:array[0..7] of string[3] = (
-                                                ('???'),
-                                                ('???'),
-                                                ('???'),
-                                                ('TR3'),
-                                                ('TR4'),
-                                                ('TR5'),
-                                                ('TR6'),
-                                                ('TR7')
-                                                );
-const mmx_register:array[0..7] of string[3] = (
-                                              ('MM0'),
-                                              ('MM1'),
-                                              ('MM2'),
-                                              ('MM3'),
-                                              ('MM4'),
-                                              ('MM5'),
-                                              ('MM6'),
-                                              ('MM7')
-                                              );
-
-const xmm_register:array[0..7] of string[4] = (
-                                              ('XMM0'),
-                                              ('XMM1'),
-                                              ('XMM2'),
-                                              ('XMM3'),
-                                              ('XMM4'),
-                                              ('XMM5'),
-                                              ('XMM6'),
-                                              ('XMM7')
-                                              );
-
-
+  Modrm16bitAddress_register: array [0..7] of string = (
+    ('BX+SI'),
+    ('BX+DI'),
+    ('BP+SI'),
+    ('BP+DI'),
+    ('SI'),
+    ('DI'),
+    ('BP'),
+    ('BX')
+  );
 
 {
   Nacita ModRM do struktury TModRM
@@ -256,10 +245,10 @@ begin
   Inc(i);
   SIB := LoadSIB(code[i]);
   if not ((ModRM.Moder = 0) and (SIB.Base = 5)) then begin
-    result := fourbyte_register[SIB.Base];
+    result := DWordRegister[SIB.Base];
 
     if SIB.Index <> 4 then begin
-      result := result + '+' + fourbyte_register[SIB.Index];
+      result := result + '+' + DWordRegister[SIB.Index];
       if SIB.Scale <> 0 then
         result := result + '*' + PowersOfTwoStr[SIB.Scale];
     end;
@@ -270,7 +259,7 @@ begin
     Inc(i, 3);
 
     if SIB.index <> 4 then begin
-      result := result + '+' + fourbyte_register[SIB.Index];
+      result := result + '+' + DWordRegister[SIB.Index];
       if SIB.scale <> 0 then
         result := result + '*' + PowersOfTwoStr[SIB.Scale];
     end;
@@ -279,9 +268,30 @@ end;
 
 
 
-function Tx86Disassembler.SpracujModRM(a: TModRMParameterType; b: TModRMParameterSize):string;
+function Tx86Disassembler.SpracujModRM(OperandType: TModRMOperandType; OperandSize: TModRMOperandSize): string;
+
+  function GetRegister(Index: byte): string;
+  begin
+    case OperandSize of
+      os1: result := ByteRegister[Index];
+      os2: result := WordRegister[Index];
+      os2Or4, os4Or6:
+        if operand32 then
+          result := DWordRegister[Index]
+        else
+          result := WordRegister[Index];
+      os4, osR4_M1, osR4_M2: result := DWordRegister[Index];
+      os8, osR8_M4: result := MMXRegister[Index];
+      os16, osR16_M8, osR16_M4, osR16_M2: result := XMMRegister[Index];
+      else
+        raise EUndefinedOpcodeException.Create('ModRM - Bad register size.  OperandType = ' + IntToStr(Ord(OperandType)) + ', OperandSize = ' + IntToStr(Ord(OperandSize)) +
+          ', Moder = ' + IntToStr(ModRM.Moder) + ', RegOp = ' + IntToStr(ModRM.RegOp) + ', RM = ' + IntToStr(ModRM.RM));
+
+    end;
+  end;
+
 begin
-  result:='';
+  result := '';
 
   if not ModRM.Loaded then begin
     Inc(i);
@@ -289,290 +299,108 @@ begin
     ModRM.Loaded := true;
   end;
 
-  case address32 of
-    false: begin
-             case a of
-               GReg: begin
-                       case b of
-                         OneByte: result:=onebyte_register[modrm.regop];
-                         TwoByte: result:=twobyte_register[modrm.regop];
-                         TwoOrFour: if operand32 then result:=fourbyte_register[modrm.regop]
-                                    else result:=twobyte_register[modrm.regop];
-                         FourByte: result:=fourbyte_register[modrm.regop];
-                         MMX: result:=mmx_register[modrm.regop];
-                         XMM: result:=xmm_register[modrm.regop];
-                       end;
-                     end;
+  if OperandType = otRegister then
+    result := GetRegister(ModRM.RegOp)
+  else if (ModRM.Moder = 3) and ((OperandType = otRMReg) or (OperandType = otRMRegMem)) then
+    result := GetRegister(ModRM.RM)
+  else if (ModRM.Moder <> 3) and ((OperandType = otRMMem) or (OperandType = otRMRegMem)) then begin
 
-              Reg: begin
-                     if modrm.moder = 3 then
-                       case b of
-                         OneByte: result:=onebyte_register[modrm.rm];
-                         TwoByte: result:=twobyte_register[modrm.rm];
-                         TwoOrFour: if operand32 then result:=fourbyte_register[modrm.rm]
-                                    else result:=twobyte_register[modrm.rm];
-                         FourByte: result:=fourbyte_register[modrm.rm];
-                         MMX: result:=mmx_register[modrm.rm];
-                         XMM: result:=xmm_register[modrm.rm];
-                       end
-                     else
-                       result := 'Invalid parameter';
-                   end;
+    // Address size 32 bit
+    if Address32 then begin
+      case modrm.moder of
+        0: begin
+            result := '[' + SegmentOverride;
+            case ModRM.RM of
+              5: begin
+                Inc(i);
+                result := result + '0x' + IntToHex(cardinal((@code[i])^), 8);
+                Inc(i, 3);
+              end;
+              4: result := result + SpracujSIB;
+              else
+                result := result + DwordRegister[modrm.rm];
+            end;
+            result := result + ']';
+          end;
 
-               Mem: begin
-                          case modrm.moder of
-                            0: begin
-                                 result := '[' + SegmentOverride;
-                                 if ModRM.RM = 6 then begin
-                                   Inc(i,2);
-                                   result := result + '0x' + IntToHex(code[i],2) + IntToHex(code[i-1],2);
-                                 end
-                                 else
-                                   result:=result + modrm16bitaddress_register[modrm.rm];
-                                 result:=result+']';
-                               end;
-                            1: begin
-                                inc(i);
-                                result:='[' + SegmentOverride + modrm16bitaddress_register[modrm.rm]+ByteToSignedHex(code[i])+']';
-                               end;
-                            2: begin
-                                inc(i,2);
-                                result:='[' + SegmentOverride + modrm16bitaddress_register[modrm.rm]+'+'+'0x'+inttohex(code[i],2)+inttohex(code[i-1],2)+']';
-                               end;
-                            3:result:='Invalid parameter!';
-                          end;
-                          case OperandSize of
-                            szByte: result:='byte ' + result;
-                            szWord: result:='word ' + result;
-                            szDword: result:='dword ' + result;
-                            szQword: result:='qword ' + result;
-                            szTword: result:='tword ' + result;
-                          end;
-                        end;
+        1: begin
+            result := '[' + SegmentOverride;
+            if modrm.rm = 4 then
+              result := result + SpracujSIB
+            else
+              result := result + DwordRegister[modrm.rm];
+            Inc(i);
+            result := result + ByteToSignedHex(code[i])+']';
+          end;
 
-               RegMem: begin
-                          case modrm.moder of
-                            0:begin
-                                result:='[' + SegmentOverride;
-                                if modrm.rm=6 then begin
-                                  inc(i,2);
-                                  result:=result+'0x'+inttohex(code[i],2)+inttohex(code[i-1],2);
-                                end
-                                else result:=result+modrm16bitaddress_register[modrm.rm];
-                                result:=result+']';
-                              end;
-                            1:begin
-                                inc(i);
-                                result:='[' + SegmentOverride + modrm16bitaddress_register[modrm.rm]+ByteToSignedHex(code[i])+']';
-                              end;
-                            2:begin
-                                inc(i,2);
-                                result:='[' + SegmentOverride + modrm16bitaddress_register[modrm.rm]+'+'+'0x'+inttohex(code[i],2)+inttohex(code[i-1],2)+']';
-                              end;
-                            3:begin
-                                case b of
-                                  onebyte: result:=onebyte_register[modrm.rm];
-                                  twobyte: result:=twobyte_register[modrm.rm];
-                                  twoorfour:
-                                    if operand32 then
-                                      result := fourbyte_register[modrm.rm]
-                                    else
-                                      result := twobyte_register[modrm.rm];
-                                  fourbyte: result:=fourbyte_register[modrm.rm];
-                                  FourOrSix: if operand32 then result:=fourbyte_register[modrm.rm]
-                                           else result:=twobyte_register[modrm.rm];
-                                  mmx: result := mmx_register[modrm.rm];
-                                  xmm: result := xmm_register[modrm.rm];
-                                  R32_M16: result := fourbyte_register[modrm.rm];
-                                  R128_M32: result := xmm_register[modrm.rm];
-                                  R128_M64: result := xmm_register[modrm.rm];
-                                end;
-                              end;
-                          end;
-                        end;
-              sreg: begin
-                      case b of
-                        twobyte: result:=segment_register[modrm.regop];
-                      end;
-                    end;
-              creg: begin
-                      result:=control_register[modrm.regop];
-                    end;
-              dreg: begin
-                      result:=debug_register[modrm.regop];
-                    end;
-              treg: begin
-                      result:=test_register[modrm.regop];
-                    end;
+        2: begin
+            result := '[' + SegmentOverride;
+            if modrm.rm = 4 then
+              result := result + SpracujSIB
+            else
+              result := result + DwordRegister[modrm.rm];
+            Inc(i);
+            result := result + '+' + '0x' + IntToHex(cardinal((@code[i])^), 8) + ']';
+            Inc(i, 3);
+          end;
+      end;
+    end
 
-             end;
-           end;
-    true: begin
-            case a of
-              Greg: begin
-                      case b of
-                        onebyte: result:=onebyte_register[modrm.regop];
-                        twobyte: result:=twobyte_register[modrm.regop];
-                        twoorfour: if operand32 then result:=fourbyte_register[modrm.regop]
-                                   else result:=twobyte_register[modrm.regop];
-                        fourbyte: result:=fourbyte_register[modrm.regop];
-                        mmx: result:=mmx_register[modrm.regop];
-                        xmm: result:=xmm_register[modrm.regop];
-                      end;
-                    end;     //hotovo
-              Reg: begin
-                     if modrm.moder = 3 then
-                       case b of
-                         onebyte: result:=onebyte_register[modrm.rm];
-                         twobyte: result:=twobyte_register[modrm.rm];
-                         twoorfour: if operand32 then result:=fourbyte_register[modrm.rm]
-                                    else result:=twobyte_register[modrm.rm];
-                         fourbyte: result:=fourbyte_register[modrm.rm];
-                         mmx: result:=mmx_register[modrm.rm];
-                         xmm: result:=xmm_register[modrm.rm];
-                       end
-                     else result:='Invalid parameter';
-                   end;
-
-              Mem: begin
-                         case modrm.moder of
-                           0: begin
-                                result:='[' + SegmentOverride;
-                                case modrm.rm of
-                                  5: begin
-                                    Inc(i);
-                                    result:= result + '0x' + IntToHex(cardinal((@code[i])^), 8);
-                                    Inc(i, 3);
-                                  end;
-//                                  4: result:=spracujsib;
-                                  4: result:=result + spracujsib;
-                                else result:=result+fourbyte_register[modrm.rm];
-                                end;
-                                result:=result+']';
-                              end;
-                           1: begin
-                                result:='[' + SegmentOverride;
-                                if modrm.rm = 4 then result:=result + spracujsib
-                                else result:=result + fourbyte_register[modrm.rm];
-                                inc(i);
-                                result:=result+ByteToSignedHex(code[i])+']';
-                              end;
-                           2: begin
-                                result:='[' + SegmentOverride;
-                                if modrm.rm = 4 then
-                                  result:=result + spracujsib
-                                else
-                                  result:= result + fourbyte_register[modrm.rm];
-                                Inc(i);
-                                result:= result + '+' + '0x' + IntToHex(cardinal((@code[i])^), 8) + ']';
-                                Inc(i, 3);
-                              end;
-                           3: result:='Invalid parameter!';
-                         end; //end of "case moder"
-                         case OperandSize of
-                           szByte: result:='byte '+result;
-                           szWord: result:='word '+result;
-                           szDword: result:='dword '+result;
-                           szQword: result:='qword '+result;
-                           szTword: result:='tword '+result;
-                         end;
-                       end; // end of Mem
-              RegMem: begin
-                         case modrm.moder of
-                           0: begin
-                                result:='[' + SegmentOverride;
-                                case ModRM.RM of
-                                  5: begin
-                                    Inc(i);
-                                    result := result + '0x' + IntToHex(cardinal((@code[i])^), 8);
-                                    Inc(i, 3);
-                                  end;
-                                  4: result := result + SpracujSIB;
-                                  else
-                                    result := result + fourbyte_register[modrm.rm];
-                                end;
-                                result := result + ']';
-                                case OperandSize of
-                                  szByte: result:='byte '+result;
-                                  szWord: result:='word '+result;
-                                  szDword: result:='dword '+result;
-                                end;
-//                                  if operand32 then result:='dword '+result
-//                                  else result:='word '+result;
-
-                              end;
-                           1: begin
-                                result:='[' + SegmentOverride;
-                                if modrm.rm = 4 then
-                                  result := result + SpracujSIB
-                                else
-                                  result := result + fourbyte_register[modrm.rm];
-                                Inc(i);
-                                result := result + ByteToSignedHex(code[i])+']';
-
-                                case OperandSize of
-                                  szByte: result:='byte '+result;
-                                  szWord: result:='word '+result;
-                                  szDword: result:='dword '+result;
-                                end;
-
-                              end;
-                           2: begin
-                                result:='[' + SegmentOverride;
-                                if modrm.rm = 4 then
-                                  result:=result + spracujsib
-                                else
-                                  result:= result + fourbyte_register[modrm.rm];
-                                Inc(i);
-                                result:= result + '+' + '0x' + IntToHex(cardinal((@code[i])^), 8) + ']';
-                                Inc(i, 3);
-
-                                case OperandSize of
-                                  szByte: result:='byte '+result;
-                                  szWord: result:='word '+result;
-                                  szDword: result:='dword '+result;
-                                end;
-
-                              end;
-                           3: begin
-                                case b of
-                                  onebyte: result:=onebyte_register[modrm.rm];
-                                  twobyte: result:=twobyte_register[modrm.rm];
-                                  twoorfour: if operand32 then result:=fourbyte_register[modrm.rm]
-                                           else result:=twobyte_register[modrm.rm];
-                                  fourbyte: result:=fourbyte_register[modrm.rm];
-                                  mmx: result:=mmx_register[modrm.rm];
-                                  xmm: result:=xmm_register[modrm.rm];
-                                  R32_M16: result:=fourbyte_register[modrm.rm];
-                                  R128_M32: result:=xmm_register[modrm.rm];
-                                  R128_M64: result:=xmm_register[modrm.rm];
-                                end;
-                              end;
-                         end; //end of "case moder"
-                       end; // end of RegMem
-              sreg: begin
-                      case b of
-                        TwoByte: result := segment_register[modrm.regop];
-                      end;
-                    end;
-              creg: begin
-                      result:=control_register[modrm.regop];
-                    end;
-              dreg: begin
-                      result:=debug_register[modrm.regop];
-                    end;
-              treg: begin
-                      result:=test_register[modrm.regop];
-                    end;
-
-            end; // End of "case parameter type
-          end; //End of "true address32"
-  end; // End of "case address32"
-end; // End of ModRM
+    // Address size 16 bit
+    else begin
+      case Modrm.Moder of
+        0: begin
+          result := '[' + SegmentOverride;
+          if ModRM.RM = 6 then begin
+            Inc(i, 2);
+            result := result + '0x' + IntToHex(code[i], 2) + IntToHex(code[i - 1], 2);
+          end
+          else
+            result := result + modrm16bitaddress_register[modrm.rm];
+          result := result + ']';
+        end;
+        1: begin
+          Inc(i);
+          result := '[' + SegmentOverride + modrm16bitaddress_register[modrm.rm] + ByteToSignedHex(code[i]) + ']';
+        end;
+        2: begin
+          Inc(i, 2);
+          result := '[' + SegmentOverride + modrm16bitaddress_register[modrm.rm] + '+' + '0x' + IntToHex(code[i], 2) + IntToHex(code[i - 1], 2) + ']';
+        end;
+      end;
+    end;
+    case OperandSize of
+      osNone: ; // LEA
+      os1, osR4_M1: result := 'byte ' + result;
+      os2, osR4_M2, osR16_M2: result := 'word ' + result;
+      os2or4:
+        if operand32 then
+          result := 'dword ' + result
+        else
+          result := 'word ' + result;
+      os4, osR8_M4, osR16_M4: result := 'dword ' + result;
+      os4Or6: ; // TODO
+      os8, osR16_M8: result := 'qword ' + result;
+      os10: result := 'tword ' + result;
+      os16: result := 'dqword ' + result;
+    end;
+  end
+  else if (OperandType = otSegmentReg) and (OperandSize = os2) then
+    result := SegmentRegister[ModRM.RegOp]
+  else if OperandType = otControlReg then
+    result := ControlRegister[ModRM.RegOp]
+  else if OperandType = otDebugReg then
+    result := DebugRegister[ModRM.RegOp]
+  else if OperandType = otTestReg then
+    result := TestRegister[ModRM.RegOp]
+  else
+    raise EUndefinedOpcodeException.Create('ModRM - Bad operand type.  OperandType = ' + IntToStr(Ord(OperandType)) + ', OperandSize = ' + IntToStr(Ord(OperandSize)) +
+      ', Moder = ' + IntToStr(ModRM.Moder) + ', RegOp = ' + IntToStr(ModRM.RegOp) + ', RM = ' + IntToStr(ModRM.RM));
+end;
 
 
 
-function Tx86Disassembler.SpracujImmediate(a: TModRMParameterSize):string;
+function Tx86Disassembler.SpracujImmediate(OperandSize: TModRMOperandSize): string;
 var
   Immediate: cardinal;
   SegmentImmediate: word;
@@ -588,13 +416,13 @@ begin
     add eax,ebx        // adresa prvku pola v pamati
     xor ecx,ecx        // vysledny immediate
   // Case
-    cmp a,OneByte           // ONE BYTE
+    cmp OperandSize,os1           // ONE BYTE
     jne @CheckTwobyte
     movzx ecx,byte[eax]     // parameter instrukcie -> ECX
     jmp @EndCase
 
   @CheckTwobyte:
-    cmp a,TwoByte           // TWO BYTE
+    cmp OperandSize,os2           // TWO BYTE
     jne @CheckTwoOrFour
 
   @_16:
@@ -603,7 +431,7 @@ begin
     jmp @EndCase
 
   @CheckTwoOrFour:
-    cmp a,TwoOrFour
+    cmp OperandSize,os2or4
     jne @CheckFourOrSix
     cmp byte ptr [esi].operand32,0
     je @_16
@@ -647,7 +475,7 @@ begin
     pop ebx
     pop esi
   end;
-  if a = FourOrSix then
+  if OperandSize = os4or6 then
     result:= '0x' + IntToHex(SegmentImmediate, 4) + ':' + '0x' + IntToHex(Immediate, ParsedCount)
   else
     // was: result:=result + '0x'+IntToHex(immediate,parsedcount);
@@ -661,7 +489,7 @@ end;
 
 
 
-function Tx86Disassembler.SpracujRelative(a: TModRMParameterSize):string;
+function Tx86Disassembler.SpracujRelative(OperandSize: TModRMOperandSize): string;
 var
   address: integer;
   parsed: cardinal;
@@ -679,7 +507,7 @@ begin
     xor edx,edx        // vysledny Parsed
   // Case
   {
-    cmp a,onebyte           // ONE BYTE
+    cmp OperandSize,onebyte           // ONE BYTE
     jne @CheckTwobyte
     movsx ecx,byte[eax]     // parameter instrukcie -> ECX
     mov edx,ecx          //
@@ -688,7 +516,7 @@ begin
     inc ecx                 // zvysime o 1, lebo skok je relativny od nasledujucej instrukcie
     jmp @EndCase
   }
-    cmp a,onebyte           // ONE BYTE
+    cmp OperandSize,os1           // ONE BYTE
     jne @CheckTwobyte
     mov dl,byte[eax]     // parameter instrukcie -> ECX
     movsx ecx,dl          //
@@ -699,7 +527,7 @@ begin
 
 
   @CheckTwobyte:
-    cmp a,twobyte           // TWO BYTE
+    cmp OperandSize,os2           // TWO BYTE
     jne @CheckTwoOrFour
 
   @TwoByteOnly:
@@ -713,7 +541,7 @@ begin
     jmp @EndCase
 
   @CheckTwoOrFour:
-    cmp a,twoorfour
+    cmp OperandSize,os2or4
     jne @EndCase
     cmp byte ptr [esi].operand32,0
     je @TwoByteOnly
@@ -768,24 +596,23 @@ end;
 
 function Tx86Disassembler.SpracujGenReg: string;
 begin
-  if not genreg16 then
-    if operand32 then
-      result:= 'E'
-    else
-      result:= '';
+  if operand32 then
+    result:= 'E'
+  else
+    result:= '';
 end;
 
 
 
-function Tx86Disassembler.SpracujOffset(a: TModRMParameterSize):string;
+function Tx86Disassembler.SpracujOffset: string;
 begin
   Inc(i);
-  if address32 then begin
-    result:= '[' + SegmentOverride + '0x' + IntToHex(cardinal((@code[i])^), 8) + ']';
+  if Address32 then begin
+    result := '[' + SegmentOverride + '0x' + IntToHex(cardinal((@code[i])^), 8) + ']';
     Inc(i, 3);
   end
   else begin
-    result:= '[' + SegmentOverride + '0x' + IntToHex(word((@code[i])^), 4) + ']';
+    result := '[' + SegmentOverride + '0x' + IntToHex(word((@code[i])^), 4) + ']';
     Inc(i);
   end;
 end;
@@ -869,7 +696,7 @@ begin
   DisassemblerCycle;
 
   //****************************************************************************
-  // 3. Phase - Transform non-disassembled bytee to UNSIGNED BYTE data
+  // 3. Phase - Transform non-disassembled bytes to UNSIGNED BYTE data
   //****************************************************************************
 
   Logger.Info('TDisassembler.DisassembleAll - Phase 3');
@@ -936,7 +763,6 @@ var
     prefixes: TPrefixes;
 
     AsmByte: byte;
-    c: cardinal;
   Is3DNowInstruction: boolean;
     k: cardinal;
     KoniecBloku: boolean;
@@ -948,7 +774,7 @@ var
   TheByte: byte;
 
   GroupMapIndex: Integer;
-  GroupInstruction, OneByteInstruction: TInstruction;
+  GroupInstruction, OneByteOpcodeInstruction, TwoByteOpcodeInstruction: TInstruction;
   SIMDInstruction: TSIMDInstruction;
   FPUInstrIndex: Integer;
 
@@ -970,9 +796,9 @@ var
   end;
 
 begin
-  i:= Start;
-  InstrAddress:= i;
-  KoniecBloku:= false;
+  i := Start;
+  InstrAddress := i;
+  KoniecBloku := false;
 
 
   LastParsedIndex := 0;
@@ -995,7 +821,6 @@ begin
 
     Is3DNowInstruction:=false;
     vpc:=0;                                 // Vynulovanie poctu operandov pre nasledujucu instrukciu
-    genreg16:=false;
     modrm.loaded:=false;
     prefixes.pF2:=false;                    // 'prefixes' sa pouzivaju pri urcovani MMX, SSE, SSE2 instrukcii
     prefixes.pF3:=false;
@@ -1029,29 +854,38 @@ XADD, and XCHG.
         case code[i] of
 
           // Group 1
-          $F0,$F2,$F3: begin
+          $F0, $F2, $F3: begin
             if prefixflags.group1 then
               raise EUndefinedOpcodeException.Create('Doubled prefix');
-            prefixflags.group1:=true;
+            prefixflags.group1 := true;
             case code[i] of
-              $F0: begin prefixstr:='lock'; InstructionPrefix:='lock'; end;
-              $F2: begin prefixstr:='repne'; prefixes.pF2:=true; end;
-              $F3: begin prefixstr:='repe'; prefixes.pF3:=true; end;
+              $F0: begin
+                prefixstr := 'lock';
+                InstructionPrefix :='lock';
+              end;
+              $F2: begin
+                prefixstr := 'repne';
+                prefixes.pF2 := true;
+              end;
+              $F3: begin
+                prefixstr := 'repe';
+                prefixes.pF3 := true;
+              end;
             end;
           end;
 
           // Group 2
-          $2E,$36,$3E,$26,$64,$65: begin
+          $2E, $36, $3E, $26, $64, $65: begin
             if PrefixFlags.group2 then
               raise EUndefinedOpcodeException.Create('Doubled prefix');
-            prefixflags.group2:=true;
+            prefixflags.group2 := true;
             case code[i] of
-              $2E: SegmentOverride:='CS:';
-              $36: SegmentOverride:='SS:';
-              $3E: SegmentOverride:='DS:';
-              $26: SegmentOverride:='ES:';
-              $64: SegmentOverride:='FS:';
-              $65: SegmentOverride:='GS:';
+              $2E: SegmentOverride := 'CS:';
+              $36: SegmentOverride := 'SS:';
+              $3E: SegmentOverride := 'DS:';
+              $26: SegmentOverride := 'ES:';
+              $64: SegmentOverride := 'FS:';
+              $65: SegmentOverride := 'GS:';
             end;
           end;
 
@@ -1059,8 +893,8 @@ XADD, and XCHG.
           $66: begin
             if PrefixFlags.group3 then
               raise EUndefinedOpcodeException.Create('Doubled prefix');
-            prefixflags.group3:=true;
-            operand32:=not operand32;
+            prefixflags.group3 := true;
+            operand32 := not operand32;
   //          if bit32 then prefixstr:=prefixstr + 'o16 '
   //          else prefixstr:=prefixstr + 'o32 ';
   //          if bit32 then InstructionPrefix:='o16'
@@ -1072,8 +906,8 @@ XADD, and XCHG.
           $67: begin
             if PrefixFlags.group4 then
               raise EUndefinedOpcodeException.Create('Doubled prefix');
-            prefixflags.group4:=true;
-            address32:=not address32;
+            prefixflags.group4 := true;
+            Address32 := not address32;
   //          if bit32 then prefixstr:=prefixstr + 'a16 '
   //          else prefixstr:=prefixstr + 'a32 ';
   //          if bit32 then InstructionPrefix:='a16'
@@ -1091,9 +925,8 @@ XADD, and XCHG.
       if code[i] <> $0F then
         InstructionPrefix := prefixstr;
 
-      j:=0;
 
-      case OneByte_InstructionSet[code[i]].typ of
+      case OneByteOpcode_InstructionSet[code[i]].typ of
 
         // OneByte Opcode Group Instructions
         itGroup: begin
@@ -1127,8 +960,20 @@ XADD, and XCHG.
             if InstructionName = '' then
               raise EUndefinedOpcodeException.Create('FPU instruction');
 
-            OperandSize := FPU_A_InstructionSet[FPUInstrIndex].par;
-            InstructionOperands := SpracujModRM(mem, twoorfour);
+            {
+            GlobalOperandSize := FPU_A_InstructionSet[FPUInstrIndex].par;
+            InstructionOperands := SpracujModRM(otRMMem, os2or4); // TODO: preco os2or4 ??? je to zle pri FSTCW v tatradas-e
+            }
+            Vpc := 1;
+            case FPU_A_InstructionSet[FPUInstrIndex].par of
+              szWord: Vparam.p1 := M16;
+              szDWord: Vparam.p1 := M32;
+              szQWord: Vparam.p1 := M64;
+              szTWord: Vparam.p1 := M80;
+              szEmpty: Vparam.p1 := MMM; // TODO: dalsie typ ako 14/28 alebo 98/108
+            end;
+            // TODO: asi jke vhodne spracovanie FPU parametrov riesit trochu zvlast (a nespinit tym standardny disassembler)
+
           end
           else begin
             InstructionName := FPU_B_InstructionSet[code[i]][code[i+1]].Name;
@@ -1142,7 +987,7 @@ XADD, and XCHG.
         // TwoByte Opcode Instruction
         itTwoByteOpcodeExtension: begin
           Inc(i);
-          case TBOInstruction_set[code[i]].typ of
+          case TwoByteOpcode_InstructionSet[code[i]].typ of
 
             // Group instruction
             itGroup: begin
@@ -1188,10 +1033,28 @@ XADD, and XCHG.
 
             // SIMD instructions
             itSIMD: begin
-              if prefixes.p66 then SIMDInstruction := GroupInstruction.SIMD_66^
-              else if prefixes.pF2 then SIMDInstruction := GroupInstruction.SIMD_F2^
-              else if prefixes.pF3 then SIMDInstruction := GroupInstruction.SIMD_F3^
-              else SIMDInstruction := GroupInstruction.SIMD^;
+              TwoByteOpcodeInstruction := TwoByteOpcode_InstructionSet[code[i]];
+              if prefixes.p66 then SIMDInstruction := TwoByteOpcodeInstruction.SIMD_66^
+              else if prefixes.pF2 then SIMDInstruction := TwoByteOpcodeInstruction.SIMD_F2^
+              else if prefixes.pF3 then SIMDInstruction := TwoByteOpcodeInstruction.SIMD_F3^
+              else begin
+                // Teraz nasleduje hnusny hack, lebo to neviem vyriesit inak (rozne instrukcie v zavislosti od ModRM.Moder
+                if code[i] = $12 then begin
+                  if (code[i+1] and $C0) <> $C0 then
+                    SIMDInstruction := simd_MOVLPS_a
+                  else
+                    SIMDInstruction := simd_MOVHLPS;
+                end
+                else if code[i] = $16 then begin
+                  if (code[i+1] and $C0) <> $C0 then
+                    SIMDInstruction := simd_MOVHPS_a
+                  else
+                    SIMDInstruction := simd_MOVLHPS;
+                end
+                else
+                  // Predtym tu bol iba tento riadok:
+                  SIMDInstruction := TwoByteOpcodeInstruction.SIMD^;
+              end;
 
               Vparam := SIMDInstruction.Operands;
               Vpc := SIMDInstruction.OperandsCount;
@@ -1209,9 +1072,10 @@ XADD, and XCHG.
 
             // Obycajne TwoByte Instructions
             else begin
-              Vparam := TBOInstruction_set[code[i]].Operands;
-              Vpc := TBOInstruction_set[code[i]].OperandsCount;
-              InstructionName := TBOinstruction_set[code[i]].name;
+              TwoByteOpcodeInstruction := TwoByteOpcode_InstructionSet[code[i]];
+              Vparam := TwoByteOpcodeInstruction.Operands;
+              Vpc := TwoByteOpcodeInstruction.OperandsCount;
+              InstructionName := TwoByteOpcodeInstruction.Name;
             end;
           end;  // End of "case"
         end;
@@ -1219,66 +1083,46 @@ XADD, and XCHG.
         // One byte opcode instructions
         else
           begin
-            OneByteInstruction := OneByte_InstructionSet[code[i]];
-            if OneByteInstruction.typ = itUndefined then
+            OneByteOpcodeInstruction := OneByteOpcode_InstructionSet[code[i]];
+            if OneByteOpcodeInstruction.typ = itUndefined then
               raise EUndefinedOpcodeException.Create('One byte instruction')
             else begin
-              Vparam := OneByteInstruction.Operands;
-              Vpc := OneByteInstruction.OperandsCount;
-              if not OneByteInstruction.AddOp then
-                InstructionName := OneByteInstruction.name
+              Vparam := OneByteOpcodeInstruction.Operands;
+              Vpc := OneByteOpcodeInstruction.OperandsCount;
+              if not OneByteOpcodeInstruction.AddOp then
+                InstructionName := OneByteOpcodeInstruction.name
               else
                 if operand32 then
-                  InstructionName := OneByteInstruction.name32
+                  InstructionName := OneByteOpcodeInstruction.name32
                 else
-                  InstructionName := OneByteInstruction.name16;
+                  InstructionName := OneByteOpcodeInstruction.name16;
             end;
           end;
       end;  // End of "case code[i] of"
 
-
-
-      // Instructions' parameters processing (except FPU instructions which parameters are processed now)
-      OperandSize := szEmpty;
+      // Instructions' parameters processing (except FPU instructions which parameters are already processed now)
       case Vpc of                             // Spracovanie parametrov podla ich poctu
-        1: begin
-            case Vparam.p1 of
-              MODb: OperandSize:=szByte;
-              MODv: If Operand32 then OperandSize:=szDword else OperandSize:=szWord;
-              MODw: OperandSize:=szWord;
-              MODd: OperandSize:=szDword;
-            end;
-            InstructionOperands:=SpracujParameter(Vparam.p1);
-          end;
-        2: begin
-            case Vparam.p1 of
-              MODb: OperandSize:=szByte;
-              MODv: if Operand32 then
-                      OperandSize:=szDword
-                    else
-                      OperandSize:=szWord;
-              MODw: OperandSize:=szWord;
-              MODd: OperandSize:=szDword;
-            end;
-            // Function "SpracujParameter" has side effects its second calling depends on.
-            // So we must ensure that the first parameter is process before second.
-            // We cannot use "InstructionOperands := SpracujParameter(Vparam.p1) + ',' + SpracujParameter(Vparam.p2);"
-            // because the order of proc/fun calling in such statement is not guaranteed (depends on compiler)
-            InstructionOperands := SpracujParameter(Vparam.p1) + ',';
-            OperandSize := szEmpty;
-            InstructionOperands := InstructionOperands + SpracujParameter(Vparam.p2);
-          end;
-        3: begin
-            // Function "SpracujParameter" has side effects its second calling depends on.
-            // So we must ensure that the first parameter is process before second.
-            // We cannot use "InstructionOperands := SpracujParameter(Vparam.p1) + ',' + SpracujParameter(Vparam.p2) + ',' + SpracujParameter(Vparam.p3);"
-            // because the order of proc/fun calling in such statement is not guaranteed (depends on compiler)
-            InstructionOperands := SpracujParameter(Vparam.p1) + ',';
-            InstructionOperands := InstructionOperands + SpracujParameter(Vparam.p2) + ',';
-            InstructionOperands := InstructionOperands + SpracujParameter(Vparam.p3);
-          end;
-      end;
+        1: InstructionOperands := SpracujParameter(Vparam.p1);
 
+        2: begin
+          // Function "SpracujParameter" has side effects its second calling depends on.
+          // So we must ensure that the first parameter is process before second.
+          // We cannot use "InstructionOperands := SpracujParameter(Vparam.p1) + ',' + SpracujParameter(Vparam.p2);"
+          // because the order of proc/fun calling in such statement is not guaranteed (depends on compiler)
+          InstructionOperands := SpracujParameter(Vparam.p1) + ',';
+          InstructionOperands := InstructionOperands + SpracujParameter(Vparam.p2);
+        end;
+
+        3: begin
+          // Function "SpracujParameter" has side effects its second calling depends on.
+          // So we must ensure that the first parameter is process before second.
+          // We cannot use "InstructionOperands := SpracujParameter(Vparam.p1) + ',' + SpracujParameter(Vparam.p2) + ',' + SpracujParameter(Vparam.p3);"
+          // because the order of proc/fun calling in such statement is not guaranteed (depends on compiler)
+          InstructionOperands := SpracujParameter(Vparam.p1) + ',';
+          InstructionOperands := InstructionOperands + SpracujParameter(Vparam.p2) + ',';
+          InstructionOperands := InstructionOperands + SpracujParameter(Vparam.p3);
+        end;
+      end;
 
       // Detekcia 3DNow! instrukcii
       if Is3DNowInstruction then begin
@@ -1324,6 +1168,7 @@ XADD, and XCHG.
 
       // Vlozenie specifikatora velkosti pre instrukcie MOVZX a MOVSX
       // Nieco podobne by sa mozno zislo aj pre PUNPCKxxx instrukcie
+      { nefunguje ak je prefix napr. 66
       if (code[InstrAddress] = $0F) then
         case code[InstrAddress+1] of
           // MOVZX
@@ -1333,6 +1178,7 @@ XADD, and XCHG.
           $BE: InstructionOperands:= InsertStr('byte ', InstructionOperands, Pos(',', InstructionOperands) + 1);
           $BF: InstructionOperands:= InsertStr('word ', InstructionOperands, Pos(',', InstructionOperands) + 1);
         end;
+      }
 
       // Ak je posledny bajt aktual. instrukcie uz sucastou nejakej inej instrukcie alebo je uz mimo bloku,
       // tak sa odstrani flag dfInstruction z prveho bajtu aktual. instrukcie a ukonci sa aktual. blok
@@ -1350,7 +1196,7 @@ XADD, and XCHG.
         // Address
         MemAddress:= InstrAddress + fMemOffset;
         for HexAddressIndex := 1 to 8 do begin
-          Line[9 - HexAddressIndex]:= HexDigits[MemAddress and 15];
+          Line[9 - HexAddressIndex] := HexDigits[MemAddress and 15];
           MemAddress:= MemAddress shr 4;
         end;
 
@@ -1391,7 +1237,6 @@ XADD, and XCHG.
 
         SetLength(Line, LineIndex);
         Disassembled[InstrAddress].Disassembled := Line;
-
 {
         // Create intruction line of Disassembled from particles
         Disassembled[InstrAddress].Disassembled :=
@@ -1410,13 +1255,14 @@ XADD, and XCHG.
       Inc(i);
 
     except
-      on EUndefinedOpcodeException do begin
+      on E: EUndefinedOpcodeException do begin
         Inc(Disassembled[InstrAddress].ReferCount);
         SetLength(Disassembled[InstrAddress].refer, Disassembled[InstrAddress].ReferCount);
-        Disassembled[InstrAddress].refer[disassembled[InstrAddress].refercount-1]:= ';' + IntToHex(InstrAddress,8) + ' ' + DataToHex(code[InstrAddress], i - InstrAddress + 1) + '...                  UNDEFINED OPCODE!';
-        InstructionPrefix:= '';
-        DisasmMap[InstrAddress]:= 0;
-        KoniecBloku:= true;
+        Disassembled[InstrAddress].refer[disassembled[InstrAddress].refercount - 1] := StringRightPad(';' + IntToHex(InstrAddress + fMemOffset, 8) + ' ' + DataToHex(code[InstrAddress], i - InstrAddress + 1) + '...', ilInstructionMnemonicIndex - 1) + 'UNDEFINED OPCODE!';
+        InstructionPrefix := '';
+        DisasmMap[InstrAddress] := 0;
+        KoniecBloku := true;
+        Logger.Debug('Undefined opcode, message: ' + E.Message);
       end
       else
         raise;
@@ -1443,71 +1289,78 @@ end;
 function Tx86Disassembler.SpracujParameter(a:Tparameter):string;
 begin
   case a of
-    MODb: result:=SpracujModRM(regmem, onebyte);
-    MODw: result:=SpracujModRM(regmem, twobyte);
-    MODv: result:=SpracujModRM(regmem, twoorfour);
-    MODd: result:=SpracujModRM(regmem, fourbyte);
-    MODp: result:=SpracujModRM(regmem, fourorsix);
-    MODq: result:=SpracujModRM(regmem, mmx);
-    MODdq: result:=SpracujModRM(regmem, xmm);
+    MODb: result := SpracujModRM(otRMRegMem, os1);
+    MODw: result := SpracujModRM(otRMRegMem, os2);
+    MODv: result := SpracujModRM(otRMRegMem, os2or4);
+    MODd: result := SpracujModRM(otRMRegMem, os4);
+    MODp: result := SpracujModRM(otRMRegMem, os4or6);
+    MODq: result := SpracujModRM(otRMRegMem, os8);
+    MODdq: result := SpracujModRM(otRMRegMem, os16);
 
-    GREGb: result:=SpracujModRM(greg,onebyte);
-    GREGw: result:=SpracujModRM(greg,twobyte);
-    GREGv: result:=SpracujModRM(greg,twoorfour);
-    GREGd: result:=SpracujModRM(greg,fourbyte);
-    GREGq: result:=SpracujModRM(greg,mmx);
-    GREGdq: result:=SpracujModRM(greg,xmm);
+    GREGb: result := SpracujModRM(otRegister, os1);
+    GREGw: result := SpracujModRM(otRegister, os2);
+    GREGv: result := SpracujModRM(otRegister, os2or4);
+    GREGd: result := SpracujModRM(otRegister, os4);
+    GREGq: result := SpracujModRM(otRegister, os8);
+    GREGdq: result := SpracujModRM(otRegister, os16);
 
-    SREGw: result:=SpracujModRM(sreg,twobyte);
-    CREGd: result:=SpracujModRM(creg,fourbyte);
-    DREGd: result:=SpracujModRM(dreg,fourbyte);
-    TREGd: result:=SpracujModRM(treg,fourbyte);
+    SREGw: result := SpracujModRM(otSegmentReg, os2);
+    CREGd: result := SpracujModRM(otControlReg, os4);
+    DREGd: result := SpracujModRM(otDebugReg, os4);
+    TREGd: result := SpracujModRM(otTestReg, os4);
 
-    IMMb: result:=SpracujImmediate(onebyte);
-    IMMv: result:=SpracujImmediate(twoorfour);
-    IMMw: result:=SpracujImmediate(twobyte);
-    IMMp: result:=SpracujImmediate(fourorsix);
+    IMMb: result := SpracujImmediate(os1);
+    IMMv: result := SpracujImmediate(os2or4);
+    IMMw: result := SpracujImmediate(os2);
+    IMMp: result := SpracujImmediate(os4or6);
 
-    RELb: result:=SpracujRelative(onebyte);
-    RELv: result:=SpracujRelative(twoorfour);
-    RELw: result:=SpracujRelative(twobyte);
+    RELb: result := SpracujRelative(os1);
+    RELv: result := SpracujRelative(os2or4);
+    RELw: result := SpracujRelative(os2);
 
-    OFFb: result:=SpracujOffset(onebyte);
-    OFFv: result:=SpracujOffset(twoorfour);
+    OFFb, OFFv: result := SpracujOffset;
 
-    ax: result:=SpracujGenReg+'AX';
-    bx: result:=SpracujGenReg+'BX';
-    cx: result:=SpracujGenReg+'CX';
-    dx: result:=SpracujGenReg+'DX';
-    si: result:=SpracujGenReg+'SI';
-    di: result:=SpracujGenReg+'DI';
-    bp: result:=SpracujGenReg+'BP';
-    sp: result:=SpracujGenReg+'SP';
-    al: result:='AL';
-    bl: result:='BL';
-    cl: result:='CL';
-    dl: result:='DL';
-    ah: result:='AH';
-    bh: result:='BH';
-    ch: result:='CH';
-    dh: result:='DH';
-    DS: result:='DS';
-    ES: result:='ES';
-    SS: result:='SS';
-    CS: result:='CS';
-    statDX: result:='DX';
+    ax: result := SpracujGenReg + 'AX';
+    bx: result := SpracujGenReg + 'BX';
+    cx: result := SpracujGenReg + 'CX';
+    dx: result := SpracujGenReg + 'DX';
+    si: result := SpracujGenReg + 'SI';
+    di: result := SpracujGenReg + 'DI';
+    bp: result := SpracujGenReg + 'BP';
+    sp: result := SpracujGenReg + 'SP';
 
-    M32: result:=SpracujModRM(mem,fourbyte);
-    M64: result:=SpracujModRM(mem,mmx);
-    M128: result:=SpracujModRM(mem,xmm);
-    R32: result:=SpracujModRM(reg, fourbyte);
-    R64: result:=SpracujModRM(reg, mmx);
-    R128: result:=SpracujModRM(reg, xmm);
-    REG32_M16: result:=SpracujModRM(regmem,R32_M16);
-    XMM_M32: result:=SpracujModRM(regmem,R128_M32);
-    XMM_M64: result:=SpracujModRM(regmem,R128_M64);
+    al: result := 'AL';
+    bl: result := 'BL';
+    cl: result := 'CL';
+    dl: result := 'DL';
+    ah: result := 'AH';
+    bh: result := 'BH';
+    ch: result := 'CH';
+    dh: result := 'DH';
 
-    n1: result:='1';
+    DS: result := 'DS';
+    ES: result := 'ES';
+    SS: result := 'SS';
+    CS: result := 'CS';
+    statDX: result := 'DX';
+
+    MMM: result := SpracujModRM(otRMMem, osNone);
+    M16: result := SpracujModRM(otRMMem, os2);
+    M32: result := SpracujModRM(otRMMem, os4);
+    M64: result := SpracujModRM(otRMMem, os8);
+    M80: result := SpracujModRM(otRMMem, os10);
+    M128: result := SpracujModRM(otRMMem, os16);
+    R32: result := SpracujModRM(otRMReg, os4);
+    R64: result := SpracujModRM(otRMReg, os8);
+    R128: result := SpracujModRM(otRMReg, os16);
+    REG32_M8: result := SpracujModRM(otRMRegMem, osR4_M1);
+    REG32_M16: result := SpracujModRM(otRMRegMem, osR4_M2);
+    MMX_M32: result := SpracujModRM(otRMRegMem, osR8_M4);
+    XMM_M16: result := SpracujModRM(otRMRegMem, osR16_M2);
+    XMM_M32: result := SpracujModRM(otRMRegMem, osR16_M4);
+    XMM_M64: result := SpracujModRM(otRMRegMem, osR16_M8);
+
+    n1: result := '1';
   end;
 end;
 

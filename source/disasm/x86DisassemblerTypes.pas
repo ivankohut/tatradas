@@ -13,8 +13,9 @@ type
     OFFb,         OFFv,
 
     REG32_M8, REG32_M16,                                        // 32b register urceny R/M alebo 8 resp. 16 bitova pamat
-    XMM_M16, XMM_M32, XMM_M64,                                  // podobne ako MODdq, skutocna velkost operandu je vsak 32/64 bitov, nie 128 ( XMM_M128 by bolo to iste ako MODdq)
-    M32, M64, M128,                                             // prave adresa urcena ModRM (r/m)
+    XMM_M16, XMM_M32, XMM_M64,                                  // podobne ako MODdq, skutocna velkost operandu je vsak 16 resp. 32 resp. 64 bitov, nie 128 ( XMM_M128 by bolo to iste ako MODdq)
+    MMX_M32,                                                    // ModRM(r/m) - MMX register alebo 32 bitova pamat
+    MMM, M16, M32, M64, M80, M128,                              // prave adresa urcena ModRM (r/m)
     R32, R64, R128,                                             // prave register urceny ModRM (r/m)
 
     ax, bx, cx, dx, si, di, bp, sp,                             // general registre - dynamicke (menia sa na Exx v priprade 32 bit)
@@ -30,15 +31,16 @@ type
     p1, p2, p3: TParameter;
   end;
 
-  TFPUParameter =  (st1, //st(0),st(0)..st(0),st(7)
-                    st2, //st(0),st(0)..st(7),st(0)
-                    st3, //st(0)..st(7)
-                    none
-                    );
+  TFPUParameter =  (
+    st1, //st(0),st(0)..st(0),st(7)
+    st2, //st(0),st(0)..st(7),st(0)
+    st3, //st(0)..st(7)
+    none
+  );
 
-  TModRMParameterType = (reg, greg, sreg, creg, dreg, treg, regmem, mem);
 
-  TModRMParameterSize = (OneByte, TwoByte, TwoOrFour, FourByte, FourOrSix, MMX, XMM, R32_M16, R128_M32, R128_M64);
+  TModRMOperandType = (otRegister, otRMReg, otRMMem, otRMRegMem, otSegmentReg, otControlReg, otDebugReg, otTestReg);
+  TModRMOperandSize = (osNone, os1, os2, os2or4, os4, os4or6, os8, os10, os16, osR4_M1, osR4_M2, osR8_M4, osR16_M2, osR16_M4, osR16_M8);
 
 
   TModRM = record

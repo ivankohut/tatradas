@@ -5,6 +5,9 @@ TO DO list (TatraDAS)
 - zdroje (PE, NE, atd) ?
 - paralelne disassemblovanie viacerych sekcii
 - Lazarus GUI
+Disassembler
+- 64 bit (pozor na instrukciu MOVD/Q, PEXTRD/Q, PINSRD/Q, CMPXCH8B/16B atd.)
+- instrukcie pre virtualizaciu
 
 2.9.9
 General
@@ -12,16 +15,18 @@ General
 - errory a vynimky (o.i. ako osetrovat pristup do poli v array propertoch)
 - stringy rozhadzane po suboroch
 - translation system
+- save - rozdelit na Save Project a Export (Disassembly, NASM, lubovolne)
 
 Disassembler:
 - refactor (rewrite :) ) disassembler
-- 64 bit (pozor na instrukciu MOVD/Q, PEXTRD/Q, PINSRD/Q, CMPXCH8B/16B)
-- instrukcie pre virtualizaciu
-- MOVLPS/MOVHLPS, MOVHPS/MOVLHPS - rovnaky opcode, lisia sa reg/mem adresaciou
 - 0F C2 - CMPxxxx - spravit rozne nazvy instrukcie podla tretieho operandu
 - detekovat imported o uroven volania skor "call x, x: jump [0x...]"
 - nerekurzivne disassemblovanie
-- implementovat XMM_M16, REG32_M8
+- Four Or Six - pochopit a zariadit sa podla toho (spracujMODRM)
+- FISTTP je to SSE3 instrukcia medzi FPU - co s tym ? ako nastavit instrSet na SSE3 ?
+- zmenit typ parametra FPU instrukcii ? (aby nemusel byt "case" v FPU vetve)
+- problemy (disasm & yasm/nasm):
+    snowcraft.exe undefined symbol (yasm) - problem je v tom, ze v CALL a jeho ciel su v roznych sekciach -> CALL v jednej sekcii nevytvori referenciu v druhej sekcii a teda tam nedisassemblujeme od ciela CALL-u
 
 Misc
 - procmat - rozdelit na viac unitov ?
@@ -33,7 +38,6 @@ Misc
 - refaktorizacia
   - codeSection.savetofile (NASM)
 - kompilovatelnost s NASM
-  - wxivan.asm sa neskompiluje
   - upravit aby NASM nehadzal warningy
   - optimalizovat ukladanie do NASM (stringy)
   - najvhodnejsi by bol specialny mod disassemblovania
@@ -51,10 +55,11 @@ GUI
 - prerobit menu pomocou actions
 - system na spravu GUI dat (hodnoty formularov) & ich ukladanie do projektoveho suboru
   - pridat ulozenie bookmarkov v projekte
+- refaktorovat MyEdits
 
 CLI
 - textovy progress - dobiehanie do 100%, aj je progress naozaj kratky, tak sa nezobrazi ani jeho nazov
-- vacsie moznosti z konzoly
+- vacsie moznosti z konzoly - napr. save as projekt, DAS, NASM
 
 Bugs
 - AV - TatraFPC.exe  - disasemble, change everything to byte data, disasm at 0x0041B4FD
@@ -65,8 +70,19 @@ DONE:
 - refaktorizacia a kontrola FPU instrukcii
 - SSSE3, SSE41, SSE42
 - zavedeny typ instrukcie (napr. normal alebo undefined), odstranena polozka "opcode"
+- oprava - uvadzanie velkosti operandu vzdy, ak je v pamati; -> dosledkom je kompilovatelnost s NASM (hoci este stale hadze warningy)
+- oprava velkosti operandu u niektorych FPU instrukcii,
+    oprava FLD (ma mat iba jeden parameter, chyba je v Intel manuale), podobne FUCOM
 
-
+- oprava - velkost operandu FPU instrukcii nezavisi na operand-size attribute
+- oprava XLAT, bolo XLAT/XLATB, ma byt XLATB
+- oprava: "undefined opcode" mal adresu relativnu k zaciatku sekcie, ma byt pamatova (t.j. + fMemOffset), taktiez nie je dobre zarovnany (boli tam napevno medzery)
+- oprava viacerym SSE(x) instrukciam chybal treti operand
+- oprava NASM export - komentare (riadky zacinajuce ;) mali odseknuty zaciatok a potom nemali ; na zaciatku -> NASM nezozral
+- oprava Disassembler - rozlisovanie MOVLPS/MOVHLPS, MOVHPS/MOVLHPS - rovnaky opcode, lisia sa reg/mem adresaciou (obsahuje to napr. Chessmaster.exe)
+- pridat Go to line (cislo riadku)
+- oprava MOVD instrukcie (prvy parameter ked mal byt MMX, tak bol 32 bit register)
+- oprava DFE0 ma byt FNSTSW AX, nie FSTSW AX - sposobobalo to problemy : short jump out of range, chyba je v manuali (opcode map)
 
 2.9.8 todo list:
   - problemy:

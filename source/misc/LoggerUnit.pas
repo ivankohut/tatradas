@@ -8,7 +8,7 @@ uses
 
 
 const
-  LoggerTimeStampFormat = 'yyyy-mm-dd hh:nn:ss:zzz';  
+  LoggerTimeStampFormat = 'yyyy-mm-dd hh:nn:ss:zzz';
 
 type
 
@@ -20,13 +20,12 @@ type
   TLogger = class
   private
     fListeners: TObjectList;
-
     procedure WriteMessage(msg: string);
-
   public
     constructor Create;
     destructor Destroy; override;
     procedure Info(Msg: string);
+    procedure Debug(Msg: string);
     procedure Warning(Msg: string);
     procedure Fatal(Msg: string);
 
@@ -84,6 +83,13 @@ end;
 procedure TLogger.Info(Msg: string);
 begin
   WriteMessage('INFO - ' + msg);
+end;
+
+
+
+procedure TLogger.Debug(Msg: string);
+begin
+  WriteMessage('DEBUG - ' + msg);
 end;
 
 
@@ -149,7 +155,7 @@ begin
 end;
 
 
-  
+
 initialization
   Logger:= TLogger.Create;
 

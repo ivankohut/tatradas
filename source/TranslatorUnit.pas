@@ -27,7 +27,7 @@ uses
   StringRes;
 
 const
-  LangFileSectionCount = 25;
+  LangFileSectionCount = 26;
 
 type
 

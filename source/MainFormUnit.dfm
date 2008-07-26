@@ -408,6 +408,9 @@ object MainForm: TMainForm
       object Gotoaddress1: TMenuItem
         Action = actGoToAddress
       end
+      object Gotoline1: TMenuItem
+        Action = actGoToLine
+      end
       object N3: TMenuItem
         Caption = '-'
       end
@@ -1043,6 +1046,12 @@ object MainForm: TMainForm
       Caption = 'Go to address ...'
       ShortCut = 16455
       OnExecute = actGotoAddressExecute
+    end
+    object actGoToLine: TAction
+      Category = 'GoTo'
+      Caption = 'Go to line ...'
+      ShortCut = 16460
+      OnExecute = actGoToLineExecute
     end
   end
   object OpenProjectOpenDialog: TOpenDialog

@@ -637,16 +637,22 @@ begin
     Writeln(DAS);
 
     IsTargetAddress:= false;
-    for LineIndex:=0 to Disassembled.Count - 1 do begin
+    for LineIndex := 0 to Disassembled.Count - 1 do begin
       Inc(ProgressData.Position);
       if ProgressData.ErrorStatus = errUserTerminated then
         raise EUserTerminatedProcess.Create('');
 
-      Line:= Disassembled[LineIndex];
+      Line := Disassembled[LineIndex];
 
       // Empty line
       if Length(Line) = 0 then begin
         WriteLn(DAS);
+        Continue;
+      end;
+
+      // Comment line
+      if Line[1] = ';' then begin
+        WriteLn(DAS, Line);
         Continue;
       end;
 

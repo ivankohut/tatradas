@@ -30,21 +30,6 @@ uses
     {$ENDIF}
   {$ENDIF}
 
-  {$IFDEF FPC}
-    {$IFDEF LINUX}
-      Crt,
-      cthreads,
-    {$ENDIF}
-  {$ENDIF}
-
-  {$IFDEF MSWINDOWS}
-    {$IFDEF DELPHI}
-      {$IFDEF CONSOLE}
-        //Crt in 'misc\win32\crt.pp',
-      {$ENDIF}
-    {$ENDIF}
-  {$ENDIF}
-
   SysUtils,
   Classes,
   StrUtils,
@@ -62,6 +47,7 @@ uses
   // Misc. units
   StringRes in 'res\StringRes.pas',
   LoggerUnit in 'misc\LoggerUnit.pas',
+  FilesUnit in 'misc\FilesUnit.pas',
 
 {$IFDEF GUI_B}
   TatraDASHighlighter in 'res\TatraDASHighlighter.pas',
@@ -82,6 +68,7 @@ uses
   UnknownFileFormUnit in 'forms\UnknownFileFormUnit.pas' {UnknownFileFormatForm},
   SaveOptionsFormUnit in 'forms\SaveOptionsFormUnit.pas' {SaveOptionsForm},
   ProgressFormUnit in 'forms\ProgressFormUnit.pas' {ProgressForm},
+  GotoLineFormUnit in 'forms\GotoLineFormUnit.pas' {GoToLineForm},
   GotoAddressFormUnit in 'forms\GotoAddressFormUnit.pas' {GoToAddressForm},
 
   // Frames' units
@@ -93,6 +80,7 @@ uses
   ResourceTabFrameUnit in 'frames\ResourceTabFrameUnit.pas',
 
 {$ELSE}
+  CliUnit in 'CliUnit.pas',
   TatraDAS_SynEditStringList in 'misc\TatraDAS_SynEditStringList.pas',
 {$ENDIF}
 
@@ -128,6 +116,7 @@ uses
   // Misc. units
   StringRes in 'res/StringRes.pas',
   LoggerUnit in 'misc/LoggerUnit.pas',
+  FilesUnit in 'misc/FilesUnit.pas',
 
 {$IFDEF GUI_B}
   ButtonsX in 'misc/ButtonsX.pas',
@@ -148,9 +137,11 @@ uses
   UnknownFileFormUnit in 'forms/UnknownFileFormUnit.pas' {UnknownFileFormatForm},
   SaveOptionsFormUnit in 'forms/SaveOptionsFormUnit.pas' {SaveOptionsForm},
   ProgressFormUnit in 'forms/ProgressFormUnit.pas' {ProgressForm},
+  GotoLineFormUnit in 'forms/GotoLineFormUnit.pas' {GoToLineForm},
   GotoAddressFormUnit in 'forms/GotoAddressFormUnit.pas' {GoToAddressForm},
 
 {$ELSE}
+  CliUnit in 'CliUnit.pas',
   TatraDAS_SynEditStringList in 'misc/TatraDAS_SynEditStringList.pas',
 {$ENDIF}
   // Disassembler units
@@ -198,6 +189,7 @@ begin
   Application.CreateForm(TOptionsForm, OptionsForm);
   Application.CreateForm(THexEditForm, HexEditForm);
   Application.CreateForm(TProgressForm, ProgressForm);
+  Application.CreateForm(TGotoLineForm, GotoLineForm);
   Application.CreateForm(TGoToAddressForm, GoToAddressForm);
   Application.Run;
 end.
@@ -205,102 +197,6 @@ end.
 {$ENDIF}
 
 {$IFDEF CONSOLE}
-
-procedure ShowUsage;
-begin
-  WriteLn('usage:');
-  WriteLn;
-  WriteLn('tdascon input_file_name output_file_name');
-  WriteLn;
-  WriteLn('  input_file_name       name of file you want to disassemble');
-  WriteLn('  output_file_name      name of file you want to send disassembled output to');
-  WriteLn;
-end;
-
-
-
-procedure ExecuteProgress(AThread: TThread);
-var
-  ProgressCharsCount: integer;
-  CurrentProgress: string;
-  SavedXPosition: integer;
-begin
-  ProgressData.Finished:= false;
-  ProgressData.ErrorStatus:= errNone;
-  ProgressData.Maximum:= 0;
-  ProgressData.Position:= 0;
-  ProgressData.Name:= '';
-
-  ProgressCharsCount:= 0;
-  CurrentProgress:= '';
-  AThread.Resume;
-  while not ProgressData.Finished do begin
-    if ProgressData.Maximum <> 0 then begin
-      // Display progress name and reset progress shower after progress change
-      if CurrentProgress <> ProgressData.Name then begin
-        CurrentProgress:= ProgressData.Name;
-        ProgressCharsCount:= 0;
-        WriteLn;
-        Write(StringRightPad(ProgressData.Name + ':', MaxProgressNameLength + 1));
-      end;
-      // Show progress
-      while ProgressCharsCount < Round(20 * ProgressData.Position / ProgressData.Maximum) do begin
-        Write('.');
-        Inc(ProgressCharsCount);
-      end;
-      {$IFDEF FPC}
-       {$IFDEF LINUX}
-        SavedXPosition:= WhereX;
-        GotoXY(MaxProgressNameLength + 2 + 20 + 1, WhereY);
-        Write(Round(100 * ProgressData.Position / ProgressData.Maximum), '%');
-        GotoXY(SavedXPosition, WhereY);
-       {$ENDIF}
-      {$ENDIF}
-    end;
-    Sleep(100);
-  end;
-  AThread.WaitFor;
-  WriteLn;
-end;
-
-
-
-procedure RunDisassembler(InputFileName, OutputFileName:string);
-var
-  ExecFileManager: TExecFileManager;
-  ExecFile: TExecutableFile;
-  SaveOptions: TSaveOptions;
-begin
-  ExecFileManager:= TExecFileManager.Create;
-  ExecFile:= nil;
-  try
-    // Create ExecFile
-    ExecFile:= ExecFileManager.CreateNewExecFile(ExpandFilename(InputFileName));
-    if ProgressData.ErrorStatus <> errNone then
-      raise ETatraDASException.Create('');
-
-    // Disassemble it
-    Writeln;
-    Writeln('CS_n  =  Code Section number ''n''.');
-    Writeln;
-    ExecuteProgress(TDisassembleThread.Create(ExecFile));
-    if ProgressData.ErrorStatus <> errNone then
-      raise ETatraDASException.Create('');
-
-    // Save result to file
-    SaveOptions:= [soDisassembly];
-    ExecuteProgress(TSaveThread.Create(ExecFileManager, ExecFile, OutputFileName, SaveOptions));
-    RenameFile(ChangeFileExt(OutputFileName, '.das'), OutputFileName);
-    WriteLn;
-    WriteLn;
-    WriteLn('Disassembling finished, result saved to file ''', OutputFileName, '''.');
-
-  finally
-    ExecFile.Free;
-    ExecFileManager.Free;
-  end;
-end;
-
 
 var
   ProgramIdentification: string;
