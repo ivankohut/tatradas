@@ -25,7 +25,7 @@ type
     procedure SetMaxAddress(MaxAddress: cardinal);
     function GetAddress: cardinal;
   public
-    GotoLineEdit: TMyNumEdit;
+    GotoLineEdit: TDecimalPositiveEdit;
     procedure Translate;
     property MaxAddress: cardinal write SetMaxAddress;
     property Address: cardinal read GetAddress;
@@ -95,7 +95,7 @@ end;
 
 procedure TGotoLineForm.FormCreate(Sender: TObject);
 begin
-  GotoLineEdit := TMyNumEdit.Create(self);
+  GotoLineEdit := TDecimalPositiveEdit.Create(self);
   GotoLineEdit.Parent := self;
   GotoLineEdit.Left := 110;
   GotoLineEdit.Top := 16;

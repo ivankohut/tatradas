@@ -47,10 +47,10 @@ type
     procedure FormDestroy(Sender: TObject);
 
   public
-    MaxAddressHexEdit: TMyHexEdit; //TPBBinHexEdit;
-    BytesBinHexEdit: TMyNumEdit; //TPBBinHexEdit;
-    ItemsBinHexEdit: TMyNumEdit; //TPBBinHexEdit;
-    SelectedEdit: TMyEdit; //TPBBinHexEdit;
+    MaxAddressHexEdit: THexPositiveEdit;
+    BytesBinHexEdit: TDecimalPositiveEdit;
+    ItemsBinHexEdit: TDecimalPositiveEdit;
+    SelectedEdit: TPositiveEdit;
     Options: TDataChangeOptions;
     procedure Translate;
   end;
@@ -64,7 +64,7 @@ implementation
 
 procedure TAdvancedChangingToDataForm.FormCreate(Sender: TObject);
 begin
-  ItemsBinHexEdit:=TMyNumEdit.Create(self);
+  ItemsBinHexEdit:= TDecimalPositiveEdit.Create(self);
   ItemsBinHexEdit.Left:=132;
   ItemsBinHexEdit.Top:=24;
 //  ItemsBinHexEdit.BaseFormat:=Number;
@@ -72,7 +72,7 @@ begin
   ItemsBinHexEdit.Enabled:=true;
   ItemsBinHexEdit.OnChange:=ValueChange;
   ItemsBinHexEdit.MaxValue:=$FFFFFFFF;
-  BytesBinHexEdit:=TMyNumEdit.Create(self); //TPBBinHexEdit.Create(self);
+  BytesBinHexEdit := TDecimalPositiveEdit.Create(self); //TPBBinHexEdit.Create(self);
   BytesBinHexEdit.Left:=132;
   BytesBinHexEdit.Top:=56;
 //  BytesBinHexEdit.BaseFormat:=Number;
@@ -80,7 +80,7 @@ begin
   BytesBinHexEdit.Enabled:=false;
   BytesBinHexEdit.OnChange:=ValueChange;
   BytesBinHexEdit.MaxValue:=$FFFFFFFF;
-  MaxAddressHexEdit:=TMyHexEdit.Create(self); //TPBBinHexEdit.Create(self);
+  MaxAddressHexEdit:=THexPositiveEdit.Create(self); //TPBBinHexEdit.Create(self);
   MaxAddressHexEdit.Left:=132;
   MaxAddressHexEdit.Top:=88;
 //  MaxAddressHexEdit.BaseFormat:=HexaDecimal;
@@ -170,9 +170,10 @@ begin
 end;
 
 procedure TAdvancedChangingToDataForm.ValueChange(Sender: TObject);
-var MyEdit: TMyEdit;
+var
+  MyEdit: TPositiveEdit;
 begin
-  MyEdit:=TMyEdit(Sender);
+  MyEdit := TPositiveEdit(Sender);
   MyEdit.Change(Sender);
   if MyEdit.Text='' then Exit;
   options.value:=MyEdit.AsCardinal;

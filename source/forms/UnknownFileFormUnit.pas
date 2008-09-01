@@ -54,9 +54,9 @@ type
     { Private declarations }
     function GetParameters: TCustomFileParameters;
   public
-    StartOffsetEdit: TMyHexEdit; //TPBBinHexEdit;
-    EntrypointEdit: TMyHexEdit; //TPBBinHexEdit;
-    SizeEdit: TMyHexEdit; //TPBBinHexEdit;
+    StartOffsetEdit: THexPositiveEdit;
+    EntrypointEdit: THexPositiveEdit;
+    SizeEdit: THexPositiveEdit; 
     filename: string;
     filesize: cardinal;
     StartOffset: cardinal;
@@ -156,21 +156,21 @@ end;
 
 procedure TUnknownFileFormatForm.FormCreate(Sender: TObject);
 begin
-  StartOffsetEdit:= TMyHexEdit.Create(Panel1);
+  StartOffsetEdit:= THexPositiveEdit.Create(Panel1);
   StartOffsetEdit.Left:=248;
   StartOffsetEdit.Top:=124;
   StartOffsetEdit.Width:=169;
 //  StartOffsetEdit.BaseFormat:=Hexadecimal;
   StartOffsetEdit.Parent:=Panel1;
 
-  EntrypointEdit:= TMyHexEdit.Create(Panel1); //TPBBinHexEdit.Create(Panel1);
+  EntrypointEdit:= THexPositiveEdit.Create(Panel1); //TPBBinHexEdit.Create(Panel1);
   EntrypointEdit.Left:=248;
   EntrypointEdit.Top:=152;
   EntrypointEdit.Width:=169;
 //  EntrypointEdit.BaseFormat:=Hexadecimal;
   EntrypointEdit.Parent:=Panel1;
 
-  SizeEdit:= TMyHexEdit.Create(Panel1); //TPBBinHexEdit.Create(Panel1);
+  SizeEdit:= THexPositiveEdit.Create(Panel1); //TPBBinHexEdit.Create(Panel1);
   SizeEdit.Left:=248;
   SizeEdit.Top:=180;
   SizeEdit.Width:=169;

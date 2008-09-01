@@ -4,7 +4,7 @@ interface
 
 type
 
-  TParameter = (
+  TOperand = (
     MODb,  MODw,  MODv,  MODd,  MODp,  MODq,  MODt, MODdq,      // Operand urceny pomocou ModRM (adresa alebo General register, urceny pomocou Mod a R/M poli)
     GREGb, GREGw, GREGv, GREGd,        GREGq, GREGdq,           // General register urceny ModRM (reg field)
     SREGw, CREGd, DREGd, TREGd,                                 // Segment, Control, Debug, Test register
@@ -27,11 +27,11 @@ type
     n1
   );
 
-  TParam = record
-    p1, p2, p3: TParameter;
+  TOperands = record
+    p1, p2, p3: TOperand;
   end;
 
-  TFPUParameter =  (
+  TFpuOperand =  (
     st1, //st(0),st(0)..st(0),st(7)
     st2, //st(0),st(0)..st(7),st(0)
     st3, //st(0)..st(7)

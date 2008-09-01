@@ -30,6 +30,15 @@ uses
     {$ENDIF}
   {$ENDIF}
 
+
+  {$IFNDEF GUI_B}
+    {$IFDEF FPC}
+      {$IFDEF LINUX}
+        cthreads,
+      {$ENDIF}
+    {$ENDIF}
+  {$ENDIF}
+
   SysUtils,
   Classes,
   StrUtils,

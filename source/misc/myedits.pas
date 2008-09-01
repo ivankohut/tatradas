@@ -7,142 +7,176 @@ uses SysUtils, StdCtrls, Classes, Windows;
 type
 //  TMyEditMode = (emBinary,emOctal,emDecimal,emHexadecimal);
 
-  TMyEdit = class(TEdit)
-   public
-    MaxValue: cardinal;
+  TPositiveEdit = class(TEdit)
+  private
+    fValue: cardinal;
+    fMaxValue: cardinal;
+    function GetAsCardinal: cardinal;
+    procedure SetAsCardinal(AValue: cardinal);
+  public
     procedure Change(Sender: TObject); virtual; abstract;
-   private
-    function GetAsCardinal: cardinal; virtual; abstract;
-    procedure SetAsCardinal(Value: cardinal); virtual; abstract;
-   public
     property AsCardinal: cardinal read GetAsCardinal write SetAsCardinal;
+    property MaxValue: cardinal read fMaxValue write fMaxValue;
   end;
 
-  TMyHexEdit = class(TMyEdit)
-   public
-//    mode: TMyEditMode;
+
+const
+  HEX_PREFIX = '0x';
+  HEX_FONT = 'Courier New';
+  HEX_DIGITS = ['0'..'9','A'..'F'];
+
+type
+  THexPositiveEdit = class(TPositiveEdit)
+  private
+    procedure MyHexEditKeyPress(Sender: TObject; var Key: Char);
+  public
+    procedure Change(Sender: TObject); override;
     constructor Create(AOwner: TComponent); override;
     procedure SetFocus; override;
-   private
-    BeforeStr: string;
-    procedure MyHexEditKeyPress(Sender: TObject; var Key: Char);
-    procedure Change(Sender: TObject); override;
-    function GetAsCardinal: cardinal; override;
-    procedure SetAsCardinal(Value:cardinal); override;
-   public
   end;
 
-  TMyNumEdit = class(TMyEdit)
-   public
-    constructor Create(AOwner: TComponent); override;
-   private
-    BeforeStr: string;
+
+  TDecimalPositiveEdit = class(TPositiveEdit)
+  private
     procedure MyNumEditKeyPress(Sender: TObject; var Key: Char);
+  public
     procedure Change(Sender: TObject); override;
-    function GetAsCardinal: cardinal; override;
-    procedure SetAsCardinal(Value: cardinal); override;
-   public
-//    property AsInteger:integer read GetAsInteger write SetAsInteger; //(Value: Integer);
+    constructor Create(AOwner: TComponent); override;
   end;
 
 implementation
 
-constructor TMyHexEdit.Create(AOwner: TComponent);
+uses
+  Math,
+  StringUtilities
+  ;
+
+
+function TPositiveEdit.GetAsCardinal: cardinal;
 begin
-  inherited;
-  OnChange:=Change;
-  OnKeyPress:=MyHexEditKeyPress;
-  Text:='0x';
-  BeforeStr:= Text;
-  Font.Name:='Courier New';
-  Font.Size:=10;
-  MaxLength:=10;
+  result := fValue;
 end;
 
-procedure TMyHexEdit.SetFocus;
+
+
+procedure TPositiveEdit.SetAsCardinal(AValue: cardinal);
 begin
-  inherited;
-  SelStart:=2;
-  SelLength:=Length(Text)-2;
+  fValue := AValue;
 end;
 
-procedure TMyHexEdit.MyHexEditKeyPress(Sender: TObject; var Key: Char);
-//var pom:string;
+
+{ TPositiveHexEdit }
+
+
+constructor THexPositiveEdit.Create(AOwner: TComponent);
 begin
-  BeforeStr:=Text;
-  if Key = #8 then Exit; // BACKSPACE
-{
-  if Key = '-' then begin
-    pom:=Text;
-    if Text[1]='-' then pom[1]:=' '
-    else pom[1]:='-';
-    Text:=pom;
-    Key:=#0;
+  inherited;
+  OnChange := Change;
+  OnKeyPress := MyHexEditKeyPress;
+  Font.Name := HEX_FONT;
+  Font.Size := 10;
+  MaxLength := Length(HEX_PREFIX) + 8;
+  Text := HEX_PREFIX;
+end;
+
+
+
+procedure THexPositiveEdit.SetFocus;
+begin
+  inherited;
+  SelStart := Length(HEX_PREFIX);
+  SelLength := Length(Text) - SelStart;
+end;
+
+
+
+procedure THexPositiveEdit.MyHexEditKeyPress(Sender: TObject; var Key: Char);
+begin
+  // BACKSPACE
+  if Key = #8 then
+    Exit;
+
+  if Upcase(Key) in HEX_DIGITS then
+    Key := Upcase(Key)
+  else
+    Key := #0;
+end;
+
+
+
+procedure THexPositiveEdit.Change(Sender: TObject);
+var
+  CandidateValue: cardinal;
+  CaretPosition: integer;
+begin
+  // During creation Parent is not set => we can not use SelStart
+  if Parent = nil then begin
+    Text := HEX_PREFIX;
     Exit;
   end;
-}
-  if Key in ['a'..'f'] then Key:=UpCase(Key);
-  if not (Key in ['0'..'9','A'..'F']) then Key:=#0;
-end;
 
-procedure TMyHexEdit.Change(Sender: TObject);
-var teststr:string;
-begin
-  TestStr:=Copy(Text,1,2);
-  if (TestStr <> '0x') or (AsCardinal > MaxValue) then Text:=beforestr;
-  beforestr:=Text;
-end;
 
-function TMyHexEdit.GetAsCardinal: cardinal;
-begin
-  if Text='0x' then result:=0
-  else result:=StrToInt64('$'+Copy(Text,3,8));
-end;
-
-procedure TMyHexEdit.SetAsCardinal(Value: cardinal);
-begin
-  Text:='0x' + IntToHex(Value,8);
-//  if Value > 0 then Text:=' 0x' + IntToHex(Value,8);
-//  else Text:='-0x' + IntToHex(Value,8);
+  CaretPosition := Max(2, SelStart - 1);
+  if Text = HEX_PREFIX then
+    fValue := 0
+  else begin
+    CandidateValue := StrToInt64Def('$' + Copy(Text, Length(HEX_PREFIX) + 1, 8), MaxValue + 1);
+    if (Copy(Text, 1, 2) = HEX_PREFIX) and (candidateValue <= MaxValue) then
+      fValue := candidateValue
+    else begin
+      Text := HEX_PREFIX + CarToHex(fValue, 8);
+      SelStart := CaretPosition;
+    end;
+  end;
 end;
 
 
 
-constructor TMyNumEdit.Create(AOwner: TComponent);
+constructor TDecimalPositiveEdit.Create(AOwner: TComponent);
 begin
   inherited;
-  OnKeyPress:=MyNumEditKeyPress;
-  OnChange:=Change;
-  Font.Name:='Courier New';
-  Font.Size:=10;
-  MaxLength:=10;
+  OnKeyPress := MyNumEditKeyPress;
+  OnChange := Change;
+  Font.Name := HEX_FONT;
+  Font.Size := 10;
+  MaxLength := 10;
 end;
 
-procedure TMyNumEdit.MyNumEditKeyPress(Sender: TObject; var Key: Char);
+
+
+procedure TDecimalPositiveEdit.MyNumEditKeyPress(Sender: TObject; var Key: Char);
 begin
-  BeforeStr:=Text;
-  if Key = #8 then Exit; // BACKSPACE
-  if not (Key in ['0'..'9']) then Key:=#0;
+  // BACKSPACE
+  if Key = #8 then
+    Exit;
+
+  if not (Key in ['0'..'9']) then
+    Key := #0;
 end;
 
-function TMyNumEdit.GetAsCardinal: cardinal;
-begin
-  if text='' then result:=0
-  else result:=StrToInt64(Text);
-end;
 
-procedure TMyNumEdit.SetAsCardinal(Value: cardinal);
-begin
-  Text:=IntToStr(Value);
-end;
 
-procedure TMyNumEdit.Change(Sender: TObject);
+procedure TDecimalPositiveEdit.Change(Sender: TObject);
+var
+  CandidateValue: cardinal;
+  CaretPosition: integer; 
 begin
-  if Text <> '' then begin
-    if (StrToInt64Def(Text,-1) = -1) or (StrToInt64Def(Text,-1) > $FFFFFFFF)  then Text:=BeforeStr;
-    if AsCardinal > MaxValue then Text:=BeforeStr;
+  // During creation Parent is not set => we can not use SelStart
+  if Parent = nil then begin
+    Text := HEX_PREFIX;
+    Exit;
   end;
-  BeforeStr:=Text;
+
+  CaretPosition := Max(0, SelStart - 1);
+  if Text <> '' then begin
+    CandidateValue := StrToInt64Def(Text, MaxValue + 1);
+    if CandidateValue <= MaxValue then
+      fValue := CandidateValue
+    else
+      Text := CarToStr(fValue);
+  end;
 end;
+
+
 
 end.

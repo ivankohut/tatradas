@@ -1,8 +1,7 @@
 {
   x86 One Byte Opcode Instructions
   TODO:
-  - refactoring, checking (este som s tymto nic nerobil po rozdeleni instrukcii do viac suborov)
-  - InstrSet
+  - skontrolovat instrukcie, nastavit InstrSet
 }
 const
 
@@ -53,7 +52,7 @@ const
     (name: 'AND'; typ: itNormal; OperandsCount:2; Operands: (p1:GREGv; p2:MODv)),
     (name: 'AND'; typ: itNormal; OperandsCount:2; Operands: (p1:AL; p2:IMMb)),
     (name: 'AND'; typ: itNormal; OperandsCount:2; Operands: (p1:AX; p2:IMMv)),
-    (name: 'prefix'; typ: itNormal; OperandsCount:2; Operands: (p1:AL; p2:IMMb)),
+    (name: 'prefix'; typ: itPrefix),
     (name: 'DAA'; typ: itNormal; Operands:()),
 
     (name: 'SUB'; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2:GREGb)),
@@ -62,7 +61,7 @@ const
     (name: 'SUB'; typ: itNormal; OperandsCount:2; Operands: (p1:GREGv; p2:MODv)),
     (name: 'SUB'; typ: itNormal; OperandsCount:2; Operands: (p1:AL; p2:IMMb)),
     (name: 'SUB'; typ: itNormal; OperandsCount:2; Operands: (p1:AX; p2:IMMv)),
-    (name: 'prefix'; typ: itNormal; OperandsCount:2; Operands: (p1:AX; p2:IMMv)),
+    (name: 'prefix'; typ: itPrefix),
     (name: 'DAS'; typ: itNormal; Operands: ()),
 
   // $30-$3F
@@ -72,7 +71,7 @@ const
     (name: 'XOR'; typ: itNormal; OperandsCount:2; Operands: (p1:GREGv; p2:MODv)),
     (name: 'XOR'; typ: itNormal; OperandsCount:2; Operands: (p1:AL; p2:IMMb)),
     (name: 'XOR'; typ: itNormal; OperandsCount:2; Operands: (p1:AX; p2:IMMv)),
-    (name: 'prefix'; typ: itNormal; OperandsCount:2; Operands: (p1:AX; p2:IMMv)),
+    (name: 'prefix'; typ: itPrefix),
     (name: 'AAA'; typ: itNormal; OperandsCount:0;),
 
     (name: 'CMP'; typ: itNormal; OperandsCount:2; Operands: (p1:MODb; p2:GREGb)),
@@ -81,7 +80,7 @@ const
     (name: 'CMP'; typ: itNormal; OperandsCount:2; Operands: (p1:GREGv; p2:MODv)),
     (name: 'CMP'; typ: itNormal; OperandsCount:2; Operands: (p1:AL; p2:IMMb)),
     (name: 'CMP'; typ: itNormal; OperandsCount:2; Operands: (p1:AX; p2:IMMv)),
-    (name: 'prefix'; typ: itNormal; OperandsCount:2; Operands: (p1:AX; p2:IMMv)),
+    (name: 'prefix'; typ: itPrefix),
     (name: 'AAS'; typ: itNormal; OperandsCount:0),
 
   // $40-$4F
@@ -127,10 +126,10 @@ const
     (name: 'POPA/POPAD'; typ: itNormal; addop:true; name16:'POPA'; name32:'POPAD'),
 {???} (name: 'BOUND'; typ: itNormal; OperandsCount:2; Operands:(p1:GREGv; p2:MODv)),
     (name: 'ARPL'; typ: itNormal; OperandsCount:2; Operands: (p1:MODw; p2:GREGw)),
-    (name: 'prefix'; typ: itNormal; OperandsCount:2; Operands: (p1:MODw; p2:GREGw)),
-    (name: 'prefix'; typ: itNormal; OperandsCount:2; Operands: (p1:MODw; p2:GREGw)),
-    (name: 'prefix'; typ: itNormal; OperandsCount:2; Operands: (p1:MODw; p2:GREGw)),
-    (name: 'prefix'; typ: itNormal; OperandsCount:2; Operands: (p1:MODw; p2:GREGw)),
+    (name: 'prefix'; typ: itPrefix),
+    (name: 'prefix'; typ: itPrefix),
+    (name: 'prefix'; typ: itPrefix),
+    (name: 'prefix'; typ: itPrefix),
 
     (name: 'PUSH'; typ: itNormal; OperandsCount:1; Operands: (p1:IMMv)),
     (name: 'IMUL'; typ: itNormal; OperandsCount:3; Operands: (p1:GREGv; p2:MODv; p3:IMMv)),
@@ -294,10 +293,10 @@ const
     (name: 'OUT'; typ: itNormal; OperandsCount:2; Operands: (p1:statDX; p2:AX)),
 
   // $F0-$FF
-    (name: 'prefix'; typ: itNormal; OperandsCount:1; Operands: (p1: IMMb)),
+    (name: 'prefix'; typ: itPrefix),
     (name: 'undefined opcode'; typ: itUndefined),
-    (name: 'prefix'; typ: itNormal; OperandsCount:1; Operands: (p1: IMMb)),
-    (name: 'prefix'; typ: itNormal; OperandsCount:1; Operands: (p1: IMMb)),
+    (name: 'prefix'; typ: itPrefix),
+    (name: 'prefix'; typ: itPrefix),
     (name: 'HLT'; typ: itNormal; Operands: ()),
     (name: 'CMC'; typ: itNormal; Operands:()),
     (name: 'group3'; typ: itGroup),
@@ -310,5 +309,5 @@ const
     (name: 'CLD'; typ: itNormal; Operands:()),
     (name: 'STD'; typ: itNormal),
     (name: 'group4'; typ: itGroup),
-    (name: 'group5'; typ: itGroup) // nemalo tu byt nahodou $FF - nie, $FE znamena ze je group instr., nie opcode
+    (name: 'group5'; typ: itGroup)
   );

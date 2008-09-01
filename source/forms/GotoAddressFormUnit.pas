@@ -33,7 +33,7 @@ type
     procedure SetMaxAddress(MaxAddress: cardinal);
     function GetAddress: cardinal;
   public
-    GotoAddressEdit: TMyHexEdit;
+    GotoAddressEdit: THexPositiveEdit;
     procedure Translate;
     property MaxAddress: cardinal write SetMaxAddress;
     property Address: cardinal read GetAddress;
@@ -78,7 +78,7 @@ end;
 
 procedure TGoToAddressForm.FormCreate(Sender: TObject);
 begin
-  GotoAddressEdit := TMyHexEdit.Create(self);
+  GotoAddressEdit := THexPositiveEdit.Create(self);
   GotoAddressEdit.Parent := self;
   GotoAddressEdit.Left := 110;
   GotoAddressEdit.Top := 16;

@@ -23,8 +23,8 @@ const
     (name: 'FSTP'; par: szDword),
     (name: 'FLDENV'; par: szEmpty), // TODO: 14/28
     (name: 'FLDCW'; par: szWord),
-    (name: 'FSTENV'; par: szEmpty), // TODO: 14/28
-    (name: 'FSTCW'; par: szWord),
+    (name: 'FNSTENV'; par: szEmpty), // TODO: 14/28
+    (name: 'FNSTCW'; par: szWord),
   // DA
     (name: 'FIADD'; par: szDword),
     (name: 'FIMUL'; par: szDword),
@@ -59,8 +59,8 @@ const
     (name: 'FSTP'; par: szQword),
     (name: 'FRSTOR'; par: szEmpty), // 98/108
     (name: ''; par: szEmpty),
-    (name: 'FSAVE'; par: szEmpty), // 98/108
-    (name: 'FSTSW'; par: szWord),
+    (name: 'FNSAVE'; par: szEmpty), // 98/108
+    (name: 'FNSTSW'; par: szWord),
   // DE
     (name: 'FIADD'; par: szWord),
     (name: 'FIMUL'; par: szWord),
@@ -383,8 +383,8 @@ const
     // 0xE0
       (name: ''; par: ''),
       (name: ''; par: ''),
-      (name: 'FCLEX'; par: ''),
-      (name: 'FINIT'; par: ''),
+      (name: 'FNCLEX'; par: ''),
+      (name: 'FNINIT'; par: ''),
       (name: ''; par: ''),
       (name: ''; par: ''),
       (name: ''; par: ''),

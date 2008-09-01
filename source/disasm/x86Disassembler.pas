@@ -1,10 +1,17 @@
 { TODO:
-  pridat moznost ukoncenia bloku v 16 bit. mode v pripade instrukcii
+  - pridat moznost ukoncenia bloku v 16 bit. mode v pripade instrukcii
     MOV AH,byte 0x09
     INT byte 0x21
 
- INFO - PUNPCKLBW operandy (druhy), pozri Intel manual, 19.12.2004 zmeneny na MODq, asi by to chcelo vyriesit nejako inac (spolu s MOVZX atd)
+  Notes:
+  - We do not check if the LOCK prefix is used together with allowed instructions only, according to the INTEL manual:
+      "The LOCK prefix can be prepended only to the following instructions and only to those forms
+      of the instructions where the destination operand is a memory operand: ADD, ADC, AND,
+      BTC, BTR, BTS, CMPXCHG, CMPXCH8B, DEC, INC, NEG, NOT, OR, SBB, SUB, XOR,
+      XADD, and XCHG."
 }
+
+
 unit x86Disassembler;
 
 {$INCLUDE 'delver.inc'}
@@ -34,38 +41,34 @@ type
 
   Tx86Disassembler = class(TDisassembler)
   private
-    code: TByteDynArray;                  // Pole s kodom
-    DisasmMap: TByteDynArray;
+    code: TByteDynArray; // machine code to be disassembled
+    fDisasmMap: TByteDynArray;
     fStatistics: TStatistics;
     fBit32: boolean;
-    ModRM: TModRM;
-    SIB: TSIB;
-    i: cardinal;                          // Uchovava poziciu v poli CODE
-    operand32, address32:boolean;        // Uchovava 16/32bit stav instrukcie
-
-    SegmentOverride: string;
-
-    InstrAddress: cardinal; // address of current instruction in "code" array
-
-{ Toto sposobi spomalenie 400ms (2550 vs 2950) na wxivan.exe
-    InstructionName: string[10]; // name of current instruction
-    InstructionPrefix: string[10]; // prefix of current instruction
-    InstructionOperands: string[50]; // operands of current instruction
-}
-    InstructionName: string; // name of current instruction
-
-    Vpc: Byte;                              // Pocet parametrov aktualnej instrukcie
     fMemOffset: cardinal;
 
-    function SpracujParameter(a:TParameter): string;
+    i: cardinal; // Index in "code" array
+
+    // Fields containing values specific to the current instruction
+    InstrAddress: cardinal; // address of current instruction in "code" array <=> address of current instruction relative to the beginning of code section
+    SegmentOverride: string;
+    FirstCharOfName: char;
+    operand32: boolean; // Operand size attribute
+    address32: boolean; // Address size attribute
+    ModRM: TModRM;
+    SIB: TSIB;
+
+    function ProcessOperand(Operand: TOperand): string;
     function LoadModRM(ModRMValue: byte): TModRM;
-    function SpracujModRM(OperandType: TModRMOperandType; OperandSize: TModRMOperandSize): string;
+    function ProcessModRM(OperandType: TModRMOperandType; OperandSize: TModRMOperandSize): string;
     function LoadSIB(SIBValue: byte): TSIB;
-    function SpracujSIB: string;
-    function SpracujImmediate(OperandSize: TModRMOperandSize): string;
-    function SpracujRelative(OperandSize: TModRMOperandSize): string;
-    function SpracujOffset: string;
-    function SpracujGenReg: string;
+    function ProcessSIB: string;
+    function ProcessImmediate(OperandSize: TModRMOperandSize): string;
+    function ProcessRelative(OperandSize: TModRMOperandSize): string;
+    function ProcessOffset: string;
+    function ProcessGenPurpRegister: string;
+
+//    function SpracujImmediatePascal(OperandSize: TModRMOperandSize): string;
 
   protected
     function DisassembleBlock(Start, Finish: cardinal): boolean; override;
@@ -240,7 +243,7 @@ end;
 
 
 
-function Tx86Disassembler.SpracujSIB: string;
+function Tx86Disassembler.ProcessSIB: string;
 begin
   Inc(i);
   SIB := LoadSIB(code[i]);
@@ -268,7 +271,7 @@ end;
 
 
 
-function Tx86Disassembler.SpracujModRM(OperandType: TModRMOperandType; OperandSize: TModRMOperandSize): string;
+function Tx86Disassembler.ProcessModRM(OperandType: TModRMOperandType; OperandSize: TModRMOperandSize): string;
 
   function GetRegister(Index: byte): string;
   begin
@@ -316,7 +319,7 @@ begin
                 result := result + '0x' + IntToHex(cardinal((@code[i])^), 8);
                 Inc(i, 3);
               end;
-              4: result := result + SpracujSIB;
+              4: result := result + ProcessSIB;
               else
                 result := result + DwordRegister[modrm.rm];
             end;
@@ -326,7 +329,7 @@ begin
         1: begin
             result := '[' + SegmentOverride;
             if modrm.rm = 4 then
-              result := result + SpracujSIB
+              result := result + ProcessSIB
             else
               result := result + DwordRegister[modrm.rm];
             Inc(i);
@@ -336,7 +339,7 @@ begin
         2: begin
             result := '[' + SegmentOverride;
             if modrm.rm = 4 then
-              result := result + SpracujSIB
+              result := result + ProcessSIB
             else
               result := result + DwordRegister[modrm.rm];
             Inc(i);
@@ -379,7 +382,14 @@ begin
         else
           result := 'word ' + result;
       os4, osR8_M4, osR16_M4: result := 'dword ' + result;
-      os4Or6: ; // TODO
+      os4Or6:
+        // Indirect far pointer JMP or CALL (not LES and friends)
+        if FirstCharOfName <> 'L' then begin
+          if operand32 then
+            result := 'dword far' + result
+          else
+            result := 'word far' + result;
+        end;
       os8, osR16_M8: result := 'qword ' + result;
       os10: result := 'tword ' + result;
       os16: result := 'dqword ' + result;
@@ -399,8 +409,51 @@ begin
 end;
 
 
+{
+function Tx86Disassembler.SpracujImmediatePascal(OperandSize: TModRMOperandSize): string;
+begin
+  Inc(i);
+  case OperandSize of
+    osNone: ;
+    os1: begin
+      result := 'byte 0x' + IntToHex(code[i], 2);
+    end;
+    os2: begin
+      result := 'word 0x' + IntToHex(word((@code[i])^), 4);
+      Inc(i);
+    end;
+    os2or4: begin
+      if operand32 then begin
+        result := 'dword 0x' + IntToHex(cardinal((@code[i])^), 8);
+        Inc(i, 3);
+      end
+      else begin
+        result := 'word 0x' + IntToHex(word((@code[i])^), 4);
+        Inc(i);
+      end;
+    end;
+    os4: begin
+      result := 'dword 0x' + IntToHex(cardinal((@code[i])^), 8);
+      Inc(i, 3);
+    end;
+    os4or6: begin
+      if operand32 then begin
+        result := '0x' + IntToHex(word((@code[i + 4])^), 4) + ':' + '0x' + IntToHex(cardinal((@code[i])^), 8);
+        Inc(i, 5);
+      end
+      else begin
+        result := '0x' + IntToHex(word((@code[i + 2])^), 4) + ':' + '0x' + IntToHex(word((@code[i])^), 4);
+        Inc(i, 3);
+      end;
+    end;
+    else
+      raise EUndefinedOpcodeException.Create('Immediate - bad operand size -  ' + IntToStr(Ord(OperandSize)));
+  end;
+end;
+}
 
-function Tx86Disassembler.SpracujImmediate(OperandSize: TModRMOperandSize): string;
+
+function Tx86Disassembler.ProcessImmediate(OperandSize: TModRMOperandSize): string;
 var
   Immediate: cardinal;
   SegmentImmediate: word;
@@ -489,7 +542,7 @@ end;
 
 
 
-function Tx86Disassembler.SpracujRelative(OperandSize: TModRMOperandSize): string;
+function Tx86Disassembler.ProcessRelative(OperandSize: TModRMOperandSize): string;
 var
   address: integer;
   parsed: cardinal;
@@ -506,16 +559,6 @@ begin
     xor ecx,ecx        // vysledna adresa skoku
     xor edx,edx        // vysledny Parsed
   // Case
-  {
-    cmp OperandSize,onebyte           // ONE BYTE
-    jne @CheckTwobyte
-    movsx ecx,byte[eax]     // parameter instrukcie -> ECX
-    mov edx,ecx          //
-    mov parsedcount,2       // pocet cifier PARSED
-    add ecx,ebx             // pripocitame aktualnu pozicu
-    inc ecx                 // zvysime o 1, lebo skok je relativny od nasledujucej instrukcie
-    jmp @EndCase
-  }
     cmp OperandSize,os1           // ONE BYTE
     jne @CheckTwobyte
     mov dl,byte[eax]     // parameter instrukcie -> ECX
@@ -574,7 +617,7 @@ begin
       CAJ.Add(address);
       Inc(Disassembled[address].refercount);
       SetLength(Disassembled[address].refer,Disassembled[address].refercount);
-      case InstructionName[1] of
+      case FirstCharOfName of
         'J': Disassembled[address].refer[Disassembled[address].refercount-1]:='Jump from 0x'+IntToHex(InstrAddress + fMemOffset, 8);
         'C': Disassembled[address].refer[Disassembled[address].refercount-1]:='Call from 0x'+IntToHex(InstrAddress + fMemOffset, 8);
         'L': Disassembled[address].refer[Disassembled[address].refercount-1]:='Loop from 0x'+IntToHex(InstrAddress + fMemOffset, 8);
@@ -594,7 +637,7 @@ end;
 
 
 
-function Tx86Disassembler.SpracujGenReg: string;
+function Tx86Disassembler.ProcessGenPurpRegister: string;
 begin
   if operand32 then
     result:= 'E'
@@ -604,7 +647,7 @@ end;
 
 
 
-function Tx86Disassembler.SpracujOffset: string;
+function Tx86Disassembler.ProcessOffset: string;
 begin
   Inc(i);
   if Address32 then begin
@@ -624,9 +667,9 @@ begin
   inherited Create;
   code:= SectionCode;
   fCodeSize:= Length(code) - CodeArrayReserve;
-  DisasmMap:= DisassemblerMap;
+  fDisasmMap:= DisassemblerMap;
   SetLength(Disassembled, fCodeSize);
-  CAJ:= TCallsAndJumps.Create(DisasmMap);
+  CAJ:= TCallsAndJumps.Create(fDisasmMap);
   fMemOffset:= MemOffset;
   fBit32:= Bit32;
 end;
@@ -665,7 +708,7 @@ begin
   Logger.Info('TDisassembler.DisassembleAll - Phase 2a');
   if fCodeSize >= 3 then begin
     for CodeIndex := 0 to fCodeSize - 3 do
-      if DisasmMap[CodeIndex] = dfNone then begin
+      if fDisasmMap[CodeIndex] = dfNone then begin
         case code[CodeIndex] of
           $55:       // PUSH (E)BP
             asm
@@ -709,7 +752,7 @@ begin
 
   // Find all non-disassembled bytes and make then "byte data"
   for CodeIndex := 0 to fCodeSize - 1 do
-    if DisasmMap[CodeIndex] = dfNone then begin
+    if fDisasmMap[CodeIndex] = dfNone then begin
       Inc(ProgressData.Position);
 
       // Address
@@ -735,7 +778,7 @@ begin
 
       Disassembled[CodeIndex].Disassembled := Line;
 
-//      Inc(DisasmMap[CodeIndex],dfData);
+//      Inc(fDisasmMap[CodeIndex],dfData);
       Inc(fStatistics.Data);
     end;
 
@@ -743,7 +786,7 @@ begin
   Logger.Info('TDisassembler.DisassembleAll - Statistics');
   fStatistics.InstructionBytes:= fCodeSize - fStatistics.Data;
   CodeIndex := fCodeSize - 1;
-  while (((DisasmMap[CodeIndex] and dfNewInstr) = 0) and (DisasmMap[CodeIndex] <> 0)) do
+  while (((fDisasmMap[CodeIndex] and dfNewInstr) = 0) and (fDisasmMap[CodeIndex] <> 0)) do
     Dec(CodeIndex);
   fStatistics.LastItem := CodeIndex;
 end;
@@ -751,54 +794,34 @@ end;
 
 
 function Tx86Disassembler.DisassembleBlock(Start, Finish: cardinal): boolean;
-type
-  TPrefixFlags = record
-    group1, group2, group3, group4: boolean;
-  end;
-
 var
-    Vparam: TParam;                         // Parametre aktualnej instrukcie
-    PrefixFlags: TPrefixFlags;
-    PrefixStr: string;
-    prefixes: TPrefixes;
+  PrefixGroups: set of TPrefixGroup;
+  PrefixStr: string;
+  SIMDPrefix: TSIMDPrefix;
 
-    AsmByte: byte;
-  Is3DNowInstruction: boolean;
-    k: cardinal;
-    KoniecBloku: boolean;
-
-  Line: string[50 + ilInstructionMnemonicIndex];
-  MemAddress: cardinal;
-  HexAddressIndex, ParsedIndex, SpaceIndex, LineIndex: integer;
-  LastParsedIndex: integer;
-  TheByte: byte;
-
+  Operands: TOperands;  // Parametre aktualnej instrukcie
+  OperandsCount: Byte;  // Pocet parametrov aktualnej instrukcie
+  EndBlock: boolean;
   GroupMapIndex: Integer;
   GroupInstruction, OneByteOpcodeInstruction, TwoByteOpcodeInstruction: TInstruction;
   SIMDInstruction: TSIMDInstruction;
   FPUInstrIndex: Integer;
 
-  // presunute zhora
   InstructionPrefix: string; // prefix of current instruction
+  InstructionName: string; // name of current instruction
   InstructionOperands: string; // operands of current instruction
 
-
-  procedure ProcessSIMDInstruction(var Instruction: TInstruction);
-  begin
-    if prefixes.p66 then SIMDInstruction := Instruction.SIMD_66^
-    else if prefixes.pF2 then SIMDInstruction := Instruction.SIMD_F2^
-    else if prefixes.pF3 then SIMDInstruction := Instruction.SIMD_F3^
-    else SIMDInstruction := Instruction.SIMD^;
-
-    Vparam := SIMDInstruction.Operands;
-    Vpc := SIMDInstruction.OperandsCount;
-    InstructionName := SIMDInstruction.name;
-  end;
+  Line: string[50 + ilInstructionMnemonicIndex];
+  MemAddress: cardinal;
+  HexAddressIndex, ParsedIndex, SpaceIndex, LineIndex: integer;
+  LastParsedIndex: integer;
+  InstrByteIndex: cardinal;
+  TheByte: byte;
 
 begin
   i := Start;
   InstrAddress := i;
-  KoniecBloku := false;
+  EndBlock := false;
 
 
   LastParsedIndex := 0;
@@ -809,465 +832,429 @@ begin
 
   try
 
-  while (i<=finish) and ((DisasmMap[i] and dfPart)=0) and (not KoniecBloku) do begin                     // Hlavny disassemblovaci cyklus
+    // Main loop of disassembler
+    while (i<=finish) and ((fDisasmMap[i] and dfPart)=0) and (not EndBlock) do begin
 
-    Inc(ProgressData.Position, i - InstrAddress);
-    if ProgressData.ErrorStatus = errUserTerminated then
-      raise EUserTerminatedProcess.Create('');
+      Inc(ProgressData.Position, i - InstrAddress);
+      if ProgressData.ErrorStatus = errUserTerminated then
+        raise EUserTerminatedProcess.Create('');
 
-    operand32:=fBit32;
-    address32:=fBit32;
-    SegmentOverride:='';
+      // Set variables to default values
+      operand32 := fBit32;
+      address32 := fBit32;
 
-    Is3DNowInstruction:=false;
-    vpc:=0;                                 // Vynulovanie poctu operandov pre nasledujucu instrukciu
-    modrm.loaded:=false;
-    prefixes.pF2:=false;                    // 'prefixes' sa pouzivaju pri urcovani MMX, SSE, SSE2 instrukcii
-    prefixes.pF3:=false;
-    prefixes.p66:=false;
-    prefixstr:='';
-    prefixflags.group1:=false;
-    prefixflags.group2:=false;
-    prefixflags.group3:=false;
-    prefixflags.group4:=false;
+      SegmentOverride := '';
+      PrefixGroups := [];
+      SIMDPrefix := simdNone;
+      PrefixStr := '';
 
-    inc(fStatistics.Instructions);
-    InstrAddress:= i;
-    InstructionPrefix:= '';
-    InstructionOperands:= '';
+      OperandsCount := 0;
+      ModRM.Loaded := false;
 
-    DisasmMap[InstrAddress]:=dfNewInstr;
-//    Disassembled[InstrAddress].flag:=00;
 
-// INFO:
-// Iba Group1 zapisuje do "InstructionPrefix"
-//
-// Zislo by sa skontrolovat, ci je LOCK pouzity len s povolenymi instrukciami, pretoze:
-{
-  The LOCK prefix can be prepended only to the following instructions and only to those forms
-of the instructions where the destination operand is a memory operand: ADD, ADC, AND,
-BTC, BTR, BTS, CMPXCHG, CMPXCH8B, DEC, INC, NEG, NOT, OR, SBB, SUB, XOR,
-XADD, and XCHG.
-}
-    try
-      while true do begin
-        case code[i] of
+      InstructionPrefix := '';
+      InstructionOperands := '';
 
-          // Group 1
-          $F0, $F2, $F3: begin
-            if prefixflags.group1 then
-              raise EUndefinedOpcodeException.Create('Doubled prefix');
-            prefixflags.group1 := true;
-            case code[i] of
-              $F0: begin
-                prefixstr := 'lock';
-                InstructionPrefix :='lock';
+      InstrAddress := i;
+
+      try
+
+        // Prefix processing
+        while true do begin
+          case code[i] of
+
+            // Group 1
+            $F0, $F2, $F3: begin
+              if pgOne in PrefixGroups then
+                raise EUndefinedOpcodeException.Create('Doubled prefix');
+              PrefixGroups := PrefixGroups + [pgOne];
+
+              case code[i] of
+                $F0: begin
+                  prefixstr := 'lock';
+                  InstructionPrefix := 'lock';
+                end;
+                $F2: begin
+                  prefixstr := 'repne';
+                  SIMDPrefix := simdF2;
+                end;
+                $F3: begin
+                  prefixstr := 'repe';
+                  SIMDPrefix := simdF3;
+                end;
               end;
-              $F2: begin
-                prefixstr := 'repne';
-                prefixes.pF2 := true;
+            end;
+
+            // Group 2
+            $2E, $36, $3E, $26, $64, $65: begin
+              if pgTwo in PrefixGroups then
+                raise EUndefinedOpcodeException.Create('Doubled prefix');
+              PrefixGroups := PrefixGroups + [pgTwo];
+
+              case code[i] of
+                $2E: SegmentOverride := 'CS:';
+                $36: SegmentOverride := 'SS:';
+                $3E: SegmentOverride := 'DS:';
+                $26: SegmentOverride := 'ES:';
+                $64: SegmentOverride := 'FS:';
+                $65: SegmentOverride := 'GS:';
               end;
-              $F3: begin
-                prefixstr := 'repe';
-                prefixes.pF3 := true;
+            end;
+
+            // Group 3
+            $66: begin
+              if pgThree in PrefixGroups then
+                raise EUndefinedOpcodeException.Create('Doubled prefix');
+              PrefixGroups := PrefixGroups + [pgThree];
+
+              operand32 := not operand32;
+    //          if bit32 then prefixstr:=prefixstr + 'o16 '
+    //          else prefixstr:=prefixstr + 'o32 ';
+    //          if bit32 then InstructionPrefix:='o16'
+    //          else InstructionPrefix:='o32';
+              SIMDPrefix := simd66;
+            end;
+
+            // Group 4
+            $67: begin
+              if pgFour in PrefixGroups then
+                raise EUndefinedOpcodeException.Create('Doubled prefix');
+              PrefixGroups := PrefixGroups + [pgFour];
+
+              Address32 := not address32;
+    //          if bit32 then prefixstr:=prefixstr + 'a16 '
+    //          else prefixstr:=prefixstr + 'a32 ';
+    //          if bit32 then InstructionPrefix:='a16'
+    //          else InstructionPrefix:='a32';
+            end;
+
+            else
+              break;
+          end;
+          Inc(i);
+        end;
+
+        // Nasledujuci riadok je OK. Ak ma instrukcia dvojbajtovy opcode (OF),
+        // tak prefixy F2,F3 maju iny vyznam ako "repne, repe".
+        if code[i] <> $0F then
+          InstructionPrefix := prefixstr;
+
+
+        case OneByteOpcode_InstructionSet[code[i]].typ of
+
+          // OneByte Opcode Group Instructions
+          itGroup: begin
+            ModRM := LoadModRM(code[i+1]);
+            GroupMapIndex := 0;
+            while GroupMapIndex < cOneByteOpcodeGroupMapSize do begin
+              if OneByteOpcodeGroupMap[GroupMapIndex].Opcode = code[i] then begin
+                if ModRM.Moder <> 3 then
+                  GroupInstruction := OneByteOpcodeGroupMap[GroupMapIndex].GroupMem^[ModRM.RegOp]
+                else
+                  GroupInstruction := OneByteOpcodeGroupMap[GroupMapIndex].GroupReg^[ModRM.RegOp];
+                Break;
+              end
+              else
+                Inc(GroupMapIndex);
+            end;
+            if GroupInstruction.typ = itUndefined then
+              raise EUndefinedOpcodeException.Create('Group instruction');
+
+            Operands := GroupInstruction.Operands;
+            OperandsCount := GroupInstruction.OperandsCount;
+            InstructionName := GroupInstruction.Name;
+          end;
+
+          // FPU Instructions
+          itFPU: begin
+            if code[i+1] <= $BF then begin
+              ModRM := LoadModRM(code[i+1]);
+              FPUInstrIndex := (code[i] mod 8)*8 + ModRM.RegOp;
+              InstructionName := FPU_A_InstructionSet[FPUInstrIndex].name;
+              if InstructionName = '' then
+                raise EUndefinedOpcodeException.Create('FPU instruction');
+
+              OperandsCount := 1;
+              case FPU_A_InstructionSet[FPUInstrIndex].par of
+                szWord: Operands.p1 := M16;
+                szDWord: Operands.p1 := M32;
+                szQWord: Operands.p1 := M64;
+                szTWord: Operands.p1 := M80;
+                szEmpty: Operands.p1 := MMM; // TODO: dalsie typ ako 14/28 alebo 98/108
               end;
+              // TODO: asi jke vhodne spracovanie FPU parametrov riesit trochu zvlast (a nespinit tym standardny disassembler)
+
+            end
+            else begin
+              InstructionName := FPU_B_InstructionSet[code[i]][code[i+1]].Name;
+              InstructionOperands := FPU_B_InstructionSet[code[i]][code[i+1]].par;
+              if InstructionName = '' then
+                raise EUndefinedOpcodeException.Create('FPU instruction');
+              Inc(i);
             end;
           end;
 
-          // Group 2
-          $2E, $36, $3E, $26, $64, $65: begin
-            if PrefixFlags.group2 then
-              raise EUndefinedOpcodeException.Create('Doubled prefix');
-            prefixflags.group2 := true;
-            case code[i] of
-              $2E: SegmentOverride := 'CS:';
-              $36: SegmentOverride := 'SS:';
-              $3E: SegmentOverride := 'DS:';
-              $26: SegmentOverride := 'ES:';
-              $64: SegmentOverride := 'FS:';
-              $65: SegmentOverride := 'GS:';
-            end;
+          // TwoByte Opcode Instruction
+          itTwoByteOpcodeExtension: begin
+            Inc(i);
+            case TwoByteOpcode_InstructionSet[code[i]].typ of
+
+              // Group instruction
+              itGroup: begin
+                ModRM := LoadModRM(code[i+1]);
+                GroupMapIndex := 0;
+                while GroupMapIndex < cTwoByteOpcodeGroupMapSize do begin
+                  if TwoByteOpcodeGroupMap[GroupMapIndex].Opcode = code[i] then begin
+                    if ModRM.Moder <> 3 then
+                      GroupInstruction := TwoByteOpcodeGroupMap[GroupMapIndex].GroupMem^[ModRM.RegOp]
+                    else
+                      GroupInstruction := TwoByteOpcodeGroupMap[GroupMapIndex].GroupReg^[ModRM.RegOp];
+                    Break;
+                  end
+                  else
+                    Inc(GroupMapIndex);
+                end;
+                case GroupInstruction.typ of
+                  itUndefined: raise EUndefinedOpcodeException.Create('Group instruction');
+
+                  // SIMD group instructions
+                  itSIMD: begin
+                    case SIMDPrefix of
+                      simdNone: SIMDInstruction := GroupInstruction.SIMD^;
+                      simd66: SIMDInstruction := GroupInstruction.SIMD_66^;
+                      simdF2: SIMDInstruction := GroupInstruction.SIMD_F2^;
+                      simdF3: SIMDInstruction := GroupInstruction.SIMD_F3^;
+                    end;
+                    Operands := SIMDInstruction.Operands;
+                    OperandsCount := SIMDInstruction.OperandsCount;
+                    InstructionName := SIMDInstruction.name;
+                  end;
+
+                  // Ordinary group instructions
+                  itNormal: begin
+                    Operands := GroupInstruction.Operands;
+                    OperandsCount := GroupInstruction.OperandsCount;
+                    InstructionName := GroupInstruction.name;
+                  end;
+
+                  else
+                    raise EIllegalState.Create('Illegal instruction type of group instruction');
+                end;
+              end;
+
+              // SIMD instructions
+              itSIMD: begin
+                TwoByteOpcodeInstruction := TwoByteOpcode_InstructionSet[code[i]];
+
+                case SIMDPrefix of
+                  simdNone: begin
+                    // This nasty hack is required becuase the ModRM.Moder is part of opcode in two special cases
+                    if code[i] = $12 then begin
+                      if (code[i+1] and $C0) <> $C0 then
+                        SIMDInstruction := simd_MOVLPS_a
+                      else
+                        SIMDInstruction := simd_MOVHLPS;
+                    end
+                    else if code[i] = $16 then begin
+                      if (code[i+1] and $C0) <> $C0 then
+                        SIMDInstruction := simd_MOVHPS_a
+                      else
+                        SIMDInstruction := simd_MOVLHPS;
+                    end
+                    else
+                      // Predtym tu bol iba tento riadok:
+                      SIMDInstruction := TwoByteOpcodeInstruction.SIMD^;
+                  end;
+                  simd66: SIMDInstruction := TwoByteOpcodeInstruction.SIMD_66^;
+                  simdF2: SIMDInstruction := TwoByteOpcodeInstruction.SIMD_F2^;
+                  simdF3: SIMDInstruction := TwoByteOpcodeInstruction.SIMD_F3^;
+                end;
+
+                Operands := SIMDInstruction.Operands;
+                OperandsCount := SIMDInstruction.OperandsCount;
+                InstructionName := SIMDInstruction.name;
+              end;
+
+              // 3DNow! instruction
+              it3DNowExtension: begin
+                InstructionOperands := ProcessOperand(GREGq) + ',';
+                InstructionOperands := InstructionOperands + ProcessOperand(MODq);
+                Inc(i);
+                if _3DNow_InstructionSet[code[i]].typ = itUndefined then
+                  raise EUndefinedOpcodeException.Create('3DNow! instruction')
+                else
+                  InstructionName := _3DNow_InstructionSet[code[i]].Name;
+              end;
+
+              // Ordinary two byte opcode instructions
+              itNormal: begin
+                TwoByteOpcodeInstruction := TwoByteOpcode_InstructionSet[code[i]];
+                Operands := TwoByteOpcodeInstruction.Operands;
+                OperandsCount := TwoByteOpcodeInstruction.OperandsCount;
+                InstructionName := TwoByteOpcodeInstruction.Name;
+              end;
+
+              itUndefined: raise EUndefinedOpcodeException.Create('Two byte instruction');
+
+              else
+                raise EIllegalState('Two byte opcode instruction ' + IntToHex(code[i], 2) + ' does not have "typ" set');
+            end;  // End of "case"
           end;
 
-          // Group 3
-          $66: begin
-            if PrefixFlags.group3 then
-              raise EUndefinedOpcodeException.Create('Doubled prefix');
-            prefixflags.group3 := true;
-            operand32 := not operand32;
-  //          if bit32 then prefixstr:=prefixstr + 'o16 '
-  //          else prefixstr:=prefixstr + 'o32 ';
-  //          if bit32 then InstructionPrefix:='o16'
-  //          else InstructionPrefix:='o32';
-            prefixes.p66:=true;
+          // One byte opcode instructions
+          itNormal: begin
+            OneByteOpcodeInstruction := OneByteOpcode_InstructionSet[code[i]];
+            Operands := OneByteOpcodeInstruction.Operands;
+            OperandsCount := OneByteOpcodeInstruction.OperandsCount;
+            if not OneByteOpcodeInstruction.AddOp then
+              InstructionName := OneByteOpcodeInstruction.name
+            else
+              if operand32 then
+                InstructionName := OneByteOpcodeInstruction.Name32
+              else
+                InstructionName := OneByteOpcodeInstruction.Name16;
           end;
 
-          // Group 4
-          $67: begin
-            if PrefixFlags.group4 then
-              raise EUndefinedOpcodeException.Create('Doubled prefix');
-            prefixflags.group4 := true;
-            Address32 := not address32;
-  //          if bit32 then prefixstr:=prefixstr + 'a16 '
-  //          else prefixstr:=prefixstr + 'a32 ';
-  //          if bit32 then InstructionPrefix:='a16'
-  //          else InstructionPrefix:='a32';
-          end;
+          itUndefined: raise EUndefinedOpcodeException.Create('One byte instruction');
 
           else
-            break;
-        end;
-        Inc(i);
-      end;
+            raise EIllegalState('One byte opcode instruction ' + IntToHex(code[i], 2) + ' does not have "typ" set');
+        end;  // End of "case OneByteOpcode_InstructionSet[code[i]].typ of"
 
-      // Nasledujuci riadok je OK. Ak ma instrukcia dvojbajtovy opcode (OF),
-      // tak prefixy F2,F3 maju iny vyznam ako "repne, repe".
-      if code[i] <> $0F then
-        InstructionPrefix := prefixstr;
+        FirstCharOfName := InstructionName[1];
 
+        // Instructions' parameters processing (except FPU instructions which parameters are already processed now)
+        //
+        // Function "SpracujParameter" has side effects its second calling depends on.
+        // So we must ensure that the first parameter is processed before second.
+        // We cannot use "InstructionOperands := SpracujParameter(Operands.p1) + ',' + SpracujParameter(Operands.p2);"
+        // because the order of proc/fun calling in such statement is not guaranteed (depends on compiler)
+        case OperandsCount of
+          1: InstructionOperands := ProcessOperand(Operands.p1);
 
-      case OneByteOpcode_InstructionSet[code[i]].typ of
-
-        // OneByte Opcode Group Instructions
-        itGroup: begin
-          ModRM := LoadModRM(code[i+1]);
-          GroupMapIndex := 0;
-          while GroupMapIndex < cOneByteOpcodeGroupMapSize do begin
-            if OneByteOpcodeGroupMap[GroupMapIndex].Opcode = code[i] then begin
-              if ModRM.Moder <> 3 then
-                GroupInstruction := OneByteOpcodeGroupMap[GroupMapIndex].GroupMem^[ModRM.RegOp]
-              else
-                GroupInstruction := OneByteOpcodeGroupMap[GroupMapIndex].GroupReg^[ModRM.RegOp];
-              Break;
-            end
-            else
-              Inc(GroupMapIndex);
+          2: begin
+            InstructionOperands := ProcessOperand(Operands.p1) + ',';
+            InstructionOperands := InstructionOperands + ProcessOperand(Operands.p2);
           end;
-          if GroupInstruction.typ = itUndefined then
-            raise EUndefinedOpcodeException.Create('Group instruction');
 
-          Vparam := GroupInstruction.Operands;
-          Vpc := GroupInstruction.OperandsCount;
-          InstructionName := GroupInstruction.Name;
-        end;
-
-        // FPU Instructions
-        itFPU: begin
-          if code[i+1] <= $BF then begin
-            ModRM := LoadModRM(code[i+1]);
-            FPUInstrIndex := (code[i] mod 8)*8 + ModRM.RegOp;
-            InstructionName := FPU_A_InstructionSet[FPUInstrIndex].name;
-            if InstructionName = '' then
-              raise EUndefinedOpcodeException.Create('FPU instruction');
-
-            {
-            GlobalOperandSize := FPU_A_InstructionSet[FPUInstrIndex].par;
-            InstructionOperands := SpracujModRM(otRMMem, os2or4); // TODO: preco os2or4 ??? je to zle pri FSTCW v tatradas-e
-            }
-            Vpc := 1;
-            case FPU_A_InstructionSet[FPUInstrIndex].par of
-              szWord: Vparam.p1 := M16;
-              szDWord: Vparam.p1 := M32;
-              szQWord: Vparam.p1 := M64;
-              szTWord: Vparam.p1 := M80;
-              szEmpty: Vparam.p1 := MMM; // TODO: dalsie typ ako 14/28 alebo 98/108
-            end;
-            // TODO: asi jke vhodne spracovanie FPU parametrov riesit trochu zvlast (a nespinit tym standardny disassembler)
-
-          end
-          else begin
-            InstructionName := FPU_B_InstructionSet[code[i]][code[i+1]].Name;
-            InstructionOperands := FPU_B_InstructionSet[code[i]][code[i+1]].par;
-            if InstructionName = '' then
-              raise EUndefinedOpcodeException.Create('FPU instruction');
-            Inc(i);
+          3: begin
+            InstructionOperands := ProcessOperand(Operands.p1) + ',';
+            InstructionOperands := InstructionOperands + ProcessOperand(Operands.p2) + ',';
+            InstructionOperands := InstructionOperands + ProcessOperand(Operands.p3);
           end;
         end;
 
-        // TwoByte Opcode Instruction
-        itTwoByteOpcodeExtension: begin
-          Inc(i);
-          case TwoByteOpcode_InstructionSet[code[i]].typ of
+        //  Block ending instructions
+        if
+          ((FirstCharOfName = 'J') and (InstructionName[2] = 'M')) // JMP, JMPx
+          or
+          ((FirstCharOfName = 'R') and (InstructionName[2] = 'E')) // RET, RETN, RETF
+          or
+          ((FirstCharOfName = 'I') and (InstructionName[2] = 'R')) // IRET, IRETx
+        then
+          EndBlock := true;
 
-            // Group instruction
-            itGroup: begin
-              ModRM := LoadModRM(code[i+1]);
-              GroupMapIndex := 0;
-              while GroupMapIndex < cTwoByteOpcodeGroupMapSize do begin
-                if TwoByteOpcodeGroupMap[GroupMapIndex].Opcode = code[i] then begin
-                  if ModRM.Moder <> 3 then
-                    GroupInstruction := TwoByteOpcodeGroupMap[GroupMapIndex].GroupMem^[ModRM.RegOp]
-                  else
-                    GroupInstruction := TwoByteOpcodeGroupMap[GroupMapIndex].GroupReg^[ModRM.RegOp];
-                  Break;
-                end
-                else
-                  Inc(GroupMapIndex);
-              end;
-              case GroupInstruction.typ of
-                itUndefined: raise EUndefinedOpcodeException.Create('Group instruction');
-
-                // SIMD group instructions
-                itSIMD: begin
-                  if prefixes.p66 then SIMDInstruction := GroupInstruction.SIMD_66^
-                  else if prefixes.pF2 then SIMDInstruction := GroupInstruction.SIMD_F2^
-                  else if prefixes.pF3 then SIMDInstruction := GroupInstruction.SIMD_F3^
-                  else SIMDInstruction := GroupInstruction.SIMD^;
-
-                  Vparam := SIMDInstruction.Operands;
-                  Vpc := SIMDInstruction.OperandsCount;
-                  InstructionName := SIMDInstruction.name;
-                end;
-
-                // Ordinary group instructions
-                itNormal: begin
-                  Vparam := GroupInstruction.Operands;
-                  Vpc := GroupInstruction.OperandsCount;
-                  InstructionName := GroupInstruction.name;
-                end;
-
-                else
-                  raise EIllegalState.Create('Illegal instruction type of group instruction');
-              end;
-            end;
-
-            // SIMD instructions
-            itSIMD: begin
-              TwoByteOpcodeInstruction := TwoByteOpcode_InstructionSet[code[i]];
-              if prefixes.p66 then SIMDInstruction := TwoByteOpcodeInstruction.SIMD_66^
-              else if prefixes.pF2 then SIMDInstruction := TwoByteOpcodeInstruction.SIMD_F2^
-              else if prefixes.pF3 then SIMDInstruction := TwoByteOpcodeInstruction.SIMD_F3^
-              else begin
-                // Teraz nasleduje hnusny hack, lebo to neviem vyriesit inak (rozne instrukcie v zavislosti od ModRM.Moder
-                if code[i] = $12 then begin
-                  if (code[i+1] and $C0) <> $C0 then
-                    SIMDInstruction := simd_MOVLPS_a
-                  else
-                    SIMDInstruction := simd_MOVHLPS;
-                end
-                else if code[i] = $16 then begin
-                  if (code[i+1] and $C0) <> $C0 then
-                    SIMDInstruction := simd_MOVHPS_a
-                  else
-                    SIMDInstruction := simd_MOVLHPS;
-                end
-                else
-                  // Predtym tu bol iba tento riadok:
-                  SIMDInstruction := TwoByteOpcodeInstruction.SIMD^;
-              end;
-
-              Vparam := SIMDInstruction.Operands;
-              Vpc := SIMDInstruction.OperandsCount;
-              InstructionName := SIMDInstruction.name;
-            end;
-
-            it3DNowExtension: begin
-              Is3DNowInstruction := true;
-              Vpc := 2;
-              Vparam.p1 := GREGq;
-              Vparam.p2 := MODq;
-            end;
-
-            itUndefined: raise EUndefinedOpcodeException.Create('Two byte instruction');
-
-            // Obycajne TwoByte Instructions
-            else begin
-              TwoByteOpcodeInstruction := TwoByteOpcode_InstructionSet[code[i]];
-              Vparam := TwoByteOpcodeInstruction.Operands;
-              Vpc := TwoByteOpcodeInstruction.OperandsCount;
-              InstructionName := TwoByteOpcodeInstruction.Name;
-            end;
-          end;  // End of "case"
-        end;
-
-        // One byte opcode instructions
-        else
-          begin
-            OneByteOpcodeInstruction := OneByteOpcode_InstructionSet[code[i]];
-            if OneByteOpcodeInstruction.typ = itUndefined then
-              raise EUndefinedOpcodeException.Create('One byte instruction')
-            else begin
-              Vparam := OneByteOpcodeInstruction.Operands;
-              Vpc := OneByteOpcodeInstruction.OperandsCount;
-              if not OneByteOpcodeInstruction.AddOp then
-                InstructionName := OneByteOpcodeInstruction.name
-              else
-                if operand32 then
-                  InstructionName := OneByteOpcodeInstruction.name32
-                else
-                  InstructionName := OneByteOpcodeInstruction.name16;
-            end;
+        // Detection of imported functions calls (CALLN and JMPN instructions)
+        if (code[InstrAddress] = $FF) then begin
+          if ((ModRM.RegOp = 2) or (ModRM.RegOp = 4)) and (Length(InstructionOperands) = 18) then begin
+            SetLength(Imported, Length(Imported) + 1);
+            Imported[Length(Imported) - 1] := InstrAddress;
           end;
-      end;  // End of "case code[i] of"
-
-      // Instructions' parameters processing (except FPU instructions which parameters are already processed now)
-      case Vpc of                             // Spracovanie parametrov podla ich poctu
-        1: InstructionOperands := SpracujParameter(Vparam.p1);
-
-        2: begin
-          // Function "SpracujParameter" has side effects its second calling depends on.
-          // So we must ensure that the first parameter is process before second.
-          // We cannot use "InstructionOperands := SpracujParameter(Vparam.p1) + ',' + SpracujParameter(Vparam.p2);"
-          // because the order of proc/fun calling in such statement is not guaranteed (depends on compiler)
-          InstructionOperands := SpracujParameter(Vparam.p1) + ',';
-          InstructionOperands := InstructionOperands + SpracujParameter(Vparam.p2);
         end;
 
-        3: begin
-          // Function "SpracujParameter" has side effects its second calling depends on.
-          // So we must ensure that the first parameter is process before second.
-          // We cannot use "InstructionOperands := SpracujParameter(Vparam.p1) + ',' + SpracujParameter(Vparam.p2) + ',' + SpracujParameter(Vparam.p3);"
-          // because the order of proc/fun calling in such statement is not guaranteed (depends on compiler)
-          InstructionOperands := SpracujParameter(Vparam.p1) + ',';
-          InstructionOperands := InstructionOperands + SpracujParameter(Vparam.p2) + ',';
-          InstructionOperands := InstructionOperands + SpracujParameter(Vparam.p3);
-        end;
-      end;
+        // If the last byte of current instruction is part of another (already diassembled) instruction
+        // or it is outside the current block then the current instruction is not valid and we must end the current block.
+        if ((fDisasmMap[i] and dfPart) <> 0) or (i > finish) then
+          EndBlock := true
+        else begin
 
-      // Detekcia 3DNow! instrukcii
-      if Is3DNowInstruction then begin
-        Inc(i);
-        if _3DNow_InstructionSet[code[i]].typ = itUndefined then
-          raise EUndefinedOpcodeException.Create('3DNow! instruction')
-        else
-          InstructionName := _3DNow_InstructionSet[code[i]].Name;
-      end;
+          {
+            Construction of instruction line of Disassembled from its parts
 
-  // -- Kvoli testovanie intrukcii je obcas vypnute ukoncovanie bloku:
+            The code is equivalent to:
 
-      //  Instrukcie ukoncujuce blok
-      case InstructionName[1] of
-        'J': if InstructionName[2] = 'M' then KoniecBloku := true; // JMP, JMPx
-        'R': if InstructionName[2] = 'E' then KoniecBloku := true; // RET, RETN, RETF
-        'I': if InstructionName[2] = 'R' then KoniecBloku := true; // IRET, IRETx
-      end;
+              Disassembled[InstrAddress].Disassembled :=
+                IntToHex(InstrAddress + fMemOffset, 8) + ' ' +
+                StringRightPad(DataToHex(code[InstrAddress], i - InstrAddress + 1), ilMaxParsedLength + 1, ' ') +
+                IfThen(InstructionPrefix <> '', InstructionPrefix + ' ') +
+                InstructionName + ' ' +
+                InstructionOperands;
 
-  // --
+            It's complicated because of optimization (minimization of string creation (memory allocation))
+          }
 
-      //  Detekcia importovanych funkcii pomocou CALLN a JMPN
-      if (code[InstrAddress] = $FF) then begin
-        asmbyte:=code[InstrAddress+1];
-        asm
-          mov al,asmbyte
-          shr al,3
-          cmp al,010b
-          je @OK
-          cmp al,100b
-          je @OK
-          mov asmbyte,0
-          jmp @koniec
-        @OK:
-          mov asmbyte,1
-        @koniec:
-        end;
-        if (asmbyte = 1) and (Length(InstructionOperands) = 18) then begin
-          SetLength(Imported, Length(Imported)+1);
-          Imported[Length(Imported)-1]:= InstrAddress;
-        end;
-      end;
+          SetLength(Line, ilInstructionMnemonicIndex - 1);
 
-      // Vlozenie specifikatora velkosti pre instrukcie MOVZX a MOVSX
-      // Nieco podobne by sa mozno zislo aj pre PUNPCKxxx instrukcie
-      { nefunguje ak je prefix napr. 66
-      if (code[InstrAddress] = $0F) then
-        case code[InstrAddress+1] of
-          // MOVZX
-          $B6: InstructionOperands:= InsertStr('byte ', InstructionOperands, Pos(',', InstructionOperands) + 1);
-          $B7: InstructionOperands:= InsertStr('word ', InstructionOperands, Pos(',', InstructionOperands) + 1);
-          // MOVSX
-          $BE: InstructionOperands:= InsertStr('byte ', InstructionOperands, Pos(',', InstructionOperands) + 1);
-          $BF: InstructionOperands:= InsertStr('word ', InstructionOperands, Pos(',', InstructionOperands) + 1);
-        end;
-      }
+          // Address
+          MemAddress:= InstrAddress + fMemOffset;
+          for HexAddressIndex := 1 to 8 do begin
+            Line[9 - HexAddressIndex] := HexDigits[MemAddress and 15];
+            MemAddress:= MemAddress shr 4;
+          end;
 
-      // Ak je posledny bajt aktual. instrukcie uz sucastou nejakej inej instrukcie alebo je uz mimo bloku,
-      // tak sa odstrani flag dfInstruction z prveho bajtu aktual. instrukcie a ukonci sa aktual. blok
-      // pozn.: nad tymto a veci s tym suvisiacimi sa treba este zamysliet, napr. ci ma teda aktualny blok zmysel(alebo ten prave zacinajuci)
-      if ((DisasmMap[i] and dfPart)<>0) or (i>finish) then begin
-        Dec(DisasmMap[InstrAddress],dfNewInstr);
-        KoniecBloku:=true;
-      end
-      else begin
+          // Parsed
+          for ParsedIndex := 0 to (i - InstrAddress) do begin
+            TheByte := code[InstrAddress + Cardinal(ParsedIndex)];
+            Line[10 + 2*ParsedIndex] := HexDigits[(TheByte shr 4) and 15];
+            Line[10 + 2*ParsedIndex + 1] := HexDigits[TheByte and 15];
+          end;
 
-        { Construct instruction line of Disassembled from its parts }
+          // Spaces
+          for SpaceIndex := 10 + 2*(i - InstrAddress + 1) to LastParsedIndex do
+            Line[SpaceIndex] := ' ';
 
-        SetLength(Line, ilInstructionMnemonicIndex - 1);
+          LastParsedIndex := 9 + 2*(i - InstrAddress + 1);
 
-        // Address
-        MemAddress:= InstrAddress + fMemOffset;
-        for HexAddressIndex := 1 to 8 do begin
-          Line[9 - HexAddressIndex] := HexDigits[MemAddress and 15];
-          MemAddress:= MemAddress shr 4;
-        end;
+          // Prefix
+          LineIndex := ilInstructionMnemonicIndex;
+          if InstructionPrefix <> '' then begin
+            for ParsedIndex := 1 to Length(InstructionPrefix) do
+              Line[procmat.ilInstructionMnemonicIndex - 1 + ParsedIndex] := InstructionPrefix[ParsedIndex];
+            Inc(LineIndex, Length(InstructionPrefix));
+            Line[LineIndex] := ' ';
+            Inc(LineIndex);
+          end;
 
-        // Parsed
-        for ParsedIndex := 0 to (i - InstrAddress) do begin
-          TheByte := code[InstrAddress + Cardinal(ParsedIndex)];
-          Line[10 + 2*ParsedIndex] := HexDigits[(TheByte shr 4) and 15];
-          Line[10 + 2*ParsedIndex + 1] := HexDigits[TheByte and 15];
-        end;
-
-        // Spaces
-        for SpaceIndex := 10 + 2*(i - InstrAddress + 1) to LastParsedIndex do
-          Line[SpaceIndex] := ' ';
-
-        LastParsedIndex := 9 + 2*(i - InstrAddress + 1);
-
-        // Prefix
-        LineIndex := ilInstructionMnemonicIndex;
-        if InstructionPrefix <> '' then begin
-          for ParsedIndex := 1 to Length(InstructionPrefix) do
-            Line[procmat.ilInstructionMnemonicIndex - 1 + ParsedIndex] := InstructionPrefix[ParsedIndex];
-          Inc(LineIndex, Length(InstructionPrefix));
+          // Name
+          for ParsedIndex := 1 to Length(InstructionName) do
+            Line[LineIndex - 1 + ParsedIndex] := InstructionName[ParsedIndex];
+          Inc(LineIndex, Length(InstructionName));
           Line[LineIndex] := ' ';
           Inc(LineIndex);
+
+          // Operands
+          for ParsedIndex := 1 to Length(InstructionOperands) do
+            Line[LineIndex - 1 + ParsedIndex] := InstructionOperands[ParsedIndex];
+          Inc(LineIndex, Length(InstructionOperands) - 1);
+
+          // Shortening of "Line" to the actual length of line, se
+          SetLength(Line, LineIndex);
+          Disassembled[InstrAddress].Disassembled := Line;
+
+          // Set the fDisasmMap bitmap - first byte is "new instruction" (dfNewInstr) and each byte of instruction is "part of instruction" (dfPart)
+          fDisasmMap[InstrAddress] := dfNewInstr;
+          for InstrByteIndex := InstrAddress to i do
+            Inc(fDisasmMap[InstrByteIndex], dfPart);
+
+          Inc(fStatistics.Instructions);
         end;
 
-        // Name
-        for ParsedIndex := 1 to Length(InstructionName) do
-          Line[LineIndex - 1 + ParsedIndex] := InstructionName[ParsedIndex];
-        Inc(LineIndex, Length(InstructionName));
-        Line[LineIndex] := ' ';
-        Inc(LineIndex);
+        Inc(i);
 
-        // Operands
-        for ParsedIndex := 1 to Length(InstructionOperands) do
-          Line[LineIndex - 1 + ParsedIndex] := InstructionOperands[ParsedIndex];
-        Inc(LineIndex, Length(InstructionOperands) - 1);
-
-        SetLength(Line, LineIndex);
-        Disassembled[InstrAddress].Disassembled := Line;
-{
-        // Create intruction line of Disassembled from particles
-        Disassembled[InstrAddress].Disassembled :=
-          IntToHex(InstrAddress + fMemOffset, 8) + ' ' +
-          StringRightPad(DataToHex(code[InstrAddress], i - InstrAddress + 1), ilMaxParsedLength + 1, ' ') +
-          IfThen(InstructionPrefix <> '', InstructionPrefix + ' ') +
-          InstructionName + ' ' +
-          InstructionOperands;
-}
-
-        // prida kazdemu bajtu aktualnej instrukcie flag dfPart, t.j. ze je sucastou nejakej instruckie
-        for k := InstrAddress to i do
-          Inc(DisasmMap[k], dfPart);
+      except
+        on E: EUndefinedOpcodeException do begin
+          Inc(Disassembled[InstrAddress].ReferCount);
+          SetLength(Disassembled[InstrAddress].refer, Disassembled[InstrAddress].ReferCount);
+          Disassembled[InstrAddress].refer[disassembled[InstrAddress].refercount - 1] := StringRightPad(';' + IntToHex(InstrAddress + fMemOffset, 8) + ' ' + DataToHex(code[InstrAddress], i - InstrAddress + 1) + '...', ilInstructionMnemonicIndex - 1) + 'UNDEFINED OPCODE!';
+          InstructionPrefix := '';
+          fDisasmMap[InstrAddress] := 0;
+          EndBlock := true;
+          Logger.Debug('Undefined opcode, message: ' + E.Message);
+        end
+        else
+          raise;
       end;
-
-      Inc(i);
-
-    except
-      on E: EUndefinedOpcodeException do begin
-        Inc(Disassembled[InstrAddress].ReferCount);
-        SetLength(Disassembled[InstrAddress].refer, Disassembled[InstrAddress].ReferCount);
-        Disassembled[InstrAddress].refer[disassembled[InstrAddress].refercount - 1] := StringRightPad(';' + IntToHex(InstrAddress + fMemOffset, 8) + ' ' + DataToHex(code[InstrAddress], i - InstrAddress + 1) + '...', ilInstructionMnemonicIndex - 1) + 'UNDEFINED OPCODE!';
-        InstructionPrefix := '';
-        DisasmMap[InstrAddress] := 0;
-        KoniecBloku := true;
-        Logger.Debug('Undefined opcode, message: ' + E.Message);
-      end
-      else
-        raise;
-    end;
-  end;   // End of   Hlavny disassemblovaci cyklus
+    end;   // End of "Main loop of disassembler"
 
   except
     on E: Exception do begin
@@ -1286,48 +1273,54 @@ end;
 
 
 
-function Tx86Disassembler.SpracujParameter(a:Tparameter):string;
+function Tx86Disassembler.ProcessOperand(Operand: TOperand): string;
 begin
-  case a of
-    MODb: result := SpracujModRM(otRMRegMem, os1);
-    MODw: result := SpracujModRM(otRMRegMem, os2);
-    MODv: result := SpracujModRM(otRMRegMem, os2or4);
-    MODd: result := SpracujModRM(otRMRegMem, os4);
-    MODp: result := SpracujModRM(otRMRegMem, os4or6);
-    MODq: result := SpracujModRM(otRMRegMem, os8);
-    MODdq: result := SpracujModRM(otRMRegMem, os16);
+  case Operand of
+    MODb: result := ProcessModRM(otRMRegMem, os1);
+    MODw: result := ProcessModRM(otRMRegMem, os2);
+    MODv: result := ProcessModRM(otRMRegMem, os2or4);
+    MODd: result := ProcessModRM(otRMRegMem, os4);
+    MODp: result := ProcessModRM(otRMRegMem, os4or6);
+    MODq: result := ProcessModRM(otRMRegMem, os8);
+    MODdq: result := ProcessModRM(otRMRegMem, os16);
 
-    GREGb: result := SpracujModRM(otRegister, os1);
-    GREGw: result := SpracujModRM(otRegister, os2);
-    GREGv: result := SpracujModRM(otRegister, os2or4);
-    GREGd: result := SpracujModRM(otRegister, os4);
-    GREGq: result := SpracujModRM(otRegister, os8);
-    GREGdq: result := SpracujModRM(otRegister, os16);
+    GREGb: result := ProcessModRM(otRegister, os1);
+    GREGw: result := ProcessModRM(otRegister, os2);
+    GREGv: result := ProcessModRM(otRegister, os2or4);
+    GREGd: result := ProcessModRM(otRegister, os4);
+    GREGq: result := ProcessModRM(otRegister, os8);
+    GREGdq: result := ProcessModRM(otRegister, os16);
 
-    SREGw: result := SpracujModRM(otSegmentReg, os2);
-    CREGd: result := SpracujModRM(otControlReg, os4);
-    DREGd: result := SpracujModRM(otDebugReg, os4);
-    TREGd: result := SpracujModRM(otTestReg, os4);
+    SREGw: result := ProcessModRM(otSegmentReg, os2);
+    CREGd: result := ProcessModRM(otControlReg, os4);
+    DREGd: result := ProcessModRM(otDebugReg, os4);
+    TREGd: result := ProcessModRM(otTestReg, os4);
 
-    IMMb: result := SpracujImmediate(os1);
-    IMMv: result := SpracujImmediate(os2or4);
-    IMMw: result := SpracujImmediate(os2);
-    IMMp: result := SpracujImmediate(os4or6);
+    IMMb: result := ProcessImmediate(os1);
+    IMMv: result := ProcessImmediate(os2or4);
+    IMMw: result := ProcessImmediate(os2);
+    IMMp: result := ProcessImmediate(os4or6);
+{
+    IMMb: result := SpracujImmediatePascal(os1);
+    IMMv: result := SpracujImmediatePascal(os2or4);
+    IMMw: result := SpracujImmediatePascal(os2);
+    IMMp: result := SpracujImmediatePascal(os4or6);
+}
 
-    RELb: result := SpracujRelative(os1);
-    RELv: result := SpracujRelative(os2or4);
-    RELw: result := SpracujRelative(os2);
+    RELb: result := ProcessRelative(os1);
+    RELv: result := ProcessRelative(os2or4);
+    RELw: result := ProcessRelative(os2);
 
-    OFFb, OFFv: result := SpracujOffset;
+    OFFb, OFFv: result := ProcessOffset;
 
-    ax: result := SpracujGenReg + 'AX';
-    bx: result := SpracujGenReg + 'BX';
-    cx: result := SpracujGenReg + 'CX';
-    dx: result := SpracujGenReg + 'DX';
-    si: result := SpracujGenReg + 'SI';
-    di: result := SpracujGenReg + 'DI';
-    bp: result := SpracujGenReg + 'BP';
-    sp: result := SpracujGenReg + 'SP';
+    ax: result := ProcessGenPurpRegister + 'AX';
+    bx: result := ProcessGenPurpRegister + 'BX';
+    cx: result := ProcessGenPurpRegister + 'CX';
+    dx: result := ProcessGenPurpRegister + 'DX';
+    si: result := ProcessGenPurpRegister + 'SI';
+    di: result := ProcessGenPurpRegister + 'DI';
+    bp: result := ProcessGenPurpRegister + 'BP';
+    sp: result := ProcessGenPurpRegister + 'SP';
 
     al: result := 'AL';
     bl: result := 'BL';
@@ -1344,21 +1337,21 @@ begin
     CS: result := 'CS';
     statDX: result := 'DX';
 
-    MMM: result := SpracujModRM(otRMMem, osNone);
-    M16: result := SpracujModRM(otRMMem, os2);
-    M32: result := SpracujModRM(otRMMem, os4);
-    M64: result := SpracujModRM(otRMMem, os8);
-    M80: result := SpracujModRM(otRMMem, os10);
-    M128: result := SpracujModRM(otRMMem, os16);
-    R32: result := SpracujModRM(otRMReg, os4);
-    R64: result := SpracujModRM(otRMReg, os8);
-    R128: result := SpracujModRM(otRMReg, os16);
-    REG32_M8: result := SpracujModRM(otRMRegMem, osR4_M1);
-    REG32_M16: result := SpracujModRM(otRMRegMem, osR4_M2);
-    MMX_M32: result := SpracujModRM(otRMRegMem, osR8_M4);
-    XMM_M16: result := SpracujModRM(otRMRegMem, osR16_M2);
-    XMM_M32: result := SpracujModRM(otRMRegMem, osR16_M4);
-    XMM_M64: result := SpracujModRM(otRMRegMem, osR16_M8);
+    MMM: result := ProcessModRM(otRMMem, osNone);
+    M16: result := ProcessModRM(otRMMem, os2);
+    M32: result := ProcessModRM(otRMMem, os4);
+    M64: result := ProcessModRM(otRMMem, os8);
+    M80: result := ProcessModRM(otRMMem, os10);
+    M128: result := ProcessModRM(otRMMem, os16);
+    R32: result := ProcessModRM(otRMReg, os4);
+    R64: result := ProcessModRM(otRMReg, os8);
+    R128: result := ProcessModRM(otRMReg, os16);
+    REG32_M8: result := ProcessModRM(otRMRegMem, osR4_M1);
+    REG32_M16: result := ProcessModRM(otRMRegMem, osR4_M2);
+    MMX_M32: result := ProcessModRM(otRMRegMem, osR8_M4);
+    XMM_M16: result := ProcessModRM(otRMRegMem, osR16_M2);
+    XMM_M32: result := ProcessModRM(otRMRegMem, osR16_M4);
+    XMM_M64: result := ProcessModRM(otRMRegMem, osR16_M8);
 
     n1: result := '1';
   end;

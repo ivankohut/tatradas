@@ -62,10 +62,10 @@ type
     DataBuffer: Int64;
     Operation: TCalcOperation;
 
-    CurrentEdit: TMyEdit;
+    CurrentEdit: TPositiveEdit;
 
-    DecEdit: TMyNumEdit;
-    HexEdit: TMyHexEdit;
+    DecEdit: TDecimalPositiveEdit;
+    HexEdit: THexPositiveEdit;
     procedure EditChange(Sender: TObject);
     procedure EditEnter(Sender: TObject);
     procedure EditKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
@@ -95,10 +95,10 @@ begin
 end;
 
 procedure TCalculator.EditChange(Sender: TObject);
-var ChangedEdit: TMyEdit;
+var ChangedEdit: TPositiveEdit;
 begin
   inherited;
-  ChangedEdit:=(Sender as TMyEdit);
+  ChangedEdit:=(Sender as TPositiveEdit);
 
   if ChangedEdit.Text='' then exit;
   if ChangedEdit.Text='$' then exit;
@@ -122,7 +122,7 @@ end;
 
 procedure TCalculator.FormCreate(Sender: TObject);
 begin
-  DecEdit:= TMyNumEdit.Create(Panel1);
+  DecEdit:= TDecimalPositiveEdit.Create(Panel1);
   DecEdit.Parent:=Panel1;
   DecEdit.Align:=alClient;
 //  DecEdit.BaseFormat:=Number;
@@ -130,7 +130,7 @@ begin
   DecEdit.OnEnter:=EditEnter;
   DecEdit.OnKeyDown:=EditKeyDown;
 
-  HexEdit:=TMyHexEdit.Create(Panel2);
+  HexEdit:=THexPositiveEdit.Create(Panel2);
   HexEdit.Parent:=Panel2;
   HexEdit.Align:=alClient;
 //  HexEdit.BaseFormat:=Hexadecimal;
@@ -160,7 +160,7 @@ end;
 
 procedure TCalculator.EditEnter(Sender: TObject);
 begin
-  CurrentEdit:=Sender as TMyEdit;
+  CurrentEdit:=Sender as TPositiveEdit;
 end;
 
 procedure TCalculator.EqualButtonClick(Sender: TObject);

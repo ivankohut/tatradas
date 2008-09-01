@@ -41,8 +41,8 @@ type
     procedure bit32RadiobuttonClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
   public
-    BytesBinHexEdit: TMyNumEdit;//TPBBinHexEdit;
-    MaxAddressBinHexEdit: TMyHexEdit;//TPBBinHexEdit;
+    BytesBinHexEdit: TDecimalPositiveEdit;//TPBBinHexEdit;
+    MaxAddressBinHexEdit: THexPositiveEdit;//TPBBinHexEdit;
     Options: TDisassembleFormOptions;
     procedure Translate;
   private
@@ -93,7 +93,7 @@ end;
 
 procedure TAdvancedDisassembleForm.FormCreate(Sender: TObject);
 begin
-  BytesBinHexEdit:=TMyNumEdit.Create(self);//TPBBinHexEdit.Create(self);
+  BytesBinHexEdit:=TDecimalPositiveEdit.Create(self);//TPBBinHexEdit.Create(self);
   BytesBinHexEdit.Left:= 128;
   BytesBinHexEdit.Top:= 24;
 //  BytesBinHexEdit.BaseFormat:=Number;
@@ -102,7 +102,7 @@ begin
   BytesBinHexEdit.OnChange:= ValueChange;
   BytesBinHexEdit.MaxValue:= $FFFFFFFF;
 
-  MaxAddressBinHexEdit:= TMyHexEdit.Create(self);//TPBBinHexEdit.Create(self);
+  MaxAddressBinHexEdit:= THexPositiveEdit.Create(self);//TPBBinHexEdit.Create(self);
   MaxAddressBinHexEdit.Left:= 128;
   MaxAddressBinHexEdit.Top:= 56;
 //  MaxAddressBinHexEdit.BaseFormat:=HexaDecimal;
@@ -119,10 +119,10 @@ begin
 end;
 
 procedure TAdvancedDisassembleForm.ValueChange(Sender: TObject);
-var MyEdit: TMyEdit;
+var MyEdit: TPositiveEdit;
 begin
   if changing then exit else changing:=true;
-  MyEdit:=TMyEdit(Sender);
+  MyEdit:=TPositiveEdit(Sender);
   MyEdit.Change(Sender);
   if MyEdit.Text='' then Exit;
   options.value:=MyEdit.AsCardinal;

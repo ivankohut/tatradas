@@ -6,7 +6,6 @@ uses
   {$IFDEF FPC}
     {$IFDEF LINUX}
       Crt,
-      cthreads,
     {$ENDIF}
   {$ENDIF}
 
@@ -34,6 +33,10 @@ procedure RunDisassembler(InputFileName, OutputFileName: string);
 
 
 implementation
+
+// Temporary
+uses
+  CodeSectionUnit;
 
 
 procedure ShowUsage;
@@ -94,6 +97,25 @@ begin
 end;
 
 
+// Procedure is for testing purposes only
+procedure SaveCodeSections(AExecFile: TExecutableFile; AFileName: string);
+var
+  SectionIndex: integer;
+  CodeSection: TCodeSection;
+  fs: TStream;
+begin
+  fs := TFileStream.Create(AFileName, fmCreate);
+  for SectionIndex := 0 to AExecFile.Sections.Count - 1 do begin
+    if (AExecFile.Sections[SectionIndex] is TCodeSection) then begin
+      CodeSection := (AExecFile.Sections[SectionIndex] as TCodeSection);
+      CodeSection.CodeStream.Position := 0;
+      CodeSection.CodeStream.SaveToStream(fs);
+      //fs.Write(CodeSection.CodeStream);
+    end;
+  end;
+  fs.Free;
+end;
+
 
 procedure RunDisassembler(InputFileName, OutputFileName: string);
 var
@@ -105,7 +127,7 @@ begin
   ExecFile:= nil;
   try
     // Create ExecFile
-    ExecFile:= ExecFileManager.CreateNewExecFile(ExpandFilename(InputFileName));
+    ExecFile := ExecFileManager.CreateNewExecFile(ExpandFilename(InputFileName));
     if ProgressData.ErrorStatus <> errNone then
       raise ETatraDASException.Create('');
 
@@ -120,8 +142,11 @@ begin
     // Save result to file
 
     // TODO
-    //SaveOptions:= [soDisassembly];
-    SaveOptions:= [soNASM];
+    SaveOptions:= [soDisassembly];
+    //SaveOptions:= [soNASM];
+
+    // Ulozenie kodu kodovych sekcii
+    //SaveCodeSections(ExecFile, ChangeFileExt(OutputFileName, '.bin'));
 
     ExecuteProgress(TSaveThread.Create(ExecFileManager, ExecFile, OutputFileName, SaveOptions));
     RenameFile(ChangeFileExt(OutputFileName, '.das'), OutputFileName);

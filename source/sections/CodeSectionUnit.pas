@@ -429,7 +429,7 @@ begin
       case (ExecFile as TExecutableFile).ExeFormat of
 
         ffPE: begin
-          for i:=0 to Length(Disassembler.Imported)-1 do begin
+          for i := 0 to Length(Disassembler.Imported) - 1 do begin
             // Priprava parametrov pre GetModulAndFunction
             IndexAddressStr:=Disassembler.Disassembled[Disassembler.Imported[i]].Disassembled;
             IndexAddressStr:=Copy(IndexAddressStr, ilInstructionMnemonicIndex + 3 + 10 + Math.IfThen(Disassembler.Disassembled[Disassembler.Imported[i]].Disassembled[ilInstructionMnemonicIndex] = 'C', 1, 0), 8);

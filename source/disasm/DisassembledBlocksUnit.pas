@@ -18,7 +18,6 @@ type
     function GetBlockCount: integer;
   public
     procedure Clear;
-  //  function Add(Address, Size: cardinal): integer;
     procedure Add(Address, Size: cardinal);
     property Items[Index: integer]: TDisassembledBlock read GetBlock; default;
     property Count: integer read GetBlockCount;
@@ -30,7 +29,7 @@ implementation
 uses
   SysUtils;
 
-//function TDisassembledBlocks.Add(Address, Size: cardinal): integer;
+
 procedure TDisassembledBlocks.Add(Address, Size: cardinal);
 begin
   Inc(fCount);
