@@ -6,7 +6,7 @@ interface
 
 uses
 {$IFDEF MSWINDOWS}
-  Windows,
+  Windows, Messages,
   Controls, Forms, Dialogs, ShellAPI,  ActnList,
   Graphics, StdCtrls, ComCtrls, ImgList, Menus, ExtCtrls, Grids,
 {$ENDIF}
@@ -195,6 +195,10 @@ type
     function GetActivePageType: TPageType; // remove candidate
     function GetActiveFrame: TTabFrameTemplate;
     procedure SetModified(AModified: boolean);
+    procedure DoOpenFile(AFileName: string);
+  private
+    fOriginalWndProcOfMainPageControl: TWndMethod;
+    procedure MainPageControlSubClassWndProc(var AMessage: TMessage);
   public
     ExecFile: TExecutableFile;
 
@@ -246,20 +250,28 @@ uses
 
 
 procedure TMainForm.OpenClick(Sender: TObject);       // Otvorenie suboru
+begin
+  OpenFileOpenDialog.FileName:= '';
+  OpenFileOpenDialog.InitialDir:= OpenFilePath;
+  if OpenFileOpenDialog.Execute then begin
+    OpenFilePath:= ExtractFilePath(OpenFileOpenDialog.FileName);
+    DoOpenFile(OpenFileOpenDialog.FileName);
+  end;
+end;
+
+
+
+procedure TMainForm.DoOpenFile(AFileName: string);
 var
   ErrorMessage: string;
   i: integer;
 begin
-  OpenFileOpenDialog.FileName:= '';
-  OpenFileOpenDialog.InitialDir:= OpenFilePath;
-  if not OpenFileOpenDialog.Execute then Exit;
-  OpenFilePath:= ExtractFilePath(OpenFileOpenDialog.FileName);
-
   Application.ProcessMessages;
 
-  if ExecFile <> nil then CloseFileClick(nil);
+  if ExecFile <> nil then
+    CloseFileClick(nil);
 
-  ExecFile:= ExecFileManager.CreateNewExecFile(OpenFileOpenDialog.FileName);
+  ExecFile:= ExecFileManager.CreateNewExecFile(AFileName);
   if ProgressData.ErrorStatus <> errNone then begin
     ExecFile.Free;
     case ProgressData.ErrorStatus of
@@ -279,7 +291,7 @@ begin
         raise Exception.Create('This should not occur !');
       end;
     end;
-    MessageDlg(ErrorMessage + '"' + OpenFileOpenDialog.FileName + '"', mtError, [mbOK], 0);
+    MessageDlg(ErrorMessage + '"' + AFileName + '"', mtError, [mbOK], 0);
     Exit;
   end;
 
@@ -559,6 +571,12 @@ begin
   HelpMyButton.OnClick:=Help2Click;
   HelpMyButton.Glyph:=HelpMyButton.ObrMimo;
 }
+
+  // Drag & drop opening files
+  fOriginalWndProcOfMainPageControl := MainPageControl.WindowProc;
+  MainPageControl.WindowProc := MainPageControlSubClassWndProc;
+  DragAcceptFiles(MainPageControl.Handle, true);
+
   Caption:=TatraDASFullNameVersion;
   StatusBar2.Panels[1].Text:=TatraDASFullNameVersion;
 ///  ProcessLabel.Caption:='';
@@ -964,6 +982,28 @@ begin
   end
   else
     Caption:= TatraDASFullNameVersion;
+end;
+
+
+
+procedure TMainForm.MainPageControlSubClassWndProc(var AMessage: TMessage);
+const
+  MaxFileNameLength = 255;
+var
+  DroppedFilesCount: Integer;
+  DroppedFileName: array [0..MaxFileNameLength] of Char;
+begin
+  // If one file dropped then open it
+  if AMessage.Msg = WM_DROPFILES then begin
+    DroppedFilesCount := DragQueryFile(AMessage.WParam, $FFFFFFFF, DroppedFileName, MaxFileNameLength);
+    if DroppedFilesCount = 1 then begin
+      DragQueryFile(AMessage.WParam, 0, DroppedFileName, MaxFileNameLength);
+      DoOpenFile(DroppedFileName);
+    end;
+    DragFinish(AMessage.WParam);
+  end
+  else
+    fOriginalWndProcOfMainPageControl(AMessage);
 end;
 
 

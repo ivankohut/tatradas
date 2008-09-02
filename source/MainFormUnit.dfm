@@ -25,6 +25,7 @@ object MainForm: TMainForm
     Width = 773
     Height = 83
     Align = alTop
+    DragMode = dmAutomatic
     Stretch = True
     Transparent = True
   end
@@ -57,7 +58,6 @@ object MainForm: TMainForm
       end>
     ParentShowHint = False
     ShowHint = True
-    SimplePanel = False
   end
   object Panel1: TPanel
     Left = 0

@@ -50,7 +50,6 @@ Misc
 GUI
 - nutne optimalizovat TExportTabFrame.Create, mozno aj ImportTab - vytvaranie ListItem-ov (C:\Program Files\OpenOffice.org\program\bf_xo680mi.dll)
 - vlastny MessageDlg, aby zobrazoval buttony v jazyku TatraDASu
-- drag a drop
 - zamysliet sa nad polozkami v menu (a buttonmi na codeframe)
 - prerobit menu pomocou actions
 - system na spravu GUI dat (hodnoty formularov) & ich ukladanie do projektoveho suboru
@@ -70,6 +69,7 @@ DONE:
 - refaktorizacia a kontrola FPU instrukcii
 - SSSE3, SSE41, SSE42
 - zavedeny typ instrukcie (napr. normal alebo undefined), odstranena polozka "opcode"
+- drag & drop
 
 - oprava - uvadzanie velkosti operandu vzdy, ak je v pamati; -> dosledkom je kompilovatelnost s NASM (hoci este stale hadze warningy)
 - oprava velkosti operandu u niektorych FPU instrukcii,
