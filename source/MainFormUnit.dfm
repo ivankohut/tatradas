@@ -2,7 +2,7 @@ object MainForm: TMainForm
   Left = 243
   Top = 219
   Width = 781
-  Height = 728
+  Height = 747
   BorderIcons = [biSystemMenu, biMinimize]
   Caption = 'TatraDAS disassembler 2.9.9'
   Color = clBtnFace
@@ -17,6 +17,7 @@ object MainForm: TMainForm
   OldCreateOrder = False
   OnClose = FormClose
   OnCreate = FormCreate
+  OnDestroy = FormDestroy
   PixelsPerInch = 96
   TextHeight = 13
   object Image1: TImage
@@ -33,7 +34,7 @@ object MainForm: TMainForm
     Left = 0
     Top = 92
     Width = 773
-    Height = 571
+    Height = 590
     Align = alClient
     Constraints.MinHeight = 300
     Constraints.MinWidth = 565
@@ -43,7 +44,7 @@ object MainForm: TMainForm
   end
   object StatusBar2: TStatusBar
     Left = 0
-    Top = 663
+    Top = 682
     Width = 773
     Height = 19
     AutoHint = True
@@ -439,7 +440,7 @@ object MainForm: TMainForm
     end
     object Settings1: TMenuItem
       Caption = 'Settings'
-      object Language1: TMenuItem
+      object LanguagesMenuItem: TMenuItem
         Caption = 'Language'
       end
       object Options1: TMenuItem

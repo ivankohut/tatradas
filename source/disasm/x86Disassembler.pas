@@ -678,6 +678,7 @@ end;
 
 destructor Tx86Disassembler.Destroy;
 begin
+  CAJ.Free;
   inherited;
 end;
 

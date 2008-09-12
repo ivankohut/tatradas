@@ -63,7 +63,6 @@ const
   TatraDASFullNameVersion: string = 'TatraDAS disassembler 2.9.9 devel';
 
 
-  TranslateErrorStr = 'TRANS ERROR';
   CodeArrayReserve = 20;
   MaxProgressNameLength = 25;
 
@@ -147,7 +146,7 @@ type
     LoadingDAS, LoadingDHF, SavingDAS, SavingDHF: string;
   end;
 
-  TProgressError = (errNone, errOpen, errUnknownFormat, errBadFormat, errDASNotFound, errBadProjectVersion, errSave, errCanceled, errUserTerminated, errUnspecified);
+  TProgressError = (errNone, errOpen, errBadFormat, errDASNotFound, errBadProjectVersion, errSave, errCanceled, errUserTerminated, errUnspecified);
 
   TProgressData = record
     Name: string;

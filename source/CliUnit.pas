@@ -36,7 +36,29 @@ implementation
 
 // Temporary
 uses
-  CodeSectionUnit;
+  // Temporary
+//  CodeSectionUnit,
+  
+  //FPCUnit, TestRegistry,
+  //TestFramework,
+  CustomFileUnit;
+
+
+type
+  TRunOptions = record
+    BadParameters: boolean;
+    InputFileName: string;
+    OutputFileName: string;
+    IsCustomFile: boolean;
+    CustomFileParameters: TCustomFileParameters;
+    SaveOptions: TSaveOptions;
+  end;
+
+
+function ProcessParameters: TRunOptions;
+begin
+
+end;
 
 
 procedure ShowUsage;
@@ -96,7 +118,7 @@ begin
   WriteLn;
 end;
 
-
+{
 // Procedure is for testing purposes only
 procedure SaveCodeSections(AExecFile: TExecutableFile; AFileName: string);
 var
@@ -115,7 +137,7 @@ begin
   end;
   fs.Free;
 end;
-
+}
 
 procedure RunDisassembler(InputFileName, OutputFileName: string);
 var
@@ -160,6 +182,60 @@ begin
   end;
 end;
 
+
+{
+procedure RunTatraDAS;
+var
+  RunOptions: TRunOptions;
+begin
+  DisplayProgramIdentification;
+  RunOptions := ProcessParameters;
+  if RunOptions.BadParameters then begin
+    DisplayProgramUsage;
+    Exit;
+  end;
+
+  ExecFileManager := TExecFileManager.Create;
+  if RunOptions.IsCustomFile then
+    ExecFile := ExecFileManager.CreateNewCustomExecFile(RunOptions.InputFileName, RunOptions.CustomFileParamters)
+  else
+    ExecFile := ExecFileManager.CreateNewExecFile(RunOptions.InputFileName);
+  try
+    RunDisassembler(ExecFile, RunOptions.OutputFileName, RunOptions.SaveOptions);
+  finally
+    ExecFile.Free;
+  end;
+  ExecFileManager.Free;
+end;
+}
+
+{
+// Tests
+
+type
+
+
+ TTestCaseFirst = class(TTestCase)
+
+ published
+
+   procedure TestFirst;
+
+ end;
+
+
+procedure TTestCaseFirst.TestFirst;
+begin
+ Check(1 + 1 = 2, 'Catastrophic arithmetic failure!');
+end;
+
+
+
+initialization
+
+  RegisterTest(TTestCaseFirst);
+// TestFramework.RegisterTest(TTestCaseFirst.Suite);
+}
 
 
 end.

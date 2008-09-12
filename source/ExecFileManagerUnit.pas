@@ -4,7 +4,6 @@ unit ExecFileManagerUnit;
 
 { TODO:
   spravne osetrit citanie a zapisovanie suborou (vynimky atd)
-
 }
 
 interface
@@ -23,10 +22,6 @@ uses
   LXFileUnit,
   ELFFileUnit,
   CustomFileUnit,
-  {$IFDEF GUI_B}
-  Controls,
-  UnknownFileFormUnit,
-  {$ENDIF}
   StringRes;
 
 const
@@ -47,12 +42,13 @@ type
   TExecFileManager = class
    private
 //    fError: TFileError;
-    function GetExecFileFormat(FileStream: TFileStream): TExecFileFormat;
+    function GetExecFileFormat(AFileStream: TFileStream): TExecFileFormat;
 
    public
     function LoadExecFileFromFile(AFileName: TFileName) : TExecutableFile;    // uses TextFile
     function SaveExecFileToFile(ExecFile: TExecutableFile; AFileName: TFileName; SaveOptions: TSaveOptions): boolean;
     function CreateNewExecFile(AFileName: TFileName): TExecutableFile;
+    function CreateNewCustomExecFile(AFileName: TFileName; AParameters: TCustomFileParameters): TExecutableFile;
 
 //    property Error: TFileError read fError;
   end;
@@ -62,121 +58,123 @@ implementation
 
 { TExecFileManager }
 
-function TExecFileManager.CreateNewExecFile(aFileName: TFileName): TExecutableFile;
+function TExecFileManager.GetExecFileFormat(AFileStream: TFileStream): TExecFileFormat;
 var
-  FileFormat: TExecFileFormat;
-  InputFile: TFileStream;
-  CustomFileParameters: TCustomFileParameters;
+  LowID, HighID: word;
+  Header: TMZHeader;
 begin
-  ProgressData.ErrorStatus:= errNone;
-  result:=nil;
-
-  try
-    InputFile:=TFileStream.Create(aFileName, fmShareDenyNone);
-  except
-    ProgressData.ErrorStatus:=errOpen;
-    Exit;
-  end;
-
-  // Create appropriate ExecFile object
-  FileFormat:= GetExecFileFormat(InputFile);
-  case FileFormat of
-    ffPE:  result:=TPEFile.Create(InputFile, aFileName);
-    ffCOM: result:=TCOMFile.Create(InputFile, aFileName);
-    ffMZ:  result:=TMZFile.Create(InputFile, aFileName);
-    ffNE:  result:=TNEFile.Create(InputFile, aFileName);
-    ffELF: result:=TELFFile.Create(InputFile, aFileName);
-    // LE: result:=TLEFile.Create(InputFile, aFileName)
-    // LX: result:=TLXFile.Create(InputFile, aFileName)
-
-    {$IFDEF GUI_B}
-    ffUnknown: begin
-      UnknownFileFormatForm.FileName:= ExtractFileName(aFileName);
-      UnknownFileFormatForm.FileSize:= InputFile.Size;
-      if UnknownFileFormatForm.ShowModal = mrOK then
-        result := TCustomFile.Create(InputFile, aFileName, UnknownFileFormatForm.Parameters)
-      else begin
-        ProgressData.ErrorStatus:= errCanceled;
-        Exit;
-      end;
-    end;
-   {$ELSE}
-    ffUnknown: begin
-      CustomFileParameters.EntryPoint := 0;
-      CustomFileParameters.StartOffset := 0;
-      CustomFileParameters.Size := InputFile.Size;
-      CustomFileParameters.Bit32 := true;
-      result := TCustomFile.Create(InputFile, aFileName, CustomFileParameters);
-      {
-      ProgressData.ErrorStatus:= errUnknownFormat;
-      Exit;
-      }
-    end;
-   {$ENDIF}
-  end;
-
-  if result.ExeFormat = ffError then begin
-    ProgressData.ErrorStatus:= errBadFormat;
-    result.Free;
-  end;
-
-  InputFile.Free;
-end;
-
-
-
-function TExecFileManager.GetExecFileFormat(FileStream: TFileStream): TExecFileFormat;
-var LowID, HighID: word;
-    Header: TMZHeader;
-begin
-  if FileStream.Size > SizeOf(Header) then begin
-    FileStream.Seek(0,0);
-    FileStream.Read(LowID,2); FileStream.Read(HighID,2);
+  if AFileStream.Size > SizeOf(Header) then begin
+    AFileStream.Seek(0, 0);
+    AFileStream.Read(LowID, 2);
+    AFileStream.Read(HighID, 2);
     case LowID of
 
       // MZ class of executable file formats
       c_MZLowID: begin
-        FileStream.Position:=0;
-        FileStream.Read(header,SizeOf(Header));
-        if header.reloctableoffset = $40 then begin // newer format than MZ
-          FileStream.Seek(header.reserved[9],0);
-          FileStream.Read(header.Sign,2);
-          case header.sign of
-            c_PESign: result:= ffPE;                     // Portable Executable 32-bit
-            c_NESign: result:= ffNE;                     // New Executable 16-bit
-            c_LESign: result:= ffUnknown; //LE;                     // Linear Executable
-            c_LXSign: result:= ffUnknown; //LX;                     // Linear Executable 32 - bit
+        AFileStream.Position := 0;
+        AFileStream.Read(Header, SizeOf(Header));
+        // Format newer than MZ
+        if Header.RelocTableOffset = $40 then begin
+          AFileStream.Seek(Header.Reserved[9], 0);
+          AFileStream.Read(Header.Sign, 2);
+          case Header.Sign of
+            c_PESign: result := ffPE;      // PE - Portable Executable 32-bit
+            c_NESign: result := ffNE;      // NE - New Executable 16-bit
+            c_LESign: result := ffUnknown; // LE - Linear Executable - not supported yet
+            c_LXSign: result := ffUnknown; // LX - Linear Executable 32-bit - not supported yet
             else
-              result:=ffUnknown;
+              result := ffUnknown;
           end;
         end
-        else begin                                  // MZ file format
-          result:= ffMZ;
-        end;
+        // MZ file format
+        else
+          result := ffMZ;
       end;
 
       // ELF class of executable file formats
       c_ELFLowID:
         if HighID = c_ELFHighID then
-          result:= ffELF
+          result := ffELF
         else
-          result:= ffUnknown;
+          result := ffUnknown;
 
       // other executable file formats
       else
-        if (((LowID mod $100) = $E9) or ((LowID mod $100) = $EB)) and (FileStream.Size < High(Word)+1) then
-          result:= ffCOM
+        // If the first instruction is JUMP and the size of file is < 64K then it is probably 16 bit COM file
+        if (((LowID mod $100) = $E9) or ((LowID mod $100) = $EB)) and (AFileStream.Size < High(Word) + 1) then
+          result := ffCOM
         else
-          result:=ffUnknown;
+          result := ffUnknown;
     end;
   end
   else
-    result:=ffUnknown;
-
+    result := ffUnknown;
 end;
 
 
 
+function TExecFileManager.CreateNewExecFile(aFileName: TFileName): TExecutableFile;
+var
+  FileFormat: TExecFileFormat;
+  InputFile: TFileStream;
+begin
+  ProgressData.ErrorStatus:= errNone;
+  result := nil;
+
+  try
+    InputFile := TFileStream.Create(aFileName, fmShareDenyNone);
+  except
+    ProgressData.ErrorStatus := errOpen;
+    Exit;
+  end;
+
+  try
+    // Create appropriate ExecFile object
+    FileFormat := GetExecFileFormat(InputFile);
+    case FileFormat of
+      ffPE:  result := TPEFile.Create(InputFile, aFileName);
+      ffCOM: result := TCOMFile.Create(InputFile, aFileName);
+      ffMZ:  result := TMZFile.Create(InputFile, aFileName);
+      ffNE:  result := TNEFile.Create(InputFile, aFileName);
+      ffELF: result := TELFFile.Create(InputFile, aFileName);
+      // LE: result:=TLEFile.Create(InputFile, aFileName)
+      // LX: result:=TLXFile.Create(InputFile, aFileName)
+      ffUnknown: begin
+        result := nil;
+        Exit;
+      end;
+    end;
+
+    if result.ExeFormat = ffError then begin
+      ProgressData.ErrorStatus := errBadFormat;
+      result.Free;
+    end;
+
+  finally
+    InputFile.Free;
+  end;
+end;
+
+
+
+function TExecFileManager.CreateNewCustomExecFile(AFileName: TFileName; AParameters: TCustomFileParameters): TExecutableFile;
+var
+  InputFile: TFileStream;
+begin
+  result := nil;
+  try
+    InputFile := TFileStream.Create(aFileName, fmShareDenyNone);
+  except
+    ProgressData.ErrorStatus := errOpen;
+    Exit;
+  end;
+
+  try
+    result := TCustomFile.Create(InputFile, AFileName, AParameters);
+  finally
+    InputFile.Free;
+  end;
+end;
 
 
 

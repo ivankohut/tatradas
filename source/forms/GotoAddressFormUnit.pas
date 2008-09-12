@@ -84,13 +84,6 @@ begin
   GotoAddressEdit.Top := 16;
   GotoAddressEdit.Width := 121;
   GotoAddressEdit.Height := 21;
-
-// Tu sa spusta prelozenie prostredia na zaciatku behu programu
-// GotoAddressForm musi vznikat ako posledny z formularov
-  if Translator.fCount > 0 then
-    Translator.Translate;
-
-  OptionsForm.LoadSettings(MainForm.sINI);
 end;
 
 

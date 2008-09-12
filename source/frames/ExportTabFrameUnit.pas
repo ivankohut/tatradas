@@ -168,13 +168,13 @@ end;
 
 procedure TExportTabFrame.Translate;
 begin
-  Caption:= Translator.INI.ReadString('Export','Caption', TranslateErrorStr);
-  FunctionStringGrid.Cells[0, 0] := Translator.ini.ReadString('Export', 'FunctionListNumber', TranslateErrorStr);
-  FunctionStringGrid.Cells[1, 0] := Translator.ini.ReadString('Export', 'FunctionListName', TranslateErrorStr);
-  FunctionStringGrid.Cells[2, 0] := Translator.ini.ReadString('Export', 'FunctionListSection', TranslateErrorStr);
-  FunctionStringGrid.Cells[3, 0] := Translator.ini.ReadString('Export', 'FunctionListOffset', TranslateErrorStr);
-  FunctionStringGrid.Cells[4, 0] := Translator.ini.ReadString('Export', 'FunctionListAddress', TranslateErrorStr);
-  FunctionStringGrid.Cells[5, 0] := Translator.ini.ReadString('Export', 'FunctionListOrdinal', TranslateErrorStr);
+  Caption := Translator.TranslateControl('Export', 'Caption');
+  FunctionStringGrid.Cells[0, 0] := Translator.TranslateControl('Export', 'FunctionListNumber');
+  FunctionStringGrid.Cells[1, 0] := Translator.TranslateControl('Export', 'FunctionListName');
+  FunctionStringGrid.Cells[2, 0] := Translator.TranslateControl('Export', 'FunctionListSection');
+  FunctionStringGrid.Cells[3, 0] := Translator.TranslateControl('Export', 'FunctionListOffset');
+  FunctionStringGrid.Cells[4, 0] := Translator.TranslateControl('Export', 'FunctionListAddress');
+  FunctionStringGrid.Cells[5, 0] := Translator.TranslateControl('Export', 'FunctionListOrdinal');
 end;
 
 

@@ -185,6 +185,7 @@ constructor TCodeTabFrame.Create(AOwner: TComponent; ASection: TSection);
 begin
   inherited Create(AOwner);
   fSection:= aSection as TCodeSection;
+  Name := 'CodeTabFrame' + IntToStr(fSection.CodeSectionIndex);
   fJumpStack:= TStack.Create;
   Caption:= 'Code section #' + IntToStr(fSection.CodeSectionIndex);
 
@@ -749,6 +750,8 @@ begin
     dtPascalStr: begin
       Sign:='p';
       fSection.CodeStream.Read(StrLength8, 1);
+      if (StartOffset + StrLength8) > fSection.CodeSize then
+        Exit;
       SetLength(line, StrLength8);
       fSection.CodeStream.Read(line[1], StrLength8);
       TheString:= line;
@@ -765,6 +768,8 @@ begin
     dtPascalUniCodeStr: begin
       Sign:= 'pu';
       fSection.CodeStream.Read(StrLength16, 2);
+      if (StartOffset + 2 * StrLength16) > fSection.CodeSize then
+        Exit;
       SetLength(TheString, StrLength16);
       fSection.CodeStream.Read(TheString[1], StrLength16*2);
       StringSize:=Strlength16 + 2;

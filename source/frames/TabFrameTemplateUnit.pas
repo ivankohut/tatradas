@@ -77,19 +77,19 @@ constructor TTabSheetTemplate.Create(ASection: TSection);
 begin
   if aSection = nil then
     raise Exception.Create('TTabSheetTemplate.Create: Section = nil');
-  inherited Create(MainForm.MainPageControl);
+  inherited Create(MainForm);
   PageControl := MainForm.MainPageControl;
   PageIndex := PageControl.PageCount - 1;
   case aSection.typ of
-    stCode: Frame:= TCodeTabFrame.Create(self, ASection);
-    stExport: Frame:= TExportTabFrame.Create(self, ASection);
-    stImport: Frame:= TImportTabFrame.Create(self, ASection);
-    stResource: Frame:= TResourceTabFrame.Create(self, ASection);
+    stCode: Frame:= TCodeTabFrame.Create(MainForm, ASection);
+    stExport: Frame:= TExportTabFrame.Create(MainForm, ASection);
+    stImport: Frame:= TImportTabFrame.Create(MainForm, ASection);
+    stResource: Frame:= TResourceTabFrame.Create(MainForm, ASection);
     else
       Exit;
   end;
-  Frame.Parent:=self;
-  Caption:=Frame.Caption;
+  Frame.Parent := self;
+  Caption := Frame.Caption;
   Frame.Translate;
 end;
 
@@ -97,21 +97,21 @@ end;
 
 constructor TTabSheetTemplate.CreateFileTab(aExecFile: TExecutableFile);
 begin
-  inherited Create(MainForm.MainPageControl);
+  inherited Create(MainForm);
   PageControl := MainForm.MainPageControl;
   PageIndex := 0;
   case aExecFile.ExeFormat of
-    ffCOM: Frame:= TCOMFileTabFrame.Create(self, aExecFile);
-    ffMZ: Frame:= TMZFileTabFrame.Create(self, aExecFile);
-    ffNE: Frame:= TNEFileTabFrame.Create(self, aExecFile);
-    ffPE: Frame:= TPEFileTabFrame.Create(self, aExecFile);
-    ffELF: Frame:= TELFFileTabFrame.Create(self, aExecFile);
-    ffCustom: Frame:= TCustomFileTabFrame.Create(self, aExecFile);
+    ffCOM: Frame:= TCOMFileTabFrame.Create(MainForm, aExecFile);
+    ffMZ: Frame:= TMZFileTabFrame.Create(MainForm, aExecFile);
+    ffNE: Frame:= TNEFileTabFrame.Create(MainForm, aExecFile);
+    ffPE: Frame:= TPEFileTabFrame.Create(MainForm, aExecFile);
+    ffELF: Frame:= TELFFileTabFrame.Create(MainForm, aExecFile);
+    ffCustom: Frame:= TCustomFileTabFrame.Create(MainForm, aExecFile);
     else
-      Frame:= TFileTabFrame.Create(self, aExecFile);
+      Frame:= TFileTabFrame.Create(MainForm, aExecFile);
   end;
-  Frame.Parent:= self;
-  Caption:=Frame.Caption;
+  Frame.Parent := self;
+  Caption := Frame.Caption;
   Frame.Translate;
 end;
 
@@ -134,7 +134,7 @@ end;
 
 procedure TTabSheetTemplate.Translate;
 begin
-  Caption:=Translator.TranslateControl(Frame.TypeName, 'Caption');
+  Caption := Translator.TranslateControl(Frame.TypeName, 'Caption');
   Frame.Translate;
 end;
 

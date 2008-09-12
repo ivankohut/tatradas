@@ -63,7 +63,7 @@ type
     Help2: TMenuItem;
     FindDialog1: TFindDialog;
     Settings1: TMenuItem;
-    Language1: TMenuItem;
+    LanguagesMenuItem: TMenuItem;
     StatusBar2: TStatusBar;
     Goto1: TMenuItem;
     GotoEntrypoint1: TMenuItem;
@@ -185,6 +185,8 @@ type
     procedure HexEditor1Click(Sender: TObject);
     procedure ProjectModified(Sender: TObject);
     procedure actGoToLineExecute(Sender: TObject);
+    procedure FormDestroy(Sender: TObject);
+    procedure LanguageMenuItemClick(Sender: TObject);
 
   private
     fopenfilepath: string;
@@ -243,7 +245,7 @@ uses
   SaveOptionsFormUnit,
   CalculatorUnit,
   OptionsFormUnit,
-  ProgressFormUnit;
+  ProgressFormUnit, UnknownFileFormUnit;
 
 {$R *.DFM}
 
@@ -272,27 +274,26 @@ begin
     CloseFileClick(nil);
 
   ExecFile:= ExecFileManager.CreateNewExecFile(AFileName);
+
+  // Opening error handling
   if ProgressData.ErrorStatus <> errNone then begin
     ExecFile.Free;
     case ProgressData.ErrorStatus of
-      errCanceled: begin
-        Exit;
-      end;
-
-      errOpen: begin
-        ErrorMessage:=CouldNotOpenFileStr;
-      end;
-      errBadFormat: begin
-        ErrorMessage:='File is corrupted: ';
-      end;
-      // Neznamy format, nemalo by nastat
-      errUnknownFormat: begin
-        ErrorMessage:='Unknown file format: ';
-        raise Exception.Create('This should not occur !');
-      end;
+      errOpen: ErrorMessage := CouldNotOpenFileStr;
+      errBadFormat: ErrorMessage := 'File is corrupted: ';
     end;
     MessageDlg(ErrorMessage + '"' + AFileName + '"', mtError, [mbOK], 0);
     Exit;
+  end;
+
+  // Unknown file format - custom file format offer
+  if ExecFile = nil then begin
+    UnknownFileFormatForm.FileName := ExtractFileName(AFileName);
+    UnknownFileFormatForm.FileSize := GetFileSize(AFileName); 
+    if UnknownFileFormatForm.ShowModal = mrOK then
+      ExecFile := ExecFileManager.CreateNewCustomExecFile(AFileName, UnknownFileFormatForm.Parameters)
+    else
+      Exit;
   end;
 
   Modified := false;
@@ -501,27 +502,45 @@ end;
 
 
 
-procedure TMainForm.FormClose(Sender: TObject; var Action: TCloseAction); // Uzavretie MainForm
+procedure TMainForm.FormClose(Sender: TObject; var Action: TCloseAction); 
 begin
   if not CloseMainFile then begin // Vycistenie ExecFile
     Action:=caNone;
     Exit;
   end;
-  sINI.WriteInteger('Settings','Top',Top);
-  sINI.WriteInteger('Settings','Left',Left);
-  sINI.WriteInteger('Settings','Height',Height);
-  sINI.WriteInteger('Settings','Width',Width);
-  sINI.WriteString('Settings','Language', Translator.ShortCut);
+  sINI.WriteInteger('Settings', 'Top', Top);
+  sINI.WriteInteger('Settings', 'Left', Left);
+  sINI.WriteInteger('Settings', 'Height', Height);
+  sINI.WriteInteger('Settings', 'Width', Width);
+  sINI.WriteString('Settings', 'Language', Translator.ActiveLanguage.ShortCut);
 
   OptionsForm.SaveSettings(sINI);
 
   sINI.UpdateFile;
-  sINI.Free;
 end;
 
 
 
-procedure TMainForm.FormCreate(Sender: TObject);      // Inicializacia
+procedure TMainForm.FormCreate(Sender: TObject);      
+
+  procedure CreateLanguagesMenuItems;
+  var
+    i: Integer;
+    LanguageInfo: TLanguageInfo;
+    MenuItem: TMenuItem;
+  begin
+    for i := 0 to Translator.AvailableLanguagesCount - 1 do begin
+      LanguageInfo := Translator.AvailableLanguages[i];
+      MenuItem := TMenuItem.Create(LanguagesMenuItem);
+      MenuItem.Caption := LanguageInfo.Name;
+      MenuItem.Hint:= LanguageInfo.Hint;
+      MenuItem.ImageIndex := MenuImageList.AddIcon(LanguageInfo.Icon);
+      MenuItem.OnClick := LanguageMenuItemClick;
+      LanguagesMenuItem.Add(MenuItem);
+    end;
+  end;
+
+
 begin
   DoubleBuffered:= true;
 
@@ -586,14 +605,8 @@ begin
   Left:= sINI.ReadInteger('Settings','Left',10);
 //  Height:= INI.ReadInteger('Settings','Height',200);
 //  Width:= INI.ReadInteger('Settings','Width',500);
-//  CurrentLanguage:= sINI.ReadString('Settings','Language','eng');
-// osetrit ak sa podari zmenit jazyk
-  Translator:= TTranslator.Create(AddPathDelimiter(ExtractFilePath(Application.ExeName), true) + sINI.ReadString('Settings', 'LanguageFolder', 'languages'), Language1, MenuImageList);
-  if not Translator.ChangeLanguage(sINI.ReadString('Settings','Language','en')) then
-    if not Translator.ChangeLanguage('en') then begin
-       ShowMessage(NoLanguageFilesStr);
-       Application.Terminate;
-    end;
+
+  CreateLanguagesMenuItems;
 
   fOpenFilePath:= sINI.ReadString('Paths','OpenFile','');
   fOpenProjectPath:= sINI.ReadString('Paths','OpenProject','');
@@ -601,11 +614,20 @@ begin
 
 //  OptionsForm.LoadSettings(sINI); - treba volat ked uz je OptionsForm vytvoreny
 
-  ExecFileManager:=TExecFileManager.Create;
+  ExecFileManager := TExecFileManager.Create;
 
   Logger.AddListener(TTextFileLoggerListener.Create('disasm.log'));
   Logger.Info('----- START -----');
 end;
+
+
+
+procedure TMainForm.FormDestroy(Sender: TObject);
+begin
+  ExecFileManager.Free;
+  sINI.Free;
+end;
+
 
 //==============================================================================
 //==============================================================================
@@ -614,6 +636,17 @@ procedure TMainForm.Help2Click(Sender: TObject);      // Spustenie helpu
 begin
   ShellExecute(Application.Handle, Pchar('open'), Pchar('hh.exe'), Pchar(ExtractFilePath(Application.ExeName) + 'doc' + PathDelim + 'TatraDAS.chm'), nil, sw_show);
 end;
+
+
+
+procedure TMainForm.LanguageMenuItemClick(Sender: TObject);
+var
+  i: integer;
+begin
+  if not Translator.ChangeLanguage((Sender as TMenuItem).MenuIndex) then
+    MessageDlg('Unable to change language!', mtError, [mbOk], 0);
+end;
+
 
 
 procedure TMainForm.Translate;    // Zmena jazyka prostredia
@@ -647,7 +680,7 @@ begin
   FindText1.Caption:= Translator.TranslateControl('MenuCaption','Findtext');
   SearchAgain1.Caption:= Translator.TranslateControl('MenuCaption','SearchAgain');
   Calculator1.Caption:= Translator.TranslateControl('MenuCaption','Calculator');
-  Language1.Caption:= Translator.TranslateControl('MenuCaption','Language');
+  LanguagesMenuItem.Caption:= Translator.TranslateControl('MenuCaption','Language');
   Options1.Caption:= Translator.TranslateControl('MenuCaption','Options');
   Help2.Caption:= Translator.TranslateControl('MenuCaption','HelpTopic');
   About1.Caption:= Translator.TranslateControl('MenuCaption','About');
@@ -738,7 +771,7 @@ begin
   Calculator1.Hint:= Translator.TranslateControl('MenuHint','Calculator');
   HexEditor1.Hint:= Translator.TranslateControl('MenuHint','HexEditor');
 
-  Language1.Hint:= Translator.TranslateControl('MenuHint','Language');
+  LanguagesMenuItem.Hint:= Translator.TranslateControl('MenuHint','Language');
 //  Options1.Hint:= Translator.TranslateControl('MenuHint','Options');
 
   Help2.Hint:= Translator.TranslateControl('MenuHint','Help');

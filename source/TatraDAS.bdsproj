@@ -123,7 +123,7 @@
 			<Directories Name="UnitOutputDir"></Directories>
 			<Directories Name="PackageDLLOutputDir"></Directories>
 			<Directories Name="PackageDCPOutputDir"></Directories>
-			<Directories Name="SearchPath">../third/synedit;../third/mphexeditor</Directories>
+			<Directories Name="SearchPath">$(BDS)\lib\Debug;$(BDS)\Lib\Debug\Indy10;../third/synedit;../third/mphexeditor</Directories>
 			<Directories Name="Packages">vcl;rtl;vclx;vclshlctrls;VclSmp;direct</Directories>
 			<Directories Name="Conditionals">NOTHREADS</Directories>
 			<Directories Name="DebugSourceDirs"></Directories>

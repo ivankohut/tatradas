@@ -16,9 +16,11 @@ program TatraDAS;
 
 uses
   {$IFDEF MSWINDOWS}
+    FastMM4,
     {$IFDEF GUI_B}
       Windows,
       Forms,
+      Dialogs,
       SynEdit,
     {$ENDIF}
   {$ENDIF}
@@ -200,6 +202,13 @@ begin
   Application.CreateForm(TProgressForm, ProgressForm);
   Application.CreateForm(TGotoLineForm, GotoLineForm);
   Application.CreateForm(TGoToAddressForm, GoToAddressForm);
+
+  if not Translator.ChangeLanguage(MainForm.sINI.ReadString('Settings', 'Language', 'en')) then begin
+     MessageDlg(NoLanguageFilesStr, mtError, [mbOk], 0);
+     Exit;
+  end;
+  OptionsForm.LoadSettings(MainForm.sINI);
+
   Application.Run;
 end.
 
@@ -237,8 +246,10 @@ begin
         case ProgressData.ErrorStatus of
           errOpen:
             ErrorMessage:= 'Unable to open file ''' + ExpandFilename(ParamStr(1)) + '''.';
+{
           errUnknownFormat:
             ErrorMessage:= 'Unknown file format.';
+}
           errUnspecified:
             ErrorMessage:= 'An error occured. Process stopped.';
         end;

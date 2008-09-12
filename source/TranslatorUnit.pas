@@ -1,5 +1,4 @@
 { TODO:
-  - zjednotit sposob prekladania Formov a Framov
 }
 
 unit TranslatorUnit;
@@ -10,66 +9,62 @@ interface
 uses
 
 {$IFDEF MSWINDOWS}
-  Menus, Controls, Dialogs, Graphics,
+  Forms, Graphics,
 {$ENDIF}
 {$IFDEF LINUX}
-  QMenus, QControls, QDialogs, QGraphics, QImgList,
+  QForms, QGraphics,
 {$ENDIF}
   INIFiles,
   SysUtils,
   Classes,
   Types,
   Math,
-  Forms,
+  Contnrs,
 
+  FilesUnit,
   procmat,
   VersionUnit,
   StringRes;
 
 const
   LangFileSectionCount = 26;
+  DefaultString = '- error -';
+  LanguagesFolder = 'languages';
 
 type
-
-  TLangItem = record
-    Index: cardinal;
-    FileName: string;
-    MenuItem: TMenuItem;
+  TLanguageInfo = class
+  public
     Name: string;
     Hint: string;
     Shortcut: string;
-    ID: cardinal;
-    IconFileName: string;
+    Icon: TIcon;
+    FileName: string;
+
+    constructor Create(INI: TCustomIniFile);
+    destructor Destroy; override;
   end;
 
-  TTranslator = class
-    LangArray: array of TLangItem;
-    Index: cardinal;
-    fFolder: string;
-    fCount: integer;
-    fMenu: TMenuItem;
-    fINI: TMemINIFile;
-    fError: string;
-  private
-    procedure LangMenuItemClick(Sender: TObject);
-    function CheckLangFile(filename: string):boolean; overload;
-    function CheckLangFile(testINI: TMemINIFile):boolean; overload;
-    function GetShortCut: string;
-    function GetLanguage: string;
-//    function GetID: cardinal;
-  public
-    constructor Create(AFolder: string; AMenu: TMenuItem; AImageList: TImageList);
-    function ChangeLanguage(LanguageShortCut: string): boolean; overload;
-    function ChangeLanguage(LanguageID: cardinal): boolean; overload;
-    function ChangeLanguage(LangItem: TLangItem): boolean; overload;
-    procedure Translate;
-    function TranslateControl(Category: string; Name: string): string; overload;
-//    function TranslateControl(aControl: TControl; Category: string; Name: string): boolean; overload;
-//    function TranslateCaption(var aCaption: TCaption; Category: string; Name: string): boolean;
 
-    property Language: string read GetLanguage;
-    property INI: TMemINIFile read fINI;
-    property ShortCut: string read GetShortCut;
+  TTranslator = class
+  private
+    fLanguages: TObjectList; //TLanguageInfo;
+    fActiveLanguageIndex: cardinal;
+    fINI: TMemINIFile;
+    function CheckLangFile(filename: string):boolean; overload;
+    function CheckLangFile(testINI: TCustomINIFile):boolean; overload;
+    function GetLanguageInfo(Index: Integer): TLanguageInfo;
+    function GetActiveLanguageInfo: TLanguageInfo;
+    procedure Translate;
+    function GetLanguagesCount: Integer;
+  public
+    constructor Create;
+    destructor Destroy; override;
+    function ChangeLanguage(Index: Integer): boolean; overload;
+    function ChangeLanguage(LanguageShortCut: string): boolean; overload;
+    function TranslateControl(Category: string; Name: string): string; overload;
+    property AvailableLanguages[Index: Integer]: TLanguageInfo read GetLanguageInfo;
+    property AvailableLanguagesCount: Integer read GetLanguagesCount;
+    property ActiveLanguage: TLanguageInfo read GetActiveLanguageInfo;
   end;
 
 
@@ -78,66 +73,51 @@ var
 
 implementation
 
-uses
-  MainFormUnit, TabFrameTemplateUnit;
 
 procedure TranslateStringResStrings; forward;
 
 
+{ TLanguageInfo }
 
-function AddPathDelimiter(APath: TFileName): TFileName;
-var
-  PathLength: integer;
+
+constructor TLanguageInfo.Create(INI: TCustomIniFile);
 begin
-  PathLength:= Length(APath);
-  if PathLength = 0 then
-    result:= PathDelim
-  else if APath[PathLength] <> PathDelim then
-    result:= APath + PathDelim
-  else
-    result:= APath;
+  FileName := INI.FileName;
+  Name := INI.ReadString('General', 'LanguageName', DefaultString);
+  Hint := INI.ReadString('General', 'LanguageHint', DefaultString);
+  ShortCut := INI.ReadString('General', 'LanguageShortCut', DefaultString);
+  Icon := TIcon.Create;
+  Icon.LoadFromFile(
+    AddPathDelimiter(ExtractFilePath(FileName), true) +
+      INI.ReadString('General', 'IconFile', DefaultString)
+  );
 end;
 
 
 
-constructor TTranslator.Create(AFolder: string; AMenu: TMenuItem; AImageList: TImageList);
-var
-  LangItem: TLangItem;
-  sr: TSearchRec;
-  tini: TMemINIFile;
-  Icon: TIcon;
+destructor TLanguageInfo.Destroy;
 begin
-  fError:= 'error';
-  fMenu:= AMenu;
-  fFolder:= AddPathDelimiter(AFolder);
-  fCount:= 0;
-  if FindFirst(fFolder + '*.ini', faAnyFile, sr) = 0 then begin
+  Icon.Free;
+end;
+
+
+{ TTranslator }
+
+
+constructor TTranslator.Create;
+var
+  sr: TSearchRec;
+  tini: TCustomIniFile;
+  Folder: string;
+begin
+  fLanguages := TObjectList.Create(true);
+  Folder := AddPathDelimiter(ExtractFilePath(Application.ExeName), true) + AddPathDelimiter(LanguagesFolder, true);
+  if FindFirst(Folder + '*.ini', faAnyFile, sr) = 0 then begin
     repeat
-      tINI:= TMemINIFile.Create(fFolder + sr.Name);
-      if CheckLangFile(tINI) then begin
-        Inc(fCount);
-        SetLength(LangArray, fCount);
-        LangItem.FileName := fFolder + sr.Name;
-        LangItem.Name:= tINI.ReadString('General', 'LanguageName', fError);
-        LangItem.Hint:= tINI.ReadString('General', 'LanguageHint', fError);
-        LangItem.ShortCut:=tINI.ReadString('General', 'LanguageShortCut', fError);
-        LangItem.ID:= tINI.ReadInteger('General', 'LanguageID', 0);
-        LangItem.IconFileName:= fFolder + tINI.ReadString('General', 'IconFile', fError);
-        LangItem.Index:= fCount - 1;
-        LangItem.MenuItem:= TMenuItem.Create(fMenu);
-        LangItem.MenuItem.Caption:= LangItem.Name;
-        LangItem.MenuItem.Hint:= LangItem.Hint;
-        LangItem.MenuItem.OnClick:= LangMenuItemClick;
-        Icon:= TIcon.Create;
-        try
-          Icon.LoadFromFile(LangItem.IconFileName);
-          LangItem.MenuItem.ImageIndex:= AImageList.AddIcon(Icon);
-        except
-          Icon.Free;
-        end;
-        fMenu.Add(LangItem.MenuItem);
-        LangArray[fCount-1]:= LangItem;
-      end;
+      tINI := TMemIniFile.Create(Folder + sr.Name);
+      if CheckLangFile(tINI) then 
+        fLanguages.Add(TLanguageInfo.Create(tINI));
+
       tINI.Free;
     until FindNext(sr) <> 0;
     FindClose(sr);
@@ -146,25 +126,36 @@ end;
 
 
 
-function TTranslator.GetShortCut: string;
+destructor TTranslator.Destroy;
 begin
-  result:=LangArray[Index].ShortCut;
+  fINI.Free;
+  fLanguages.Free;
 end;
 
 
 
-function TTranslator.GetLanguage: string;
+
+function TTranslator.GetActiveLanguageInfo: TLanguageInfo;
 begin
-  result:=LangArray[Index].Name;
+  result := GetLanguageInfo(fActiveLanguageIndex);
 end;
 
 
-{
-function TTranslator.GetID: cardinal;
+
+function TTranslator.GetLanguageInfo(Index: Integer): TLanguageInfo;
 begin
-  result:=LangArray[Index].ID;
+  result := TLanguageInfo(fLanguages[Index]);
 end;
-}
+
+
+
+
+function TTranslator.GetLanguagesCount: Integer;
+begin
+  result := fLanguages.Count;
+end;
+
+
 
 
 function TTranslator.CheckLangFile(FileName: string): boolean;
@@ -187,7 +178,7 @@ end;
 
 
 
-function TTranslator.CheckLangFile(testINI: TMemINIFile): boolean;
+function TTranslator.CheckLangFile(testINI: TCustomIniFile): boolean;
 var SectionList: TStrings;
 begin
   result:=false;
@@ -199,13 +190,13 @@ begin
   end;
   SectionList.Free;
 
-  if testINI.ReadString('General', 'LanguageName',fError) = fError then Exit;
-  if testINI.ReadString('General', 'LanguageShortCut',fError) = fError then Exit;
+  if testINI.ReadString('General', 'LanguageName', DefaultString) = DefaultString then Exit;
+  if testINI.ReadString('General', 'LanguageShortCut', DefaultString) = DefaultString then Exit;
   if testINI.ReadInteger('General', 'LanguageID',-1) = -1 then Exit;
 
-  if   (TatraDAS_Version.Compare(testINI.ReadString('General', 'MinVersion', fError)) = GreaterThanValue)
+  if   (TatraDAS_Version.Compare(testINI.ReadString('General', 'MinVersion', DefaultString)) = GreaterThanValue)
      OR
-       (TatraDAS_Version.Compare(testINI.ReadString('General', 'MaxVersion', fError)) = LessThanValue)
+       (TatraDAS_Version.Compare(testINI.ReadString('General', 'MaxVersion', DefaultString)) = LessThanValue)
   then
     Exit;
 
@@ -218,104 +209,66 @@ function TTranslator.ChangeLanguage(LanguageShortCut: string): boolean;
 var
   i: integer;
 begin
-  result:=false;
-  for i:=0 to fCount-1 do
-    if LangArray[i].ShortCut=LanguageShortCut then
-      result:= ChangeLanguage(LangArray[i]);
-end;
-
-
-
-function TTranslator.ChangeLanguage(LanguageID: cardinal): boolean;
-var
-  i: integer;
-begin
-  result:=false;
-  for i:=0 to fCount-1 do
-   if LangArray[i].ID=LanguageID then
-     result:=ChangeLanguage(LangArray[i]);
-end;
-
-
-
-function TTranslator.ChangeLanguage(LangItem: TLangItem): boolean;
-var
-  tINI: TMemINIFile;
-begin
-  result:= false;
-  try
-    tINI:=TMemINIFile.Create(LangItem.FileName);
-  except
-    Exit;
-  end;
-  fINI:=tINI;
-  LangArray[Index].MenuItem.Checked:= false;
-  LangItem.MenuItem.Checked:= true;
-  Index:= LangItem.Index;
-  result:= true;
-end;
-
-
-
-procedure TTranslator.LangMenuItemClick(Sender: TObject);
-var
-  i: integer;
-begin
-  for i:=0 to fCount - 1 do
-    if LangArray[i].MenuItem = Sender then begin
-      if ChangeLanguage(LangArray[i]) then
-        Translate
-      else
-        ShowMessage('Unable to change language!');
+  result := false; //UseDefault;
+  for i := 0 to fLanguages.Count - 1 do
+    if (fLanguages[i] as TLanguageInfo).ShortCut = LanguageShortCut then begin
+      // works only during startup, in the future the default language shlould be built in TatraDAS.exe
+      result := ChangeLanguage(i);
+      Break;
     end;
 end;
 
 
 
-procedure TTranslator.Translate;
+function TTranslator.ChangeLanguage(Index: Integer): boolean;
 var
-  i: integer;
+  INI: TMemINIFile;
 begin
-  // Translate StringRes strings
-  TranslateStringResStrings;
+  result := false;
+  try
+    INI := TMemINIFile.Create(GetLanguageInfo(Index).FileName);
+  except
+    Exit;
+  end;
+  fINI.Free;
+  fINI := INI;
+  Translate;
+  fActiveLanguageIndex := Index;
+  result := true;
+end;
 
-  // Translate all forms
-  for i:=0 to Application.ComponentCount - 1 do begin
-    if Supports(Application.Components[i], ITranslatable) then
-      (Application.Components[i] as ITranslatable).Translate;
+
+
+procedure TTranslator.Translate;
+
+  procedure TranslateComponent(AComponent: TComponent);
+  var
+    i: Integer;
+  begin
+    if Supports(AComponent, ITranslatable) then
+      (AComponent as ITranslatable).Translate;
+    for i := 0 to AComponent.ComponentCount - 1 do
+      TranslateComponent(AComponent.Components[i]);
   end;
 
-  // Translate all frames
-  for i:=0 to MainForm.MainPageControl.PageCount - 1 do
-    (MainForm.MainPageControl.Pages[i] as TTabSheetTemplate).Frame.Translate;
-
+begin
+  TranslateStringResStrings;
+  TranslateComponent(Application);
 end;
 
 
 
 function TTranslator.TranslateControl(Category: string; Name: string): string;
 begin
-  result:= fINI.ReadString(Category, Name, fError);
+  result := fINI.ReadString(Category, Name, DefaultString);
 end;
 
 
-{
-function TTranslator.TranslateControl(aControl: TControl; Category: string; Name: string): boolean;
-begin
-end;
-
-
-
-function TTranslator.TranslateCaption(var aCaption: TCaption; Category: string; Name: string): boolean;
-begin
-  aCaption:= fINI.ReadString(Category, Name, fError);
-end;
-}
+{ Support routines }
 
 
 procedure TranslateStringResStrings;
 begin
-
   FileNotFoundStr:= Translator.TranslateControl('Texty','FileNotFound');
   CouldNotOpenFileStr:= Translator.TranslateControl('Texty','CouldNotOpenFile');
   CouldNotOpenProjectStr:= Translator.TranslateControl('Texty','CouldNotOpenProject');
@@ -343,5 +296,10 @@ begin
 end;
 
 
+initialization
+  Translator := TTranslator.Create; 
+
+finalization
+  Translator.Free;
 
 end.

@@ -3,15 +3,28 @@ program TestTatraDAS;
 {$INCLUDE 'delver.inc'}
 
 uses
-  Forms,
 
   TestFrameWork in 'dunit\TestFrameWork.pas',
   GUITestRunner in 'dunit\GUITestRunner.pas',
-  StringRes in 'misc\StringRes.pas',
 
-  TatraDASHighlighter in 'misc\TatraDASHighlighter.pas',
-  Languages in 'misc\Languages.pas',
+  {$IFDEF MSWINDOWS}
+    {$IFDEF GUI_B}
+      Windows,
+      Forms,
+      SynEdit,
+    {$ENDIF}
+  {$ENDIF}
+
+  CliUnit,
+
+  StringRes in 'res\StringRes.pas',
+  FilesUnit in 'misc\FilesUnit.pas',
+  LoggerUnit in 'misc\LoggerUnit.pas',
+
+  TatraDASHighlighter in 'res\TatraDASHighlighter.pas',
+  TranslatorUnit in 'TranslatorUnit.pas',
   ButtonsX in 'misc\ButtonsX.pas',
+  myedits in 'misc\myedits.pas',
   MainFormUnit in 'MainFormUnit.pas' {MainForm},
   HexEditFormUnit in 'forms\HexEditFormUnit.pas' {HexEditForm},
   CalculatorUnit in 'forms\CalculatorUnit.pas' {Calculator},
@@ -23,6 +36,7 @@ uses
   UnknownFileFormUnit in 'forms\UnknownFileFormUnit.pas' {UnknownFileFormatForm},
   SaveOptionsFormUnit in 'forms\SaveOptionsFormUnit.pas' {SaveOptionsForm},
   ProgressFormUnit in 'forms\ProgressFormUnit.pas' {ProgressForm},
+  GotoLineFormUnit in 'forms\GotoLineFormUnit.pas' {GoToLineForm},
   GotoAddressFormUnit in 'forms\GotoAddressFormUnit.pas' {GoToAddressForm},
 
   // Frames' units
@@ -33,8 +47,18 @@ uses
   ExportTabFrameUnit in 'frames\ExportTabFrameUnit.pas',
   ResourceTabFrameUnit in 'frames\ResourceTabFrameUnit.pas',
 
+  // Disassembler units
+  DisassemblerUnit in 'disasm\DisassemblerUnit.pas',
+  DisassemblerUtils in 'disasm\DisassemblerUtils.pas',
+  DisassemblerTypes in 'disasm\DisassemblerTypes.pas',
+  x86DisassemblerTypes in 'disasm\x86DisassemblerTypes.pas',
+  x86Instructions in 'disasm\x86Instructions.pas',
+  x86Disassembler in 'disasm\x86Disassembler.pas',
+  DisassembledBlocksUnit in 'disasm\DisassembledBlocksUnit.pas',
+  CallsAndJumpsTableUnit in 'disasm\CallsAndJumpsTableUnit.pas',
+  
 // Executable formats' units
-  UnknownFileUnit in 'exefiles\UnknownFileUnit.pas',
+  CustomFileUnit in 'exefiles\CustomFileUnit.pas',
   MZFileUnit in 'exefiles\MZFileUnit.pas',
   COMFileUnit in 'exefiles\COMFileUnit.pas',
   LEFileUnit in 'exefiles\LEFileUnit.pas',
@@ -48,6 +72,7 @@ uses
   ExportSectionUnit in 'sections\ExportSectionUnit.pas',
   ImportSectionUnit in 'sections\ImportSectionUnit.pas',
   ResourceSectionUnit in 'sections\ResourceSectionUnit.pas';
+
 
 //{$R *.res}
 

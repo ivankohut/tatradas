@@ -191,7 +191,9 @@ end;
 
 destructor TCodeSection.Destroy;
 begin
-  Disassembled.Free;
+  fDisassembled.Free;
+  CodeStream.SetMemory(CodeArray, 0);
+  CodeStream.Free;
   inherited;
 end;
 

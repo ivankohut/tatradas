@@ -1,0 +1,18 @@
+Prepare
+- skontrolovat memory leak-y pomocou FastMM
+- update changelog.txt, readme.txt
+
+Build
+- create components source package
+- create source package
+- unpack source packages
+  - build documentation
+  - check compiler and linker options
+  - build tatradas
+  - run tests
+  - create installer package
+
+Web
+- prepare web site update: news, whats' new, download, version, screenshots
+- upload packages: win installer, source, components
+- upload web site changes

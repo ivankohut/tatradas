@@ -14,9 +14,8 @@ General
 - nastroj pre dokumentaciu zdrojoveho kodu (komentare na zaciatku metod)
 - errory a vynimky (o.i. ako osetrovat pristup do poli v array propertoch)
 - stringy rozhadzane po suboroch
-- translation system
 - save - rozdelit na Save Project a Export (Disassembly, NASM, lubovolne)
-
+- zamysliet sa nad zmyslom ExecFileManagera, co jej jeho ulohou, neda sa to spravit inak ? (nema ziaden stav(premenne))
 Disassembler:
 - refactorizacia disassemblera!
 - 0F C2 - CMPxxxx - spravit rozne nazvy instrukcie podla tretieho operandu
@@ -27,6 +26,7 @@ Disassembler:
 - problemy (disasm & yasm/nasm):
     snowcraft.exe undefined symbol (yasm) - problem je v tom, ze v CALL a jeho ciel su v roznych sekciach -> CALL v jednej sekcii nevytvori referenciu v druhej sekcii a teda tam nedisassemblujeme od ciela CALL-u
 - operand size atribute pri instrukciach s implicitnou adresaciou (to je to zakomentovane a16 a spol. pri spracovani prefixu)
+- automaticka detekcia retazcov (najma Pascal a C)
 
 Misc
 - procmat - rozdelit na viac unitov ?
@@ -70,6 +70,7 @@ DONE:
 - SSSE3, SSE41, SSE42
 - zavedeny typ instrukcie (napr. normal alebo undefined), odstranena polozka "opcode"
 - drag & drop
+- refaktorizacia Translator-a 
 
 - oprava - uvadzanie velkosti operandu vzdy, ak je v pamati; -> dosledkom je kompilovatelnost s NASM (hoci este stale hadze warningy)
 - oprava velkosti operandu u niektorych FPU instrukcii,
@@ -85,6 +86,8 @@ DONE:
 - oprava MOVD instrukcie (prvy parameter ked mal byt MMX, tak bol 32 bit register)
 - oprava DFE0 ma byt FNSTSW AX, nie FSTSW AX - sposobobalo to problemy : short jump out of range, chyba je v manuali (opcode map), podobne FSTCW/FNSTCW, FSTSW/FNSTSW word [], FSTENV/FNSTENV, FSAVE/FNSAVE, FINIT/FNINIT, FCLEX/FNCLEX
 - oprava CALL far mem - chybalo "far", teda tvarilo sa ako "near"
+- oprava ODstranene memory leak-y vdaka FastMM
+- oprava ChangeToString nezamrzne ak Pascal string pretrca cez sekciu -> nespravi sa nic
 
 2.9.8 todo list:
   - problemy:
