@@ -53,6 +53,8 @@ type
 //    property Error: TFileError read fError;
   end;
 
+var
+  ExecFileManager: TExecFileManager;
 
 implementation
 
@@ -297,5 +299,10 @@ begin
   DHF.Free;
 end;
 
+
+initialization
+  ExecFileManager := TExecFileManager.Create;
+finalization
+  ExecFileManager.Free;
 
 end.

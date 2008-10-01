@@ -63,7 +63,7 @@ const
   TatraDASFullNameVersion: string = 'TatraDAS disassembler 2.9.9 devel';
 
 
-  CodeArrayReserve = 20;
+  CodeArrayReserveSize = 20;
   MaxProgressNameLength = 25;
 
 

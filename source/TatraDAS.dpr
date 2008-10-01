@@ -16,7 +16,7 @@ program TatraDAS;
 
 uses
   {$IFDEF MSWINDOWS}
-    FastMM4,
+//    FastMM4,
     {$IFDEF GUI_B}
       Windows,
       Forms,
@@ -217,7 +217,6 @@ end.
 {$IFDEF CONSOLE}
 
 var
-  ProgramIdentification: string;
   ErrorMessage: string;
 
 begin
@@ -231,37 +230,27 @@ begin
   ProcessText.SavingDAS:= 'Saving DAS file CS_';// - Code Section #';
   ProcessText.SavingDHF:= 'Saving DHF file CS_';// - Code Section #';
 
-
-  ProgramIdentification:= TatraDASFullNameVersion + ' - console version, Ivan Kohut (c) 2008';
-  WriteLn(DupeString('-', Length(ProgramIdentification)));
-  WriteLn(ProgramIdentification);
-  WriteLn(DupeString('-', Length(ProgramIdentification)));
-  Writeln;
-
-  if ParamCount = 2 then
-    try
-      RunDisassembler(ParamStr(1), ParamStr(2));
-    except
-      on ETatraDASException do begin
-        case ProgressData.ErrorStatus of
-          errOpen:
-            ErrorMessage:= 'Unable to open file ''' + ExpandFilename(ParamStr(1)) + '''.';
+  try
+    RunTatraDAS;
+  except
+    on ETatraDASException do begin
+      case ProgressData.ErrorStatus of
+        errOpen:
+          ErrorMessage:= 'Unable to open file ''' + ExpandFilename(ParamStr(1)) + '''.';
 {
-          errUnknownFormat:
-            ErrorMessage:= 'Unknown file format.';
+        errUnknownFormat:
+          ErrorMessage:= 'Unknown file format.';
 }
-          errUnspecified:
-            ErrorMessage:= 'An error occured. Process stopped.';
-        end;
-        WriteLn(ErrorMessage);
-        Logger.Fatal(ErrorMessage);
-      end
-      else
-        Logger.Fatal('Unhandled exception occured.');
+        errUnspecified:
+          ErrorMessage:= 'An error occured. Process stopped.';
+      end;
+      WriteLn(ErrorMessage);
+      Logger.Fatal(ErrorMessage);
     end
+    else
+      Logger.Fatal('Unhandled exception occured.');
+  end;
 
-  else
-    ShowUsage;
 
   Logger.Info('----- DONE ------');
   Logger.Info('');

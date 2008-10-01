@@ -234,7 +234,6 @@ type
 
 var
   MainForm: TMainForm;
-  ExecFileManager: TExecFileManager;
 
 
 implementation
@@ -289,7 +288,7 @@ begin
   // Unknown file format - custom file format offer
   if ExecFile = nil then begin
     UnknownFileFormatForm.FileName := ExtractFileName(AFileName);
-    UnknownFileFormatForm.FileSize := GetFileSize(AFileName); 
+    UnknownFileFormatForm.FileSize := GetFileSize(AFileName);
     if UnknownFileFormatForm.ShowModal = mrOK then
       ExecFile := ExecFileManager.CreateNewCustomExecFile(AFileName, UnknownFileFormatForm.Parameters)
     else
@@ -502,7 +501,7 @@ end;
 
 
 
-procedure TMainForm.FormClose(Sender: TObject; var Action: TCloseAction); 
+procedure TMainForm.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   if not CloseMainFile then begin // Vycistenie ExecFile
     Action:=caNone;
@@ -521,7 +520,7 @@ end;
 
 
 
-procedure TMainForm.FormCreate(Sender: TObject);      
+procedure TMainForm.FormCreate(Sender: TObject);
 
   procedure CreateLanguagesMenuItems;
   var
@@ -600,9 +599,9 @@ begin
   StatusBar2.Panels[1].Text:=TatraDASFullNameVersion;
 ///  ProcessLabel.Caption:='';
 
-  sINI:= TMemINIFile.Create(ExtractFilePath(Application.ExeName)+'TatraDAS.ini');
-  Top:= sINI.ReadInteger('Settings','Top',10);
-  Left:= sINI.ReadInteger('Settings','Left',10);
+  sINI := TMemINIFile.Create(ExtractFilePath(Application.ExeName) + 'TatraDAS.ini');
+  Top := sINI.ReadInteger('Settings', 'Top', 10);
+  Left := sINI.ReadInteger('Settings', 'Left', 10);
 //  Height:= INI.ReadInteger('Settings','Height',200);
 //  Width:= INI.ReadInteger('Settings','Width',500);
 
@@ -614,8 +613,6 @@ begin
 
 //  OptionsForm.LoadSettings(sINI); - treba volat ked uz je OptionsForm vytvoreny
 
-  ExecFileManager := TExecFileManager.Create;
-
   Logger.AddListener(TTextFileLoggerListener.Create('disasm.log'));
   Logger.Info('----- START -----');
 end;
@@ -624,7 +621,6 @@ end;
 
 procedure TMainForm.FormDestroy(Sender: TObject);
 begin
-  ExecFileManager.Free;
   sINI.Free;
 end;
 

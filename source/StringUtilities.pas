@@ -1,3 +1,10 @@
+{
+  TODO:
+     - CarToHex by mal asi nejako pouzivat parameter Digits, nie ???
+     - optimalizovat CarToHex
+
+}
+
 unit StringUtilities;
 
 interface
@@ -92,12 +99,16 @@ end;
 
 function CarToHex(Value: cardinal; Digits: integer): string;
 begin
-  result:= '';
-  while Value <> 0 do begin
-    result:= result + IntToHex(Value mod 16, 1);
-    Value:= value div 16;
+  if Value = 0 then
+    result := '0'
+  else begin
+    result := '';
+    while Value <> 0 do begin
+      result := result + IntToHex(Value mod 16, 1);
+      Value := value div 16;
+    end;
+    result := ReverseString(result);
   end;
-  result:= ReverseString(result);
 end;
 
 

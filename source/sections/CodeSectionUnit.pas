@@ -138,8 +138,8 @@ uses
 
 
 constructor TCodeSection.Create(InputStream: TStream; aBit32: boolean; aFileOffset, aFileSize, aMemOffset, aMemSize: cardinal; aCodeSectionIndex: integer; aName: string; aExecFile: TObject);
-var position: cardinal;
-    i: integer;
+var
+  SavedInputPosition: cardinal;
 begin
   inherited Create(aName, aExecFile);
 
@@ -153,38 +153,36 @@ begin
 
   fCodeSectionIndex:= aCodeSectionIndex;
 
-
-
   // Set CodeSize
   if aFileSize <> 0 then
-    fCodeSize:=aMemSize // consider Min(aMemSize, aFileSize) ?
+    fCodeSize := aMemSize // consider Min(aMemSize, aFileSize) ?
   else
-    fCodeSize:=0;
+    fCodeSize := 0;
 
-  // Set CodeArray & CodeStream
-  SetLength(CodeArray, CodeSize + CodeArrayReserve);
-  CodeStream:= TMyMemoryStream.Create;
-  CodeStream.SetMemory(Pointer(CodeArray), CodeSize + CodeArrayReserve);
-  position:= InputStream.Position;
-  InputStream.Position:=aFileOffset;
-  CodeStream.CopyFrom(InputStream, Min(InputStream.Size - InputStream.Position, CodeSize)); //+CodeArrayReserve
-  InputStream.Position:=position;
-  for i:= CodeSize to CodeSize + CodeArrayReserve - 1 do
-    CodeArray[i]:=0;  // vynulovanie pola nad byty precitane zo suboru
+  // Prepare CodeArray & CodeStream
+  SetLength(CodeArray, CodeSize + CodeArrayReserveSize);
+  CodeStream := TMyMemoryStream.Create;
+  CodeStream.SetMemory(Pointer(CodeArray), CodeSize + CodeArrayReserveSize);
+
+  // Load CodeArray & CodeStream
+  SavedInputPosition := InputStream.Position;
+  InputStream.Position := aFileOffset;
+  CodeStream.CopyFrom(InputStream, Min(InputStream.Size - InputStream.Position, CodeSize));
+  InputStream.Position := SavedInputPosition;
+  FillChar(CodeArray[CodeSize], CodeArrayReserveSize, 0); // vynulovanie pola nad byty precitane zo suboru
 
   // Set DisassemblerMap
-  SetLength(DisassemblerMap, CodeSize + CodeArrayReserve);
-  for i:=0 to CodeSize + CodeArrayReserve - 1 do
-    DisassemblerMap[i]:= 0;
+  SetLength(DisassemblerMap, CodeSize + CodeArrayReserveSize);
+  FillChar(DisassemblerMap[0], CodeSize + CodeArrayReserveSize, 0);
 
-  fDisassembled:= TTatraDASStringList.Create;
+  fDisassembled := TTatraDASStringList.Create;
 end;
 
 
 
 constructor TCodeSection.Create(ExecFile: TObject);
 begin
-  fExecFile:= ExecFile;
+  fExecFile := ExecFile;
 end;
 
 
@@ -201,28 +199,26 @@ end;
 
 procedure TCodeSection.SetEntryPointAddress(Address: cardinal);
 begin
-  fEntryPointAddress:= Address;
-  fHasEntryPoint:= true;
+  fEntryPointAddress := Address;
+  fHasEntryPoint := true;
 end;
 
 
 
 function TCodeSection.GetMaxAddress: cardinal;
 begin
-  result:= MemOffset + MemSize - 1;
+  result := MemOffset + MemSize - 1;
 end;
 
 
 
 procedure TCodeSection.ClearDisassembled;
-var CodeIndex: cardinal;
 begin
   if CodeSize > 0 then begin
     Disassembled.Clear;
-    for CodeIndex:= 0 to CodeSize - 1 do
-      DisassemblerMap[CodeIndex]:= 0;
+    FillChar(DisassemblerMap[0], CodeSize, 0);
   end;
-  fIsDisassembled:= false;
+  fIsDisassembled := false;
 end;
 
 

@@ -276,8 +276,13 @@ function GetFileSize(AFileName: string): Int64;
 var
   Stream: TFileStream;
 begin
-  Stream := TFileStream.Create(AFileName, fmOpenRead);
-  Result := Stream.Size;
+  Stream := nil;
+  try
+    Stream := TFileStream.Create(AFileName, fmOpenRead);
+    Result := Stream.Size;
+  except
+    Result := -1;
+  end;
   Stream.Free;
 end;
 

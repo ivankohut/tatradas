@@ -666,7 +666,7 @@ constructor Tx86Disassembler.Create(SectionCode: TByteDynArray; var Disassembler
 begin
   inherited Create;
   code:= SectionCode;
-  fCodeSize:= Length(code) - CodeArrayReserve;
+  fCodeSize:= Length(code) - CodeArrayReserveSize;
   fDisasmMap:= DisassemblerMap;
   SetLength(Disassembled, fCodeSize);
   CAJ:= TCallsAndJumps.Create(fDisasmMap);
@@ -805,6 +805,7 @@ var
   EndBlock: boolean;
   GroupMapIndex: Integer;
   GroupInstruction, OneByteOpcodeInstruction, TwoByteOpcodeInstruction: TInstruction;
+  SIMDInstructionPtr: PSIMDInstruction;
   SIMDInstruction: TSIMDInstruction;
   FPUInstrIndex: Integer;
 
@@ -1021,11 +1022,15 @@ begin
                   // SIMD group instructions
                   itSIMD: begin
                     case SIMDPrefix of
-                      simdNone: SIMDInstruction := GroupInstruction.SIMD^;
-                      simd66: SIMDInstruction := GroupInstruction.SIMD_66^;
-                      simdF2: SIMDInstruction := GroupInstruction.SIMD_F2^;
-                      simdF3: SIMDInstruction := GroupInstruction.SIMD_F3^;
+                      simdNone: SIMDInstructionPtr := GroupInstruction.SIMD;
+                      simd66: SIMDInstructionPtr := GroupInstruction.SIMD_66;
+                      simdF2: SIMDInstructionPtr := GroupInstruction.SIMD_F2;
+                      simdF3: SIMDInstructionPtr := GroupInstruction.SIMD_F3;
                     end;
+                    if SIMDInstructionPtr = nil then
+                      raise EUndefinedOpcodeException.Create('SIMD instruction');
+
+                    SIMDInstruction := SIMDInstructionPtr^;
                     Operands := SIMDInstruction.Operands;
                     OperandsCount := SIMDInstruction.OperandsCount;
                     InstructionName := SIMDInstruction.name;
@@ -1052,25 +1057,28 @@ begin
                     // This nasty hack is required becuase the ModRM.Moder is part of opcode in two special cases
                     if code[i] = $12 then begin
                       if (code[i+1] and $C0) <> $C0 then
-                        SIMDInstruction := simd_MOVLPS_a
+                        SIMDInstructionPtr := @simd_MOVLPS_a
                       else
-                        SIMDInstruction := simd_MOVHLPS;
+                        SIMDInstructionPtr := @simd_MOVHLPS;
                     end
                     else if code[i] = $16 then begin
                       if (code[i+1] and $C0) <> $C0 then
-                        SIMDInstruction := simd_MOVHPS_a
+                        SIMDInstructionPtr := @simd_MOVHPS_a
                       else
-                        SIMDInstruction := simd_MOVLHPS;
+                        SIMDInstructionPtr := @simd_MOVLHPS;
                     end
                     else
                       // Predtym tu bol iba tento riadok:
-                      SIMDInstruction := TwoByteOpcodeInstruction.SIMD^;
+                      SIMDInstructionPtr := TwoByteOpcodeInstruction.SIMD;
                   end;
-                  simd66: SIMDInstruction := TwoByteOpcodeInstruction.SIMD_66^;
-                  simdF2: SIMDInstruction := TwoByteOpcodeInstruction.SIMD_F2^;
-                  simdF3: SIMDInstruction := TwoByteOpcodeInstruction.SIMD_F3^;
+                  simd66: SIMDInstructionPtr := TwoByteOpcodeInstruction.SIMD_66;
+                  simdF2: SIMDInstructionPtr := TwoByteOpcodeInstruction.SIMD_F2;
+                  simdF3: SIMDInstructionPtr := TwoByteOpcodeInstruction.SIMD_F3;
                 end;
+                if SIMDInstructionPtr = nil then
+                  raise EUndefinedOpcodeException.Create('SIMD instruction');
 
+                SIMDInstruction := SIMDInstructionPtr^;
                 Operands := SIMDInstruction.Operands;
                 OperandsCount := SIMDInstruction.OperandsCount;
                 InstructionName := SIMDInstruction.name;
@@ -1238,6 +1246,7 @@ begin
             Inc(fDisasmMap[InstrByteIndex], dfPart);
 
           Inc(fStatistics.Instructions);
+          WriteLn(Line);
         end;
 
         Inc(i);

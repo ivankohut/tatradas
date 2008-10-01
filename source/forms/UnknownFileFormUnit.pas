@@ -183,10 +183,10 @@ end;
 
 function TUnknownFileFormatForm.GetParameters: TCustomFileParameters;
 begin
-  Result.Entrypoint:=Entrypoint;
-  Result.StartOffset:=StartOffset;
-  Result.Size:=Size;
-  Result.Bit32:=Bit32;
+  Result.EntrypointOffset := Entrypoint;
+  Result.FileOffset := StartOffset;
+  Result.Size := Size;
+  Result.Bit32 := Bit32;
 end;
 
 

@@ -1,5 +1,5 @@
 { TODO:
-
+  MemOffset
 }
 
 unit CustomFileUnit;
@@ -20,11 +20,12 @@ uses
 
 type
 
+  // Code section parameters
   TCustomFileParameters = record
-    Entrypoint: cardinal;
-    StartOffset: cardinal;
-    Size: cardinal;
-    Bit32: boolean;
+    EntrypointOffset: cardinal; // Entry point offset - relative to the beginning of the file
+    FileOffset: cardinal; // Code section file offset - relative to the beginning of the file
+    Size: cardinal; // File or Mem Size, currently the same size
+    Bit32: boolean; // true = 32 bit, false = 16 bit
   end;
 
 
@@ -36,7 +37,7 @@ type
     function LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; override;
   end;
 
-  
+
 implementation
 
 
@@ -47,25 +48,25 @@ begin
   inherited Create(InputFile, aFileName);
   fExecFormat:= ffCustom;
 
-  fRegions.Add('Code', Parameters.StartOffset, Parameters.Size);
+  fRegions.Add('Code', Parameters.FileOffset, Parameters.Size);
   fRegions.Finish;
 
   InputFile.Seek(0, 0);
-  CodeSection:= TCodeSection.Create(InputFile, Parameters.bit32, Parameters.StartOffset, Parameters.Size, Parameters.StartOffset, Parameters.Size, 0, 'N/A', self);
-  CodeSection.EntryPointAddress:= Parameters.Entrypoint - Parameters.StartOffset;
+  CodeSection:= TCodeSection.Create(InputFile, Parameters.bit32, Parameters.FileOffset, Parameters.Size, Parameters.FileOffset, Parameters.Size, 0, 'N/A', self);
+  CodeSection.EntryPointAddress:= Parameters.EntrypointOffset - Parameters.FileOffset;
   Sections.Add(CodeSection);
 end;
 
 
 
-function TCustomFile.SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; 
+function TCustomFile.SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean;
 begin
   result:=inherited SaveToFile(DHF, DAS, SaveOptions);
 end;
 
 
 
-function TCustomFile.LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; 
+function TCustomFile.LoadFromFile(DHF: TStream; var DAS: TextFile): boolean;
 begin
   result:=inherited LoadFromFile(DHF, DAS);
 end;
