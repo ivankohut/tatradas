@@ -59,6 +59,7 @@ uses
   StringRes in 'res\StringRes.pas',
   LoggerUnit in 'misc\LoggerUnit.pas',
   FilesUnit in 'misc\FilesUnit.pas',
+  MyLists in 'misc\MyLists.pas',
 
 {$IFDEF GUI_B}
   TatraDASHighlighter in 'res\TatraDASHighlighter.pas',
@@ -81,6 +82,7 @@ uses
   ProgressFormUnit in 'forms\ProgressFormUnit.pas' {ProgressForm},
   GotoLineFormUnit in 'forms\GotoLineFormUnit.pas' {GoToLineForm},
   GotoAddressFormUnit in 'forms\GotoAddressFormUnit.pas' {GoToAddressForm},
+  MessageFormUnit in 'forms\MessageFormUnit.pas' {MessageForm},
 
   // Frames' units
   TabFrameTemplateUnit in 'frames\TabFrameTemplateUnit.pas',
@@ -128,6 +130,7 @@ uses
   StringRes in 'res/StringRes.pas',
   LoggerUnit in 'misc/LoggerUnit.pas',
   FilesUnit in 'misc/FilesUnit.pas',
+  MyLists in 'misc/MyLists.pas',
 
 {$IFDEF GUI_B}
   ButtonsX in 'misc/ButtonsX.pas',
@@ -150,6 +153,7 @@ uses
   ProgressFormUnit in 'forms/ProgressFormUnit.pas' {ProgressForm},
   GotoLineFormUnit in 'forms/GotoLineFormUnit.pas' {GoToLineForm},
   GotoAddressFormUnit in 'forms/GotoAddressFormUnit.pas' {GoToAddressForm},
+  MessageFormUnit in 'forms/MessageFormUnit.pas' {MessageForm},
 
 {$ELSE}
   CliUnit in 'CliUnit.pas',
@@ -204,7 +208,7 @@ begin
   Application.CreateForm(TGoToAddressForm, GoToAddressForm);
 
   if not Translator.ChangeLanguage(MainForm.sINI.ReadString('Settings', 'Language', 'en')) then begin
-     MessageDlg(NoLanguageFilesStr, mtError, [mbOk], 0);
+     DisplayMessage(NoLanguageFilesStr, mtError, [mbOk]);
      Exit;
   end;
   OptionsForm.LoadSettings(MainForm.sINI);

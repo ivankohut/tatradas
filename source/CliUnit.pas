@@ -70,9 +70,6 @@ const
     '                           das - just a DAS file, contains disassembly listing (default)' + CRLF +
     '                           nasm - NASM and YASM compilable (usually) file' + CRLF;
 
-var
-  ExecFileManager: TExecFileManager;
-
 
 function ProcessParameters: TRunOptions;
 type

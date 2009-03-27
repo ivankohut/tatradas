@@ -4,8 +4,8 @@ program TestTatraDAS;
 
 uses
 
-  TestFrameWork in 'dunit\TestFrameWork.pas',
-  GUITestRunner in 'dunit\GUITestRunner.pas',
+  TestFrameWork,
+  GUITestRunner,
 
   {$IFDEF MSWINDOWS}
     {$IFDEF GUI_B}
@@ -17,9 +17,11 @@ uses
 
   CliUnit,
 
+  VersionUnit in 'VersionUnit.pas',
   StringRes in 'res\StringRes.pas',
   FilesUnit in 'misc\FilesUnit.pas',
   LoggerUnit in 'misc\LoggerUnit.pas',
+  MyLists in 'misc\MyLists.pas',
 
   TatraDASHighlighter in 'res\TatraDASHighlighter.pas',
   TranslatorUnit in 'TranslatorUnit.pas',
@@ -38,6 +40,7 @@ uses
   ProgressFormUnit in 'forms\ProgressFormUnit.pas' {ProgressForm},
   GotoLineFormUnit in 'forms\GotoLineFormUnit.pas' {GoToLineForm},
   GotoAddressFormUnit in 'forms\GotoAddressFormUnit.pas' {GoToAddressForm},
+  MessageFormUnit in 'forms\MessageFormUnit.pas' {MessageForm},
 
   // Frames' units
   TabFrameTemplateUnit in 'frames\TabFrameTemplateUnit.pas',

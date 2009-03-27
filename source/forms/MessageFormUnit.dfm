@@ -1,0 +1,26 @@
+object MessageForm: TMessageForm
+  Left = 402
+  Top = 354
+  BorderIcons = [biMinimize]
+  BorderStyle = bsDialog
+  Caption = 'MessageForm'
+  ClientHeight = 93
+  ClientWidth = 211
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'MS Sans Serif'
+  Font.Style = []
+  OldCreateOrder = False
+  Position = poMainFormCenter
+  PixelsPerInch = 96
+  TextHeight = 13
+  object MessageLabel: TLabel
+    Left = 16
+    Top = 16
+    Width = 69
+    Height = 13
+    Caption = 'MessageLabel'
+  end
+end

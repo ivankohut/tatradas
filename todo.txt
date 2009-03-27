@@ -1,6 +1,8 @@
 TO DO list (TatraDAS)
 
 3.x
+General
+- automaticka detekcia retazcov (najma Pascal a C)
 - rozne znakove sady v synedit
 - zdroje (PE, NE, atd) ?
 - paralelne disassemblovanie viacerych sekcii
@@ -8,6 +10,14 @@ TO DO list (TatraDAS)
 Disassembler
 - 64 bit (pozor na instrukciu MOVD/Q, PEXTRD/Q, PINSRD/Q, CMPXCH8B/16B atd.)
 - instrukcie pre virtualizaciu
+
+GUI
+- optimalizacia ImportTabFrame - nahradit ListView StringGrid-om, aby sa v pripade obrovskeho mnzostva importovanych funkcii z jedneho modulu nenacitaval zoznam funkcii prilis dlho  
+- zamysliet sa nad polozkami v menu (a buttonmi na codeframe)
+- prerobit menu pomocou actions
+- system na spravu GUI dat (hodnoty formularov) & ich ukladanie do projektoveho suboru
+  - pridat ulozenie bookmarkov v projekte
+- usporiadanie GUI prvkov na FileTabFrame
 
 2.9.9
 General
@@ -19,14 +29,12 @@ General
 Disassembler:
 - refactorizacia disassemblera!
 - 0F C2 - CMPxxxx - spravit rozne nazvy instrukcie podla tretieho operandu
-- detekovat imported o uroven volania skor "call x, x: jump [0x...]"
 - nerekurzivne disassemblovanie
 - FISTTP je to SSE3 instrukcia medzi FPU - co s tym ? ako nastavit instrSet na SSE3 ?
 - zmenit typ parametra FPU instrukcii ? (aby nemusel byt "case" v FPU vetve)
-- problemy (disasm & yasm/nasm):
+- problemy (disasm & yasm/nasm): (skoky a volania medzi sekciam)
     snowcraft.exe undefined symbol (yasm) - problem je v tom, ze v CALL a jeho ciel su v roznych sekciach -> CALL v jednej sekcii nevytvori referenciu v druhej sekcii a teda tam nedisassemblujeme od ciela CALL-u
 - operand size atribute pri instrukciach s implicitnou adresaciou (to je to zakomentovane a16 a spol. pri spracovani prefixu)
-- automaticka detekcia retazcov (najma Pascal a C)
 
 Misc
 - procmat - rozdelit na viac unitov ?
@@ -42,35 +50,31 @@ Misc
   - optimalizovat ukladanie do NASM (stringy)
   - najvhodnejsi by bol specialny mod disassemblovania
 - osetrenie viacerych vynimiek v ProgressThreads a nasledne v MainForm-e(GUI) a TatraDAS-e(console)
-- ReplaceLines
-  - nevyhadzovat vsetky bezadresne riadky
-  - vyhodit tie, na ktore odkazuje nahradzovany kod
-  - porozmyslat nad volanim beginupdate/endupdate niekde vyssie
+- framy si nepamataju svoju velkost
+- mozno je to OK - pe import lookup table NULL error
+- po stlaceni zrusit vlakno stale bezi
+- dlho trvajuca zmena na ???
 
 GUI
-- nutne optimalizovat TExportTabFrame.Create, mozno aj ImportTab - vytvaranie ListItem-ov (C:\Program Files\OpenOffice.org\program\bf_xo680mi.dll)
-- vlastny MessageDlg, aby zobrazoval buttony v jazyku TatraDASu
-- zamysliet sa nad polozkami v menu (a buttonmi na codeframe)
-- prerobit menu pomocou actions
-- system na spravu GUI dat (hodnoty formularov) & ich ukladanie do projektoveho suboru
-  - pridat ulozenie bookmarkov v projekte
 - refaktorovat MyEdits
 
 CLI
 - textovy progress - dobiehanie do 100%, aj je progress naozaj kratky, tak sa nezobrazi ani jeho nazov
-- vacsie moznosti z konzoly - napr. save as projekt, DAS, NASM
-
-Bugs
-- AV - TatraFPC.exe  - disasemble, change everything to byte data, disasm at 0x0041B4FD
 
 DONE:
+- ReplaceLines (zatial nevyhadzuje ziadne bezadresne riadky, iba nahradzovane adresne riadky)
+- optimalizovany ExportTabFrame - ListView nahradenym StringGrid-om (ak mala kniznica vela exportovanych funkcii, ako napr. svx680mi.dll - 16000 alebo bf_svx680mi.dll - 31000, tak sa ListItem-y vytvarali strasne dlho)
+- vlastny MessageDlg, aby zobrazoval buttony v jazyku TatraDASu
+- detekovat imported o uroven volania skor "call x, x: jump [0x...]"
+
+- vacsie moznosti z konzoly - napr. save as projekt, DAS, NASM
 - pozriet co pise SVN log
 - refaktorizacia GROUP instrukcii
 - refaktorizacia a kontrola FPU instrukcii
 - SSSE3, SSE41, SSE42
 - zavedeny typ instrukcie (napr. normal alebo undefined), odstranena polozka "opcode"
 - drag & drop
-- refaktorizacia Translator-a 
+- refaktorizacia Translator-a
 
 - oprava - uvadzanie velkosti operandu vzdy, ak je v pamati; -> dosledkom je kompilovatelnost s NASM (hoci este stale hadze warningy)
 - oprava velkosti operandu u niektorych FPU instrukcii,
@@ -89,23 +93,8 @@ DONE:
 - oprava ODstranene memory leak-y vdaka FastMM
 - oprava ChangeToString nezamrzne ak Pascal string pretrca cez sekciu -> nespravi sa nic
 
-2.9.8 todo list:
-  - problemy:
-      mozno je to OK - pe import lookup table NULL error
-      usporiadanie GUI prvkov na FileTabFrame
-      framy si nepamataju svoju velkost
-- Fat32.dll - v 32 bit rezime,
-   - disasm na 0xF7 zamrzne
-   - po stlaceni zrusit vlakno stale bezi
-
-- dn.com
-  to C string na ssssss..., potom disasm na 14C zblbne
-
-- dlho trvajuca zmena na ???
 -----------------------------
 
-- ukoncit disassemblovanie bloku v ktorom sa nachadza nedefinovana instrukcia ?
-- skoky a volania medzi sekciam
 
 - AAS nie je zvyraznena v MEM.jar
 - relocation table v MZ formate

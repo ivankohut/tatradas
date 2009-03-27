@@ -67,7 +67,7 @@ implementation
 {$R *.dfm}
 
 uses
-  MainFormUnit, GotoAddressFormUnit, ExecFileUnit;
+  MainFormUnit, GotoAddressFormUnit, ExecFileUnit, MessageFormUnit;
 
 
 
@@ -77,7 +77,7 @@ begin
     HexEdit.LoadFromFile(aFileName);
   except
     on EFOpenError do
-      MessageDlg(CouldNotOpenReadWriteFileStr, mtError, [mbOk], 0);
+      DisplayMessage(CouldNotOpenReadWriteFileStr, mtError, [mbOk]);
     else
       raise;
   end;
@@ -133,7 +133,7 @@ end;
 procedure THexEditForm.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   if HexEdit.Modified then begin
-    case MessageDlg(AnsiReplaceStr(FileModifiedStr, '<filename>', '''' + ExtractFileName(HexEdit.FileName) + ''''), mtWarning, [mbYes, mbNo, mbCancel], 0) of
+    case DisplayMessage(AnsiReplaceStr(FileModifiedStr, '<filename>', '''' + ExtractFileName(HexEdit.FileName) + ''''), mtWarning, [mbYes, mbNo, mbCancel]) of
       mrYes: SaveAsButtonClick(self);
       mrNo: ;
       mrCancel: begin

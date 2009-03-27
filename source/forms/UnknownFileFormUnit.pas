@@ -74,6 +74,8 @@ var
 
 implementation
 
+uses MessageFormUnit;
+
 {$R *.dfm}
 
 {
@@ -112,8 +114,8 @@ begin
           Exit;
         end;
       end;
-  end;    
-  MessageDlg(error,mtWarning,[mbOK], 0);
+  end;
+  DisplayMessage(error, mtWarning, [mbOK]);
   StartOffsetEdit.SetFocus;
 end;
 

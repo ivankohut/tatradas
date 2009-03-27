@@ -26,6 +26,7 @@ uses
   SynEditTextBuffer,
   TatraDASHighlighter,
 
+  MessageFormUnit,
   TranslatorUnit,
   TabFrameTemplateUnit,
   GotoAddressFormUnit,
@@ -119,7 +120,7 @@ type
     // Navigation events
     procedure GotoEntryPointButtonClick(Sender: TObject);
     procedure GotoAddressButtonClick(Sender: TObject);
-    procedure GotoLineClick(Sender: TObject);    
+    procedure GotoLineClick(Sender: TObject);
     procedure FollowButtonClick(Sender: TObject);
     procedure ReturnButtonClick(Sender: TObject);
     procedure ToggleBookmarkClick(Sender: TObject);
@@ -290,7 +291,7 @@ begin
     soBeginning: Position:= NonNegative(Offset);
     soCurrent: Position:= NonNegative(Plocha.CaretY - 1 + Offset);
     else
-      raise Exception.Create('This should not happened.');
+      raise Exception.Create('This should not happen.');
   end;
 { remove
   Plocha.CaretY:= Min(Position, plocha.Lines.Count - 1) + 1;
@@ -355,7 +356,7 @@ begin
   if IsFound then
     GotoPosition(LineIndex, soBeginning)
   else
-    MessageDlg('"' + SearchText + '" ' + NotFoundStr, mtWarning, [mbOK], 0);
+    DisplayMessage('"' + SearchText + '" ' + NotFoundStr, mtWarning, [mbOK]);
 end;
 
 
@@ -437,7 +438,7 @@ end;
 
 procedure TCodeTabFrame.GotoEntrypointButtonClick(Sender: TObject);     // Premiestnenie na Entrypoint
 begin
-  GotoPosition(fSection.GetPosition(fSection.EntryPointAddress + fSection.MemOffset)-2, soBeginning);
+  GotoPosition(fSection.GetPosition(fSection.EntryPointAddress + fSection.MemOffset), soBeginning);
   plocha.SetFocus;
 end;
 
@@ -470,7 +471,7 @@ var
   SourceAddressPtr: ^cardinal;
 begin
   New(SourceAddressPtr);
-  SourceAddressPtr^:= GetLineAddress(plocha.Lines[fSection.FindAddressableLine(Plocha.CaretY - 1)]);
+  SourceAddressPtr^ := GetLineAddress(plocha.Lines[fSection.FindAddressableLine(Plocha.CaretY - 1)]);
   fJumpStack.Push(SourceAddressPtr);
   GotoPosition(fSection.GetPosition(fTargetAddress), soBeginning);
   UpdateActions;
@@ -667,17 +668,17 @@ procedure TCodeTabFrame.ChangeToData(Options: TDataChangeOptions);
     result:= 0;
     DataTypeSize:= DataTypeSizes[Options.datatype];
     case Options.Option of
-      dcItems: result:= Min(Options.value,(fSection.MemSize - Address) div DataTypeSize);
-      dcBytes: result:= Min(Options.value+Address,fSection.MemSize) div DataTypeSize; //dcBytes: result:= Options.value shr Options.datatype
-      dcMaxAddress: result:= (Options.value - Address) div DataTypeSize;
+      dcItems: result:= Min(Options.value, (fSection.MemSize - Address) div DataTypeSize);
+      dcBytes: result:= Min(Options.value + Address, fSection.MemSize) div DataTypeSize; //dcBytes: result:= Options.value shr Options.datatype
+      dcMaxAddress: result:= (Options.value - fSection.MemOffset - Address) div DataTypeSize;
       dcEndSection: result:= (fSection.MemSize - Address) div DataTypeSize;
       dcCode: begin
-        for i:= Index to plocha.Lines.Count - 1 do begin
+        for i := Index to plocha.Lines.Count - 1 do begin
           if (GetLineType(plocha.lines[i]) <> ltInstruction) then
             Continue;
           if plocha.lines[i][ilInstructionMnemonicIndex] <> UpCase(plocha.lines[i][ilInstructionMnemonicIndex]) then
             Continue;
-          result:= (GetLineAddress(plocha.lines[i]) - Address) div DataTypeSize;
+          result := (GetLineAddress(plocha.lines[i]) - Address) div DataTypeSize;
           Break;
         end;
       end;
@@ -713,7 +714,8 @@ begin
     LineIndex,
     StartOffset,
     ItemSize*NewLinesCount,
-    fSection.GetLineFromDataEx(fSection.CodeArray[StartOffset], Options.DataType, Options.Signed, StartAddress, NewLinesCount)
+//    fSection.GetLineFromDataEx(fSection.CodeArray[StartOffset], Options.DataType, Options.Signed, StartAddress, NewLinesCount)
+    GetLineFromDataEx(fSection.CodeArray[StartOffset], Options.DataType, Options.Signed, StartAddress, NewLinesCount)
   );
   if Assigned(fOnChangeDisassembled) then
     fOnChangeDisassembled(plocha);

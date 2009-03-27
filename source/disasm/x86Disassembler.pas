@@ -544,6 +544,7 @@ end;
 
 function Tx86Disassembler.ProcessRelative(OperandSize: TModRMOperandSize): string;
 var
+  ReferenceType: TReferenceType;
   address: integer;
   parsed: cardinal;
   parsedcount: byte;
@@ -608,21 +609,22 @@ begin
 
   end;
 
-
-  if address < 0 then result:='-0x' + IntToHex(Abs(address),8)            // skok na zapornu adresu (treba este zohladnit MemOffset !!!)
+  // skok na zapornu adresu (treba este zohladnit MemOffset !!!)
+  if address < 0 then
+    result := '-0x' + IntToHex(Abs(address), 8)
   else begin
-    result:='0x' + IntToHex(cardinal(address) + fMemOffset, 8);
-    if cardinal(address) > fCodeSize-1 then Exit                             // skok za koniec kodovej sekcie
+    result := '0x' + IntToHex(cardinal(address) + fMemOffset, 8);
+    // skok za koniec kodovej sekcie
+    if cardinal(address) > fCodeSize-1 then
+      Exit
     else begin
       CAJ.Add(address);
-      Inc(Disassembled[address].refercount);
-      SetLength(Disassembled[address].refer,Disassembled[address].refercount);
       case FirstCharOfName of
-        'J': Disassembled[address].refer[Disassembled[address].refercount-1]:='Jump from 0x'+IntToHex(InstrAddress + fMemOffset, 8);
-        'C': Disassembled[address].refer[Disassembled[address].refercount-1]:='Call from 0x'+IntToHex(InstrAddress + fMemOffset, 8);
-        'L': Disassembled[address].refer[Disassembled[address].refercount-1]:='Loop from 0x'+IntToHex(InstrAddress + fMemOffset, 8);
+        'J': ReferenceType := rtJump;
+        'C': ReferenceType := rtCall;
+        'L': ReferenceType := rtLoop;
       end;
-      Inc(fStatistics.References);
+      AddReference(InstrAddress, address, ReferenceType);
     end;
   end;
 {
@@ -777,7 +779,7 @@ begin
       else
         SetLength(Line, ilInstructionMnemonicIndex + 8);
 
-      Disassembled[CodeIndex].Disassembled := Line;
+      Disassembled[CodeIndex].DisassembledLine := Line;
 
 //      Inc(fDisasmMap[CodeIndex],dfData);
       Inc(fStatistics.Data);
@@ -819,6 +821,7 @@ var
   LastParsedIndex: integer;
   InstrByteIndex: cardinal;
   TheByte: byte;
+  InstrCodeIndex: Cardinal;
 
 begin
   i := Start;
@@ -1164,103 +1167,107 @@ begin
           EndBlock := true;
 
         // Detection of imported functions calls (CALLN and JMPN instructions)
-        if (code[InstrAddress] = $FF) then begin
-          if ((ModRM.RegOp = 2) or (ModRM.RegOp = 4)) and (Length(InstructionOperands) = 18) then begin
-            SetLength(Imported, Length(Imported) + 1);
-            Imported[Length(Imported) - 1] := InstrAddress;
-          end;
+        if (code[InstrAddress] = $FF) then
+          if ((ModRM.RegOp = 2) or (ModRM.RegOp = 4)) and (Length(InstructionOperands) = 18) then
+            fImportCandidates.Add(InstrAddress);
+
+        // If the last byte of the current instruction is outside the current block
+        // or any byte of the current instruction is part of another (already diassembled) instruction
+        // then the current instruction is not valid and we must end the current block.
+        if i > finish then
+          raise EInstructionTruncated.Create('Code section overflow');
+
+        for InstrCodeIndex := InstrAddress to i do
+          if (fDisasmMap[InstrCodeIndex] and dfPart) <> 0 then
+            raise EInstructionTruncated.Create('Already disassembled code');
+
+
+
+        {
+          Construction of instruction line of Disassembled from its parts
+
+          The code is equivalent to:
+
+            Disassembled[InstrAddress].Disassembled :=
+              IntToHex(InstrAddress + fMemOffset, 8) + ' ' +
+              StringRightPad(DataToHex(code[InstrAddress], i - InstrAddress + 1), ilMaxParsedLength + 1, ' ') +
+              IfThen(InstructionPrefix <> '', InstructionPrefix + ' ') +
+              InstructionName + ' ' +
+              InstructionOperands;
+
+          It's complicated because of optimization (minimization of string creation (memory allocation))
+        }
+
+        SetLength(Line, ilInstructionMnemonicIndex - 1);
+
+        // Address
+        MemAddress:= InstrAddress + fMemOffset;
+        for HexAddressIndex := 1 to 8 do begin
+          Line[9 - HexAddressIndex] := HexDigits[MemAddress and 15];
+          MemAddress:= MemAddress shr 4;
         end;
 
-        // If the last byte of current instruction is part of another (already diassembled) instruction
-        // or it is outside the current block then the current instruction is not valid and we must end the current block.
-        if ((fDisasmMap[i] and dfPart) <> 0) or (i > finish) then
-          EndBlock := true
-        else begin
+        // Parsed
+        for ParsedIndex := 0 to (i - InstrAddress) do begin
+          TheByte := code[InstrAddress + Cardinal(ParsedIndex)];
+          Line[10 + 2*ParsedIndex] := HexDigits[(TheByte shr 4) and 15];
+          Line[10 + 2*ParsedIndex + 1] := HexDigits[TheByte and 15];
+        end;
 
-          {
-            Construction of instruction line of Disassembled from its parts
+        // Spaces
+        for SpaceIndex := 10 + 2*(i - InstrAddress + 1) to LastParsedIndex do
+          Line[SpaceIndex] := ' ';
 
-            The code is equivalent to:
+        LastParsedIndex := 9 + 2*(i - InstrAddress + 1);
 
-              Disassembled[InstrAddress].Disassembled :=
-                IntToHex(InstrAddress + fMemOffset, 8) + ' ' +
-                StringRightPad(DataToHex(code[InstrAddress], i - InstrAddress + 1), ilMaxParsedLength + 1, ' ') +
-                IfThen(InstructionPrefix <> '', InstructionPrefix + ' ') +
-                InstructionName + ' ' +
-                InstructionOperands;
-
-            It's complicated because of optimization (minimization of string creation (memory allocation))
-          }
-
-          SetLength(Line, ilInstructionMnemonicIndex - 1);
-
-          // Address
-          MemAddress:= InstrAddress + fMemOffset;
-          for HexAddressIndex := 1 to 8 do begin
-            Line[9 - HexAddressIndex] := HexDigits[MemAddress and 15];
-            MemAddress:= MemAddress shr 4;
-          end;
-
-          // Parsed
-          for ParsedIndex := 0 to (i - InstrAddress) do begin
-            TheByte := code[InstrAddress + Cardinal(ParsedIndex)];
-            Line[10 + 2*ParsedIndex] := HexDigits[(TheByte shr 4) and 15];
-            Line[10 + 2*ParsedIndex + 1] := HexDigits[TheByte and 15];
-          end;
-
-          // Spaces
-          for SpaceIndex := 10 + 2*(i - InstrAddress + 1) to LastParsedIndex do
-            Line[SpaceIndex] := ' ';
-
-          LastParsedIndex := 9 + 2*(i - InstrAddress + 1);
-
-          // Prefix
-          LineIndex := ilInstructionMnemonicIndex;
-          if InstructionPrefix <> '' then begin
-            for ParsedIndex := 1 to Length(InstructionPrefix) do
-              Line[procmat.ilInstructionMnemonicIndex - 1 + ParsedIndex] := InstructionPrefix[ParsedIndex];
-            Inc(LineIndex, Length(InstructionPrefix));
-            Line[LineIndex] := ' ';
-            Inc(LineIndex);
-          end;
-
-          // Name
-          for ParsedIndex := 1 to Length(InstructionName) do
-            Line[LineIndex - 1 + ParsedIndex] := InstructionName[ParsedIndex];
-          Inc(LineIndex, Length(InstructionName));
+        // Prefix
+        LineIndex := ilInstructionMnemonicIndex;
+        if InstructionPrefix <> '' then begin
+          for ParsedIndex := 1 to Length(InstructionPrefix) do
+            Line[procmat.ilInstructionMnemonicIndex - 1 + ParsedIndex] := InstructionPrefix[ParsedIndex];
+          Inc(LineIndex, Length(InstructionPrefix));
           Line[LineIndex] := ' ';
           Inc(LineIndex);
-
-          // Operands
-          for ParsedIndex := 1 to Length(InstructionOperands) do
-            Line[LineIndex - 1 + ParsedIndex] := InstructionOperands[ParsedIndex];
-          Inc(LineIndex, Length(InstructionOperands) - 1);
-
-          // Shortening of "Line" to the actual length of line, se
-          SetLength(Line, LineIndex);
-          Disassembled[InstrAddress].Disassembled := Line;
-
-          // Set the fDisasmMap bitmap - first byte is "new instruction" (dfNewInstr) and each byte of instruction is "part of instruction" (dfPart)
-          fDisasmMap[InstrAddress] := dfNewInstr;
-          for InstrByteIndex := InstrAddress to i do
-            Inc(fDisasmMap[InstrByteIndex], dfPart);
-
-          Inc(fStatistics.Instructions);
-          WriteLn(Line);
         end;
 
+        // Name
+        for ParsedIndex := 1 to Length(InstructionName) do
+          Line[LineIndex - 1 + ParsedIndex] := InstructionName[ParsedIndex];
+        Inc(LineIndex, Length(InstructionName));
+        Line[LineIndex] := ' ';
+        Inc(LineIndex);
+
+        // Operands
+        for ParsedIndex := 1 to Length(InstructionOperands) do
+          Line[LineIndex - 1 + ParsedIndex] := InstructionOperands[ParsedIndex];
+        Inc(LineIndex, Length(InstructionOperands) - 1);
+
+        // Shortening of "Line" to the actual length of line, se
+        SetLength(Line, LineIndex);
+        Disassembled[InstrAddress].DisassembledLine := Line;
+
+        // Set the fDisasmMap bitmap - first byte is "new instruction" (dfNewInstr) and each byte of instruction is "part of instruction" (dfPart)
+        fDisasmMap[InstrAddress] := dfNewInstr;
+        for InstrByteIndex := InstrAddress to i do
+          Inc(fDisasmMap[InstrByteIndex], dfPart);
+
+        Inc(fStatistics.Instructions);
         Inc(i);
 
       except
         on E: EUndefinedOpcodeException do begin
-          Inc(Disassembled[InstrAddress].ReferCount);
-          SetLength(Disassembled[InstrAddress].refer, Disassembled[InstrAddress].ReferCount);
-          Disassembled[InstrAddress].refer[disassembled[InstrAddress].refercount - 1] := StringRightPad(';' + IntToHex(InstrAddress + fMemOffset, 8) + ' ' + DataToHex(code[InstrAddress], i - InstrAddress + 1) + '...', ilInstructionMnemonicIndex - 1) + 'UNDEFINED OPCODE!';
-          InstructionPrefix := '';
-          fDisasmMap[InstrAddress] := 0;
+          AddUndefinedOpcode(InstrAddress, i - InstrAddress + 1);
+          i := InstrAddress;
+          InstructionPrefix := ''; // ??
+          fDisasmMap[InstrAddress] := 0; // ??
           EndBlock := true;
           Logger.Debug('Undefined opcode, message: ' + E.Message);
-        end
+        end;
+        on E: EInstructionTruncated do begin
+          i := InstrAddress;
+          EndBlock := true;
+          Logger.Debug('Instruction truncated, message: ' + E.Message);
+        end;
         else
           raise;
       end;

@@ -1,0 +1,9 @@
+Nechce zobrat urcenie pamati dqword pri instrukciach MOVUPS a MOVAPS,
+vravi: "error: comma or end of line expected"
+Mozny dovod je, ze druhy operand je typu 4 packed single a jemu sa nepaci oznacenie "dqword"
+Priklad MOVUPS XMM0,dqword [EAX]
+
+Nechce zobrat urcenie pamati dqword pri instrukciach PAND
+PAND XMM0,dqword [0x005A7640]
+
+... proste to tak vyzera, ze nechce zobrat pri pristupe do pamati pri mnohych 128 bit instrukciach DQWORD, aj ked v 64 bit verzii mu QWORD nevadilo.

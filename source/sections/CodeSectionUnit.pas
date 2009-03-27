@@ -1,4 +1,6 @@
 { TODO:
+  - UndefinedOpcodes v DisassemblePart
+
   - dtCUniCodeStr:    v ChangeToStringData
   - osetrit code section nulovej velkosti
   - zjednodusit moynosti ukladanie disassembled
@@ -50,20 +52,20 @@ type
 
   TCodeSection = class(TSection)
     private
-      fBit32: boolean;
-      fCodeSize: cardinal;                  // Velkost kodu tejto sekcie v bajtoch
-      fIsDisassembled: boolean;
+      fBit32: Boolean;
+      fCodeSize: Cardinal;                  // Velkost kodu tejto sekcie v bajtoch
+      fIsDisassembled: Boolean;
       fDisassembled: TTatraDASStringList;
 
-      fHasEntryPoint: boolean;
-      fEntryPointAddress: cardinal;
+      fHasEntryPoint: Boolean;
+      fEntryPointAddress: Cardinal;
 
-      fFileOffset: cardinal;
-      fFileSize: cardinal;
-      fMemOffset: cardinal;
-      fMemSize: cardinal;
+      fFileOffset: Cardinal;
+      fFileSize: Cardinal;
+      fMemOffset: Cardinal;
+      fMemSize: Cardinal;
 
-      fCodeSectionIndex: integer;             // Cislo sekcie v ramci kodovych sekcii
+      fCodeSectionIndex: Integer;             // Cislo sekcie v ramci kodovych sekcii
 
       InstructionLineCount, DataLineCount, ReferenceLineCount, BlankLineCount: cardinal;
 //       Statistics: TStatistics;
@@ -73,6 +75,8 @@ type
       procedure SetEntryPointAddress(Address: cardinal);
       function GetMaxAddress: cardinal;
 
+      function GetReplacingLines(StartLineIndex, StartAddress, ByteCount: cardinal; NewLines: TStrings; out LastLineIndex: Integer): TStrings;
+      procedure ReplaceLinesInternal(StartLineIndex, StartAddress, ByteCount: Cardinal; NewLines: TStrings);
     public
 // Polia
       CodeArray: TByteDynArray;        // Pole obsahujuce kod
@@ -90,8 +94,8 @@ type
       function GetPosition(MemAddress: cardinal): cardinal; // Get position in Disassembled from Address (memory address)
       function FindAddressableLine(Position: cardinal): cardinal; // forward search, returns $FFFFFFFF if reaches end of Disassembled
       procedure ClearDisassembled;
-      function GetLineFromDataEx(var InputData; DataType: cardinal; Signed: boolean; const StartAddress: cardinal; Count: integer): TStrings; // StartAddress is memory address
-      procedure ReplaceLines(StartLineIndex, StartAddress, ByteCount: cardinal; NewLines: TStrings);
+
+      procedure ReplaceLines(StartLineIndex, StartAddress, ByteCount: Cardinal; NewLines: TStrings);
 
       function SaveToFile  (DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
       function LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; overload; override;
@@ -117,7 +121,11 @@ type
 function GetLineAddress(line: string): cardinal;
 function GetLineBytes(line: string): cardinal;
 function GetLineType(line: string): TLineType;
+function GetLineData(Line: string): TByteDynArray;
 function GetTargetAddress(Line: string; var Address: cardinal): boolean;
+
+// StartAddress is memory address
+function GetLineFromDataEx(var InputData; DataType: cardinal; Signed: Boolean; const StartAddress: Cardinal; Count: Integer): TStrings;
 
 
 
@@ -128,9 +136,12 @@ uses
   DateUtils,
   ExecFileUnit,
   PEFileUnit,
-  x86Disassembler
-  ;
+  x86Disassembler,
+  DisassemblerUtils,
+  TestFramework;
 
+
+function PrepareInnerReplaceLines(const OldStartLineIndex: Integer; OldLines, NewLines: TStrings; out OldLastLineIndex: Integer): TStrings; forward;
 
 //******************************************************************************
 // TCodeSection class
@@ -222,52 +233,94 @@ begin
 end;
 
 
-// StartAddress is section address (not memory)
-procedure TCodeSection.ReplaceLines(StartLineIndex, StartAddress, ByteCount: cardinal; NewLines: TStrings);
-var
-  AfterAddress: cardinal;
-  Address: cardinal;
-  LineIndex: cardinal;
-  PreCodeIndex, RestCodeIndex: cardinal;
-  PreLines: TStrings;
-begin
-  // Konverzia zaciatku instrukcie, v ktorej zaciname nahradzovanie, na typ "byte"
-  PreLines:= TStringList.Create;
-  for PreCodeIndex:= GetLineAddress(Disassembled[StartLineIndex]) to StartAddress + MemOffset - 1 do
-    DisassemblerMap[PreCodeIndex - MemOffset]:= dfNone;
 
-  PreLines.AddStrings(GetLineFromDataEx(
+function ReplaceFirstLastLine(ALine: string; AReplaceAddress: Cardinal; AIsFirst: Boolean): TStrings;
+var
+  LineData: TByteDynArray;
+  ReplaceDataSize: Integer;
+begin
+  LineData := GetLineData(ALine);
+  if AIsFirst then
+    Result := GetLineFromDataEx(
+      LineData[0],
+      dtByte,
+      false,
+      GetLineAddress(ALine),
+      AReplaceAddress - GetLineAddress(ALine)
+    )
+  else begin
+    if AReplaceAddress = GetLineAddress(ALine) then begin
+      Result := TStringList.Create;
+      Result.Add(ALine);
+    end
+    else
+      Result := GetLineFromDataEx(
+        LineData[AReplaceAddress - GetLineAddress(ALine)],
+        dtByte,
+        false,
+        AReplaceAddress,
+        GetLineBytes(ALine) - (AReplaceAddress - GetLineAddress(ALine))
+      );
+  end;
+
+{ 2009-02-21 Do not remove this, may be used in future
+  Result := GetLineFromDataEx(
     CodeArray[GetLineAddress(Disassembled[StartLineIndex]) - MemOffset],
     dtByte,
     false,
     GetLineAddress(Disassembled[StartLineIndex]),
     (StartAddress + MemOffset - 1) - GetLineAddress(Disassembled[StartLineIndex])
   ));
-  PreLines.AddStrings(NewLines);
-//  NewLines.Free;
-  NewLines:= PreLines;
+}
+end;
 
-  // Jednoduche zistenie kolko riadkov nahradime (bezadresne riadky sa vyhodia)
-  LineIndex:= StartLineIndex;
-  Address:= StartAddress;
-  AfterAddress:= StartAddress + ByteCount;
-  while Address < AfterAddress do begin
-    if GetLineType(Disassembled[LineIndex]) = ltInstruction then
-      Inc(Address, GetLineBytes(Disassembled[LineIndex]));
-    Inc(LineIndex);
-  end;
+
+procedure TCodeSection.ReplaceLines(StartLineIndex, StartAddress, ByteCount: cardinal; NewLines: TStrings);
+begin
+  Disassembled.BeginUpdate;
+  ReplaceLinesInternal(StartLineIndex, StartAddress, ByteCount, NewLines);
+  Disassembled.EndUpdate;
+end;
+
+
+// StartLineIndex - index prveho instrukcneho riadka, ktory ideme nahradzovat
+// StartAddress is section address (not memory)
+procedure TCodeSection.ReplaceLinesInternal(StartLineIndex, StartAddress, ByteCount: cardinal; NewLines: TStrings);
+var
+  LastLineIndex: Integer;
+  FinalNewLines: TStrings;
+begin
+  FinalNewLines := GetReplacingLines(StartLineIndex, StartAddress, ByteCount, NewLines, LastLineIndex);
+  Disassembled.DeleteLines(StartLineIndex, LastLineIndex - StartLineIndex + 1);
+  Disassembled.InsertStrings(StartLineIndex, FinalNewLines);
+end;
+
+
+// StartLineIndex - index prveho instrukcneho riadka, ktory ideme nahradzovat
+// StartAddress is section address (not memory)
+function TCodeSection.GetReplacingLines(StartLineIndex, StartAddress, ByteCount: cardinal; NewLines: TStrings; out LastLineIndex: Integer): TStrings;
+var
+  InnerLines, RestLines: TStrings;
+  PreCodeIndex, RestCodeIndex: Integer;
+begin
+  Logger.Debug('StartLineIndex: ' + IntToStr(StartLineIndex) + ', StartAddress: ' + IntToHex(StartAddress, 8) + ', ByteCount: ' + IntToStr(ByteCount));
+  // Konverzia zaciatku instrukcie, v ktorej zaciname nahradzovanie, na typ "byte"
+  Result := ReplaceFirstLastLine(Disassembled[StartLineIndex], StartAddress + MemOffset, True);
+  for PreCodeIndex := GetLineAddress(Disassembled[StartLineIndex]) to StartAddress + MemOffset - 1 do
+    DisassemblerMap[PreCodeIndex - MemOffset] := dfNone;
+
+  // Hlavny merge starych a novych riadkov
+  InnerLines := PrepareInnerReplaceLines(StartLineIndex, Disassembled, NewLines, LastLineIndex);
+  Result.AddStrings(InnerLines);
+  InnerLines.Free;
 
   // Konverzia zvysnych bytov na datovy typ "byte"
-  for RestCodeIndex:=1 to Address - AfterAddress do
-    DisassemblerMap[AfterAddress + RestCodeIndex - 1]:= dfNone;
-  NewLines.AddStrings(GetLineFromDataEx(CodeArray[AfterAddress], dtByte, false, AfterAddress + MemOffset, Address - AfterAddress));
 
-  // Actual replace
-  Disassembled.BeginUpdate;
-  Disassembled.DeleteLines(StartLineIndex, LineIndex - StartLineIndex);
-  Disassembled.InsertStrings(StartLineIndex, NewLines);
-  Disassembled.EndUpdate;
-  //sm('Pokracuj');
+  RestLines := ReplaceFirstLastLine(Disassembled[LastLineIndex], StartAddress + ByteCount + MemOffset, False);
+  Result.AddStrings(RestLines);
+  RestLines.Free;
+  for RestCodeIndex := StartAddress + ByteCount + MemOffset to GetLineAddress(Disassembled[LastLineIndex]) + GetLineBytes(Disassembled[LastLineIndex]) do
+    DisassemblerMap[RestCodeIndex - MemOffset] := dfNone;
 end;
 
 
@@ -275,7 +328,7 @@ end;
 procedure TCodeSection.DisassemblePart(Options: TDisassembleOptions);
 var
   BlockIndex: integer;
-  CodeIndex: cardinal;
+  CodeIndex, StartBlockAddress: cardinal;
   ReferenceIndex: integer;
   NewLines: TStrings;
   Disassembler: TDisassembler;
@@ -287,7 +340,7 @@ begin
     // Disassemble
     Disassembler:= Tx86Disassembler.Create(CodeArray, DisassemblerMap, MemOffset, Options.Bit32);
     Disassembler.CAJ.Add(Options.Address - MemOffset);
-    Disassembler.CAJ.Process(Options.Address - MemOffset + Options.Size - 1);
+    Disassembler.CAJ.Process(Options.Address - MemOffset + Options.Size);
 
     Disassembler.Disassemble(Options.Recursive);
   //  Statistics:=Disassembler.Statistics;
@@ -297,40 +350,47 @@ begin
     ProgressData.Position:= 0;
     ProgressData.Maximum:= Disassembler.BlockCount;
 
+    Disassembled.BeginUpdate;
     NewLines:= TStringList.Create;
-    for BlockIndex:=0 to Disassembler.BlockCount - 1 do begin
+    for BlockIndex := 0 to Disassembler.BlockCount - 1 do begin
       Inc(ProgressData.Position);
       if ProgressData.ErrorStatus = errUserTerminated then
         raise EUserTerminatedProcess.Create('');
 
       NewLines.Clear;
       CodeIndex:= Disassembler.Blocks[BlockIndex].Address;
-      while CodeIndex < Disassembler.Blocks[BlockIndex].Address + Disassembler.Blocks[BlockIndex].Size do begin
+
+      StartBlockAddress := Disassembler.Blocks[BlockIndex].Address;
+      for CodeIndex := StartBlockAddress to StartBlockAddress + Disassembler.Blocks[BlockIndex].Size - 1 do begin
         if (DisassemblerMap[CodeIndex] <> 0) and ((DisassemblerMap[CodeIndex] and dfNewInstr) = 0) then // otestovat ci to funguje tak ako ma
           Continue;
-        // References
-        for ReferenceIndex:=0 to (Disassembler.Disassembled[CodeIndex].ReferCount - 1) do
-          Newlines.Add(Disassembler.Disassembled[CodeIndex].Refer[ReferenceIndex]);
+
+        // Proccess instruction's references
+        with Disassembler.Disassembled[CodeIndex] do
+          for ReferenceIndex := 0 to ReferencesCount - 1 do
+            case References[ReferenceIndex].Typ of
+              rtJump: Newlines.Add('Jump from 0x' + IntToHex(References[ReferenceIndex].Address + fMemOffset, 8));
+              rtCall: Newlines.Add('Call from 0x' + IntToHex(References[ReferenceIndex].Address + fMemOffset, 8));
+              rtLoop: Newlines.Add('Loop from 0x' + IntToHex(References[ReferenceIndex].Address + fMemOffset, 8));
+            end;
 
         // Instruction
-        DisassemblerMap[CodeIndex]:= (DisassemblerMap[CodeIndex] AND Byte(255 - dfNewInstr));
-        DisassemblerMap[CodeIndex]:= (DisassemblerMap[CodeIndex] OR Byte(dfInstruction));
-  //      Dec(DisassemblerMap[CodeIndex], dfNewInstr);
-  //      Inc(DisassemblerMap[CodeIndex], dfInstruction);
+        DisassemblerMap[CodeIndex] := (DisassemblerMap[CodeIndex] AND Byte(255 - dfNewInstr));
+        DisassemblerMap[CodeIndex] := (DisassemblerMap[CodeIndex] OR Byte(dfInstruction));
 
-        Newlines.Add(Disassembler.Disassembled[CodeIndex].Disassembled);
-
-        Inc(CodeIndex);
+        Newlines.Add(Disassembler.Disassembled[CodeIndex].DisassembledLine);
       end;
 
-      ReplaceLines(GetPosition(Disassembler.Blocks[BlockIndex].Address + MemOffset), Disassembler.Blocks[BlockIndex].Address, Disassembler.Blocks[BlockIndex].Size, NewLines);
+      ReplaceLinesInternal(GetPosition(Disassembler.Blocks[BlockIndex].Address + MemOffset), Disassembler.Blocks[BlockIndex].Address, Disassembler.Blocks[BlockIndex].Size, NewLines);
     end;
+    // TODO: vlozit "; UNDEFINED OPCODE" riadky
+    Disassembled.EndUpdate;
 
-    // Compute LastItem
-    CodeIndex:= CodeSize - 1;
+    // Recompute LastItem
+    CodeIndex := CodeSize - 1;
     while (((DisassemblerMap[CodeIndex] and dfInstruction) = 0) and (DisassemblerMap[CodeIndex] <> 0)) do
       Dec(CodeIndex);
-    fLastItem:= CodeIndex;
+    fLastItem := CodeIndex;
 
   finally
     NewLines.Free;
@@ -342,7 +402,7 @@ end;
 
 procedure TCodeSection.DisassembleAll(Options: TDisassembleOptions);               // Disasseblovanie, hladanie skokov, spracovanie vystupu...
 var
-  i,j,k: integer;
+  i,j,k,l: integer;
 
   IndexAddressStr: string;
   IndexAddress: cardinal;
@@ -358,6 +418,23 @@ var
   ExportSection: TExportSection;
   Disassembler: TDisassembler;
 
+  CodeLineTexts: array of record Count: Integer; Texts: array of string; end; 
+
+  procedure AddText(const AAddress: cardinal; const AText: string);
+  begin
+    with CodeLineTexts[AAddress] do begin
+      Inc(Count);
+      SetLength(Texts, Count);
+      Texts[Count - 1] := AText;
+    end;
+  end;
+
+var
+  ReferencingAddress: cardinal;
+  ImportedFunctionStr: string;
+  ImportCandidate: cardinal;
+  UndefinedOpcodeAddress: cardinal;
+
 begin
   // Empty section is considered already disassembled
   if CodeSize = 0 then
@@ -366,6 +443,7 @@ begin
   Disassembler:= nil;
 
   try
+    SetLength(CodeLineTexts, CodeSize);
 
     ImportSection:= (ExecFile as TExecutableFile).ImportSection;
     ExportSection:= (ExecFile as TExecutableFile).ExportSection;
@@ -411,13 +489,9 @@ begin
 
     // Vyhladanie EntryPoint-u a jeho zapisanie do pola Disassembler.Disassembled
     if fHasEntryPoint then begin
-      with Disassembler.Disassembled[EntryPointAddress] do begin
-        Inc(ReferCount, 3);
-        SetLength(refer, ReferCount);
-        refer[Refercount-3]:= '';
-        refer[Refercount-2]:= 'Program Entry point';
-        refer[Refercount-1]:= '';
-      end;
+      AddText(EntryPointAddress, '');
+      AddText(EntryPointAddress, 'Program Entry point');
+      AddText(EntryPointAddress, '');
     //    Inc(Statistics.References);
     //    Inc(Statistics.Blanks,2);
     end;
@@ -427,25 +501,27 @@ begin
       case (ExecFile as TExecutableFile).ExeFormat of
 
         ffPE: begin
-          for i := 0 to Length(Disassembler.Imported) - 1 do begin
+          for i := 0 to Disassembler.ImportCandidates.Count - 1 do begin
+            ImportCandidate := Disassembler.ImportCandidates[i];
             // Priprava parametrov pre GetModulAndFunction
-            IndexAddressStr:=Disassembler.Disassembled[Disassembler.Imported[i]].Disassembled;
-            IndexAddressStr:=Copy(IndexAddressStr, ilInstructionMnemonicIndex + 3 + 10 + Math.IfThen(Disassembler.Disassembled[Disassembler.Imported[i]].Disassembled[ilInstructionMnemonicIndex] = 'C', 1, 0), 8);
+            IndexAddressStr:=Disassembler.Disassembled[ImportCandidate].DisassembledLine;
+            IndexAddressStr:=Copy(IndexAddressStr, ilInstructionMnemonicIndex + 3 + 10 + Math.IfThen(Disassembler.Disassembled[ImportCandidate].DisassembledLine[ilInstructionMnemonicIndex] = 'C', 1, 0), 8);
             IndexAddress:=cardinal(StrToIntDef('$'+IndexAddressStr, 0));
             if IndexAddress = 0 then
               Continue;
 
-            CallInstrAddress := Disassembler.Imported[i] + fMemOffset;
+            CallInstrAddress := ImportCandidate + fMemOffset;
             FunctionFromModul := ImportSection.AddFunctionOccurence(IndexAddress, CallInstrAddress, SectionIndex);
             if FunctionFromModul <> '' then begin
     //            Inc(Statistics.References);
     //            Inc(Statistics.Blanks);
-              with Disassembler.Disassembled[Disassembler.Imported[i]] do begin
-                Inc(ReferCount,2);
-                SetLength(Refer, ReferCount);
-                refer[ReferCount-2]:= '';
-                refer[ReferCount-1]:= 'Imported function '''+FunctionFromModul + ''' used';
-              end;
+              AddText(ImportCandidate, '');
+              AddText(ImportCandidate, 'Imported function ''' + FunctionFromModul + ''' used');
+              with Disassembler.Disassembled[ImportCandidate] do
+                for j := 0 to ReferencesCount - 1 do begin
+                  AddText(References[j].Address, '');
+                  AddText(References[j].Address, 'Imported function ''' + FunctionFromModul + ''' used');
+                end
             end;
           end;
         end;
@@ -455,15 +531,22 @@ begin
             for j:=0 to integer(ImportSection.Moduls[i].FunctionCount) - 1 do begin
               for k:=0 to Length(ImportSection.Moduls[i].Functions[j].Occurs) - 1 do begin
                 if ImportSection.Moduls[i].Functions[j].Occurs[k].SectionIndex = SectionIndex then begin
-                  with Disassembler.Disassembled[ImportSection.Moduls[i].Functions[j].Occurs[k].Address] do begin
-                    Inc(ReferCount, 2);
-                    SetLength(Refer, ReferCount);
-                    refer[ReferCount-2]:= '';
-                    if ImportSection.Moduls[i].Functions[j].ByOrdinal then
-                      refer[ReferCount-1]:= 'Imported function ''' + IntToHex(ImportSection.Moduls[i].Functions[j].Ordinal, 4) + '''(Ordinal) from ''' + ImportSection.Moduls[i].Name + ''' used'
-                    else
-                      refer[ReferCount-1]:= 'Imported function ''' + ImportSection.Moduls[i].Functions[j].Name + ''' from ''' + ImportSection.Moduls[i].Name + ''' used';
-                  end;
+
+                  //with Disassembler.Disassembled[ImportSection.Moduls[i].Functions[j].Occurs[k].Address] do begin
+                  ReferencingAddress := ImportSection.Moduls[i].Functions[j].Occurs[k].Address;
+                  AddText(ReferencingAddress, '');
+                  if ImportSection.Moduls[i].Functions[j].ByOrdinal then
+                    ImportedFunctionStr := 'Imported function ''' + IntToHex(ImportSection.Moduls[i].Functions[j].Ordinal, 4) + '''(Ordinal) from ''' + ImportSection.Moduls[i].Name + ''' used'
+                  else
+                    ImportedFunctionStr := 'Imported function ''' + ImportSection.Moduls[i].Functions[j].Name + ''' from ''' + ImportSection.Moduls[i].Name + ''' used';
+                  AddText(ReferencingAddress, ImportedFunctionStr);
+
+                  // Indirect imported function calls
+                  with Disassembler.Disassembled[ReferencingAddress] do
+                    for l := 0 to ReferencesCount - 1 do begin
+                      AddText(References[j].Address, '');
+                      AddText(References[j].Address, ImportedFunctionStr);
+                    end;
                 end;
               end;
             end;
@@ -475,23 +558,28 @@ begin
 
     // Process exported functions
     if ExportSection <> nil then begin
-      for i:=0 to ExportSection.FunctionCount-1 do begin
+      for i := 0 to ExportSection.FunctionCount-1 do begin
         if ExportSection.functions[i].section = SectionIndex then begin
-    //        Inc(Statistics.References);
-    //        Inc(Statistics.Blanks);
+          Position := ExportSection.functions[i].CodeSectionOffset;
 
-          Position:=ExportSection.functions[i].CodeSectionOffset;
-          with Disassembler.Disassembled[Position] do begin
-            Inc(ReferCount, 2);
-            SetLength(refer, ReferCount);
-            refer[ReferCount-2]:='';
-            if (ExportSection.Functions[i].Name <> '') then
-              refer[ReferCount-1]:= 'Exported function ''' + ExportSection.functions[i].name + ''''
-            else
-              refer[ReferCount-1]:= 'Exported function ' + 'ordinal: ''0x' + IntToHex(ExportSection.functions[i].ordinal, 8) + '''';
-          end;
+          AddText(Position, '');
+          if (ExportSection.Functions[i].Name <> '') then
+            AddText(Position, 'Exported function ''' + ExportSection.functions[i].name + '''')
+          else
+            AddText(Position, 'Exported function ' + 'ordinal: ''0x' + IntToHex(ExportSection.functions[i].ordinal, 8) + '''');
         end;
       end;
+    end;
+
+    // Process undefined opcodes
+    for i := 0 to Disassembler.UndefinedOpcodesCount - 1 do begin
+      UndefinedOpcodeAddress := Disassembler.UndefinedOpcodes[i].Address;
+      AddText(
+        UndefinedOpcodeAddress,
+        StringRightPad(';' + IntToHex(UndefinedOpcodeAddress + fMemOffset, 8) + ' ' +
+          DataToHex(CodeArray[UndefinedOpcodeAddress], Disassembler.UndefinedOpcodes[i].ParsedSize) + '...', ilInstructionMnemonicIndex - 1) +
+          'UNDEFINED OPCODE!'
+      );
     end;
 
     // Set Disassembled string list
@@ -521,11 +609,22 @@ begin
         Inc(DisassemblerMap[i], dfInstruction);
       end;
 
-      // Proccess instruction's references
-      for ReferenceIndex:=0 to (Disassembler.Disassembled[i].refercount - 1) do
-        Disassembled.Add(Disassembler.Disassembled[i].refer[ReferenceIndex]);
+      with Disassembler.Disassembled[i] do begin
+        // Proccess instruction's references
+        for ReferenceIndex := 0 to ReferencesCount - 1 do
+          case References[ReferenceIndex].Typ of
+            rtJump: Disassembled.Add('Jump from 0x' + IntToHex(References[ReferenceIndex].Address + fMemOffset, 8));
+            rtCall: Disassembled.Add('Call from 0x' + IntToHex(References[ReferenceIndex].Address + fMemOffset, 8));
+            rtLoop: Disassembled.Add('Loop from 0x' + IntToHex(References[ReferenceIndex].Address + fMemOffset, 8));
+          end;
 
-      Disassembled.Add(Disassembler.Disassembled[i].Disassembled);
+        // Proccess texts of the code line
+        for ReferenceIndex := 0 to CodeLineTexts[i].Count - 1 do
+          Disassembled.Add(CodeLineTexts[i].Texts[ReferenceIndex]);
+
+        Disassembled.Add(DisassembledLine);
+      end;
+
     end;
     Logger.Info('Finish: Preparing output');
 
@@ -780,12 +879,12 @@ begin
         else begin
           case si of
             siAll: ;
-            siAddr:     Line:= LeftStr(Line, ilMaxAddressLength);
-            siPar:      Line:= TrimRight(Copy(Line, ilMaxAddressLength + 2, ilMaxParsedLength));
+            siAddr:     Line:= LeftStr(Line, ilAddressLength);
+            siPar:      Line:= TrimRight(Copy(Line, ilParsedIndex, ilMaxParsedLength));
             siDis:      Line:= Copy(Line, ilInstructionMnemonicIndex, MaxInt);
             siAddr_Par: Line:= TrimRight(LeftStr(Line, ilInstructionMnemonicIndex - 1));
-            siPar_Dis:  Line:= Copy(Line, ilMaxAddressLength + 2, MaxInt);
-            siAddr_Dis: Line:= LeftStr(Line, ilMaxAddressLength) + ' ' + Copy(Line, ilInstructionMnemonicIndex, MaxInt);
+            siPar_Dis:  Line:= Copy(Line, ilParsedIndex, MaxInt);
+            siAddr_Dis: Line:= LeftStr(Line, ilAddressLength) + ' ' + Copy(Line, ilInstructionMnemonicIndex, MaxInt);
           end;
         end;
       end;
@@ -959,7 +1058,8 @@ end;
 
 
 // StartAddress is memory address
-function TCodeSection.GetLineFromDataEx(var InputData; DataType: cardinal; Signed: boolean; const StartAddress: cardinal; Count: integer): TStrings;
+//function TCodeSection.
+function GetLineFromDataEx(var InputData; DataType: cardinal; Signed: boolean; const StartAddress: cardinal; Count: integer): TStrings;
 var
   Address: cardinal;
   ItemSize: integer;
@@ -1038,8 +1138,8 @@ begin
       end;
 
     if DataType = dtByte then
-      if not ( byte(DataPtr^) in [$00, $0A, $0D] ) then
-        Line:= Line + ' ''' + Char(byte(DataPtr^)) + '''';
+      if byte(DataPtr^) >= 32 then
+        Line := Line + ' ''' + Char(byte(DataPtr^)) + '''';
 
     Result.Add(Line);
 
@@ -1087,20 +1187,25 @@ end;
 
 function GetLineAddress(line: string): cardinal;
 begin
-  result:= cardinal(StrToIntDef('$' + LeftStr(line, 8), -1));
+  Result := Cardinal(StrToIntDef('$' + LeftStr(Line, ilAddressLength), -1));
 end;
 
 
 
 function GetLineBytes(line: string): cardinal;
-var i:cardinal;
+var
+  i: Cardinal;
 begin
-  if line[10] = 'b' then
-    result:= StrToInt('$' + Copy(line, 17, 8))
+  // Retazec
+  if Line[ilParsedIndex] = 'b' then
+    Result := StrToInt('$' + Copy(Line, ilParsedIndex + 7, 8))
+  // Normalna instrukcia alebo jednoduche data
   else begin
-    i:=11;
-    while line[i] <> ' ' do inc(i, 2);
-    result:= (i-11) div 2;
+    i := ilParsedIndex;
+    while (i < Length(Line)) and (Line[i] <> ' ') do
+      Inc(i, 2);
+
+    Result := (i - ilParsedIndex) div 2;
   end;
 end;
 
@@ -1159,5 +1264,382 @@ begin
 end;
 
 
+
+function GetLineData(Line: string): TByteDynArray;
+var
+  DataSize: Cardinal;
+begin
+  if GetLineType(Line) = ltInstruction then begin
+    DataSize := GetLineBytes(Line);
+    SetLength(Result, DataSize);
+    // Retazec
+    if Line[10] = 'b' then begin
+      case Line[ilInstructionMnemonicIndex] of
+        // C string
+        'c': begin
+          Move(Line[ilInstructionMnemonicIndex + 9], Result[0], DataSize - 1);
+          Result[DataSize - 1] := 0;
+        end;
+        // Pascal string
+        'p': begin
+          Move(Line[ilInstructionMnemonicIndex + 9], Result[1], DataSize - 1);
+          Result[0] := DataSize - 1;
+        end;
+      end;
+    end
+    // Instrukcia alebo jednoduche data
+    else
+      HexToBin(
+        PChar(Copy(Line, ilParsedIndex, DataSize * 2)),
+        PChar(@(Result[0])),
+        DataSize
+      );
+  end
+  else
+    SetLength(Result, 0);
+end;
+
+
+
+function PrepareReplaceLines(OldStartLineIndex: Integer; OldLines, NewLines: TStrings): TStrings;
+begin
+  Result := TStringList.Create;
+end;
+
+
+// Merges NewLines and non-instruction lines from OldLines
+function PrepareInnerReplaceLines(const OldStartLineIndex: Integer; OldLines, NewLines: TStrings; out OldLastLineIndex: Integer): TStrings;
+var
+  OldIndex, NewIndex: Integer;
+  OldNonInstrLineIndex, NewNonInstrLineIndex: Integer;
+  OldLineAddress, NewLineAddress: Cardinal;
+  i: Integer;
+begin
+  Result := TStringList.Create;
+  OldIndex := OldStartLineIndex;
+  NewIndex := 0;
+
+  OldLineAddress := GetLineAddress(OldLines[OldIndex]);
+  OldNonInstrLineIndex := OldIndex;
+{
+  while (OldNonInstrLineIndex > 0) and (GetLineType(OldLines[OldNonInstrLineIndex - 1]) <> ltInstruction) do
+    Dec(OldNonInstrLineIndex);
+}
+
+  NewNonInstrLineIndex := 0;
+  NewIndex := 0;
+  while GetLineType(NewLines[NewIndex]) <> ltInstruction do
+    Inc(NewIndex);
+  NewLineAddress := GetLineAddress(NewLines[NewIndex]);
+
+  while NewIndex < NewLines.Count do begin
+    // Najprv pridame stare bezadresne riadky, ak su na mensej /*alebo rovnej*/ adrese ako NASLEDUJUCA new instrukcia
+    if OldLineAddress < (NewLineAddress + GetLineBytes(NewLines[NewIndex])) then begin
+      for i := OldNonInstrLineIndex to OldIndex - 1 do
+        Result.Add(OldLines[i]);
+      OldNonInstrLineIndex := OldIndex + 1;
+      OldLastLineIndex := OldIndex;
+      Inc(OldIndex);
+      while (OldIndex < OldLines.Count) and (GetLineType(OldLines[OldIndex]) <> ltInstruction) do
+        Inc(OldIndex);
+      if OldIndex = OldLines.Count then
+        OldLineAddress := $FFFFFFFF
+      else begin
+        OldLineAddress := GetLineAddress(OldLines[OldIndex]);
+      end;
+    end
+
+    // Inak pridame nove bezdresne riadky a aj adresny riadok
+    else begin
+      for i := NewNonInstrLineIndex to NewIndex do
+        Result.Add(NewLines[i]);
+      NewNonInstrLineIndex := NewIndex + 1;
+      Inc(NewIndex);
+      while (NewIndex < NewLines.Count) and (GetLineType(NewLines[NewIndex]) <> ltInstruction) do
+        Inc(NewIndex);
+      if NewIndex = NewLines.Count then
+        NewLineAddress := $FFFFFFFF
+      else
+        NewLineAddress := GetLineAddress(NewLines[NewIndex]);
+    end;
+  end;
+
+
+end;
+
+//******************************************************************************
+// Tests
+//******************************************************************************
+
+type
+  TCodeSectionTests = class(TTestCase)
+  published
+    procedure TestGetLineAddress;
+    procedure TestGetLineBytes;
+    procedure TestReplaceFirstLastLine;
+    procedure TestGetLineData;
+    procedure TestPrepareInnerReplaceLines;
+
+    procedure TestGetReplacingLines;
+  end;
+
+
+
+procedure TCodeSectionTests.TestGetLineAddress;
+begin
+  Check(GetLineAddress('12345678faklwejfsjfdioaweoijklsadjf') = $12345678);
+end;
+
+
+
+procedure TCodeSectionTests.TestGetLineBytes;
+begin
+  // Normalne instrukcie alebo jednoduche data
+  Check(GetLineBytes('12345678 A8') = 1);
+  Check(GetLineBytes('12345678 A836 qwwjqof sdkjfha isdfhu sid') = 2);
+
+  // Retazce
+  Check(GetLineBytes('1B00F4F8 bytes: 0000010A(hex)') = 266);
+  Check(GetLineBytes('1B00F4F8 bytes: 0000000A(hex)     cstring ''AAAAAAAAAA''') = 10);
+end;
+
+
+
+procedure TCodeSectionTests.TestGetLineData;
+var
+  LineData: TByteDynArray; 
+begin
+  // Riadky s datami
+  LineData := GetLineData('12345678 A8');
+  Check((Length(LineData) = 1) and (LineData[0] = $A8));
+  LineData := GetLineData('12345678 A836 qwwjqof sdkjfha isdfhu sid');
+  Check((Length(LineData) = 2) and (LineData[0] = $A8) and (LineData[1] = $36));
+  LineData := GetLineData('1B00F4F8 bytes: 00000005(hex)     cstring ''abcd''');
+  Check((Length(LineData) = 5) and (LineData[0] = Ord('a')) and (LineData[1] = Ord('b')) and (LineData[2] = Ord('c')) and (LineData[3] = Ord('d')) and (LineData[4] = 0));
+  LineData := GetLineData('1B00F4F8 bytes: 00000005(hex)     pstring ''abcd''');
+  Check((Length(LineData) = 5) and (LineData[0] = 4) and (LineData[1] = Ord('a')) and (LineData[2] = Ord('b')) and (LineData[3] = Ord('c')) and (LineData[4] = Ord('d')));
+
+  // Riadky bez dat
+  LineData := GetLineData('Jump from 0x12345678');
+  Check((Length(LineData) = 0));
+  LineData := GetLineData('; asda sd a');
+  Check((Length(LineData) = 0));
+  LineData := GetLineData('');
+  Check((Length(LineData) = 0));
+end;
+
+
+
+procedure TCodeSectionTests.TestPrepareInnerReplaceLines;
+var
+  OldLines, NewLines, ResultLines: TStrings;
+  OldLastLineIndex: Integer;
+  i: Integer;
+begin
+  // 1. Adresy zaciatocnej starej a zaciatocnej novej instrukcie su rozne    
+  OldLines := TStringList.Create;
+  OldLines.Add('');
+  OldLines.Add(';');
+  OldLines.Add('10000000 21222324');
+  OldLines.Add('Jump from 0x12345678');
+  OldLines.Add('10000004 2122');
+  OldLines.Add('10000006 212223242526');
+
+  NewLines := TStringList.Create;
+  NewLines.Add('; janko hrasko');
+  NewLines.Add('10000003 3132');
+  NewLines.Add('');
+  NewLines.Add('10000005 313233');
+
+  ResultLines := PrepareInnerReplaceLines(4, OldLines, NewLines, OldLastLineIndex);
+  Check(ResultLines.Count = 4);
+//  Check(ResultLines[0]  = 'Jump from 0x12345678');
+  Check(ResultLines[0]  = '; janko hrasko');
+  Check(ResultLines[1]  = '10000003 3132');
+  Check(ResultLines[2]  = '');
+  Check(ResultLines[3]  = '10000005 313233');
+  ResultLines.Free;
+
+  // 2. Adresy zaciatocnej starej a zaciatocnej novej instrukcie su rovnake
+  OldLines := TStringList.Create;
+  OldLines.Add('');
+  OldLines.Add(';');
+  OldLines.Add('10000000 212223');
+  OldLines.Add('Jump from 0x12345678');
+  OldLines.Add('10000003 2122');
+  OldLines.Add('10000006 212223242526');
+
+  NewLines := TStringList.Create;
+  NewLines.Add('; janko hrasko');
+  NewLines.Add('10000003 3132');
+  NewLines.Add('');
+  NewLines.Add('10000005 313233');
+
+  ResultLines := PrepareInnerReplaceLines(4, OldLines, NewLines, OldLastLineIndex);
+  Check(ResultLines.Count = 4);
+//  Check(ResultLines[0]  = 'Jump from 0x12345678');
+  Check(ResultLines[0]  = '; janko hrasko');
+  Check(ResultLines[1]  = '10000003 3132');
+  Check(ResultLines[2]  = '');
+  Check(ResultLines[3]  = '10000005 313233');
+  ResultLines.Free;
+
+
+  // 3.
+ OldLines := TStringList.Create;
+  with OldLines do begin
+    Add('00000000 AA');
+    Add(';aaa');
+    Add('00000001 BB');
+  end;
+
+  NewLines := TStringList.Create;
+  NewLines.Add('00000000 FF');
+
+  ResultLines := PrepareInnerReplaceLines(0, OldLines, NewLines, OldLastLineIndex);
+  for i := 0 to ResultLines.Count - 1 do
+    Logger.Debug(ResultLines[i]);
+  Check(ResultLines.Count = 1);
+  Check(ResultLines[0]  = '00000000 FF');
+end;
+
+
+
+
+procedure TCodeSectionTests.TestReplaceFirstLastLine;
+var
+  NewLines: TStrings;
+begin
+  // First line
+  NewLines := ReplaceFirstLastLine('10000000 21222324', $10000000, True);
+  Check(NewLines.Count = 0);
+
+  NewLines := ReplaceFirstLastLine('10000000 21222324', $10000003, True);
+  Check(NewLines.Count = 3);
+  Check(NewLines[0] = '10000000 21                       byte 0x21 ''' + Char($21) + '''');
+  Check(NewLines[1] = '10000001 22                       byte 0x22 ''' + Char($22) + '''');
+  Check(NewLines[2] = '10000002 23                       byte 0x23 ''' + Char($23) + '''');
+
+  // Last line
+  NewLines := ReplaceFirstLastLine('10000000 21222324', $10000000, False);
+  Check(NewLines.Count = 1);
+  Check(NewLines[0] = '10000000 21222324');
+
+  NewLines := ReplaceFirstLastLine('10000000 21222324', $10000001, False);
+  Check(NewLines.Count = 3);
+  Check(NewLines[0] = '10000001 22                       byte 0x22 ''' + Char($22) + '''');
+  Check(NewLines[1] = '10000002 23                       byte 0x23 ''' + Char($23) + '''');
+  Check(NewLines[2] = '10000003 24                       byte 0x24 ''' + Char($24) + '''');
+
+  NewLines := ReplaceFirstLastLine('10000000 21222324', $10000004, False);
+  Check(NewLines.Count = 0);
+end;
+
+
+
+procedure TCodeSectionTests.TestGetReplacingLines;
+var
+  section: TCodeSection;
+  NewLines, ResultLines: TStrings;
+  LastLineIndex, i: Integer;
+begin
+  // 1.
+
+  section := TCodeSection.Create;
+  SetLength(section.DisassemblerMap, 10);
+  section.fMemOffset := $10000000;
+  section.CodeStream := TMyMemoryStream.Create;
+  section.fDisassembled := TTatraDASStringList.Create;
+  with section.fDisassembled do begin
+    Add('');
+    Add(';');
+    Add('10000000 21222324');
+    Add('Jump from 0x12345678');
+    Add('10000004 2122');
+    Add('10000006 212223242526');
+  end;
+
+  NewLines := TStringList.Create;
+  NewLines.Add('; janko hrasko');
+  NewLines.Add('10000003 3132');
+  NewLines.Add('');
+  NewLines.Add('10000005 313233');
+
+
+  ResultLines := section.GetReplacingLines(2, 3, 5, NewLines, LastLineIndex);
+  for i := 0 to ResultLines.Count - 1 do
+    Logger.Debug(ResultLines[i]);
+
+  Check(ResultLines.Count = 12);
+  Check(ResultLines[0]  = '10000000 21                       byte 0x21 ''' + Char($21) + '''');
+  Check(ResultLines[1]  = '10000001 22                       byte 0x22 ''' + Char($22) + '''');
+  Check(ResultLines[2]  = '10000002 23                       byte 0x23 ''' + Char($23) + '''');
+  Check(ResultLines[3]  = 'Jump from 0x12345678');
+  Check(ResultLines[4]  = '; janko hrasko');
+  Check(ResultLines[5]  = '10000003 3132');
+  Check(ResultLines[6]  = '');
+  Check(ResultLines[7]  = '10000005 313233');
+  Check(ResultLines[8] = '10000008 23                       byte 0x23 ''' + Char($23) + '''');
+  Check(ResultLines[9] = '10000009 24                       byte 0x24 ''' + Char($24) + '''');
+  Check(ResultLines[10] = '1000000A 25                       byte 0x25 ''' + Char($25) + '''');
+  Check(ResultLines[11] = '1000000B 26                       byte 0x26 ''' + Char($26) + '''');
+  ResultLines.Free;
+//  section.Free;
+
+
+  // 2.
+
+  section := TCodeSection.Create;
+  SetLength(section.DisassemblerMap, 10);
+  section.fMemOffset := 0;
+  section.CodeStream := TMyMemoryStream.Create;
+  section.fDisassembled := TTatraDASStringList.Create;
+  with section.fDisassembled do begin
+    Add('00000000 AA');
+    Add(';aaa');
+    Add('00000001 BB');
+  end;
+
+  NewLines := TStringList.Create;
+  NewLines.Add('00000000 FF');
+
+  ResultLines := section.GetReplacingLines(0, 0, 1, NewLines, LastLineIndex);
+  for i := 0 to ResultLines.Count - 1 do
+    Logger.Debug(ResultLines[i]);
+
+  Check(ResultLines.Count = 1);
+  Check(ResultLines[0]  = '00000000 FF');
+
+  // 3.
+
+  section := TCodeSection.Create;
+  SetLength(section.DisassemblerMap, 10);
+  section.fMemOffset := 0;
+  section.CodeStream := TMyMemoryStream.Create;
+  section.fDisassembled := TTatraDASStringList.Create;
+  with section.fDisassembled do begin
+    Add('00000000 bytes: 00000005(hex)     pstring ''Byte''');
+  end;
+
+  NewLines := TStringList.Create;
+  NewLines.Add('00000000 04                       byte 0x04');
+
+  ResultLines := section.GetReplacingLines(0, 0, 1, NewLines, LastLineIndex);
+  for i := 0 to ResultLines.Count - 1 do
+    Logger.Debug(ResultLines[i]);
+
+  Check(ResultLines.Count = 5);
+  Check(ResultLines[0]  = '00000000 04                       byte 0x04');
+  Check(ResultLines[1]  = '00000001 42                       byte 0x42 ''B''');
+  Check(ResultLines[2]  = '00000002 79                       byte 0x79 ''y''');
+  Check(ResultLines[3]  = '00000003 74                       byte 0x74 ''t''');
+  Check(ResultLines[4]  = '00000004 65                       byte 0x65 ''e''');
+end;
+
+
+
+initialization
+  TestFramework.RegisterTest(TCodeSectionTests.Suite);
+  Logger.AddListener(TTextFileLoggerListener.Create('test_disasm.log'));
 
 end.

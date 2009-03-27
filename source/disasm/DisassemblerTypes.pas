@@ -7,12 +7,24 @@ uses
 
 type
 
-  TDisassembledItem = record
-    Disassembled: string;
-    refercount: integer;
-    refer: array of string;
+  TReferenceType = (rtCall, rtJump, rtLoop);
+
+  TReference = record
+    Address: cardinal;
+    Typ: TReferenceType;
   end;
 
+  TUndefinedOpcodeItem = record
+    Address: cardinal;
+    ParsedSize: cardinal;
+  end;
+
+  TDisassembledItem = record
+    // code section beginning relative addressess of jumps/calls/loops
+    References: array of TReference;
+    ReferencesCount: integer;
+    DisassembledLine: string;
+  end;
 
   TStatistics = record
     Instructions: cardinal;     // pocet instrukcii
@@ -37,8 +49,8 @@ type
 
   TSize = (szEmpty, szByte, szWord, szDword, szQword, szTword, szDQword);
 
-  EUndefinedOpcodeException = class(Exception)
-  end;
+  EUndefinedOpcodeException = class(Exception) end;
+  EInstructionTruncated = class(Exception) end;
 
 const
 

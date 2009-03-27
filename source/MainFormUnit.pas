@@ -143,8 +143,12 @@ type
     Panel1: TPanel;
     Gotoline1: TMenuItem;
     actGoToLine: TAction;
+    actOpen: TAction;
+    actClose: TAction;
+    actDisassemble: TAction;
+    actSave: TAction;
+    actOpenProject: TAction;
 
-    procedure OpenClick(Sender: TObject);
     procedure DisassembleClick(Sender: TObject);
     procedure OpenProjectClick(Sender: TObject);
     procedure SaveClick(Sender: TObject);
@@ -187,6 +191,8 @@ type
     procedure actGoToLineExecute(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure LanguageMenuItemClick(Sender: TObject);
+    procedure actOpenExecute(Sender: TObject);
+    procedure actOpenProjectExecute(Sender: TObject);
 
   private
     fopenfilepath: string;
@@ -244,18 +250,18 @@ uses
   SaveOptionsFormUnit,
   CalculatorUnit,
   OptionsFormUnit,
-  ProgressFormUnit, UnknownFileFormUnit;
+  ProgressFormUnit, UnknownFileFormUnit, MessageFormUnit;
 
 {$R *.DFM}
 
 
 
-procedure TMainForm.OpenClick(Sender: TObject);       // Otvorenie suboru
+procedure TMainForm.actOpenExecute(Sender: TObject);
 begin
-  OpenFileOpenDialog.FileName:= '';
-  OpenFileOpenDialog.InitialDir:= OpenFilePath;
+  OpenFileOpenDialog.FileName := '';
+  OpenFileOpenDialog.InitialDir := OpenFilePath;
   if OpenFileOpenDialog.Execute then begin
-    OpenFilePath:= ExtractFilePath(OpenFileOpenDialog.FileName);
+    OpenFilePath := ExtractFilePath(OpenFileOpenDialog.FileName);
     DoOpenFile(OpenFileOpenDialog.FileName);
   end;
 end;
@@ -281,7 +287,7 @@ begin
       errOpen: ErrorMessage := CouldNotOpenFileStr;
       errBadFormat: ErrorMessage := 'File is corrupted: ';
     end;
-    MessageDlg(ErrorMessage + '"' + AFileName + '"', mtError, [mbOK], 0);
+    DisplayMessage(ErrorMessage + '"' + AFileName + '"', mtError, [mbOK]);
     Exit;
   end;
 
@@ -379,6 +385,13 @@ end;
 
 
 
+procedure TMainForm.actOpenProjectExecute(Sender: TObject);
+begin
+  OpenProjectClick(Sender);
+end;
+
+
+
 procedure TMainForm.OpenProjectClick(Sender: TObject);
 var
   ErrorMessage: string;
@@ -416,7 +429,7 @@ begin
       errUnspecified:
         ErrorMessage:= 'An error occured. Process stopped.';
     end;
-    MessageDlg(ErrorMessage + '"' + OpenProjectOpenDialog.FileName + '"', mtError, [mbOK], 0);
+    DisplayMessage(ErrorMessage + '"' + OpenProjectOpenDialog.FileName + '"', mtError, [mbOK]);
     Exit;
   end;
 
@@ -454,7 +467,7 @@ begin
 
   result := false;
   if Modified then begin
-    case MessageDlg(AnsiReplaceStr(ProjectModifiedStr, '<project>', '''' + ExecFile.FileName + ''''), mtConfirmation, mbYesNoCancel, 0) of
+    case DisplayMessage(AnsiReplaceStr(ProjectModifiedStr, '<project>', '''' + ExecFile.FileName + ''''), mtConfirmation, mbYesNoCancel) of
       mrYes: SaveClick(nil);
       mrNo: ;
       mrCancel: Exit;
@@ -550,8 +563,8 @@ begin
   OpenMyButton.ObrMimo.LoadFromResourceName(hinstance,'open1');
   OpenMyButton.ObrNad.LoadFromResourceName(hinstance,'open2');
   OpenMyButton.Left:=0;
-  OpenMyButton.OnClick:=OpenClick;
-  OpenMyButton.Glyph:=OpenMyButton.ObrMimo;
+  OpenMyButton.Action := actOpen;
+  OpenMyButton.Glyph := OpenMyButton.ObrMimo;
 
   DisassembleMyButton:= TIvanSpeedButton.Create(self);
   DisassembleMyButton.Parent:=self;
@@ -568,7 +581,7 @@ begin
   ProjectMyButton.ObrMimo.LoadFromResourceName(hinstance,'project1');
   ProjectMyButton.ObrNad.LoadFromResourceName(hinstance,'project2');
   ProjectMyButton.Left:=220;
-  ProjectMyButton.OnClick:= OpenProjectClick;
+  ProjectMyButton.Action := actOpenProject;
   ProjectMyButton.Glyph:=ProjectMyButton.ObrMimo;
 
   SaveMyButton:= TIvanSpeedButton.Create(self);
@@ -636,11 +649,9 @@ end;
 
 
 procedure TMainForm.LanguageMenuItemClick(Sender: TObject);
-var
-  i: integer;
 begin
   if not Translator.ChangeLanguage((Sender as TMenuItem).MenuIndex) then
-    MessageDlg('Unable to change language!', mtError, [mbOk], 0);
+    DisplayMessage('Unable to change language!', mtError, [mbOk]);
 end;
 
 

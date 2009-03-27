@@ -21,7 +21,6 @@ uses
   Math,
   Contnrs,
 
-  FilesUnit,
   procmat,
   VersionUnit,
   StringRes;
@@ -88,7 +87,7 @@ begin
   ShortCut := INI.ReadString('General', 'LanguageShortCut', DefaultString);
   Icon := TIcon.Create;
   Icon.LoadFromFile(
-    AddPathDelimiter(ExtractFilePath(FileName), true) +
+    IncludeTrailingPathDelimiter(ExtractFilePath(FileName)) +
       INI.ReadString('General', 'IconFile', DefaultString)
   );
 end;
@@ -111,11 +110,11 @@ var
   Folder: string;
 begin
   fLanguages := TObjectList.Create(true);
-  Folder := AddPathDelimiter(ExtractFilePath(Application.ExeName), true) + AddPathDelimiter(LanguagesFolder, true);
+  Folder := IncludeTrailingPathDelimiter(ExtractFilePath(Application.ExeName)) + IncludeTrailingPathDelimiter(LanguagesFolder);
   if FindFirst(Folder + '*.ini', faAnyFile, sr) = 0 then begin
     repeat
       tINI := TMemIniFile.Create(Folder + sr.Name);
-      if CheckLangFile(tINI) then 
+      if CheckLangFile(tINI) then
         fLanguages.Add(TLanguageInfo.Create(tINI));
 
       tINI.Free;
@@ -297,7 +296,7 @@ end;
 
 
 initialization
-  Translator := TTranslator.Create; 
+  Translator := TTranslator.Create;
 
 finalization
   Translator.Free;

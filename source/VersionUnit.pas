@@ -1,15 +1,9 @@
 unit VersionUnit;
 
-//{$DEFINE TESTING}
-
 
 interface
 
 uses
-  {$IFDEF TESTING}
-  TestFramework,
-  {$ENDIF}
-
   Math,
   SysUtils,
   Types,
@@ -36,13 +30,6 @@ type
     property Fix: integer read fFix;
   end;
 
-  {$IFDEF TESTING}
-  TTestVersion = class(TTestCase)
-  published
-    procedure testCreate;
-    procedure testCompare;
-  end;
-  {$ENDIF}
 
 var
   TatraDAS_Version: TVersion;
@@ -50,6 +37,8 @@ var
 
 implementation
 
+uses
+  TestFramework;
 
 
 constructor TVersion.Create(Maj, Min, Fix: integer);
@@ -123,8 +112,14 @@ end;
 // TTestVersion Class
 //******************************************************************************
 
+type
+  TTestVersion = class(TTestCase)
+  published
+    procedure testCreate;
+    procedure testCompare;
+  end;
 
-{$IFDEF TESTING}
+
 procedure TTestVersion.testCreate;
 var Version: TVersion;
 begin
@@ -157,9 +152,6 @@ end;
 
 initialization
   TestFramework.RegisterTest(TTestVersion.Suite);
-{$ENDIF}
-
-initialization
   TatraDAS_Version:= TVersion.Create(ShortTatraDASVersion);
 
 finalization

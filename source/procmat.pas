@@ -42,9 +42,12 @@ const
   DataTypeSizes: array [0..DataTypesCount-1] of Byte = ( (1),(2),(4),(8),(4),(8),(10),(1),(1),(1),(1) );
 
   // Instruction line constants
-  ilMaxAddressLength = 8;
+  ilAddressLength = 8;
   ilMaxParsedLength = 24;
-  ilInstructionMnemonicIndex = ilMaxAddressLength + 1 + ilMaxParsedLength + 1 + 1; // 1 based index
+
+    // 1 based (string) indices
+  ilParsedIndex = ilAddressLength + 2;
+  ilInstructionMnemonicIndex = ilAddressLength + 1 + ilMaxParsedLength + 1 + 1;
 
   // Exe format descriptions
   fdCOM = 'COM (16-bit)';
@@ -161,6 +164,7 @@ type
     ['{E293B4CE-B91A-42FE-884A-27F54EEAD8DD}']
     procedure Translate;
   end;
+
 
 var
   ProcessText: TProcessText;
@@ -298,6 +302,10 @@ begin
   else
     result:= 1;
 end;
+
+
+
+
 
 
 end.
