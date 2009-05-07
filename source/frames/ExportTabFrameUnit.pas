@@ -100,15 +100,15 @@ end;
 
 procedure TExportTabFrame.FunctionStringGridDblClick(Sender: TObject);
 var
-  FunctionIndex, SectionIndex: integer;
-  Address: cardinal;
+  FunctionIndex, SectionIndex: Integer;
+  Address: Cardinal;
   Tab: TTabSheetTemplate;
 begin
   if not (fGotoEnabled and fValidGotoClick) then Exit;
 
   FunctionIndex := Integer(FunctionStringGrid.Objects[0, FunctionStringGrid.Row]);
-  Address:= fSection.Functions[FunctionIndex].MemOffset;
-  SectionIndex:= fSection.Functions[FunctionIndex].Section;
+  Address := fSection.Functions[FunctionIndex].MemOffset;
+  SectionIndex := fSection.Functions[FunctionIndex].Section;
 
   Tab:=MainForm.GetSectionsTabSheet(MainForm.ExecFile.Sections[SectionIndex]);
   with (Tab.Frame as TCodeTabFrame) do begin
@@ -195,49 +195,49 @@ end;
 
 function TExportTabFrame.SortCompare(Item1, Item2: Integer): Integer;
 var
-  Num1, Num2: integer;
+  Num1, Num2: Integer;
   Str1, Str2: string;
 begin
-  str1 := fSortArray[Item1][fSortColumn];
-  str2 := fSortArray[Item2][fSortColumn];
+  Str1 := fSortArray[Item1][fSortColumn];
+  Str2 := fSortArray[Item2][fSortColumn];
 
   case fSortColumn of
     0: begin
-      num1 := StrToInt(Copy(str1, 1, Length(str1)-1));
-      num2 := StrToInt(Copy(str2, 1, Length(str2)-1));
+      Num1 := StrToInt(Copy(Str1, 1, Length(Str1) - 1));
+      Num2 := StrToInt(Copy(Str2, 1, Length(Str2) - 1));
       if num1 > num2 then
-        result := +1
+        Result := +1
       else
         if num1 < num2 then
-          result:= -1
+          Result := -1
         else
-          result:=0;
+          Result := 0;
     end;
 
     2: begin
       Num1:= StrToInt(Str1);
       Num2:= StrToInt(Str2);
       if num1 > num2 then
-        result:= +1
+        Result := +1
       else
         if num1 < num2 then
-          result:= -1
+          Result := -1
         else
-          result:=0;
+          Result := 0;
     end;
 
-    1,3,4,5: begin
+    1, 3, 4, 5: begin
       if str1 > str2 then
         result:= +1
       else
         if str1 < str2 then
-          result:=-1
+          Result := -1
         else
-          result:= 0;
+          Result := 0;
     end;
 
     else
-      result:= 0;
+      Result := 0;
   end;
 end;
 

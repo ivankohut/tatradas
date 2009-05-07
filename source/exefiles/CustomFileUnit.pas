@@ -30,11 +30,12 @@ type
 
 
   TCustomFile = class(TExecutableFile)
+  public
     constructor Create(InputFile: TStream; aFileName: TFileName; Parameters: TCustomFileParameters); overload;
-    destructor Destroy(); override;
+    destructor Destroy; override;
 
-    function SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
-    function LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; override;
+    procedure SaveToFile(DHF: TStream; var DAS: TextFile); override;
+    procedure LoadFromFile(DHF: TStream; var DAS: TextFile); override;
   end;
 
 
@@ -46,29 +47,29 @@ var
   CodeSection: TCodeSection;
 begin
   inherited Create(InputFile, aFileName);
-  fExecFormat:= ffCustom;
+  fExecFormat := ffCustom;
 
   fRegions.Add('Code', Parameters.FileOffset, Parameters.Size);
   fRegions.Finish;
 
   InputFile.Seek(0, 0);
-  CodeSection:= TCodeSection.Create(InputFile, Parameters.bit32, Parameters.FileOffset, Parameters.Size, Parameters.FileOffset, Parameters.Size, 0, 'N/A', self);
-  CodeSection.EntryPointAddress:= Parameters.EntrypointOffset - Parameters.FileOffset;
+  CodeSection := TCodeSection.Create(InputFile, Parameters.bit32, Parameters.FileOffset, Parameters.Size, Parameters.FileOffset, Parameters.Size, 0, 'N/A', self);
+  CodeSection.EntryPointAddress := Parameters.EntrypointOffset - Parameters.FileOffset;
   Sections.Add(CodeSection);
 end;
 
 
 
-function TCustomFile.SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean;
+procedure TCustomFile.SaveToFile(DHF: TStream; var DAS: TextFile);
 begin
-  result:=inherited SaveToFile(DHF, DAS, SaveOptions);
+  inherited SaveToFile(DHF, DAS);
 end;
 
 
 
-function TCustomFile.LoadFromFile(DHF: TStream; var DAS: TextFile): boolean;
+procedure TCustomFile.LoadFromFile(DHF: TStream; var DAS: TextFile);
 begin
-  result:=inherited LoadFromFile(DHF, DAS);
+  inherited LoadFromFile(DHF, DAS);
 end;
 
 

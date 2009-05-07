@@ -88,7 +88,6 @@ object AdvancedDisassembleForm: TAdvancedDisassembleForm
       Height = 17
       Caption = '16 bit'
       TabOrder = 0
-      OnClick = bit16RadiobuttonClick
     end
     object bit32Radiobutton: TRadioButton
       Left = 136
@@ -99,7 +98,6 @@ object AdvancedDisassembleForm: TAdvancedDisassembleForm
       Checked = True
       TabOrder = 1
       TabStop = True
-      OnClick = bit32RadiobuttonClick
     end
   end
   object RecursiveCheckBox: TCheckBox
@@ -111,6 +109,5 @@ object AdvancedDisassembleForm: TAdvancedDisassembleForm
     Checked = True
     State = cbChecked
     TabOrder = 4
-    OnClick = RecursiveCheckBoxClick
   end
 end

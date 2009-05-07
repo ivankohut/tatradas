@@ -15,7 +15,7 @@ type
     REG32_M8, REG32_M16,                                        // 32b register urceny R/M alebo 8 resp. 16 bitova pamat
     XMM_M16, XMM_M32, XMM_M64,                                  // podobne ako MODdq, skutocna velkost operandu je vsak 16 resp. 32 resp. 64 bitov, nie 128 ( XMM_M128 by bolo to iste ako MODdq)
     MMX_M32,                                                    // ModRM(r/m) - MMX register alebo 32 bitova pamat
-    MMM, M16, M32, M64, M80, M128,                              // prave adresa urcena ModRM (r/m)
+    MMM, M16, M32, M64, M80, M128,                              // prave adresa urcena ModRM (r/m) (bez velkosti operandu, 16, 32, 64, 80, 128 bitovy operand)
     R32, R64, R128,                                             // prave register urceny ModRM (r/m)
 
     ax, bx, cx, dx, si, di, bp, sp,                             // general registre - dynamicke (menia sa na Exx v priprade 32 bit)

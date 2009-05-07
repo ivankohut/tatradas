@@ -11,7 +11,7 @@ uses
   procmat,
   LoggerUnit,
   StringUtilities,
-  MyLists,
+  ListsUnit,
   CallsAndJumpsTableUnit,
   DisassembledBlocksUnit,
   DisassemblerTypes,
@@ -28,19 +28,19 @@ type
   private
     fBlocks: TDisassembledBlocks;
     fUndefinedOpcodes: array of TUndefinedOpcodeItem;
-    function GetBlocksCount: integer;
-    function GetDisassembledBlock(Index: integer): TDisassembledBlock;
-    function GetUndefinedOpcodeItem(Index: integer): TUndefinedOpcodeItem;
+    function GetBlocksCount: Integer;
+    function GetDisassembledBlock(Index: Integer): TDisassembledBlock;
+    function GetUndefinedOpcodeItem(Index: Integer): TUndefinedOpcodeItem;
     function GetUndefinedOpcodesCount: Integer;
   protected
     fStatistics: TStatistics;
-    fCodeSize: cardinal;
+    fCodeSize: Cardinal;
     fImportCandidates: TCardinalList;
     procedure DisassemblerCycle;
-    function DisassembleBlock(Start, Finish: cardinal): boolean; virtual; abstract;
-    procedure AddBlock(AAddress, ASize: cardinal);
-    procedure AddReference(const ReferencingAddress, ReferencedAddress: cardinal; const ReferenceType: TReferenceType);
-    procedure AddUndefinedOpcode(AAddress, AParsedSize: cardinal);
+    function DisassembleBlock(Start, Finish: Cardinal): Boolean; virtual; abstract;
+    procedure AddBlock(AAddress, ASize: Cardinal);
+    procedure AddReference(const ReferencingAddress, ReferencedAddress: Cardinal; const ReferenceType: TReferenceType);
+    procedure AddUndefinedOpcode(AAddress, AParsedSize: Cardinal);
 
 
   public
@@ -52,14 +52,14 @@ type
     destructor Destroy; override;
 
     procedure DisassembleAll; virtual; abstract;
-    procedure Disassemble(Recursive: boolean);
+    procedure Disassemble(Recursive: Boolean);
 
     property ImportCandidates: TCardinalList read fImportCandidates;
     property UndefinedOpcodes[Index: Integer]: TUndefinedOpcodeItem read GetUndefinedOpcodeItem;
     property UndefinedOpcodesCount: Integer read GetUndefinedOpcodesCount;
     property Statistics: TStatistics read fStatistics;
-    property Blocks[Index: integer]: TDisassembledBlock read GetDisassembledBlock;
-    property BlockCount: integer read GetBlocksCount;
+    property Blocks[Index: Integer]: TDisassembledBlock read GetDisassembledBlock;
+    property BlockCount: Integer read GetBlocksCount;
   end;
 
 
@@ -82,21 +82,21 @@ end;
 
 
 
-function TDisassembler.GetDisassembledBlock(Index: integer): TDisassembledBlock;
+function TDisassembler.GetDisassembledBlock(Index: Integer): TDisassembledBlock;
 begin
-  result := fBlocks[Index];
+  Result := fBlocks[Index];
 end;
 
 
 
 function TDisassembler.GetBlocksCount: integer;
 begin
-  result := fBlocks.Count;
+  Result := fBlocks.Count;
 end;
 
 
 
-procedure TDisassembler.AddBlock(AAddress, ASize: cardinal);
+procedure TDisassembler.AddBlock(AAddress, ASize: Cardinal);
 begin
   if ASize > 0 then
     fBlocks.Add(AAddress, ASize);
@@ -119,7 +119,7 @@ end;
 
 
 
-procedure TDisassembler.Disassemble(Recursive: boolean);
+procedure TDisassembler.Disassemble(Recursive: Boolean);
 begin
   if Recursive then
     DisassemblerCycle
@@ -129,7 +129,7 @@ end;
 
 
 
-procedure TDisassembler.AddReference(const ReferencingAddress, ReferencedAddress: cardinal; const ReferenceType: TReferenceType);
+procedure TDisassembler.AddReference(const ReferencingAddress, ReferencedAddress: Cardinal; const ReferenceType: TReferenceType);
 begin
   with Disassembled[ReferencedAddress] do begin
     Inc(ReferencesCount);
@@ -142,7 +142,7 @@ end;
 
 
 
-procedure TDisassembler.AddUndefinedOpcode(AAddress, AParsedSize: cardinal);
+procedure TDisassembler.AddUndefinedOpcode(AAddress, AParsedSize: Cardinal);
 begin
   SetLength(fUndefinedOpcodes, Length(fUndefinedOpcodes) + 1);
   with fUndefinedOpcodes[High(fUndefinedOpcodes)] do begin
@@ -153,16 +153,16 @@ end;
 
 
 
-function TDisassembler.GetUndefinedOpcodeItem(Index: integer): TUndefinedOpcodeItem;
+function TDisassembler.GetUndefinedOpcodeItem(Index: Integer): TUndefinedOpcodeItem;
 begin
-  result := fUndefinedOpcodes[Index];
+  Result := fUndefinedOpcodes[Index];
 end;
 
 
 
 function TDisassembler.GetUndefinedOpcodesCount: Integer;
 begin
-  result := Length(fUndefinedOpcodes);
+  Result := Length(fUndefinedOpcodes);
 end;
 
 

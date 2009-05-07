@@ -136,14 +136,14 @@ end;
 
 function TTranslator.GetActiveLanguageInfo: TLanguageInfo;
 begin
-  result := GetLanguageInfo(fActiveLanguageIndex);
+  Result := GetLanguageInfo(fActiveLanguageIndex);
 end;
 
 
 
 function TTranslator.GetLanguageInfo(Index: Integer): TLanguageInfo;
 begin
-  result := TLanguageInfo(fLanguages[Index]);
+  Result := TLanguageInfo(fLanguages[Index]);
 end;
 
 
@@ -151,13 +151,13 @@ end;
 
 function TTranslator.GetLanguagesCount: Integer;
 begin
-  result := fLanguages.Count;
+  Result := fLanguages.Count;
 end;
 
 
 
 
-function TTranslator.CheckLangFile(FileName: string): boolean;
+function TTranslator.CheckLangFile(FileName: string): Boolean;
 var
   tINI: TMemINIFile;
 begin
@@ -177,10 +177,11 @@ end;
 
 
 
-function TTranslator.CheckLangFile(testINI: TCustomIniFile): boolean;
-var SectionList: TStrings;
+function TTranslator.CheckLangFile(testINI: TCustomIniFile): Boolean;
+var
+  SectionList: TStrings;
 begin
-  result:=false;
+  Result := False;
   SectionList:= TStringList.Create;
   testINI.ReadSections(SectionList);
   if SectionList.Count <> LangFileSectionCount then begin
@@ -268,30 +269,34 @@ end;
 
 procedure TranslateStringResStrings;
 begin
-  FileNotFoundStr:= Translator.TranslateControl('Texty','FileNotFound');
-  CouldNotOpenFileStr:= Translator.TranslateControl('Texty','CouldNotOpenFile');
-  CouldNotOpenProjectStr:= Translator.TranslateControl('Texty','CouldNotOpenProject');
-  CouldNotOpenReadWriteFileStr:= Translator.TranslateControl('Texty','CouldNotOpenReadWrite');
-  ProjectFilterStr:= Translator.TranslateControl('Texty','ProjectFilter');
-  SaveDisassemblyFilterStr:= Translator.TranslateControl('Texty','SaveDisassemblyFilter');
-  FileModifiedStr:= Translator.TranslateControl('Texty', 'FileModified');
-  ProjectModifiedStr:= Translator.TranslateControl('Texty', 'ProjectModified');
+  FileNotFoundStr := Translator.TranslateControl('Texty', 'FileNotFound');
+  CouldNotOpenFileStr := Translator.TranslateControl('Texty', 'CouldNotOpenFile');
+  CouldNotOpenProjectStr := Translator.TranslateControl('Texty', 'CouldNotOpenProject');
+  CouldNotOpenReadWriteFileStr := Translator.TranslateControl('Texty', 'CouldNotOpenReadWrite');
+  ProjectFilterStr := Translator.TranslateControl('Texty', 'ProjectFilter');
+  SaveDisassemblyFilterStr := Translator.TranslateControl('Texty', 'SaveDisassemblyFilter');
+  FileModifiedStr := Translator.TranslateControl('Texty', 'FileModified');
+  ProjectModifiedStr := Translator.TranslateControl('Texty', 'ProjectModified');
+  FileCorruptedStr := Translator.TranslateControl('Texty', 'FileCorrupted');
 
-  InvalidAddressStr:= Translator.TranslateControl('Texty','InvalidAddress');
-  InvalidStartOffsetStr:= Translator.TranslateControl('Texty','InvalidStartOffset');
-  InvalidSizeStr:= Translator.TranslateControl('Texty','InvalidSize');
-  InvalidEntrypointStr:= Translator.TranslateControl('Texty','InvalidEntryPoint');
-  FileOffsetStr:= Translator.TranslateControl('Texty','FileOffset');
-  SectionOffsetStr:= Translator.TranslateControl('Texty','SectionOffset');
+  InvalidAddressStr := Translator.TranslateControl('Texty', 'InvalidAddress');
+  InvalidStartOffsetStr := Translator.TranslateControl('Texty', 'InvalidStartOffset');
+  InvalidSizeStr := Translator.TranslateControl('Texty', 'InvalidSize');
+  InvalidEntrypointStr := Translator.TranslateControl('Texty', 'InvalidEntryPoint');
+  FileOffsetStr := Translator.TranslateControl('Texty', 'FileOffset');
+  SectionOffsetStr := Translator.TranslateControl('Texty', 'SectionOffset');
 
-  CodeSectionStr:= Translator.TranslateControl('Texty','CodeSection');
-  SectionStr:= Translator.TranslateControl('Texty','Section');
+  CodeSectionStr := Translator.TranslateControl('Texty', 'CodeSection');
+  SectionStr := Translator.TranslateControl('Texty', 'Section');
+  UnusedSpaceStr := Translator.TranslateControl('Texty', 'UnusedSpace');
 
-  InCompatibleProjectVersion:= Translator.TranslateControl('Texty','InCompatibleProjectVersion');
-  CurrentVersion:= Translator.TranslateControl('Texty','CurrentVersion');
+  InCompatibleProjectVersion := Translator.TranslateControl('Texty', 'InCompatibleProjectVersion');
+  CurrentVersion := Translator.TranslateControl('Texty', 'CurrentVersion');
+  UnableToChangeLanguageStr := Translator.TranslateControl('Texty', 'UnableToChangeLanguage');
 
-  DivisionByZeroStr:= Translator.TranslateControl('Texty','DivisionByZero');
-  NotFoundStr:= Translator.TranslateControl('Texty','NotFound');
+  DivisionByZeroStr:= Translator.TranslateControl('Texty', 'DivisionByZero');
+  NotFoundStr := Translator.TranslateControl('Texty', 'NotFound');
+  UnspecifiedErrorStr := Translator.TranslateControl('Texty', 'UnspecifiedError');
 end;
 
 

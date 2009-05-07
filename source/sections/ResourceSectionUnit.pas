@@ -141,7 +141,7 @@ type
     constructor Create(InputStream: TStream; aName: string; aFileOffset, aFileSize, aMemOffset, aMemSize: cardinal; aSectionIndex: integer; ResourceTableRVA: cardinal; aExecFile:TObject); overload;
     constructor Create(efile:TObject); overload;
     destructor Destroy; override;
-    function SaveToFile  (DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
+    procedure SaveToFile(DHF: TStream; var DAS: TextFile); override;
     function LoadFromFile(DHF: TStream; var DAS: TextFile):boolean; overload; override;
   end;
 
@@ -358,10 +358,9 @@ begin
   fExecFile:=efile;
 end;
 
-function TResourceSection.SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean;
+procedure TResourceSection.SaveToFile(DHF: TStream; var DAS: TextFile);
 begin
-  inherited SaveToFile(DHF, DAS, SaveOptions);
-  result:=true;
+  inherited SaveToFile(DHF, DAS);
 end;
 
 function TResourceSection.LoadFromFile(DHF: TStream; var DAS: TextFile): boolean;

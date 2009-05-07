@@ -1,4 +1,4 @@
-unit MyLists;
+unit ListsUnit;
 
 interface
 
@@ -8,8 +8,8 @@ type
     fCount: Integer;
     fCapacity: Integer;
     fItems: array of Cardinal;
-    function GetItem(Index: Integer): cardinal;
-    procedure SetItem(Index: Integer; Value: cardinal);
+    function GetItem(Index: Integer): Cardinal;
+    procedure SetItem(Index: Integer; Value: Cardinal);
   public
     constructor Create;
     procedure Add(const Value: Cardinal);
@@ -17,6 +17,7 @@ type
     property Count: Integer read fCount;
     property Items[Index: Integer]: Cardinal read GetItem write SetItem; default;
   end;
+
 
 implementation
 
@@ -30,9 +31,9 @@ end;
 
 
 
-function TCardinalList.GetItem(Index: Integer): cardinal;
+function TCardinalList.GetItem(Index: Integer): Cardinal;
 begin
-  result := fItems[Index];
+  Result := fItems[Index];
 end;
 
 

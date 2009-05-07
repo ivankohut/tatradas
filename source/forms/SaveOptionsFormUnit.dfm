@@ -4,7 +4,7 @@ object SaveOptionsForm: TSaveOptionsForm
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
   Caption = 'Save Options'
-  ClientHeight = 268
+  ClientHeight = 259
   ClientWidth = 489
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -17,8 +17,8 @@ object SaveOptionsForm: TSaveOptionsForm
   PixelsPerInch = 96
   TextHeight = 13
   object OKButton: TButton
-    Left = 322
-    Top = 234
+    Left = 320
+    Top = 223
     Width = 75
     Height = 25
     Caption = 'OK'
@@ -28,7 +28,7 @@ object SaveOptionsForm: TSaveOptionsForm
   end
   object CancelButton: TButton
     Left = 406
-    Top = 234
+    Top = 223
     Width = 75
     Height = 25
     Cancel = True
@@ -40,7 +40,7 @@ object SaveOptionsForm: TSaveOptionsForm
     Left = 288
     Top = 8
     Width = 193
-    Height = 217
+    Height = 192
     Caption = 'References'
     TabOrder = 2
     object JumpCheckBox: TCheckBox
@@ -96,7 +96,7 @@ object SaveOptionsForm: TSaveOptionsForm
   end
   object InstructionGroupBox: TGroupBox
     Left = 8
-    Top = 136
+    Top = 127
     Width = 265
     Height = 121
     Caption = 'Instruction'
@@ -136,45 +136,36 @@ object SaveOptionsForm: TSaveOptionsForm
     Left = 8
     Top = 8
     Width = 265
-    Height = 113
+    Height = 105
     Caption = 'Save options'
     TabOrder = 4
-    object ProjectRadioButton: TRadioButton
-      Left = 16
-      Top = 16
-      Width = 233
-      Height = 17
-      Caption = 'Project (*.DAS and *.DHF files)'
-      Checked = True
-      TabOrder = 0
-      TabStop = True
-      OnClick = ProjectRadioButtonClick
-    end
     object CustomRadioButton: TRadioButton
       Left = 16
-      Top = 40
+      Top = 21
       Width = 241
       Height = 17
       Caption = 'Custom (custom extension, without *.DHF file)'
-      TabOrder = 1
+      Checked = True
+      TabOrder = 0
+      TabStop = True
       OnClick = CustomRadioButtonClick
     end
     object DisassemblyRadioButton: TRadioButton
       Left = 16
-      Top = 64
+      Top = 48
       Width = 233
       Height = 17
       Caption = 'Disassembly only (*.DAS, without *.DHF file)'
-      TabOrder = 2
+      TabOrder = 1
       OnClick = ProjectRadioButtonClick
     end
     object NASMRadioButton: TRadioButton
       Left = 16
-      Top = 88
+      Top = 75
       Width = 233
       Height = 17
       Caption = 'NASM compilable'
-      TabOrder = 3
+      TabOrder = 2
       OnClick = ProjectRadioButtonClick
     end
   end

@@ -5,57 +5,57 @@ interface
 type
 
   TDisassembledBlock = record
-    Address: cardinal;
-    Size: cardinal;
+    Address: Cardinal;
+    Size: Cardinal;
   end;
 
   TDisassembledBlocks = class
   private
-    fCount: integer;
-    fCapacity: integer;
+    fCount: Integer;
+    fCapacity: Integer;
     fBlocks: array of TDisassembledBlock;
-    function GetBlock(Index: integer): TDisassembledBlock;
-    function GetBlockCount: integer;
+    function GetBlock(Index: Integer): TDisassembledBlock;
+    function GetBlockCount: Integer;
   public
     procedure Clear;
-    procedure Add(Address, Size: cardinal);
-    property Items[Index: integer]: TDisassembledBlock read GetBlock; default;
-    property Count: integer read GetBlockCount;
+    procedure Add(Address, Size: Cardinal);
+    property Items[Index: Integer]: TDisassembledBlock read GetBlock; default;
+    property Count: Integer read GetBlockCount;
   end;
 
 
 implementation
 
 uses
-  SysUtils;
+  SysUtils, procmat;
 
 
-procedure TDisassembledBlocks.Add(Address, Size: cardinal);
+procedure TDisassembledBlocks.Add(Address, Size: Cardinal);
 begin
   Inc(fCount);
   if fCount > fCapacity then begin
-    fCapacity:= fCapacity + 10;
+    fCapacity := fCapacity + 10;
     SetLength(fBlocks, fCapacity);
   end;
-  fBlocks[fCount - 1].Address:= Address;
-  fBlocks[fCount - 1].Size:= Size;
+  fBlocks[fCount - 1].Address := Address;
+  fBlocks[fCount - 1].Size := Size;
 end;
 
 
 
-function TDisassembledBlocks.GetBlock(Index: integer): TDisassembledBlock;
+function TDisassembledBlocks.GetBlock(Index: Integer): TDisassembledBlock;
 begin
   if (Index >= 0) and (Index < fCount) then
-    result:= fBlocks[Index]
+    Result := fBlocks[Index]
   else
-    raise Exception.Create('Index out of bounds');
+    raise EIllegalState.Create('Index out of bounds');
 end;
 
 
 
-function TDisassembledBlocks.GetBlockCount: integer;
+function TDisassembledBlocks.GetBlockCount: Integer;
 begin
-  result:= fCount;
+  Result := fCount;
 end;
 
 
@@ -63,8 +63,8 @@ end;
 procedure TDisassembledBlocks.Clear;
 begin
   SetLength(fBlocks, 10);
-  fCapacity:= 10;
-  fCount:= 0;
+  fCapacity := 10;
+  fCount := 0;
 end;
 
 

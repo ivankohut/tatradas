@@ -40,27 +40,61 @@ type
     procedure CodeRadioButtonClick(Sender: TObject);
     procedure OKButtonClick(Sender: TObject);
     procedure CancelButtonClick(Sender: TObject);
-    procedure UnsignedRadioButtonClick(Sender: TObject);
-    procedure SignedRadioButtonClick(Sender: TObject);
     procedure DataTypeComboBoxChange(Sender: TObject);
     procedure ValueChange(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
 
-  public
+  private
     MaxAddressHexEdit: THexPositiveEdit;
     BytesBinHexEdit: TDecimalPositiveEdit;
     ItemsBinHexEdit: TDecimalPositiveEdit;
     SelectedEdit: TPositiveEdit;
-    Options: TDataChangeOptions;
+    function GetOptions: TDataChangeOptions;
+  public
     procedure Translate;
+    procedure SetMaxAdressMaxValue(AValue: Cardinal);
+    property Options: TDataChangeOptions read GetOptions;
   end;
 
 var
   AdvancedChangingToDataForm: TAdvancedChangingToDataForm;
 
+  
 implementation
 
+
 {$R *.dfm}
+
+
+procedure TAdvancedChangingToDataForm.SetMaxAdressMaxValue(AValue: Cardinal);
+begin
+  MaxAddressHexEdit.MaxValue := AValue;
+end;
+
+
+
+function TAdvancedChangingToDataForm.GetOptions: TDataChangeOptions;
+begin
+  if ItemsRadioButton.Checked then
+    Result.Option := dcItems
+  else if BytesRadioButton.Checked then
+    Result.Option := dcBytes
+  else if MaxRadioButton.Checked then
+    Result.Option := dcMaxAddress
+  else if EndSectionRadioButton.Checked then
+    Result.Option := dcEndSection
+  else if CodeRadioButton.Checked then
+    Result.Option := dcCode
+  else
+    raise EIllegalState.Create('TAdvancedChangingToDataForm.GetOptions: No RadioButton selected');
+
+  Result.DataType := DataTypeComboBox.ItemIndex;
+  Result.Signed := SignedRadioButton.Checked;
+  Result.Value := SelectedEdit.AsCardinal;
+  Result.DatatypeSize := 1; // ???
+end;
+
+
 
 procedure TAdvancedChangingToDataForm.FormCreate(Sender: TObject);
 begin
@@ -88,119 +122,118 @@ begin
   MaxAddressHexEdit.Enabled:=false;
   MaxAddressHexEdit.OnChange:=ValueChange;
 
-  DataTypeComboBox.ItemIndex:=0;
+  DataTypeComboBox.ItemIndex := 0;
   DataTypeComboBoxChange(DataTypeComboBox);
-  options.datatype:=0; //byte
-  options.datatypesize:=1;
-  options.signed:=false;
-  options.option:=dcItems;
-  options.value:=0;
-  SelectedEdit:=ItemsBinHexEdit;
+  UnsignedRadioButton.Checked := True;
+  ItemsRadioButton.Checked := True;
+  SelectedEdit := ItemsBinHexEdit;
+  SelectedEdit.AsCardinal := 0;
 end;
+
+
 
 procedure TAdvancedChangingToDataForm.ItemsRadioButtonClick(Sender: TObject);
 begin
-  SelectedEdit.Enabled:=false;
-  SelectedEdit:=ItemsBinHexEdit;
-  SelectedEdit.Enabled:=true;
+  SelectedEdit.Enabled := False;
+  SelectedEdit := ItemsBinHexEdit;
+  SelectedEdit.Enabled := True;
   SelectedEdit.SetFocus;
-  options.option:=dcItems;
 end;
+
+
 
 procedure TAdvancedChangingToDataForm.BytesRadioButtonClick(Sender: TObject);
 begin
-  SelectedEdit.Enabled:=false;
-  SelectedEdit:=BytesBinHexEdit;
-  SelectedEdit.Enabled:=true;
+  SelectedEdit.Enabled := False;
+  SelectedEdit := BytesBinHexEdit;
+  SelectedEdit.Enabled := True;
   SelectedEdit.SetFocus;
-  options.option:=dcBytes;
 end;
+
+
 
 procedure TAdvancedChangingToDataForm.MaxRadioButtonClick(Sender: TObject);
 begin
-  SelectedEdit.Enabled:=false;
-  SelectedEdit:=MaxAddressHexEdit;
-  SelectedEdit.Enabled:=true;
+  SelectedEdit.Enabled := False;
+  SelectedEdit := MaxAddressHexEdit;
+  SelectedEdit.Enabled := True;
   SelectedEdit.SetFocus;
-  options.option:=dcMaxAddress;
 end;
+
+
 
 procedure TAdvancedChangingToDataForm.EndSectionRadioButtonClick(Sender: TObject);
 begin
-  SelectedEdit.Enabled:=false;
-  options.option:=dcEndSection;
+  SelectedEdit.Enabled := False;
 end;
+
+
 
 procedure TAdvancedChangingToDataForm.CodeRadioButtonClick(Sender: TObject);
 begin
-  SelectedEdit.Enabled:=false;
-  options.option:=dcCode;
+  SelectedEdit.Enabled := False;
 end;
+
+
 
 procedure TAdvancedChangingToDataForm.OKButtonClick(Sender: TObject);
 begin
-  if not UnsignedRadioButton.Enabled then Options.signed:=false;
-  ModalResult:=mrOK;
+  ModalResult := mrOK;
 end;
+
+
 
 procedure TAdvancedChangingToDataForm.CancelButtonClick(Sender: TObject);
 begin
-  ModalResult:=mrCancel;
+  ModalResult := mrCancel;
 end;
 
-procedure TAdvancedChangingToDataForm.UnsignedRadioButtonClick(
-  Sender: TObject);
+
+
+procedure TAdvancedChangingToDataForm.DataTypeComboBoxChange(Sender: TObject);
+var
+  SignGroupBoxEnabled: Boolean;
 begin
-  options.signed:=false;
+  SignGroupBoxEnabled := (DataTypeComboBox.ItemIndex <= dtQword);
+  UnSignedRadioButton.Enabled := SignGroupBoxEnabled;
+  SignedRadioButton.Enabled := SignGroupBoxEnabled;
 end;
 
-procedure TAdvancedChangingToDataForm.SignedRadioButtonClick(
-  Sender: TObject);
-begin
-  options.signed:=true;
-end;
 
-procedure TAdvancedChangingToDataForm.DataTypeComboBoxChange(
-  Sender: TObject);
-begin
-  options.datatype:=DataTypeComboBox.ItemIndex;
-  UnSignedRadioButton.Enabled:=Options.datatype <= dtQword;
-  SignedRadioButton.Enabled:=Options.datatype <= dtQword;
-//  SignGroupBox.Enabled:=Options.datatype <= dtQword;
-end;
 
 procedure TAdvancedChangingToDataForm.ValueChange(Sender: TObject);
-var
-  MyEdit: TPositiveEdit;
 begin
-  MyEdit := TPositiveEdit(Sender);
-  MyEdit.Change(Sender);
-  if MyEdit.Text='' then Exit;
-  options.value:=MyEdit.AsCardinal;
+  TPositiveEdit(Sender).Change(Sender);
 end;
+
+
 
 procedure TAdvancedChangingToDataForm.FormDestroy(Sender: TObject);
 begin
-  MaxAddressHexEdit.Destroy;
-  BytesBinHexEdit.Destroy;
-  ItemsBinHexEdit.Destroy;
+  FreeAndNil(MaxAddressHexEdit);
+  FreeAndNil(BytesBinHexEdit);
+  FreeAndNil(ItemsBinHexEdit);
 end;
+
+
 
 procedure TAdvancedChangingToDataForm.Translate;
 begin
-  Caption:= Translator.TranslateControl('AdvancedChangingToDataForm','Caption');
-  OptionsGroupBox.Caption:= Translator.TranslateControl('AdvancedChangingToDataForm','Options');
-  ItemsRadioButton.Caption:= Translator.TranslateControl('AdvancedChangingToDataForm','Items');
-  BytesRadioButton.Caption:= Translator.TranslateControl('AdvancedChangingToDataForm','Bytes');
-  MaxRadioButton.Caption:= Translator.TranslateControl('AdvancedChangingToDataForm','Max');
-  EndSectionRadioButton.Caption:= Translator.TranslateControl('AdvancedChangingToDataForm','EndSection');
-  CodeRadioButton.Caption:= Translator.TranslateControl('AdvancedChangingToDataForm','Code');
-  SignGroupBox.Caption:= Translator.TranslateControl('AdvancedChangingToDataForm','Sign');
-  UnsignedRadioButton.Caption:= Translator.TranslateControl('AdvancedChangingToDataForm','Unsigned');
-  SignedRadioButton.Caption:= Translator.TranslateControl('AdvancedChangingToDataForm','Signed');
-  DataTypeGroupBox.Caption:= Translator.TranslateControl('AdvancedChangingToDataForm','DataType');
-  OKButton.Caption:= Translator.TranslateControl('Common','OKButton');
-  CancelButton.Caption:= Translator.TranslateControl('Common','CancelButton');
+  Caption := Translator.TranslateControl('AdvancedChangingToDataForm', 'Caption');
+  OptionsGroupBox.Caption := Translator.TranslateControl('AdvancedChangingToDataForm', 'Options');
+  ItemsRadioButton.Caption := Translator.TranslateControl('AdvancedChangingToDataForm', 'Items');
+  BytesRadioButton.Caption := Translator.TranslateControl('AdvancedChangingToDataForm', 'Bytes');
+  MaxRadioButton.Caption := Translator.TranslateControl('AdvancedChangingToDataForm', 'Max');
+  EndSectionRadioButton.Caption := Translator.TranslateControl('AdvancedChangingToDataForm', 'EndSection');
+  CodeRadioButton.Caption := Translator.TranslateControl('AdvancedChangingToDataForm', 'Code');
+  SignGroupBox.Caption := Translator.TranslateControl('AdvancedChangingToDataForm', 'Sign');
+  UnsignedRadioButton.Caption := Translator.TranslateControl('AdvancedChangingToDataForm', 'Unsigned');
+  SignedRadioButton.Caption := Translator.TranslateControl('AdvancedChangingToDataForm', 'Signed');
+  DataTypeGroupBox.Caption := Translator.TranslateControl('AdvancedChangingToDataForm', 'DataType');
+  OKButton.Caption := Translator.TranslateControl('Common', 'OKButton');
+  CancelButton.Caption := Translator.TranslateControl('Common', 'CancelButton');
 end;
+
+
 
 end.

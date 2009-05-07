@@ -1,11 +1,9 @@
 inherited ExportTabFrame: TExportTabFrame
-  Width = 671
   inherited Panel: TPanel
-    Width = 671
     object FunctionStringGrid: TStringGrid
       Left = 8
       Top = 8
-      Width = 655
+      Width = 427
       Height = 261
       Align = alClient
       ColCount = 6

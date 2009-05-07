@@ -59,22 +59,21 @@ uses MainFormUnit;
 
 procedure TAboutBox.OKButtonClick(Sender: TObject);
 begin
-  ModalResult:= mrOK;
+  ModalResult := mrOK;
 end;
 
 
 
-procedure TAboutBox.URLLabelMouseMove(Sender: TObject; Shift: TShiftState;
-  X, Y: Integer);
+procedure TAboutBox.URLLabelMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
 begin
-  Self.URLLabel.Font.Style:=[fsUnderline];
+  Self.URLLabel.Font.Style := [fsUnderline];
 end;
 
 
 
 procedure TAboutBox.URLLabelMouseLeave(Sender: TObject);
 begin
-  Self.URLLabel.Font.Style:=[];
+  Self.URLLabel.Font.Style := [];
 end;
 
 
@@ -88,13 +87,13 @@ end;
 
 procedure TAboutBox.Translate;
 begin
-  Caption:= Translator.TranslateControl('AboutBoxForm', 'Caption');
-  ProgrammingLabel.Caption:= Translator.TranslateControl('AboutBoxForm', 'ProgrammingLabel');
-  GraphicsLabel.Caption:= Translator.TranslateControl('AboutBoxForm', 'GraphicsLabel');
-  VersionLabel.Caption:= Translator.TranslateControl('AboutBoxForm', 'VersionLabel') + ' ' + ShortTatraDASVersion;
-  ReleaseDateLabel.Caption:= Translator.TranslateControl('AboutBoxForm', 'ReleaseDateLabel') + ' ' + TatraDASDate + ' (DMY)'; // + ' (DD.MM.YYYY)';
-  LicenseLabel.Caption:= Translator.TranslateControl('AboutBoxForm', 'LicenseLabel');
-  URLLabel.Hint:= Translator.TranslateControl('AboutBoxForm', 'URLLabelHint');
+  Caption := Translator.TranslateControl('AboutBoxForm', 'Caption');
+  ProgrammingLabel.Caption := Translator.TranslateControl('AboutBoxForm', 'ProgrammingLabel');
+  GraphicsLabel.Caption := Translator.TranslateControl('AboutBoxForm', 'GraphicsLabel');
+  VersionLabel.Caption := Translator.TranslateControl('AboutBoxForm', 'VersionLabel') + ' ' + ShortTatraDASVersion;
+  ReleaseDateLabel.Caption := Translator.TranslateControl('AboutBoxForm', 'ReleaseDateLabel') + ' ' + TatraDASDate + ' (DMY)'; // + ' (DD.MM.YYYY)';
+  LicenseLabel.Caption := Translator.TranslateControl('AboutBoxForm', 'LicenseLabel');
+  URLLabel.Hint := Translator.TranslateControl('AboutBoxForm', 'URLLabelHint');
   CompilerLabel.Caption := Translator.TranslateControl('AboutBoxForm', 'CompilerLabel');
 end;
 
@@ -102,8 +101,8 @@ end;
 
 procedure TAboutBox.FormActivate(Sender: TObject);
 begin
-  VersionLabel.Left:= (Panel1.Width - VersionLabel.Width) div 2;
-  ReleaseDateLabel.Left:= (Panel1.Width - ReleaseDateLabel.Width) div 2;
+  VersionLabel.Left := (Panel1.Width - VersionLabel.Width) div 2;
+  ReleaseDateLabel.Left := (Panel1.Width - ReleaseDateLabel.Width) div 2;
 end;
 
 
@@ -117,5 +116,7 @@ begin
   CompilerDataLabel.Caption := CompilerDataLabel.Caption + ' ' + FloatToStrF(CompilerVersion, ffFixed, 5, 1);
   DecimalSeparator := DecSepar;
 end;
+
+
 
 end.

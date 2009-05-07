@@ -361,9 +361,9 @@ end;
 
 
 
-function TCodeTabFrame.GetPosition(Address: cardinal): cardinal; // Get position in Disassembled from Address (memory address)
+function TCodeTabFrame.GetPosition(Address: Cardinal): Cardinal; // Get position in Disassembled from Address (memory address)
 begin
-  result:= fSection.GetPosition(Address);
+  Result := fSection.GetPosition(Address);
 end;
 
 
@@ -446,8 +446,7 @@ end;
 
 procedure TCodeTabFrame.GotoAddressButtonClick(Sender: TObject);    // Premiestnenie na zadanu adresu
 begin
-  GotoAddressForm.GotoAddressEdit.Text:= '';
-  GotoAddressForm.MaxAddress:= fSection.MaxAddress;
+  GotoAddressForm.MaxAddress := fSection.MaxAddress;
   if GotoAddressForm.ShowModal = mrOK then
     GotoPosition(fSection.GetPosition(GotoAddressForm.Address), soBeginning);
   plocha.SetFocus;
@@ -457,10 +456,9 @@ end;
 
 procedure TCodeTabFrame.GotoLineClick(Sender: TObject);    // Premiestnenie na zadane cislo riadka
 begin
-  GotoLineForm.GotoLineEdit.Text := '';
-  GotoLineForm.MaxAddress := fSection.Disassembled.Count;
+  GotoLineForm.MaxLineIndex := fSection.Disassembled.Count;
   if GotoLineForm.ShowModal = mrOK then
-    GotoPosition(GotoLineForm.Address - 1, soBeginning);
+    GotoPosition(GotoLineForm.LineIndex - 1, soBeginning);
   plocha.SetFocus;
 end;
 
@@ -600,7 +598,7 @@ end;
 
 procedure TCodeTabFrame.AdvancedChangeToDataClick(Sender: TObject);
 begin
-  AdvancedChangingToDataForm.MaxAddressHexEdit.MaxValue:= fSection.MaxAddress;
+  AdvancedChangingToDataForm.SetMaxAdressMaxValue(fSection.MaxAddress);
   if AdvancedChangingToDataForm.ShowModal = mrOK then
     ChangeToData(AdvancedChangingToDataForm.Options);
 end;
@@ -623,7 +621,8 @@ end;
 
 procedure TCodeTabFrame.AdvancedDisassembleClick(Sender: TObject);
 begin
-  AdvancedDisassembleForm.MaxAddressBinHexEdit.MaxValue:=fSection.MaxAddress; // podobne by sa zislo nastavit MaxValue aj pre ostatne edity
+  // podobne by sa zislo nastavit MaxValue aj pre ostatne edity
+  AdvancedDisassembleForm.SetMaxAddressMaxValue(fSection.MaxAddress);
   if AdvancedDisassembleForm.ShowModal = mrOK then
     Disassemble(AdvancedDisassembleForm.Options);
 end;
@@ -789,7 +788,7 @@ begin
       StringSize:= Strlength16*2 + 2;
     end;
     else
-      Raise Exception.Create('ChangeToStringData error');
+      raise EIllegalState.Create('ChangeToStringData: Bad DataType');
   end;
 
   NewLines:= TStringList.Create;

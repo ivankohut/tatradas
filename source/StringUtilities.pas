@@ -31,13 +31,15 @@ function InsertStr(const Source: string; const Dest: string; Index: integer): st
 
 function FirstCommaToPoint(AText: string):string;
 
+function InjectStr(const AString: string; AValues: array of string; const AReplaceMark: string = '%s'): string;
+
 
 implementation
 
 
-function StringLeftPad(AString: string; Size: integer): string;
+function StringLeftPad(AString: string; Size: Integer): string;
 begin
-  result:= StringLeftPad(AString, Size, ' ');
+  Result := StringLeftPad(AString, Size, ' ');
 end;
 
 
@@ -160,5 +162,60 @@ begin
     end;
   result:=AText;
 end;
+
+// PosEx was added in Delphi 7 so in case of Delphi 6 we need this:
+{$IFDEF VER140}
+function PosEx(const SubStr, S: string; Offset: Cardinal = 1): Integer;
+var
+  I,X: Integer;
+  Len, LenSubStr: Integer;
+begin
+  if Offset = 1 then
+    Result := Pos(SubStr, S)
+  else
+  begin
+    I := Offset;
+    LenSubStr := Length(SubStr);
+    Len := Length(S) - LenSubStr + 1;
+    while I <= Len do
+    begin
+      if S[I] = SubStr[1] then
+      begin
+        X := 1;
+        while (X < LenSubStr) and (S[I + X] = SubStr[X + 1]) do
+          Inc(X);
+        if (X = LenSubStr) then
+        begin
+          Result := I;
+          exit;
+        end;
+      end;
+      Inc(I);
+    end;
+    Result := 0;
+  end;
+end;
+{$ENDIF}
+
+function InjectStr(const AString: string; AValues: array of string; const AReplaceMark: string = '%s'): string;
+var
+  Position, Index: Integer;
+begin
+  Result := AString;
+  Position := 1;
+  Index := 0;
+  while True do begin
+    Position := PosEx(AReplaceMark, Result, Position);
+    if Position > 0 then begin
+      Result := StuffString(Result, Position, Length(AReplaceMark), AValues[Index]);
+      Inc(Position, Length(AValues[Index]));
+      Inc(Index);
+    end
+    else
+      Break;
+  end;
+end;
+
+
 
 end.

@@ -45,11 +45,10 @@ type
     function GetExecFileFormat(AFileStream: TFileStream): TExecFileFormat;
 
    public
-    function LoadExecFileFromFile(AFileName: TFileName) : TExecutableFile;    // uses TextFile
-    function SaveExecFileToFile(ExecFile: TExecutableFile; AFileName: TFileName; SaveOptions: TSaveOptions): boolean;
+    function LoadExecFileFromFile(AProjectFileName: TFileName) : TExecutableFile;    // uses TextFile
+    function SaveExecFileToFile(ExecFile: TExecutableFile; AFileName: TFileName): boolean;
     function CreateNewExecFile(AFileName: TFileName): TExecutableFile;
     function CreateNewCustomExecFile(AFileName: TFileName; AParameters: TCustomFileParameters): TExecutableFile;
-
 //    property Error: TFileError read fError;
   end;
 
@@ -57,6 +56,8 @@ var
   ExecFileManager: TExecFileManager;
 
 implementation
+
+uses StringUtilities, SectionUnit, CodeSectionUnit;
 
 { TExecFileManager }
 
@@ -159,6 +160,7 @@ end;
 
 
 
+
 function TExecFileManager.CreateNewCustomExecFile(AFileName: TFileName; AParameters: TCustomFileParameters): TExecutableFile;
 var
   InputFile: TFileStream;
@@ -179,8 +181,8 @@ begin
 end;
 
 
-
-function TExecFileManager.SaveExecFileToFile(ExecFile: TExecutableFile; AFileName: TFileName; SaveOptions: TSaveOptions): boolean;
+// Save as TatraDAS Project
+function TExecFileManager.SaveExecFileToFile(ExecFile: TExecutableFile; AFileName: TFileName): boolean;
 var
   DAS: TextFile;
   DHF: TFileStream;
@@ -189,70 +191,51 @@ var
   Version: cardinal;
 begin
   DHF := nil;
-  // Save as TatraDAS Project
-  if soProject in SaveOptions then begin
 
-    // Initialize DHF project file
-    DHF_FileName:=ChangeFileExt(aFileName,'.dhf');;
-    try
-      DHF:= TFileStream.Create(DHF_FileName, fmCreate);
-    except
-      ProgressData.ErrorStatus:= errSave;
-      DHF.Free;
-      result:= false;
-      Exit;
-    end;
-    Version:= TatraDASProjectVersion;
-    DHF.Write(Version, 4);
-    DHF.Write(ExecFile.ExeFormat, SizeOf(TExecFileFormat));
-
-    DAS_FileName:=ChangeFileExt(aFileName, '.das');
+  // Initialize DHF project file
+  DHF_FileName := ChangeFileExt(aFileName, '.dhf');;
+  try
+    DHF := TFileStream.Create(DHF_FileName, fmCreate);
+  except
+    ProgressData.ErrorStatus := errSave;
+    DHF.Free;
+    result := False;
+    Exit;
   end;
+  Version := TatraDASProjectVersion;
+  DHF.Write(Version, 4);
+  DHF.Write(ExecFile.ExeFormat, SizeOf(TExecFileFormat));
 
   // Save disassembled code sections
-  if soDisassembly in SaveOptions then
-    DAS_FileName:=ChangeFileExt(aFileName, '.das');
-
-  // Save disassembled code sections as NASM compilable code
-  if (soNASM in SaveOptions) then
-    DAS_FileName:= aFileName;
-
-  // Save disassembled code sections using user defined constraints
-  if (SaveOptions * [soProject, soDisassembly, soNASM]) = [] then
-    DAS_FileName:= aFileName;
-
-  // Initialize DAS file
+  DAS_FileName := ChangeFileExt(aFileName, '.das');
   AssignFile(DAS, DAS_FileName);
   Rewrite(DAS);
-
-  // Save :)
-  result:= ExecFile.SaveToFile(DHF, DAS, SaveOptions);
-
+  ExecFile.SaveToFile(DHF, DAS);
   CloseFile(DAS);
   DHF.Free;
 end;
 
 
 
-function TExecFileManager.LoadExecFileFromFile(aFileName: TFileName): TExecutableFile;
+function TExecFileManager.LoadExecFileFromFile(AProjectFileName: TFileName): TExecutableFile;
 var
     DHF_FileName, DAS_FileName: string;
     DHF: TMemoryStream;
     DAS: TextFile;
-    ProjectVersion: cardinal;
+    ProjectVersion: Cardinal;
     ProjectExecFileFormat: TExecFileFormat;
 begin
-  result:= nil;
-  DHF_FileName:= aFileName;
+  Result := nil;
+  DHF_FileName:= AProjectFileName;
   DAS_FileName:= ChangeFileExt(DHF_FileName, '.das');
 
   if not FileExists(DAS_FileName) then begin
-    ProgressData.ErrorStatus:= errDASNotFound;
-    result:= nil;
+    ProgressData.ErrorStatus := errDASNotFound;
+    Result := nil;
     Exit;
   end;
 
-  DHF:= TMemoryStream.Create;
+  DHF := TMemoryStream.Create;
   DHF.LoadFromFile(DHF_FileName);
   DHF.Read(ProjectVersion, 4);
   case ProjectVersion of
@@ -260,15 +243,15 @@ begin
 
       DHF.Read(ProjectExecFileFormat, SizeOf(TExecFileFormat));
       case ProjectExecFileFormat of
-        ffCOM: result:=TCOMFile.Create;
-        ffMZ:  result:=TMZFile.Create;
-        ffNE:  result:=TNEFile.Create;
-        ffPE:  result:=TPEFile.Create;
-        ffELF: result:=TELFFile.Create;
-        ffCustom: result:=TCustomFile.Create;
+        ffCOM: Result := TCOMFile.Create;
+        ffMZ:  Result := TMZFile.Create;
+        ffNE:  Result := TNEFile.Create;
+        ffPE:  Result := TPEFile.Create;
+        ffELF: Result := TELFFile.Create;
+        ffCustom: Result := TCustomFile.Create;
         else begin
           DHF.Free;
-          ProgressData.ErrorStatus:= errBadFormat;
+          ProgressData.ErrorStatus := errBadFormat;
           Exit;
         end;
       end;
@@ -278,20 +261,21 @@ begin
       Readln(DAS);
       Readln(DAS);
 
-      if not result.LoadFromFile(DHF, DAS) then begin
-        result.Free;
-        result:= nil;
+      try
+        Result.LoadFromFile(DHF, DAS);
+      except
+        FreeAndNil(Result);
         DHF.Free;
         CloseFile(DAS);
-        Exit;
+        raise;
       end;
 
       CloseFile(DAS);
     end
 
     else begin
-      ProgressData.ErrorStatus:= errBadProjectVersion;
-      result:= nil;
+      ProgressData.ErrorStatus := errBadProjectVersion;
+      Result := nil;
       DHF.Free;
       Exit;
     end;

@@ -24,14 +24,14 @@ var
 
 implementation
 
-uses TranslatorUnit;
+uses TranslatorUnit, procmat;
 
 {$R *.dfm}
 
 
 function DisplayMessage(AMessage: string; AMessageType: TMsgDlgType; AButtons: TMsgDlgButtons): Integer;
 begin
-  result := TMessageForm.DisplayMessage(AMessage, AMessageType, AButtons);
+  Result := TMessageForm.DisplayMessage(AMessage, AMessageType, AButtons);
 end;
 
 
@@ -81,10 +81,10 @@ begin
     mtWarning: MessageForm.Caption := Translator.TranslateControl('Common', 'Warning');
     mtError: MessageForm.Caption := Translator.TranslateControl('Common', 'Error');
     mtInformation: MessageForm.Caption := Translator.TranslateControl('Common', 'Information');
-    mtCustom: raise Exception.Create('');
+    mtCustom: raise EIllegalState.Create('TMessageForm.DisplayMessage: Unsupported message type');
   end;
 
-  result := MessageForm.ShowModal;
+  Result := MessageForm.ShowModal;
 
   MessageForm.Release;
 end;

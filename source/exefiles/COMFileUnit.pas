@@ -20,9 +20,9 @@ type
   public
     constructor Create; overload; override;
     constructor Create(InputFile: TStream; aFileName: TFileName); overload; override;
-    destructor Destroy(); override;
-    function SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
-    function LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; override;
+    destructor Destroy; override;
+    procedure SaveToFile(DHF: TStream; var DAS: TextFile); override;
+    procedure LoadFromFile(DHF: TStream; var DAS: TextFile); override;
   end;
 
   
@@ -32,7 +32,7 @@ implementation
 constructor TCOMFile.Create;
 begin
   inherited;
-  fExecFormat:= ffCOM;
+  fExecFormat := ffCOM;
 end;
 
 
@@ -42,33 +42,33 @@ var
   CodeSection: TCodeSection;
 begin
   inherited;
-  fExecFormat:= ffCOM;
+  fExecFormat := ffCOM;
 
   fRegions.Add('COM file', 0, FileSize);
   fRegions.Finish;
 
-  CodeSection:= TCodeSection.Create(InputFile, false, 0, FileSize, $100, FileSize, 0, 'N/A', self);
-  CodeSection.EntryPointAddress:= 0;
+  CodeSection := TCodeSection.Create(InputFile, False, 0, FileSize, $100, FileSize, 0, 'N/A', self);
+  CodeSection.EntryPointAddress := 0;
   Sections.Add(CodeSection);
 end;
 
 
 
-function TCOMFile.SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean;
+procedure TCOMFile.SaveToFile(DHF: TStream; var DAS: TextFile);
 begin
-  result:= inherited SaveToFile(DHF, DAS, SaveOptions);
+  inherited SaveToFile(DHF, DAS);
 end;
 
 
 
-function TCOMFile.LoadFromFile(DHF: TStream; var DAS: TextFile): boolean;
+procedure TCOMFile.LoadFromFile(DHF: TStream; var DAS: TextFile);
 begin
-  result:= inherited LoadFromFile(DHF, DAS);
+  inherited LoadFromFile(DHF, DAS);
 end;
 
 
 
-destructor TCOMFile.Destroy();
+destructor TCOMFile.Destroy;
 begin
   inherited;
 end;

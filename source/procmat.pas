@@ -59,12 +59,12 @@ const
 
   // TatraDAS version constants
   TatraDASVersion: cardinal = $00029900;
-  TatraDASDate: string = '27. 12. 2007';
+  TatraDASDate: string = '31. 3. 2009';
   TatraDASProjectVersion = $00030002;
   ShortTatraDASVersion: string = '2.9.9';
   TatraDASFullName: string = 'TatraDAS disassembler';
-  TatraDASFullNameVersion: string = 'TatraDAS disassembler 2.9.9 devel';
-
+  TatraDASFullNameVersion = 'TatraDAS disassembler 2.9.9 devel';
+  DASFileFirstLine = ';DisASsembled file, Original file: %s  ' + TatraDASFullNameVersion + ', Ivan Kohut (c) 2009';
 
   CodeArrayReserveSize = 20;
   MaxProgressNameLength = 25;
@@ -102,8 +102,9 @@ type
     RemoveExport: boolean;
   end;
 
-  TSaveOption = (soProject, soDisassembly, soNASM, soAddress, soParsed, soDisassembled, soJump, soCall, soExport, soImport, soEntryPoint);
-  TSaveOptions = set of TSaveOption;
+  TExportOption = (eoDAS, eoCustomDAS, eoNASM);
+  TExportCustomDASOption = (soAddress, soParsed, soDisassembled, soJump, soCall, soExport, soImport, soEntryPoint);
+  TExportCustomDASOptions = set of TExportCustomDASOption;
 
   TLineType = (ltInstruction, ltComment, ltJumpRef, ltCallRef, ltLoopRef, ltImportRef, ltExportRef, ltEntryPointRef, ltEmpty);
 
@@ -134,10 +135,18 @@ type
     Movable: array of TMovableBundle;
   end;
 
+  // Exceptions - general exceptions which can be used everywhere in TatraDAS
 
   ETatraDASException = class (Exception);
-  EUserTerminatedProcess = class (ETatraDASException);
+
+  // Raise in case of unexpected state = indicates bug
+  // Messages in English only
   EIllegalState = class (ETatraDASException);
+
+  // User terminated a process
+  EUserTerminatedProcess = class (ETatraDASException);
+  // User exception shold be translated
+
 
   TMyMemoryStream = class(TMemoryStream)
     procedure SetMemory(Ptr: pointer; Size: LongInt);

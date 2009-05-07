@@ -78,7 +78,6 @@ object AdvancedChangingToDataForm: TAdvancedChangingToDataForm
       Height = 17
       Caption = 'signed'
       TabOrder = 0
-      OnClick = SignedRadioButtonClick
     end
     object UnsignedRadioButton: TRadioButton
       Left = 16
@@ -89,7 +88,6 @@ object AdvancedChangingToDataForm: TAdvancedChangingToDataForm
       Checked = True
       TabOrder = 1
       TabStop = True
-      OnClick = UnsignedRadioButtonClick
     end
   end
   object OptionsGroupBox: TGroupBox

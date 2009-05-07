@@ -11,8 +11,9 @@ var
   CouldNotFindDASFileStr: string = 'Could not find project DAS file';
   ProjectFilterStr: string = 'Disassembled file ';
   SaveDisassemblyFilterStr: string = 'Disassembled file ';
-  ProjectModifiedStr: string = 'Project <project> has been modified. Do you want to save changes ?';
-  FileModifiedStr: string = 'File <filename> has been modified. Do you want to save changes ?';
+  ProjectModifiedStr: string = 'Project %s has been modified. Do you want to save changes ?';
+  FileModifiedStr: string = 'File %s has been modified. Do you want to save changes ?';
+  FileCorruptedStr: string = 'File is corrupted';
 
 // Address
   InvalidAddressStr: string = 'Invalid address';
@@ -25,16 +26,18 @@ var
 // Section
   CodeSectionStr: string = 'Code Section #';
   SectionStr: string = 'Section';
+  UnusedSpaceStr: string = 'unused space';
 
 // TatraDAS general
   InCompatibleProjectVersion: string = 'Incompatible Project version';
   CurrentVersion: string = 'Current version is';
   NoLanguageFilesStr: string = 'Unable to find any language file. Exiting.';
+  UnableToChangeLanguageStr: string = 'Unable to change language!';
 
 // Common
   DivisionByZeroStr: string = 'Division by zero!';
   NotFoundStr: string = 'was not found!';
-
+  UnspecifiedErrorStr: string = 'An error has occured. Process stopped.';
 
 implementation
 

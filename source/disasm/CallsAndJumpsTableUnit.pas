@@ -17,25 +17,25 @@ type
 { TCallsAndJumps }
 
   TCaJEntry = record
-    start,finish: cardinal;
+    start, finish: Cardinal;
   end;
 
   TCallsAndJumps = class
   private
     Current: array of TCaJEntry;
-    Next: array of cardinal;
-    fNextCount: integer;
+    Next: array of Cardinal;
+    fNextCount: Integer;
     fDisassemblerMap: TByteDynArray;
-    function GetCount: integer;
-    function GetCapacity: integer;
-    function GetData(index: integer):tcajentry;
-    procedure SetCapacity(aCapacity: integer);
+    function GetCount: Integer;
+    function GetCapacity: Integer;
+    function GetData(Index: Integer): TCaJEntry;
+    procedure SetCapacity(aCapacity: Integer);
   public
     constructor Create(var aDisassemblerMap: TByteDynArray); overload;
 
-    procedure Add(address: cardinal);                              // pridanie do buducich
-    procedure Process(lastAddress: cardinal);                      // spracovanie buducich -> na aktualne
-    property CAJ[index: integer]: TCAJEntry read GetData; default; // aktualne skoky
+    procedure Add(Address: Cardinal);                              // pridanie do buducich
+    procedure Process(LastAddress: Cardinal);                      // spracovanie buducich -> na aktualne
+    property CAJ[index: Integer]: TCAJEntry read GetData; default; // aktualne skoky
     property Count: Integer read GetCount;                         // Current Count
     property Capacity: Integer read GetCapacity write SetCapacity; // Next Capacity
   end;
@@ -46,54 +46,54 @@ implementation
 
 constructor TCallsAndJumps.Create(var aDisassemblerMap: TByteDynArray);
 begin
-  fDisassemblerMap:=aDisassemblerMap;
+  fDisassemblerMap := aDisassemblerMap;
 end;
 
 
 
-function TCallsAndJumps.GetCount: integer;
+function TCallsAndJumps.GetCount: Integer;
 begin
-  result:=Length(current);
+  Result := Length(current);
 end;
 
 
 
-function TCallsAndJumps.GetCapacity: integer;
+function TCallsAndJumps.GetCapacity: Integer;
 begin
-  result:=Length(next);
+  Result := Length(next);
 end;
 
 
 
-procedure TCallsAndJumps.SetCapacity(aCapacity: integer);
+procedure TCallsAndJumps.SetCapacity(aCapacity: Integer);
 begin
-  SetLength(next,aCapacity);
+  SetLength(next, aCapacity);
 end;
 
 
 
-function TCallsAndJumps.GetData(index: integer): tcajentry;
+function TCallsAndJumps.GetData(Index: Integer): TCaJEntry;
 begin
-  result:=current[index];
+  Result := current[Index];
 end;
 
 
 
-procedure TCallsAndJumps.Add(address: cardinal);
+procedure TCallsAndJumps.Add(Address: Cardinal);
 begin
   if (fDisassemblerMap[address] and dfPart) <> 0 then
     Exit;
 
   if Capacity <= fNextCount then
-    Capacity:=Capacity + 10;
+    Capacity := Capacity + 10;
 
-  next[fNextCount]:=address;
+  next[fNextCount] := Address;
   Inc(fNextCount);
 end;
 
 
 
-procedure TCallsAndJumps.Process(lastAddress: cardinal);
+procedure TCallsAndJumps.Process(LastAddress: Cardinal);
 var
   pom: TCardinalDynArray;
 

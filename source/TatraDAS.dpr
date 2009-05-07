@@ -52,6 +52,7 @@ uses
   SectionUnit in 'SectionUnit.pas',
   RegionsUnit in 'RegionsUnit.pas',
   ProgressThreads in 'ProgressThreads.pas',
+  Exporters in 'Exporters.pas',
 
 {$IFDEF MSWINDOWS}
 
@@ -59,7 +60,7 @@ uses
   StringRes in 'res\StringRes.pas',
   LoggerUnit in 'misc\LoggerUnit.pas',
   FilesUnit in 'misc\FilesUnit.pas',
-  MyLists in 'misc\MyLists.pas',
+  ListsUnit in 'misc\ListsUnit.pas',
 
 {$IFDEF GUI_B}
   TatraDASHighlighter in 'res\TatraDASHighlighter.pas',
@@ -130,7 +131,7 @@ uses
   StringRes in 'res/StringRes.pas',
   LoggerUnit in 'misc/LoggerUnit.pas',
   FilesUnit in 'misc/FilesUnit.pas',
-  MyLists in 'misc/MyLists.pas',
+  ListsUnit in 'misc/ListsUnit.pas',
 
 {$IFDEF GUI_B}
   ButtonsX in 'misc/ButtonsX.pas',
@@ -240,13 +241,13 @@ begin
     on ETatraDASException do begin
       case ProgressData.ErrorStatus of
         errOpen:
-          ErrorMessage:= 'Unable to open file ''' + ExpandFilename(ParamStr(1)) + '''.';
+          ErrorMessage:= CouldNotOpenFileStr + ' ''' + ExpandFilename(ParamStr(1)) + '''.';
 {
         errUnknownFormat:
           ErrorMessage:= 'Unknown file format.';
 }
         errUnspecified:
-          ErrorMessage:= 'An error occured. Process stopped.';
+          ErrorMessage:= UnspecifiedErrorStr;
       end;
       WriteLn(ErrorMessage);
       Logger.Fatal(ErrorMessage);

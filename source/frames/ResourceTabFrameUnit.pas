@@ -36,14 +36,14 @@ implementation
 constructor TResourceTabFrame.Create(AOwner: TComponent; ASection: TSection);
 begin
   inherited;
-  fSection:=aSection as TResourceSection;
+  fSection := aSection as TResourceSection;
 end;
 
 
 
 function TResourceTabFrame.GetSection: TSection;
 begin
-  result:=fSection;
+  Result := fSection;
 end;
 
 

@@ -30,13 +30,13 @@ type
     procedure FormActivate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
   private
+    GotoAddressEdit: THexPositiveEdit;
     procedure SetMaxAddress(MaxAddress: cardinal);
     function GetAddress: cardinal;
   public
-    GotoAddressEdit: THexPositiveEdit;
     procedure Translate;
-    property MaxAddress: cardinal write SetMaxAddress;
-    property Address: cardinal read GetAddress;
+    property MaxAddress: Cardinal write SetMaxAddress;
+    property Address: Cardinal read GetAddress;
   end;
 
 var
@@ -57,7 +57,7 @@ end;
 
 function TGoToAddressForm.GetAddress: cardinal;
 begin
-  result := GotoAddressEdit.AsCardinal;
+  Result := GotoAddressEdit.AsCardinal;
 end;
 
 

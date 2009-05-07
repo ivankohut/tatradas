@@ -156,26 +156,12 @@ end;
 constructor TTextFileLoggerListener.Create(AFilename: string);
 begin
   fLogFileName := AFileName;
-  {
-  try
-    AssignFile(fLogFile, AFilename);
-    if FileExists(AFilename) then
-      System.Append(fLogFile)
-    else
-      System.Rewrite(fLogFile);
-
-  except
-    CloseFile(fLogFile);
-    raise Exception.Create('Logger listener file opening failed.');
-  end;
-  }
 end;
 
 
 
 destructor TTextFileLoggerListener.Destroy;
 begin
-//  CloseFile(fLogFile);
   inherited Destroy;
 end;
 

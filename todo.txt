@@ -7,50 +7,55 @@ General
 - zdroje (PE, NE, atd) ?
 - paralelne disassemblovanie viacerych sekcii
 - Lazarus GUI
+- nastroj pre dokumentaciu zdrojoveho kodu (komentare na zaciatku metod) - kedze zatial kod je okomentovany dost slabo, taky nastroj nema velmi zmysel
+
 Disassembler
 - 64 bit (pozor na instrukciu MOVD/Q, PEXTRD/Q, PINSRD/Q, CMPXCH8B/16B atd.)
 - instrukcie pre virtualizaciu
+- nerekurzivne disassemblovanie
+- 0F C2 - CMPxxxx - spravit rozne nazvy instrukcie podla tretieho operandu
+- FISTTP je to SSE3 instrukcia medzi FPU - co s tym ? ako nastavit instrSet na SSE3 ?
+- problemy (disasm & yasm/nasm): (skoky a volania medzi sekciam)
+    snowcraft.exe undefined symbol (yasm) - problem je v tom, ze v CALL a jeho ciel su v roznych sekciach -> CALL v jednej sekcii nevytvori referenciu v druhej sekcii a teda tam nedisassemblujeme od ciela CALL-u
+- operand size atribute pri instrukciach s implicitnou adresaciou (to je to zakomentovane a16 a spol. pri spracovani prefixu)
 
 GUI
-- optimalizacia ImportTabFrame - nahradit ListView StringGrid-om, aby sa v pripade obrovskeho mnzostva importovanych funkcii z jedneho modulu nenacitaval zoznam funkcii prilis dlho  
+- optimalizacia ImportTabFrame - nahradit ListView StringGrid-om, aby sa v pripade obrovskeho mnzostva importovanych funkcii z jedneho modulu nenacitaval zoznam funkcii prilis dlho
 - zamysliet sa nad polozkami v menu (a buttonmi na codeframe)
 - prerobit menu pomocou actions
 - system na spravu GUI dat (hodnoty formularov) & ich ukladanie do projektoveho suboru
   - pridat ulozenie bookmarkov v projekte
 - usporiadanie GUI prvkov na FileTabFrame
 
-2.9.9
-General
-- nastroj pre dokumentaciu zdrojoveho kodu (komentare na zaciatku metod)
-- errory a vynimky (o.i. ako osetrovat pristup do poli v array propertoch)
-- stringy rozhadzane po suboroch
-- save - rozdelit na Save Project a Export (Disassembly, NASM, lubovolne)
-- zamysliet sa nad zmyslom ExecFileManagera, co jej jeho ulohou, neda sa to spravit inak ? (nema ziaden stav(premenne))
-Disassembler:
-- refactorizacia disassemblera!
-- 0F C2 - CMPxxxx - spravit rozne nazvy instrukcie podla tretieho operandu
-- nerekurzivne disassemblovanie
-- FISTTP je to SSE3 instrukcia medzi FPU - co s tym ? ako nastavit instrSet na SSE3 ?
-- zmenit typ parametra FPU instrukcii ? (aby nemusel byt "case" v FPU vetve)
-- problemy (disasm & yasm/nasm): (skoky a volania medzi sekciam)
-    snowcraft.exe undefined symbol (yasm) - problem je v tom, ze v CALL a jeho ciel su v roznych sekciach -> CALL v jednej sekcii nevytvori referenciu v druhej sekcii a teda tam nedisassemblujeme od ciela CALL-u
-- operand size atribute pri instrukciach s implicitnou adresaciou (to je to zakomentovane a16 a spol. pri spracovani prefixu)
-
 Misc
-- procmat - rozdelit na viac unitov ?
-- porozmyslat na rozdelenim SaveToFile na dve metody (DAS a DHF)
 - ELF
     - pochopit a prerobit import
     - pridat inicializaciu Regionov
     - exefily by mali mat len take polia, ktore su hodne ukladania do projektu (resp. existencie po otvoreni projektu), zvysok by sa mal posuvat pri vytvarani ako parametre
+- porozmyslat na rozdelenim SaveToFile na dve metody (DAS a DHF)
+
+2.9.9
+OptionsForm - co s tym ? nastavenia sa ukladaju od INI, aj preklady su pripravene
+
+General
+- errory a vynimky (o.i. ako osetrovat pristup do poli v array propertoch), ExecFileManager
+- zamysliet sa nad zmyslom ExecFileManagera, co jej jeho ulohou, neda sa to spravit inak ? (nema ziaden stav(premenne))
+
+Disassembler:
+- refactorizacia disassemblera!
+- zmenit typ parametra FPU instrukcii ? (aby nemusel byt "case" v FPU vetve)
+- pri znovu disassemblovani celeho suboru treba nejak spravit to, aby disassemblovanie nevkladalo output do toho isteho TatradasStringList-u, v ktorom je uz disassemblovany kod, lebo to ide potom strasne pomaly
+
+Misc
+- procmat - rozdelit na viac unitov ?
 - refaktorizacia
-  - codeSection.savetofile (NASM)
+    - ExportSectionToNASM (testy)
 - kompilovatelnost s NASM
   - upravit aby NASM nehadzal warningy
   - optimalizovat ukladanie do NASM (stringy)
   - najvhodnejsi by bol specialny mod disassemblovania
+
 - osetrenie viacerych vynimiek v ProgressThreads a nasledne v MainForm-e(GUI) a TatraDAS-e(console)
-- framy si nepamataju svoju velkost
 - mozno je to OK - pe import lookup table NULL error
 - po stlaceni zrusit vlakno stale bezi
 - dlho trvajuca zmena na ???
@@ -62,6 +67,8 @@ CLI
 - textovy progress - dobiehanie do 100%, aj je progress naozaj kratky, tak sa nezobrazi ani jeho nazov
 
 DONE:
+- save - rozdelit na Save Project a Export (Disassembly, NASM, lubovolne)
+- stringy rozhadzane po suboroch
 - ReplaceLines (zatial nevyhadzuje ziadne bezadresne riadky, iba nahradzovane adresne riadky)
 - optimalizovany ExportTabFrame - ListView nahradenym StringGrid-om (ak mala kniznica vela exportovanych funkcii, ako napr. svx680mi.dll - 16000 alebo bf_svx680mi.dll - 31000, tak sa ListItem-y vytvarali strasne dlho)
 - vlastny MessageDlg, aby zobrazoval buttony v jazyku TatraDASu
@@ -92,11 +99,12 @@ DONE:
 - oprava CALL far mem - chybalo "far", teda tvarilo sa ako "near"
 - oprava ODstranene memory leak-y vdaka FastMM
 - oprava ChangeToString nezamrzne ak Pascal string pretrca cez sekciu -> nespravi sa nic
+- oprava instrukcia FXRSTOR bola nazvana FXSTOR (chybalo 'R', dosledkom bolo nezvyraznenie)
+- oprava instrukcie LDMXCSR, STMXCSR, FXSAVE, FXRSTOR, CLFLUSH nemali operand
+
 
 -----------------------------
 
-
-- AAS nie je zvyraznena v MEM.jar
 - relocation table v MZ formate
 - moznost vzdy si vybrat otvorit subor ako subor neznameho formatu
 - lepsia detekcia volania funkcii

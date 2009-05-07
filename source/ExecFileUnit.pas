@@ -73,8 +73,8 @@ type
 
     procedure Disassemble; virtual;
 
-    function SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; overload; virtual;
-    function LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; virtual;
+    procedure SaveToFile(DHF: TStream; var DAS: TextFile); overload; virtual;
+    procedure LoadFromFile(DHF: TStream; var DAS: TextFile); virtual;
 
     property FileName: TFileName read fFileName;
     property FullPath: TFileName read fFullPath;
@@ -92,6 +92,8 @@ type
 
 implementation
 
+uses StringUtilities;
+
 
 //******************************************************************************
 // TExecutableFile class
@@ -100,18 +102,18 @@ implementation
 
 constructor TExecutableFile.Create;
 begin
-  fSections:= TSections.Create;
+  fSections := TSections.Create;
 end;
 
 
 
 constructor TExecutableFile.Create(InputFile: TStream; aFileName: TFileName);
 begin
-  fFileSize:= InputFile.Size;
-  fFullPath:= aFileName;
-  fFileName:= ExtractFileName(aFileName);
-  fSections:= TSections.Create;
-  fRegions:= TRegions.Create(FileSize);
+  fFileSize := InputFile.Size;
+  fFullPath := aFileName;
+  fFileName := ExtractFileName(aFileName);
+  fSections := TSections.Create;
+  fRegions := TRegions.Create(FileSize);
 end;
 
 
@@ -126,84 +128,67 @@ end;
 
 procedure TExecutableFile.Disassemble;
 var
-  SectionIndex, j: integer;
+  SectionIndex, ExceptionSectionIndex: Integer;
   Options: TDisassembleOptions;
 begin
   // Reset code section if file is already disassembled
   if IsDisassembled then
-    for SectionIndex:=0 to Sections.Count-1 do
+    for SectionIndex := 0 to Sections.Count - 1 do
       if Sections[SectionIndex].Typ = stCode then
         (Sections[SectionIndex] as TCodeSection).ClearDisassembled;
-  fIsDisassembled:= false;
+  fIsDisassembled := false;
 
   // Nastavime parametre a disassemblujme
-  for SectionIndex:=0 to Sections.Count-1 do
+  for SectionIndex := 0 to Sections.Count - 1 do
     if Sections[SectionIndex].Typ = stCode then
       with Sections[SectionIndex] as TCodeSection do begin
-        Options.Address:= EntryPointAddress;
-        Options.Size:= CodeSize;
-        Options.Bit32:= Bit32;
+        Options.Address := EntryPointAddress;
+        Options.Size := CodeSize;
+        Options.Bit32 := Bit32;
         try
           DisassembleAll(Options);
         except
-          for j:=0 to SectionIndex do
-            if Sections[j] is TCodeSection then (Sections[j] as TCodeSection).ClearDisassembled;
+          for ExceptionSectionIndex := 0 to SectionIndex do
+            if Sections[ExceptionSectionIndex].Typ = stCode then
+              (Sections[ExceptionSectionIndex] as TCodeSection).ClearDisassembled;
           raise;
         end;
       end;
-  fIsDisassembled:= true;
+  fIsDisassembled := True;
 end;
 
 
 
-function TExecutableFile.SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean;
+procedure TExecutableFile.SaveToFile(DHF: TStream; var DAS: TextFile);
 var
-  SectionIndex: integer;
-  StreamSectionCount: integer;
+  SectionIndex: Integer;
+  StreamSectionCount: Integer;
 begin
-  result:=false;
+  // Write ExecFile info
+  DHF.Write(fFileSize, 4);
+  StreamWriteAnsiString(DHF, fFullPath);
+  fRegions.SaveToFile(DHF);
+  StreamSectionCount := Sections.Count;
+  DHF.Write(StreamSectionCount, 4);
+  WriteLn(DAS, InjectStr(DASFileFirstLine, [FileName]));
+  Writeln(DAS);
 
-  // Save as project
-  if soProject in SaveOptions then begin
-
-    DHF.Write(fFileSize, 4);
-    StreamWriteAnsiString(DHF, fFullPath);
-
-    fRegions.SaveToFile(DHF);
-
-    StreamSectionCount:=Sections.Count;
-    DHF.Write(StreamSectionCount, 4);
-    WriteLn(DAS, ';DisASsembled file, Original file: ' + FileName + '  ' + TatraDASFullNameVersion + ', Ivan Kohut (c) 2008');
-    Writeln(DAS);
-    for SectionIndex:=0 to Sections.Count-1 do begin
-      DHF.Write(Sections[SectionIndex].typ, sizeof(TSectionType));
-      if not Sections[SectionIndex].SaveToFile(DHF, DAS, SaveOptions) then
-        Exit;
-    end;
-  end
-
-  // Save disassembled code sections
-  else begin
-    WriteLn(DAS, ';DisASsembled file, Original file: ' + FileName + '  ' + TatraDASFullNameVersion + ', Ivan Kohut (c) 2008');
-    Writeln(DAS);
-    for SectionIndex:=0 to Sections.Count-1 do
-      if Sections[SectionIndex].typ = stCode then
-        if not Sections[SectionIndex].SaveToFile(DHF, DAS, SaveOptions) then
-          Exit;
+  // Write sections
+  for SectionIndex := 0 to Sections.Count - 1 do begin
+    DHF.Write(Sections[SectionIndex].typ, SizeOf(TSectionType));
+    Sections[SectionIndex].SaveToFile(DHF, DAS);
   end;
-  result:=true;
 end;
 
 
 
-function TExecutableFile.LoadFromFile(DHF: TStream; var DAS: TextFile): boolean;
-var i:integer;
-    SectionType: TSectionType;
-    StreamSectionCount: integer;
-    Section: TSection;
+procedure TExecutableFile.LoadFromFile(DHF: TStream; var DAS: TextFile);
+var
+  i: Integer;
+  SectionType: TSectionType;
+  StreamSectionCount: Integer;
+  Section: TSection;
 begin
-  result:= false;
-
   DHF.Read(fFileSize, 4);
   fFullPath:= StreamReadAnsiString(DHF);
   fFileName:= ExtractFileName(fFullpath);
@@ -218,30 +203,29 @@ begin
     DHF.Read(SectionType, sizeOf(TSectionType));
     case SectionType of
       stCode: begin
-        Section:= TCodeSection.Create(self);
+        Section := TCodeSection.Create(self);
         Inc(fCodeSectionsCount);
       end;
       stImport: begin
-        Section:= TImportSection.Create(self);
-        fImportSection:= Section as TImportSection;
+        Section := TImportSection.Create(self);
+        fImportSection := Section as TImportSection;
       end;
       stExport: begin
-        Section:= TExportSection.Create(self);
-        fExportSection:= Section as TExportSection;
+        Section := TExportSection.Create(self);
+        fExportSection := Section as TExportSection;
       end;
       stResource: begin
-        Section:= TResourceSection.Create(self);
+        Section := TResourceSection.Create(self);
       end;
       else
-        raise Exception.Create('Bad section type (Executable.LoadFromFile)');
+        raise EIllegalState.Create('Executable.LoadFromFile: Bad section type');
     end;
 
     if not Section.LoadFromFile(DHF, DAS) then
       Exit;
     Sections.Add(Section);
   end;
-  fIsDisassembled:= true;
-  result:= true;
+  fIsDisassembled := True;
 end;
 
 

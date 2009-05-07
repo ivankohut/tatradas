@@ -21,17 +21,17 @@ type
    protected
     fExecFile: TObject; // TExecutableFile;
     fTyp: TSectionType;
-    fSectionIndex: integer;  // index in ExecFile's 'Sections' array
+    fSectionIndex: Integer;  // index in ExecFile's 'Sections' array
 
    public
     constructor Create(aName: string; aExecFile: TObject); overload; virtual;
 
-    function SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; virtual;
+    procedure SaveToFile(DHF: TStream; var DAS: TextFile); virtual;
     function LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; virtual;
 
     property Name: string read fName;
     property Typ: TSectionType read fTyp;
-    property SectionIndex: integer read fSectionIndex;
+    property SectionIndex: Integer read fSectionIndex;
     property ExecFile: TObject read fExecFile;
   end;
 
@@ -40,10 +40,10 @@ type
   TSections = class
    private
     fSections: array of TSection;
-    fReadOnly: boolean;
-    fCount: integer;
+    fReadOnly: Boolean;
+    fCount: Integer;
 
-    function GetSection(Index: integer): TSection;
+    function GetSection(Index: Integer): TSection;
    public
     constructor Create;
     destructor Destroy; override;
@@ -56,10 +56,10 @@ type
     function GetSectionOffsetFromFileOffset(Offset: cardinal): cardinal; virtual;  // Offset v danej sekcii
 }
 
-    function GetSectionIndexFromMemOffset(Offset: cardinal): integer; virtual;  // Index (kodovej) sekcie v poli Sections
+    function GetSectionIndexFromMemOffset(Offset: Cardinal): Integer; virtual;  // Index (kodovej) sekcie v poli Sections
 
-    property Count: integer read fCount;
-    property Items[Index: integer]: TSection read GetSection; default;
+    property Count: Integer read fCount;
+    property Items[Index: Integer]: TSection read GetSection; default;
   end;
 
 
@@ -71,28 +71,25 @@ uses CodeSectionUnit;
 
 constructor TSection.Create(aName: string; aExecFile: TObject);
 begin
-  fName:= aName;
-  fExecFile:= aExecFile;
+  fName := aName;
+  fExecFile := aExecFile;
 end;
 
 
 
-function TSection.SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean;
+procedure TSection.SaveToFile(DHF: TStream; var DAS: TextFile);
 begin
-  if soProject in SaveOptions then begin
-    StreamWriteAnsiString(DHF, fName);
-    DHF.Write(fSectionIndex, 4);
-  end;
-  result:= true;
+  StreamWriteAnsiString(DHF, fName);
+  DHF.Write(fSectionIndex, 4);
 end;
 
 
 
-function TSection.LoadFromFile(DHF: TStream; var DAS: TextFile): boolean;
+function TSection.LoadFromFile(DHF: TStream; var DAS: TextFile): Boolean;
 begin
-  fName:= StreamReadAnsiString(DHF);
+  fName := StreamReadAnsiString(DHF);
   DHF.Read(fSectionIndex, 4);
-  result:= true;
+  Result := True;
 end;
 
 
@@ -101,17 +98,17 @@ end;
 
 constructor TSections.Create;
 begin
-  fReadOnly:= false;
-  fCount:= 0;
+  fReadOnly := False;
+  fCount := 0;
 end;
 
 
 
 destructor TSections.Destroy;
 var
-  i: integer;
+  i: Integer;
 begin
-  for i:=0 to fCount - 1 do
+  for i := 0 to fCount - 1 do
     fSections[i].Free;
 end;
 
@@ -163,17 +160,18 @@ end;
 
 
 
-function TSections.GetSectionIndexFromMemOffset(Offset: cardinal): integer;
-var i: integer;
+function TSections.GetSectionIndexFromMemOffset(Offset: Cardinal): Integer;
+var
+  i: Integer;
 begin
-  for i:=0 to Count - 1 do
+  for i := 0 to Count - 1 do
     if fSections[i].Typ = stCode then
       with fSections[i] as TCodeSection do
         if (Offset >= MemOffset) and (Offset < MemOffset + MemSize) then begin
-          result:= i;
+          Result := i;
           Exit;
         end;
-  result:=-1;
+  Result := -1;
 end;
 
 
@@ -183,28 +181,28 @@ begin
   if not fReadOnly then begin
     Inc(fCount);
     SetLength(fSections, self.Count);
-    ASection.fSectionIndex:= Count - 1;
-    fSections[fCount-1]:= ASection;
+    ASection.fSectionIndex := Count - 1;
+    fSections[fCount - 1] := ASection;
   end
   else
-    raise Exception.Create('Class data read-only');
+    raise EIllegalState.Create('Class data read-only');
 end;
 
 
 
 procedure TSections.MakeReadOnly;
 begin
-  fReadOnly:= true;
+  fReadOnly := True;
 end;
 
 
 
-function TSections.GetSection(Index: integer): TSection;
+function TSections.GetSection(Index: Integer): TSection;
 begin
   if (Index >= 0) and (Index < fCount)  then
-    result:= fSections[Index]
+    result := fSections[Index]
   else
-    raise Exception.Create('Array index out of bounds');
+    raise EIllegalState.Create('Array index out of bounds');
 end;
 
 

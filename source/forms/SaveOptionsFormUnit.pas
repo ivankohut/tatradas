@@ -31,7 +31,6 @@ type
     ParsedCheckBox: TCheckBox;
     DisassembledCheckBox: TCheckBox;
     MainGroupBox: TGroupBox;
-    ProjectRadioButton: TRadioButton;
     CustomRadioButton: TRadioButton;
     DisassemblyRadioButton: TRadioButton;
     NASMRadioButton: TRadioButton;
@@ -41,100 +40,123 @@ type
     procedure FormShow(Sender: TObject);
     procedure CancelButtonClick(Sender: TObject);
   private
-    { Private declarations }
+    procedure SetExtSettingsEnabled(AValue: Boolean);
+    function GetExportCustomDASOptions: TExportCustomDASOptions;
+    function GetExportOption: TExportOption;
   public
-    SaveOptions: TSaveOptions;
     procedure Translate;
-    { Public declarations }
+    property ExportCustomDASOptions: TExportCustomDASOptions read GetExportCustomDASOptions;
+    property ExportOption: TExportOption read GetExportOption; 
   end;
 
 var
   SaveOptionsForm: TSaveOptionsForm;
 
+  
 implementation
+
 
 {$R *.dfm}
 
-procedure TSaveOptionsForm.ProjectRadioButtonClick(Sender: TObject);
+
+function TSaveOptionsForm.GetExportCustomDASOptions: TExportCustomDASOptions;
 begin
-  ReferencesGroupBox.Enabled:=false;
-  InstructionGroupBox.Enabled:=false;
-  AddressCheckBox.Enabled:=false;
-  ParsedCheckBox.Enabled:=false;
-  DisassembledCheckBox.Enabled:=false;
-  JumpCheckBox.Enabled:=false;
-  CallCheckBox.Enabled:=false;
-  ExportCheckBox.Enabled:=false;
-  ImportCheckBox.Enabled:=false;
-  EntryPointCheckBox.Enabled:=false;
+  Result := [];
+  if AddressCheckBox.Checked then Result := Result + [soAddress];
+  if ParsedCheckBox.Checked then Result := Result + [soParsed];
+  if DisassembledCheckBox.Checked then Result := Result + [soDisassembled];
+  if JumpCheckBox.Checked then Result := Result + [soJump];
+  if CallCheckBox.Checked then Result := Result + [soCall];
+  if ExportCheckBox.Checked then Result := Result + [soExport];
+  if ImportCheckBox.Checked then Result := Result + [soImport];
+  if EntryPointCheckBox.Checked then Result := Result + [soEntrypoint];
 end;
 
-procedure TSaveOptionsForm.OKButtonClick(Sender: TObject);
+
+
+function TSaveOptionsForm.GetExportOption: TExportOption;
 begin
-  SaveOptions:=[];
-  if ProjectRadioButton.Checked then SaveOptions:=[soProject]
-  else if DisassemblyRadioButton.Checked then SaveOptions:=[soDisassembly]
-  else if NASMRadioButton.Checked then SaveOptions:=[soNASM]
-  else begin
-    if AddressCheckBox.Checked then SaveOptions:=SaveOptions + [soAddress];
-    if ParsedCheckBox.Checked then SaveOptions:=SaveOptions + [soParsed];
-    if DisassembledCheckBox.Checked then SaveOptions:=SaveOptions + [soDisassembled];
-    if JumpCheckBox.Checked then SaveOptions:=SaveOptions + [soJump];
-    if CallCheckBox.Checked then SaveOptions:=SaveOptions + [soCall];
-    if ExportCheckBox.Checked then SaveOptions:=SaveOptions + [soExport];
-    if ImportCheckBox.Checked then SaveOptions:=SaveOptions + [soImport];
-    if EntryPointCheckBox.Checked then SaveOptions:=SaveOptions + [soEntrypoint];
-  end;
-  ModalResult:=mrOK;
+  if DisassemblyRadioButton.Checked then Result := eoDAS
+  else if CustomRadioButton.Checked then Result := eoCustomDAS
+  else if NASMRadioButton.Checked then Result := eoNASM
+  else
+    raise EIllegalState.Create('TSaveOptionsForm.GetExportOption: No radio button selected');
 end;
+
+
+
+procedure TSaveOptionsForm.SetExtSettingsEnabled(AValue: Boolean);
+begin
+  ReferencesGroupBox.Enabled := AValue;
+  InstructionGroupBox.Enabled := AValue;
+  AddressCheckBox.Enabled := AValue;
+  ParsedCheckBox.Enabled := AValue;
+  DisassembledCheckBox.Enabled := AValue;
+  JumpCheckBox.Enabled := AValue;
+  CallCheckBox.Enabled := AValue;
+  ExportCheckBox.Enabled := AValue;
+  ImportCheckBox.Enabled := AValue;
+  EntryPointCheckBox.Enabled := AValue;
+end;
+
+
+
+procedure TSaveOptionsForm.ProjectRadioButtonClick(Sender: TObject);
+begin
+  SetExtSettingsEnabled(False);
+end;
+
+
 
 procedure TSaveOptionsForm.CustomRadioButtonClick(Sender: TObject);
 begin
-  ReferencesGroupBox.Enabled:=true;
-  InstructionGroupBox.Enabled:=true;
-  AddressCheckBox.Enabled:=true;
-  ParsedCheckBox.Enabled:=true;
-  DisassembledCheckBox.Enabled:=true;
-  JumpCheckBox.Enabled:=true;
-  CallCheckBox.Enabled:=true;
-  ExportCheckBox.Enabled:=true;
-  ImportCheckBox.Enabled:=true;
-  EntryPointCheckBox.Enabled:=true;
+  SetExtSettingsEnabled(True);
 end;
 
-procedure TSaveOptionsForm.FormShow(Sender: TObject);
+
+
+procedure TSaveOptionsForm.OKButtonClick(Sender: TObject);
 begin
-  if CustomRadioButton.Checked then CustomRadioButtonClick(nil)
-  else ProjectRadioButtonClick(nil);
+  ModalResult := mrOK;
 end;
+
+
 
 procedure TSaveOptionsForm.CancelButtonClick(Sender: TObject);
 begin
-  ModalResult:=mrCancel;
+  ModalResult := mrCancel;
 end;
+
+
+
+procedure TSaveOptionsForm.FormShow(Sender: TObject);
+begin
+  SetExtSettingsEnabled(CustomRadioButton.Checked);
+end;
+
+
 
 procedure TSaveOptionsForm.Translate;
 begin
-  Caption:= Translator.TranslateControl('SaveOptionsForm','Caption');
+  Caption := Translator.TranslateControl('SaveOptionsForm', 'Caption');
 
-  MainGroupBox.Caption:= Translator.TranslateControl('SaveOptionsForm','MainGroupBox');
-  ReferencesGroupBox.Caption:= Translator.TranslateControl('SaveOptionsForm','ReferencesGroupBox');
-  InstructionGroupBox.Caption:= Translator.TranslateControl('SaveOptionsForm','InstructionGroupBox');
+  MainGroupBox.Caption := Translator.TranslateControl('SaveOptionsForm', 'MainGroupBox');
+  ReferencesGroupBox.Caption := Translator.TranslateControl('SaveOptionsForm', 'ReferencesGroupBox');
+  InstructionGroupBox.Caption := Translator.TranslateControl('SaveOptionsForm', 'InstructionGroupBox');
 
-  ProjectRadioButton.Caption:= Translator.TranslateControl('SaveOptionsForm','ProjectRadioButton');
-  DisassemblyRadioButton.Caption:= Translator.TranslateControl('SaveOptionsForm','DisassemblyRadioButton');
-  CustomRadioButton.Caption:= Translator.TranslateControl('SaveOptionsForm','CustomRadioButton');
-  NASMRadioButton.Caption:= Translator.TranslateControl('SaveOptionsForm','NASMRadioButton');
-  AddressCheckBox.Caption:= Translator.TranslateControl('SaveOptionsForm','AddressCheckBox');
-  ParsedCheckBox.Caption:= Translator.TranslateControl('SaveOptionsForm','ParsedCheckBox');
-  DisassembledCheckBox.Caption:= Translator.TranslateControl('SaveOptionsForm','DisassembledCheckBox');
-  JumpCheckBox.Caption:= Translator.TranslateControl('SaveOptionsForm','JumpCheckBox');
-  CallCheckBox.Caption:= Translator.TranslateControl('SaveOptionsForm','CallCheckBox');
-  ExportCheckBox.Caption:= Translator.TranslateControl('SaveOptionsForm','ExportCheckBox');
-  ImportCheckBox.Caption:= Translator.TranslateControl('SaveOptionsForm','ImportCheckBox');
-  EntryPointCheckBox.Caption:= Translator.TranslateControl('SaveOptionsForm','EntryPointCheckBox');
+  DisassemblyRadioButton.Caption := Translator.TranslateControl('SaveOptionsForm', 'DisassemblyRadioButton');
+  CustomRadioButton.Caption := Translator.TranslateControl('SaveOptionsForm', 'CustomRadioButton');
+  NASMRadioButton.Caption := Translator.TranslateControl('SaveOptionsForm', 'NASMRadioButton');
+  AddressCheckBox.Caption := Translator.TranslateControl('SaveOptionsForm', 'AddressCheckBox');
+  ParsedCheckBox.Caption := Translator.TranslateControl('SaveOptionsForm', 'ParsedCheckBox');
+  DisassembledCheckBox.Caption := Translator.TranslateControl('SaveOptionsForm', 'DisassembledCheckBox');
+  JumpCheckBox.Caption := Translator.TranslateControl('SaveOptionsForm', 'JumpCheckBox');
+  CallCheckBox.Caption := Translator.TranslateControl('SaveOptionsForm', 'CallCheckBox');
+  ExportCheckBox.Caption := Translator.TranslateControl('SaveOptionsForm', 'ExportCheckBox');
+  ImportCheckBox.Caption := Translator.TranslateControl('SaveOptionsForm', 'ImportCheckBox');
+  EntryPointCheckBox.Caption := Translator.TranslateControl('SaveOptionsForm', 'EntryPointCheckBox');
 
-  CancelButton.Caption:= Translator.TranslateControl('Common','CancelButton');
+  CancelButton.Caption := Translator.TranslateControl('Common', 'CancelButton');
 end;
 
 

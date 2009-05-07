@@ -1,7 +1,5 @@
-
 [FileVersion]
 Version=6.0
-
 [Compiler]
 A=8
 B=0
@@ -32,7 +30,6 @@ Z=1
 ShowHints=1
 ShowWarnings=1
 UnitAliases=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
-
 [Linker]
 MapFile=0
 OutputObjs=0
@@ -43,7 +40,6 @@ MinStackSize=16384
 MaxStackSize=1048576
 ImageBase=4194304
 ExeDescription=
-
 [Directories]
 OutputDir=../
 UnitOutputDir=
@@ -54,14 +50,12 @@ Packages=vcl;rtl;vclx;vclshlctrls;VclSmp;direct
 Conditionals=NOTHREADS
 DebugSourceDirs=
 UsePackages=0
-
 [Parameters]
 RunParams=
 HostApplication=
 Launcher=
 UseLauncher=0
 DebugCWD=
-
 [Version Info]
 IncludeVerInfo=0
 AutoIncBuild=0
@@ -76,7 +70,6 @@ Private=0
 DLL=0
 Locale=1033
 CodePage=1252
-
 [Version Info Keys]
 CompanyName=
 FileDescription=
@@ -88,21 +81,17 @@ OriginalFilename=
 ProductName=
 ProductVersion=1.0.0.0
 Comments=
-
 [HistoryLists\hlConditionals]
 Count=1
 Item0=NOTHREADS
-
 [HistoryLists\hlUnitAliases]
 Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
-
 [HistoryLists\hlSearchPath]
 Count=3
 Item0=../third/synedit;../third/mphexeditor
 Item1=$(DELPHI)\Lib\Debug;../third/synedit;../third/mphexeditor
 Item2=../third/synedit
-
 [HistoryLists\hlOutputDirectorry]
 Count=2
 Item0=../

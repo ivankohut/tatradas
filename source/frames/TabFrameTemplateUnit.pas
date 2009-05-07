@@ -76,15 +76,15 @@ uses
 constructor TTabSheetTemplate.Create(ASection: TSection);
 begin
   if aSection = nil then
-    raise Exception.Create('TTabSheetTemplate.Create: Section = nil');
+    raise EIllegalState.Create('TTabSheetTemplate.Create: Section = nil');
   inherited Create(MainForm);
   PageControl := MainForm.MainPageControl;
   PageIndex := PageControl.PageCount - 1;
   case aSection.typ of
-    stCode: Frame:= TCodeTabFrame.Create(MainForm, ASection);
-    stExport: Frame:= TExportTabFrame.Create(MainForm, ASection);
-    stImport: Frame:= TImportTabFrame.Create(MainForm, ASection);
-    stResource: Frame:= TResourceTabFrame.Create(MainForm, ASection);
+    stCode: Frame := TCodeTabFrame.Create(MainForm, ASection);
+    stExport: Frame := TExportTabFrame.Create(MainForm, ASection);
+    stImport: Frame := TImportTabFrame.Create(MainForm, ASection);
+    stResource: Frame := TResourceTabFrame.Create(MainForm, ASection);
     else
       Exit;
   end;
@@ -127,7 +127,7 @@ end;
 
 function TTabSheetTemplate.GetPageType: TPageType;
 begin
-  result:=Frame.PageType;
+  Result := Frame.PageType;
 end;
 
 
@@ -161,18 +161,18 @@ end;
 function TTabFrameTemplate.GetPageType: TPageType;
 begin
   if self is TFileTabFrame then
-    result:= ttFile
+    Result := ttFile
   else begin
     if Section = nil then
-      raise Exception.Create('TTabSheetTemplate.Create: Section = nil');
+      raise EIllegalState.Create('TTabSheetTemplate.Create: Section = nil');
     case Section.typ of
-      stCode: result := ttCode;
-      stImport: result := ttImport;
-      stExport: result := ttExport;
-      stRelocation: result := ttRelocation;
-      stResource: result := ttResource;
+      stCode: Result := ttCode;
+      stImport: Result := ttImport;
+      stExport: Result := ttExport;
+      stRelocation: Result := ttRelocation;
+      stResource: Result := ttResource;
       else
-        raise Exception.Create('Illegal state');
+        raise EIllegalState.Create('Bad section type');
     end;
   end;  
 end;

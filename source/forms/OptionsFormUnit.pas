@@ -35,14 +35,11 @@ type
     procedure OKButtonClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
   private
-    { Private declarations }
-  public
     Options: TTatraDASOptions;
+  public
     procedure Translate;
     procedure SaveSettings(ini: TMemINIFile);
     procedure LoadSettings(ini: TMemINIFile);
-
-    { Public declarations }
   end;
 
 var

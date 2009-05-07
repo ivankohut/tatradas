@@ -24,18 +24,18 @@ type
   private
     fHeader: TMZHeader;
     fRelocations: array of TRelocationEntry;
-    function GetRelocationEntry(Index: integer): TRelocationEntry;
-    function GetRelocationsCount: integer;
+    function GetRelocationEntry(Index: Integer): TRelocationEntry;
+    function GetRelocationsCount: Integer;
   public
     constructor Create; overload; override;
     constructor Create(InputFile: TStream; aFileName: TFileName); overload; override;
-    destructor Destroy(); override;
-    function SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
-    function LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; override;
+    destructor Destroy; override;
+    procedure SaveToFile(DHF: TStream; var DAS: TextFile); override;
+    procedure LoadFromFile(DHF: TStream; var DAS: TextFile); override;
   public
     property Header: TMZHeader read fHeader;
-    property Relocations[Index: integer]: TRelocationEntry read GetRelocationEntry;
-    property RelocationsCount: integer read GetRelocationsCount;
+    property Relocations[Index: Integer]: TRelocationEntry read GetRelocationEntry;
+    property RelocationsCount: Integer read GetRelocationsCount;
   end;
 
 
@@ -50,7 +50,7 @@ implementation
 constructor TMZFile.Create;
 begin
   inherited;
-  fExecFormat:= ffMZ;
+  fExecFormat := ffMZ;
 end;
 
 
@@ -58,25 +58,25 @@ end;
 constructor TMZFile.Create(InputFile: TStream; aFileName: TFileName);
 var
   CodeSection: TCodeSection;
-  CodeSize: cardinal;
+  CodeSize: Cardinal;
 begin
   inherited;
-  fExecFormat:= ffMZ;
+  fExecFormat := ffMZ;
 
   InputFile.Seek(0, 0);
   InputFile.Read(fHeader, 40);
-  CodeSize:= (fHeader.PageCount-1)*512 + fHeader.PageRemainder - fHeader.HeaderSize*16;
+  CodeSize := (fHeader.PageCount - 1) * 512 + fHeader.PageRemainder - fHeader.HeaderSize * 16;
 
   // Set Regions
   Regions.Add('MZ Header', 0, 40);
-  Regions.Add('Code', fHeader.HeaderSize*16, CodeSize);
+  Regions.Add('Code', fHeader.HeaderSize * 16, CodeSize);
   Regions.Add('Relocation table', fHeader.RelocTableOffset, fHeader.RelocCount * SizeOf(TRelocationEntry));
   Regions.Finish;
 
   // Code section
   if CodeSize > 0 then begin
-    CodeSection:= TCodeSection.Create(InputFile, false, fHeader.HeaderSize*16, CodeSize, fHeader.HeaderSize*16, CodeSize, 0, 'N/A', self);
-    CodeSection.EntryPointAddress:= word(fHeader.ReloCS*16 + fHeader.EXEIP);
+    CodeSection := TCodeSection.Create(InputFile, false, fHeader.HeaderSize * 16, CodeSize, fHeader.HeaderSize * 16, CodeSize, 0, 'N/A', self);
+    CodeSection.EntryPointAddress := Word(fHeader.ReloCS * 16 + fHeader.EXEIP);
     Sections.Add(CodeSection);
   end;
 
@@ -97,20 +97,18 @@ end;
 
 
 
-function TMZFile.SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean;
+procedure TMZFile.SaveToFile(DHF: TStream; var DAS: TextFile);
 begin
-  result:= inherited SaveToFile(DHF, DAS, SaveOptions);
-  if soProject in SaveOptions then begin
-    DHF.Write(fHeader, SizeOf(TMZHeader));
-    DHF.Write(fRelocations[0], fHeader.RelocCount * SizeOf(TRelocationEntry));
-  end;
+  inherited SaveToFile(DHF, DAS);
+  DHF.Write(fHeader, SizeOf(TMZHeader));
+  DHF.Write(fRelocations[0], fHeader.RelocCount * SizeOf(TRelocationEntry));
 end;
 
 
 
-function TMZFile.LoadFromFile(DHF: TStream; var DAS: TextFile): boolean;
+procedure TMZFile.LoadFromFile(DHF: TStream; var DAS: TextFile);
 begin
-  result:= inherited LoadFromFile(DHF, DAS);
+  inherited LoadFromFile(DHF, DAS);
   DHF.Read(fHeader, SizeOf(TMZHeader));
   SetLength(fRelocations, fHeader.RelocCount);
   DHF.Read(fRelocations[0], fHeader.RelocCount * SizeOf(TRelocationEntry));
@@ -121,18 +119,18 @@ end;
 function TMZFile.GetRelocationEntry(Index: integer): TRelocationEntry;
 begin
   if (Index < 0) or (Index >= Length(fRelocations)) then begin
-    result.Offset:= 0;
-    result.Segment:= 0;
+    Result.Offset := 0;
+    Result.Segment := 0;
   end
   else
-    result:= fRelocations[Index];
+    Result := fRelocations[Index];
 end;
 
 
 
-function TMZFile.GetRelocationsCount: integer;
+function TMZFile.GetRelocationsCount: Integer;
 begin
-  result:= Length(fRelocations);
+  Result := Length(fRelocations);
 end;
 
 

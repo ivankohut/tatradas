@@ -20,43 +20,43 @@ uses
 type
 
   TImportFunctionOccurence = record
-    Address: cardinal;
-    SectionIndex: integer;
+    Address: Cardinal;
+    SectionIndex: Integer;
   end;
 
   TImportFunction = record
-    AddressRVA: cardinal;
+    AddressRVA: Cardinal;
 //    RVAtoname: cardinal;
-    Hint: word;
-    ByOrdinal: boolean;
-    Ordinal: cardinal;
-    MemAddress: cardinal; // added in 2.9.8 alpha
+    Hint: Word;
+    ByOrdinal: Boolean;
+    Ordinal: Cardinal;
+    MemAddress: Cardinal; // added in 2.9.8 alpha
     Name: string;
     Occurs: array of TImportFunctionOccurence;  // Memory addresses
   end;
 
   TImportModul = record
-    FunctionCount: integer;
+    FunctionCount: Integer;
     Functions: array of TImportFunction;
     Name: string;
   end;
 
   TImportDirectoryEntry = record
-    LookupTableRVA: cardinal;
-    Reserved1, Reserved2: cardinal;
-    NameRVA: cardinal;
-    AddressTableRVA: cardinal;
+    LookupTableRVA: Cardinal;
+    Reserved1, Reserved2: Cardinal;
+    NameRVA: Cardinal;
+    AddressTableRVA: Cardinal;
   end;
 
   TNESectionImports = record
-    Offset: cardinal;
-    SectionIndex: integer;
-    SectionFileOffset: cardinal;
+    Offset: Cardinal;
+    SectionIndex: Integer;
+    SectionFileOffset: Cardinal;
   end;
 
   TImportSection = class(TSection)
-    ModulCount: integer;
-    TotalFunctionCount: integer;
+    ModulCount: Integer;
+    TotalFunctionCount: Integer;
     Moduls: array of TImportModul;
     constructor Create(efile:TObject); overload;
     constructor CreateFromPEFile(InputFile: TStream; ImTableRVA, ImageBase: cardinal; aFileOffset, aFileSize, aMemOffset, aMemSize: cardinal; aName: string; aExecFile: TObject);
@@ -65,20 +65,20 @@ type
     constructor CreateFromELFFile(InputFile: TStream; Offset, Size, StringTableOffset, StringTableSize: cardinal; aName: string; aExecFile: TObject);
     destructor Destroy; override;
 
-    function SaveToFile  (DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
-    function LoadFromFile(DHF: TStream; var DAS: TextFile):boolean; overload; override;
+    procedure SaveToFile(DHF: TStream; var DAS: TextFile); override;
+    function LoadFromFile(DHF: TStream; var DAS: TextFile): Boolean; overload; override;
 
-    function AddFunctionOccurence(IndexAddress: cardinal; CallInstrAddress: cardinal; aSectionIndex: integer): string;
+    function AddFunctionOccurence(IndexAddress: Cardinal; CallInstrAddress: Cardinal; aSectionIndex: Integer): string;
 //    procedure AddFunctionOccurence(ModulIndex, FunctionIndex: integer; Address: cardinal);
   end;
 
   TSymbolTableEntry = record
-    st_name: cardinal;
-    st_value: cardinal;
-    st_size: cardinal;
-    st_info: byte;
-    st_other: byte;
-    st_shndx: word;
+    st_name: Cardinal;
+    st_value: Cardinal;
+    st_size: Cardinal;
+    st_info: Byte;
+    st_other: Byte;
+    st_shndx: Word;
   end;
 
 
@@ -106,10 +106,10 @@ uses
   CodeSectionUnit;
 
 
-constructor TImportSection.Create(efile:TObject);
+constructor TImportSection.Create(efile: TObject);
 begin
-  fTyp:=stImport;
-  fExecFile:=efile;
+  fTyp := stImport;
+  fExecFile := efile;
 end;
 
 
@@ -153,9 +153,9 @@ FOUND:
       Occurs[High(Occurs)].SectionIndex:= aSectionIndex;
 
       if ByOrdinal then
-        result:=IntToHex(Ordinal, 8) + '''(Ordinal)' + ' from ''' + moduls[ModulIndex].name
+        Result := IntToHex(Ordinal, 8) + '''(Ordinal)' + ' from ''' + moduls[ModulIndex].Name
       else
-        result:= name +''' from ''' + moduls[ModulIndex].name;
+        Result := Name + ''' from ''' + Moduls[ModulIndex].Name;
     end;
 
   end;
@@ -401,8 +401,8 @@ begin
       with Moduls[RelocationItem.Data1-1].Functions[k] do
         repeat
           SetLength(Occurs, Length(Occurs) + 1);
-          Occurs[High(Occurs)].Address:= RelocationOffset - 1;
-          Occurs[High(Occurs)].SectionIndex:= SegmentImports[i].SectionIndex;
+          Occurs[High(Occurs)].Address := RelocationOffset - 1;
+          Occurs[High(Occurs)].SectionIndex := SegmentImports[i].SectionIndex;
 
           InputFile.Position:= SegmentImports[i].SectionFileOffset + RelocationOffset;
           InputFile.Read(RelocationOffset, 2);
@@ -415,62 +415,61 @@ end;
 
 
 
-function TImportSection.SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean;
+procedure TImportSection.SaveToFile(DHF: TStream; var DAS: TextFile);
 var
-  ModulIndex, FunctionIndex, OccurIndex: integer;
-  OccurenceCount: integer;
+  ModulIndex, FunctionIndex, OccurIndex: Integer;
+  OccurenceCount: Integer;
 begin
-  inherited SaveToFile(DHF, DAS, SaveOptions);
+  inherited SaveToFile(DHF, DAS);
   DHF.Write(TotalFunctionCount, 4);
   DHF.Write(ModulCount, 4);
-  for ModulIndex:= 0 to ModulCount - 1 do begin
+  for ModulIndex := 0 to ModulCount - 1 do begin
     with moduls[ModulIndex] do begin
       StreamWriteAnsiString(DHF, Name);
       DHF.Write(FunctionCount, 4);
-      for FunctionIndex:= 0 to FunctionCount - 1 do begin
+      for FunctionIndex := 0 to FunctionCount - 1 do begin
         DHF.Write(functions[FunctionIndex], SizeOf(TImportFunction) - 8);
         with functions[FunctionIndex] do begin
           StreamWriteAnsiString(DHF, name);
-          OccurenceCount:= Length(Occurs);
+          OccurenceCount := Length(Occurs);
           DHF.Write(OccurenceCount, 4);
-          for OccurIndex:= 0 to OccurenceCount - 1 do
+          for OccurIndex := 0 to OccurenceCount - 1 do
             DHF.Write(Occurs[OccurIndex], SizeOf(TImportFunctionOccurence));
         end;
       end;
     end;
   end;
-  result:=true;
 end;
 
 
 
-function TImportSection.LoadFromFile(DHF: TStream; var DAS: TextFile): boolean;
+function TImportSection.LoadFromFile(DHF: TStream; var DAS: TextFile): Boolean;
 var
-  ModulIndex, FunctionIndex, OccurIndex: integer;
-  OccurenceCount: integer;
+  ModulIndex, FunctionIndex, OccurIndex: Integer;
+  OccurenceCount: Integer;
 begin
   inherited LoadFromFile(DHF, DAS);
   DHF.Read(TotalFunctionCount, 4);
   DHF.Read(ModulCount, 4);
-  SetLength(moduls, Modulcount);
-  for ModulIndex:= 0 to ModulCount - 1 do begin
-    with moduls[ModulIndex] do begin
+  SetLength(Moduls, ModulCount);
+  for ModulIndex := 0 to ModulCount - 1 do begin
+    with Moduls[ModulIndex] do begin
       Name:= StreamReadAnsiString(DHF);
       DHF.Read(FunctionCount, 4);
       SetLength(functions, FunctionCount);
-      for FunctionIndex:= 0 to FunctionCount - 1 do begin
+      for FunctionIndex := 0 to FunctionCount - 1 do begin
         DHF.Read(functions[FunctionIndex], SizeOf(TImportFunction) - 8);
         with functions[FunctionIndex] do begin
-          Name:= StreamReadAnsiString(DHF);
+          Name := StreamReadAnsiString(DHF);
           DHF.Read(OccurenceCount, 4);
           SetLength(Occurs, OccurenceCount);
-          for OccurIndex:= 0 to OccurenceCount - 1 do
+          for OccurIndex := 0 to OccurenceCount - 1 do
             DHF.Read(Occurs[OccurIndex], SizeOf(TImportFunctionOccurence));
         end;
       end;
     end;
   end;
-  result:=true;
+  Result := True;
 end;
 
 

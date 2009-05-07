@@ -17,8 +17,8 @@ type
 
   TRegion = class
     Name: string;
-    Offset: cardinal;
-    Size: cardinal;
+    Offset: Cardinal;
+    Size: Cardinal;
     constructor Create(AName: string; AOffset, ASize: cardinal);
   end;
 
@@ -27,20 +27,20 @@ type
     fFileSize: cardinal;
     fRegions: TObjectList;
     fFinished: boolean;
-    function GetRegion(Index: integer): TRegion;
-    function GetCount: integer;
+    function GetRegion(Index: Integer): TRegion;
+    function GetCount: Integer;
   public
-    constructor Create(FileSize: cardinal);
+    constructor Create(FileSize: Cardinal);
     destructor Destroy; override;
 
-    procedure Add(Name: string; Offset, Size: cardinal);
+    procedure Add(Name: string; Offset, Size: Cardinal);
     procedure Finish;
 
     procedure SaveToFile(DHF: TStream);
     procedure LoadFromFile(DHF: TStream);
 
-    function GetIndexFromOffset(Offset: cardinal): integer;
-    property Regions[Index: integer]: TRegion read GetRegion; default;
+    function GetIndexFromOffset(Offset: Cardinal): Integer;
+    property Regions[Index: Integer]: TRegion read GetRegion; default;
     property Count: Integer read GetCount;
   end;
 
@@ -55,16 +55,16 @@ implementation
 
 constructor TRegion.Create(AName: string; AOffset, ASize: cardinal);
 begin
-  Name:= AName;
-  Offset:= AOffset;
-  Size:= ASize;
+  Name := AName;
+  Offset := AOffset;
+  Size := ASize;
 end;
 
 
 
-function CompareRegions(Region1, Region2: Pointer): integer;
+function CompareRegions(Region1, Region2: Pointer): Integer;
 begin
-  result:=CompareValue(TRegion(Region1).Offset, TRegion(Region2).Offset);
+  Result := CompareValue(TRegion(Region1).Offset, TRegion(Region2).Offset);
 end;
 
 
@@ -73,11 +73,11 @@ end;
 //******************************************************************************
 
 
-constructor TRegions.Create(FileSize: cardinal);
+constructor TRegions.Create(FileSize: Cardinal);
 begin
-  fFileSize:= FileSize;
-  fRegions:= TObjectList.Create;
-  fRegions.OwnsObjects:= true;
+  fFileSize := FileSize;
+  fRegions := TObjectList.Create;
+  fRegions.OwnsObjects := True;
 end;
 
 
@@ -89,24 +89,24 @@ end;
 
 
 
-function TRegions.GetRegion(Index: integer): TRegion;
+function TRegions.GetRegion(Index: Integer): TRegion;
 begin
-  result:= fRegions[Index] as TRegion;
+  Result := fRegions[Index] as TRegion;
 end;
 
 
 
-function TRegions.GetCount: integer;
+function TRegions.GetCount: Integer;
 begin
-  result:= fRegions.Count;
+  Result := fRegions.Count;
 end;
 
 
 
-procedure TRegions.Add(Name: string; Offset, Size: cardinal);
+procedure TRegions.Add(Name: string; Offset, Size: Cardinal);
 begin
   if fFinished then
-    raise Exception.Create('Regions already finished');
+    raise EIllegalState.Create('Regions already finished');
 
   fRegions.Add(TRegion.Create(Name, Offset, Size));
 end;
@@ -115,7 +115,7 @@ end;
 
 procedure TRegions.Finish;
 begin
-  fFinished:= true;
+  fFinished := True;
   fRegions.Sort(CompareRegions);
 end;
 
@@ -123,12 +123,12 @@ end;
 
 procedure TRegions.SaveToFile(DHF: TStream);
 var
-  RegionIndex: integer;
-  RegionsCount: integer;
+  RegionIndex: Integer;
+  RegionsCount: Integer;
 begin
-  RegionsCount:= fRegions.Count;
+  RegionsCount := fRegions.Count;
   DHF.Write(RegionsCount, 4);
-  for RegionIndex:= 0 to Count - 1 do begin
+  for RegionIndex := 0 to Count - 1 do begin
     with (fRegions[RegionIndex] as TRegion) do begin
       StreamWriteAnsiString(DHF, Name);
       DHF.Write(Offset, 4);
@@ -141,42 +141,42 @@ end;
 
 procedure TRegions.LoadFromFile(DHF: TStream);
 var
-  RegionIndex: integer;
+  RegionIndex: Integer;
   Name: string;
-  Offset, Size: cardinal;
-  RegionsCount: integer;
+  Offset, Size: Cardinal;
+  RegionsCount: Integer;
 begin
   DHF.Read(RegionsCount, 4);
-  for RegionIndex:= 0 to RegionsCount - 1 do begin
-    Name:= StreamReadAnsiString(DHF);
-    Offset:= DHF.Read(Offset, 4);
-    Size:= DHF.Read(Size, 4);
+  for RegionIndex := 0 to RegionsCount - 1 do begin
+    Name := StreamReadAnsiString(DHF);
+    Offset := DHF.Read(Offset, 4);
+    Size := DHF.Read(Size, 4);
     fRegions.Add(TRegion.Create(Name, Offset, Size))
-  end;
-  fFinished:= true;
+  end;          
+  fFinished := True;
 end;
 
 
 
-function TRegions.GetIndexFromOffset(Offset: cardinal): integer;
+function TRegions.GetIndexFromOffset(Offset: Cardinal): integer;
 var
-  RegionIndex: integer;
+  RegionIndex: Integer;
 begin
   if Count = 0 then begin
-    result:= -1;
+    Result := -1;
     Exit;
   end;
-  RegionIndex:= Count - 1;
+  RegionIndex := Count - 1;
   if Offset < fFileSize then begin
     while Offset < (fRegions[RegionIndex] as TRegion).Offset do
       Dec(RegionIndex);
     if Offset <  (fRegions[RegionIndex] as TRegion).Offset + (fRegions[RegionIndex] as TRegion).Size then
-      result:= RegionIndex
+      Result := RegionIndex
     else
-      result:= -1
+      Result := -1
   end
   else
-    raise Exception.Create('Offset higher than file size');
+    raise EIllegalState.Create('Offset higher than file size');
 end;
 
 

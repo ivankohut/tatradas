@@ -433,14 +433,14 @@ const
   // Group 15
 
   Group15_AE_Mem: TGroupInstructions = (
-    (name: 'FXSAVE'; typ: itNormal; OperandsCount:0),
-    (name: 'FXSTOR'; typ: itNormal; OperandsCount:0),
-    (name: 'LDMXCSR'; typ: itNormal; OperandsCount:0),
-    (name: 'STMXCSR'; typ: itNormal; OperandsCount:0),
+    (name: 'FXSAVE'; typ: itNormal; OperandsCount:1; Operands: (p1: MMM)),
+    (name: 'FXRSTOR'; typ: itNormal; OperandsCount:1; Operands: (p1: MMM)),
+    (name: 'LDMXCSR'; typ: itNormal; OperandsCount:1; Operands: (p1: M32)),
+    (name: 'STMXCSR'; typ: itNormal; OperandsCount:1; Operands: (p1: M32)),
     (name: 'undefined opcode!'; typ: itUndefined;),
     (name: 'undefined opcode!'; typ: itUndefined;),
     (name: 'undefined opcode!'; typ: itUndefined;),
-    (name: 'CLFLUSH'; typ: itNormal; OperandsCount:0)
+    (name: 'CLFLUSH'; typ: itNormal; OperandsCount:1; Operands: (p1: MMM))
   );
 
   Group15_AE_Reg: TGroupInstructions = (

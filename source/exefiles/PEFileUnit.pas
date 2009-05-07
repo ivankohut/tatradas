@@ -92,8 +92,8 @@ type
     constructor Create; overload; override;
     constructor Create(InputFile: TStream; aFileName: TFileName); overload; override;
     destructor Destroy; override;
-    function SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
-    function LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; override;
+    procedure SaveToFile(DHF: TStream; var DAS: TextFile); override;
+    procedure LoadFromFile(DHF: TStream; var DAS: TextFile); override;
 
   // Fields and methods specific to PE File
   public
@@ -145,14 +145,14 @@ begin
   InputFile.Read(fHeader, SizeOf(TPEHeader));
 
   // Read Interesting RVA/Sizes table
-  InputFile.Read(InterestingRVAs, 4*(header.interestingcount));
+  InputFile.Read(InterestingRVAs, 4 * (Header.InterestingCount));
 
   // Read Object Table
   InputFile.Seek(PEHeaderOffset + 248, 0);
   SetLength(fObjectTable, header.objectcount);
-  for i:=0 to header.objectcount-1 do begin
+  for i := 0 to Header.ObjectCount - 1 do begin
     InputFile.Read(fObjectTable[i], 40);
-    fObjectTable[i].name:= pchar(@fObjectTable[i].internal_name[1]);
+    fObjectTable[i].Name := Pchar(@fObjectTable[i].internal_name[1]);
   end;
 
   // Set file regions
@@ -166,12 +166,12 @@ begin
   fRegions.Finish;
 
   // Create code sections
-  for i:=0 to Header.ObjectCount-1 do begin
+  for i := 0 to Header.ObjectCount-1 do begin
     if IsObjectExecutable(i) then begin
-      CodeSection:= TCodeSection.Create(InputFile, true, ObjectTable[i].Offset, ObjectTable[i].Size, ObjectTable[i].RVA + Header.ImageBase, ObjectTable[i].VirtualSize, fCodeSectionsCount, ObjectTable[i].Name, self);
+      CodeSection := TCodeSection.Create(InputFile, True, ObjectTable[i].Offset, ObjectTable[i].Size, ObjectTable[i].RVA + Header.ImageBase, ObjectTable[i].VirtualSize, fCodeSectionsCount, ObjectTable[i].Name, self);
       Inc(fCodeSectionsCount);
       if CodeSection.IsInSection(Header.EntryPoint + Header.ImageBase) then
-        CodeSection.EntryPointAddress:= header.EntryPoint + header.ImageBase - (ObjectTable[i].RVA + header.ImageBase);
+        CodeSection.EntryPointAddress := Header.EntryPoint + Header.ImageBase - (ObjectTable[i].RVA + Header.ImageBase);
 
       Sections.Add(CodeSection);
     end;
@@ -179,15 +179,15 @@ begin
 
   // Create Import section
   if InterestingRVAs.ImportTableRVA <> 0 then begin
-    i:= GetObjectNumberFromRVA(InterestingRVAs.ImportTableRVA);
-    fImportSection:= TImportSection.CreateFromPEFile(InputFile, InterestingRVAs.ImportTableRVA, Header.ImageBase, ObjectTable[i].Offset, ObjectTable[i].Size, ObjectTable[i].RVA + Header.ImageBase, ObjectTable[i].VirtualSize, ObjectTable[i].Name, self);
+    i := GetObjectNumberFromRVA(InterestingRVAs.ImportTableRVA);
+    fImportSection := TImportSection.CreateFromPEFile(InputFile, InterestingRVAs.ImportTableRVA, Header.ImageBase, ObjectTable[i].Offset, ObjectTable[i].Size, ObjectTable[i].RVA + Header.ImageBase, ObjectTable[i].VirtualSize, ObjectTable[i].Name, self);
     Sections.Add(ImportSection);
   end;
 
   // Create Export section
   if InterestingRVAs.ExportTableRVA <> 0 then begin                // Spracovanie Exportu
-    i:=GetObjectNumberFromRVA(InterestingRVAs.ExportTableRVA);
-    fExportSection:= TExportSection.CreateFromPEFile(InputFile, ObjectTable[i].Offset + (InterestingRVAs.ExportTableRVA - ObjectTable[i].RVA), InterestingRVAs.ExportTableRVA, InterestingRVAs.ExportDataSize, header.ImageBase, ObjectTable[i].name, self);
+    i := GetObjectNumberFromRVA(InterestingRVAs.ExportTableRVA);
+    fExportSection := TExportSection.CreateFromPEFile(InputFile, ObjectTable[i].Offset + (InterestingRVAs.ExportTableRVA - ObjectTable[i].RVA), InterestingRVAs.ExportTableRVA, InterestingRVAs.ExportDataSize, header.ImageBase, ObjectTable[i].name, self);
     Sections.Add(ExportSection);
   end;
 {
@@ -196,90 +196,91 @@ begin
     Sections.Add( TResourceSection.Create(InputFile, ObjectTable[i].name, ObjectTable[i].offset, ObjectTable[i].size, ObjectTable[i].rva + header.ImageBase, ObjectTable[i].virtualsize, InterestingRVAs.ResourceTableRVA, i, self) );
   end;
 }
-  fExecFormat:= ffPE;
+  fExecFormat := ffPE;
 end;
 
 
 
-function TPEFile.SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean;
+procedure TPEFile.SaveToFile(DHF: TStream; var DAS: TextFile);
 var
-  i: integer;
+  i: Integer;
 begin
-  result:= inherited SaveToFile(DHF, DAS, SaveOptions);
-  if soProject in SaveOptions then begin
-    DHF.Write(Header, SizeOf(Header));                                        // PE hlavicka
-    for i:=0 to Header.ObjectCount - 1 do
-      DHF.Write(fObjectTable[i], SizeOf(TObjectTableEntry) - 4);
-  end;
+  inherited SaveToFile(DHF, DAS);
+  DHF.Write(Header, SizeOf(Header));                                        // PE hlavicka
+  for i := 0 to Header.ObjectCount - 1 do
+    DHF.Write(fObjectTable[i], SizeOf(TObjectTableEntry) - 4);
 end;
 
 
 
-function TPEFile.LoadFromFile(DHF: TStream; var DAS: TextFile): boolean;
-var i: integer;
+procedure TPEFile.LoadFromFile(DHF: TStream; var DAS: TextFile);
+var
+  i: Integer;
 begin
-  result:=inherited LoadFromFile(DHF, DAS);
+  inherited LoadFromFile(DHF, DAS);
   DHF.Read(fHeader, SizeOf(TPEHeader));
   SetLength(fObjectTable, fHeader.ObjectCount);
-  for i:=0 to fHeader.ObjectCount-1 do begin                             // Object Table
+  for i := 0 to fHeader.ObjectCount - 1 do begin                             // Object Table
     DHF.Read(fObjectTable[i], SizeOf(TObjectTableEntry) - 4);
-    fObjectTable[i].Name:= pchar(@fObjectTable[i].internal_name[1]);
+    fObjectTable[i].Name := Pchar(@fObjectTable[i].internal_name[1]);
   end;
 end;
 
 
 
-function TPEFile.GetSectionNumberFromRVA(RVA: cardinal): integer;
+function TPEFile.GetSectionNumberFromRVA(RVA: Cardinal): integer;
 var
-  i: integer;
-  Offset: cardinal;
+  i: Integer;
+  Offset: Cardinal;
 begin
-  Offset:= RVA + Header.ImageBase;
-  for i:= 0 to Sections.Count - 1 do
+  Offset := RVA + Header.ImageBase;
+  for i := 0 to Sections.Count - 1 do
     if Sections[i].Typ = stCode then
       with Sections[i] as TCodeSection do
         if (Offset >= MemOffset) and (Offset < MemOffset + MemSize) then begin
-          result:= i;
+          Result := i;
           Exit;
         end;
-  result:=-1;
+  Result := -1;
 end;
 
 
 
-function TPEFile.GetObjectTableEntry(Index: integer): TObjectTableEntry;
+function TPEFile.GetObjectTableEntry(Index: Integer): TObjectTableEntry;
 begin
   if Index < Header.ObjectCount then
-    result:=fObjectTable[Index]
+    Result := fObjectTable[Index]
   else
-    raise Exception.Create('Array Range check error in PEFile ObjectTable');
+    raise EIllegalState.Create('Array Range check error in PEFile ObjectTable');
 end;
 
 
 
-function TPEFILE.IsObjectExecutable(ObjectIndex: integer): boolean;
+function TPEFILE.IsObjectExecutable(ObjectIndex: Integer): Boolean;
 begin
-  result:= (c_ExecutableSection and ObjectTable[ObjectIndex].Flags) > 0
+  Result := (c_ExecutableSection and ObjectTable[ObjectIndex].Flags) > 0
 end;
 
 
 
 // Virtual addresses of objects should be in ascending order according to PE spec.
-function TPEFile.GetObjectNumberFromRVA(RVA: cardinal): integer;
+function TPEFile.GetObjectNumberFromRVA(RVA: Cardinal): Integer;
 var
-  ObjectIndex: integer;
+  ObjectIndex: Integer;
 begin
-  result:= -1;
-  if fHeader.ObjectCount = 0 then Exit;
-  if RVA < ObjectTable[0].RVA then Exit;
+  Result := -1;
+  if fHeader.ObjectCount = 0 then
+    Exit;
+  if RVA < ObjectTable[0].RVA then
+    Exit;
 
-  ObjectIndex:= fHeader.ObjectCount - 1;
+  ObjectIndex := fHeader.ObjectCount - 1;
   while RVA < ObjectTable[ObjectIndex].RVA do
     Dec(ObjectIndex);
   if RVA < ObjectTable[ObjectIndex].RVA + ObjectTable[ObjectIndex].VirtualSize then
-    result:= ObjectIndex
+    Result := ObjectIndex
   else
-    result:= -1
+    Result := -1
 end;
 
 
@@ -287,9 +288,9 @@ end;
 function TPefile.GetCPUType: string;
 begin
   case Header.Machine of
-    $014c: result:= '80386';
-    $014d: result:= '80486';
-    $014e: result:= '80586';
+    $014c: result := '80386';
+    $014d: result := '80486';
+    $014e: result := '80586';
   end;
 end;
 
@@ -298,14 +299,14 @@ end;
 function TPEFIle.GetPEFileType: string;
 begin
   if fHeader.Flags = 0 then
-    result:= 'program'
+    Result := 'program'
   else begin
-    if ($0002 and fHeader.Flags) = $0002 then result:= 'executable';
-    if ($0200 and fHeader.Flags) = $0200 then result:= result + ' fixed';
-    if ($2000 and fHeader.Flags) = $2000 then result:= ' library';
+    if ($0002 and fHeader.Flags) = $0002 then Result := 'executable';
+    if ($0200 and fHeader.Flags) = $0200 then Result := Result + ' fixed';
+    if ($2000 and fHeader.Flags) = $2000 then Result := ' library';
   end;
-  if result = '' then
-    result:= 'unknown';
+  if Result = '' then
+    Result := 'unknown';
 end;
 
 

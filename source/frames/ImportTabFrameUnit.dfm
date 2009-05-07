@@ -1,9 +1,7 @@
 inherited ImportTabFrame: TImportTabFrame
-  Width = 980
-  Height = 717
+  Width = 558
   inherited Panel: TPanel
-    Width = 980
-    Height = 717
+    Width = 558
     object OccurHintLabel: TLabel
       Left = 16
       Top = 790
@@ -13,18 +11,18 @@ inherited ImportTabFrame: TImportTabFrame
       Caption = 'OccurHintLabel'
     end
     object Splitter1: TSplitter
-      Left = 830
+      Left = 408
       Top = 8
       Width = 11
-      Height = 701
+      Height = 261
       Cursor = crHSplit
       Align = alRight
     end
     object Panel1: TPanel
       Left = 8
       Top = 8
-      Width = 822
-      Height = 701
+      Width = 400
+      Height = 261
       Align = alClient
       BevelOuter = bvNone
       Constraints.MinWidth = 400
@@ -32,8 +30,8 @@ inherited ImportTabFrame: TImportTabFrame
       object FunctionListView: TListView
         Left = 0
         Top = 65
-        Width = 822
-        Height = 636
+        Width = 400
+        Height = 196
         Align = alClient
         Columns = <
           item
@@ -66,7 +64,7 @@ inherited ImportTabFrame: TImportTabFrame
       object Panel3: TPanel
         Left = 0
         Top = 0
-        Width = 822
+        Width = 400
         Height = 65
         Align = alTop
         BevelOuter = bvNone
@@ -97,10 +95,10 @@ inherited ImportTabFrame: TImportTabFrame
       end
     end
     object Panel2: TPanel
-      Left = 841
+      Left = 419
       Top = 8
       Width = 131
-      Height = 701
+      Height = 261
       Align = alRight
       BevelOuter = bvNone
       TabOrder = 1
@@ -113,7 +111,7 @@ inherited ImportTabFrame: TImportTabFrame
       end
       object AddressListBox: TListBox
         Left = 0
-        Top = 65
+        Top = -375
         Width = 131
         Height = 636
         Align = alBottom

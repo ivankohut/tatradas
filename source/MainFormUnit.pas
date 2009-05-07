@@ -49,7 +49,7 @@ type
     OpenFile1: TMenuItem;
     N1: TMenuItem;
     Exit1: TMenuItem;
-    Save1: TMenuItem;
+    Export1: TMenuItem;
     Search1: TMenuItem;
     Help1: TMenuItem;
     N2: TMenuItem;
@@ -148,10 +148,11 @@ type
     actDisassemble: TAction;
     actSave: TAction;
     actOpenProject: TAction;
+    SaveProject1: TMenuItem;
 
     procedure DisassembleClick(Sender: TObject);
     procedure OpenProjectClick(Sender: TObject);
-    procedure SaveClick(Sender: TObject);
+    procedure ExportClick(Sender: TObject);
     procedure CloseFileClick(Sender: TObject);
     procedure ExitClick(Sender: TObject);
 
@@ -193,6 +194,7 @@ type
     procedure LanguageMenuItemClick(Sender: TObject);
     procedure actOpenExecute(Sender: TObject);
     procedure actOpenProjectExecute(Sender: TObject);
+    procedure SaveProjectClick(Sender: TObject);
 
   private
     fopenfilepath: string;
@@ -246,11 +248,14 @@ implementation
 
 
 uses
+  StringUtilities,
   AboutBoxUnit,
   SaveOptionsFormUnit,
   CalculatorUnit,
   OptionsFormUnit,
-  ProgressFormUnit, UnknownFileFormUnit, MessageFormUnit;
+  ProgressFormUnit,
+  UnknownFileFormUnit,
+  MessageFormUnit;
 
 {$R *.DFM}
 
@@ -285,7 +290,7 @@ begin
     ExecFile.Free;
     case ProgressData.ErrorStatus of
       errOpen: ErrorMessage := CouldNotOpenFileStr;
-      errBadFormat: ErrorMessage := 'File is corrupted: ';
+      errBadFormat: ErrorMessage := FileCorruptedStr + ': ';
     end;
     DisplayMessage(ErrorMessage + '"' + AFileName + '"', mtError, [mbOK]);
     Exit;
@@ -324,13 +329,14 @@ procedure TMainForm.DisassembleClick(Sender: TObject);
 var
   PageIndex, SectionIndex: integer;
 begin
-//  ProgressForm.Execute(TDisassembleThread.Create(ExecFile));
-  ExecFile.Disassemble; //= non-thread way
+  ProgressForm.Execute(TDisassembleThread.Create(ExecFile));
+  //ExecFile.Disassemble; //= non-thread way
 
   if ProgressData.ErrorStatus = errNone then begin
-    SaveMyButton.Enabled:= true;
-    Save1.Enabled:= true;
-    Modified:= true;
+    SaveMyButton.Enabled := True;
+    SaveProject1.Enabled := True;
+    Export1.Enabled := True;
+    Modified := True;
 
     // Clear old code tabs
     for PageIndex := MainPageControl.PageCount - 1 downto 0 do
@@ -346,8 +352,9 @@ begin
         end;
   end
   else begin
-    SaveMyButton.Enabled:= false;
-    Save1.Enabled:= false;
+    SaveMyButton.Enabled := False;
+    SaveProject1.Enabled := False;
+    Export1.Enabled := False;
     case ProgressData.ErrorStatus of
       errUserTerminated: ;
     end
@@ -356,30 +363,48 @@ end;
 
 
 
-procedure TMainForm.SaveClick(Sender: TObject);    // Ulozenie projektu
+procedure TMainForm.ExportClick(Sender: TObject);
 begin
   if SaveOptionsForm.ShowModal = mrOK then begin
-    SaveProjectSaveDialog.FileName:= '';
-    SaveProjectSaveDialog.InitialDir:= SaveProjectPath;
-    if soProject in SaveOptionsForm.SaveOptions then
-      SaveProjectSaveDialog.Filter:=ProjectFilterStr + '(*.DHF)|*.DHF'
-    else
-      if soDisassembly in SaveOptionsForm.SaveOptions then
-        SaveProjectSaveDialog.Filter:= SaveDisassemblyFilterStr + '(*.DAS)|*.DAS'
+    SaveProjectSaveDialog.FileName := '';
+    SaveProjectSaveDialog.InitialDir := SaveProjectPath;
+    case SaveOptionsForm.ExportOption of
+      eoDAS: SaveProjectSaveDialog.Filter := SaveDisassemblyFilterStr + '(*.DAS)|*.DAS';
+      eoNASM: SaveProjectSaveDialog.Filter := '(*.ASM)|*.ASM';
       else
-        SaveProjectSaveDialog.Filter:= '';
+        SaveProjectSaveDialog.Filter := '';
+    end;
     if not SaveProjectSaveDialog.Execute then
       Exit;
 
-    ProgressForm.Execute(TSaveThread.Create(ExecFileManager, ExecFile, SaveProjectSaveDialog.FileName, SaveOptionsForm.SaveOptions));
+    ProgressForm.Execute(TExportThread.Create(ExecFileManager, ExecFile, SaveProjectSaveDialog.FileName, SaveOptionsForm.ExportOption, SaveOptionsForm.ExportCustomDASOptions));
     if ProgressData.ErrorStatus <> errNone then begin
+      // TODO:
       case ProgressData.ErrorStatus of
         errUserTerminated: ;
       end;
       Exit;
     end;
-    Modified:= false;
-    SaveProjectPath:= ExtractFilePath(SaveProjectSaveDialog.FileName);
+  end;
+end;
+
+
+
+procedure TMainForm.SaveProjectClick(Sender: TObject);
+begin
+  SaveProjectSaveDialog.Filter := ProjectFilterStr + '(*.DHF)|*.DHF';
+  if SaveProjectSaveDialog.Execute then begin
+    ProgressForm.Execute(TSaveThread.Create(ExecFileManager, ExecFile, SaveProjectSaveDialog.FileName));
+    if ProgressData.ErrorStatus <> errNone then begin
+      // TODO:
+      case ProgressData.ErrorStatus of
+        errUserTerminated: ;
+      end;
+      Exit;
+    end;
+
+    Modified := False;
+    SaveProjectPath := ExtractFilePath(SaveProjectSaveDialog.FileName);
   end;
 end;
 
@@ -417,17 +442,17 @@ begin
       end;
 
       errDASNotFound:
-        ErrorMessage:=CouldNotFindDASFileStr;
+        ErrorMessage := CouldNotFindDASFileStr;
       errBadProjectVersion:
-        ErrorMessage:= InCompatibleProjectVersion + '.' + #13 + CurrentVersion + ' ' + IntToHex(TatraDASProjectVersion,8) + '.';
+        ErrorMessage := InCompatibleProjectVersion + '.' + #13 + CurrentVersion + ' ' + IntToHex(TatraDASProjectVersion,8) + '.';
       errOpen: begin
-        ErrorMessage:=CouldNotOpenFileStr;
+        ErrorMessage := CouldNotOpenFileStr;
       end;
       errBadFormat: begin
-        ErrorMessage:= 'File is corrupted: ';
+        ErrorMessage := FileCorruptedStr + ': ';
       end;
       errUnspecified:
-        ErrorMessage:= 'An error occured. Process stopped.';
+        ErrorMessage := UnspecifiedErrorStr;
     end;
     DisplayMessage(ErrorMessage + '"' + OpenProjectOpenDialog.FileName + '"', mtError, [mbOK]);
     Exit;
@@ -449,10 +474,11 @@ begin
 
   Modified:= false;
 
-  DisassembleMyButton.Enabled:= false;
-  SaveMyButton.Enabled:= true;
-  Save1.Enabled:= true;
-  CloseFile1.Enabled:= true;
+  DisassembleMyButton.Enabled := False;
+  SaveMyButton.Enabled := True;
+  SaveProject1.Enabled := True;
+  Export1.Enabled := True;
+  CloseFile1.Enabled := True;
 end;
 
 
@@ -467,8 +493,8 @@ begin
 
   result := false;
   if Modified then begin
-    case DisplayMessage(AnsiReplaceStr(ProjectModifiedStr, '<project>', '''' + ExecFile.FileName + ''''), mtConfirmation, mbYesNoCancel) of
-      mrYes: SaveClick(nil);
+    case DisplayMessage(InjectStr(ProjectModifiedStr, ['''' + ExecFile.FileName + '''']), mtConfirmation, mbYesNoCancel) of
+      mrYes: SaveProjectClick(nil);
       mrNo: ;
       mrCancel: Exit;
     end;
@@ -483,7 +509,8 @@ begin
   DisassembleMyButton.Enabled:= false;
   Disassemble1.Enabled:= false;
   CloseFile1.Enabled:= false;
-  Save1.Enabled:= false;
+  SaveProject1.Enabled:= false;
+  Export1.Enabled := false;
   SaveMyButton.Enabled:= false;
   HexEditor1.Enabled:= false;
   HexEditForm.Close;
@@ -589,9 +616,9 @@ begin
   SaveMyButton.ObrMimo.LoadFromResourceName(hinstance,'save1');
   SaveMyButton.ObrNad.LoadFromResourceName(hinstance,'save2');
   SaveMyButton.Left:=295;
-  SaveMyButton.OnClick:=SaveClick;
-  SaveMyButton.Glyph:=SaveMyButton.ObrMimo;
-  SaveMyButton.Enabled:=false;
+  SaveMyButton.OnClick := SaveProjectClick;
+  SaveMyButton.Glyph := SaveMyButton.ObrMimo;
+  SaveMyButton.Enabled := False;
 
 { Keep commented until english documentation becomes available
   HelpMyButton:=TIvanSpeedButton.Create(self);
@@ -626,7 +653,7 @@ begin
 
 //  OptionsForm.LoadSettings(sINI); - treba volat ked uz je OptionsForm vytvoreny
 
-  Logger.AddListener(TTextFileLoggerListener.Create('disasm.log'));
+  //Logger.AddListener(TTextFileLoggerListener.Create('disasm.log'));
   Logger.Info('----- START -----');
 end;
 
@@ -651,7 +678,7 @@ end;
 procedure TMainForm.LanguageMenuItemClick(Sender: TObject);
 begin
   if not Translator.ChangeLanguage((Sender as TMenuItem).MenuIndex) then
-    DisplayMessage('Unable to change language!', mtError, [mbOk]);
+    DisplayMessage(UnableToChangeLanguageStr, mtError, [mbOk]);
 end;
 
 
@@ -681,7 +708,9 @@ begin
   OpenFile1.Caption:= Translator.TranslateControl('MenuCaption','Openfile');
   OpenProject1.Caption:= Translator.TranslateControl('MenuCaption','OpenProject');
   Disassemble1.Caption:= Translator.TranslateControl('MenuCaption','Disassemble');
-  Save1.Caption:= Translator.TranslateControl('MenuCaption','Save');
+  SaveProject1.Caption:= Translator.TranslateControl('MenuCaption','Save');
+  Export1.Caption:= Translator.TranslateControl('MenuCaption','Export');
+
   Closefile1.Caption:= Translator.TranslateControl('MenuCaption','Closefile');
   Exit1.Caption:= Translator.TranslateControl('MenuCaption','Exit');
   FindText1.Caption:= Translator.TranslateControl('MenuCaption','Findtext');
@@ -760,7 +789,8 @@ begin
   OpenFile1.Hint:= Translator.TranslateControl('MenuHint','Openfile');
   OpenProject1.Hint:= Translator.TranslateControl('MenuHint','Opendisassembled');
   Disassemble1.Hint:= Translator.TranslateControl('MenuHint','Disassemble');
-  Save1.Hint:= Translator.TranslateControl('MenuHint','Savedisassembled');
+  SaveProject1.Hint:= Translator.TranslateControl('MenuHint','SaveProject');
+  Export1.Hint:= Translator.TranslateControl('MenuHint','ExportDisassembled');
   Closefile1.Hint:= Translator.TranslateControl('MenuHint','Closefile');
   Exit1.Hint:= Translator.TranslateControl('MenuHint','Exit');
 
@@ -988,40 +1018,41 @@ end;
 
 function TMainForm.GetActivePageType: TPageType;
 begin
-  result:=(MainPageControl.ActivePage as TTabSheetTemplate).PageType;
+  Result := (MainPageControl.ActivePage as TTabSheetTemplate).PageType;
 end;
+
 
 
 function TMainForm.GetSectionsTabSheet(ASection: TSection): TTabSheetTemplate;
 var
-  i: integer;
+  i: Integer;
 begin
-  result:= nil;
-  for i:=0 to MainPageControl.PageCount - 1 do
+  Result := nil;
+  for i := 0 to MainPageControl.PageCount - 1 do
     if (MainPageControl.Pages[i] as TTabSheetTemplate).IsHavingSection(ASection) then
-      result:= MainPageControl.Pages[i] as TTabSheetTemplate;
+      Result := MainPageControl.Pages[i] as TTabSheetTemplate;
 end;
 
 
 
 procedure TMainForm.ProjectModified(Sender: TObject);
 begin
-  Modified:= true;
+  Modified := True;
 end;
 
 
 
 procedure TMainForm.SetModified(AModified: boolean);
 begin
-  fModified:= AModified;
+  fModified := AModified;
   if ExecFile <> nil then begin
     if fModified then
-      Caption:= TatraDASFullNameVersion + ' - ' + ExecFile.FileName + '*'
+      Caption := TatraDASFullNameVersion + ' - ' + ExecFile.FileName + '*'
     else
-      Caption:= TatraDASFullNameVersion + ' - ' + ExecFile.FileName;
+      Caption := TatraDASFullNameVersion + ' - ' + ExecFile.FileName;
   end
   else
-    Caption:= TatraDASFullNameVersion;
+    Caption := TatraDASFullNameVersion;
 end;
 
 

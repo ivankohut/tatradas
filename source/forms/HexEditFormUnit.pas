@@ -52,8 +52,9 @@ type
     procedure GotoAddressButtonClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
-  public
+  private
     HexEdit: TMPHexEditor;
+  public
     procedure OpenAndLoad(aFileName: string);
     procedure Translate;
   end;
@@ -93,24 +94,24 @@ begin
   if HexEditSaveDialog.FileName = '' then
     Exit;
   HexEdit.SaveToFile(HexEditSaveDialog.FileName);
-  HexEdit.Modified := false;
+  HexEdit.Modified := False;
 end;
 
 
 
 procedure THexEditForm.HexEditChangePosition(Sender: TObject);
 var
-  RegionIndex: integer;
-  RegionOffset: cardinal;
-  Buffer: cardinal;
+  RegionIndex: Integer;
+  RegionOffset: Cardinal;
+  Buffer: Cardinal;
 begin
   Buffer := 0;
   HexEdit.ReadBuffer(Buffer, HexEdit.GetCursorPos, Min(4, HexEdit.DataSize - HexEdit.GetCursorPos));
-  UnsignedByteDataLabel.Caption := IntToHex(byte(Buffer), 2);
-  UnsignedWordDataLabel.Caption := IntToHex(word(Buffer), 4);
+  UnsignedByteDataLabel.Caption := IntToHex(Byte(Buffer), 2);
+  UnsignedWordDataLabel.Caption := IntToHex(Word(Buffer), 4);
   UnsignedDwordDataLabel.Caption := IntToHex(Buffer, 8);
-  SignedByteDataLabel.Caption := IntToSignedHex(shortint(Buffer), 2);
-  SignedWordDataLabel.Caption := IntToSignedHex(smallint(Buffer), 4);
+  SignedByteDataLabel.Caption := IntToSignedHex(ShortInt(Buffer), 2);
+  SignedWordDataLabel.Caption := IntToSignedHex(SmallInt(Buffer), 4);
   SignedDwordDataLabel.Caption := IntToSignedHex(integer(Buffer), 8);
   StatusBar1.Panels[0].Text := FileOffsetStr + ': ' + HexEdit.GetOffsetString(HexEdit.GetCursorPos);
   if MainForm.ExecFile <> nil then
@@ -122,7 +123,7 @@ begin
          StatusBar1.Panels[2].Text := SectionOffsetStr + ': ' + IntToHex(RegionOffset, 8);
        end
        else begin
-         StatusBar1.Panels[1].Text := SectionStr + ': ' + 'unused space';
+         StatusBar1.Panels[1].Text := SectionStr + ': ' + UnusedSpaceStr;
          StatusBar1.Panels[2].Text := SectionOffsetStr + ': ';
        end;
     end;
@@ -133,7 +134,7 @@ end;
 procedure THexEditForm.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   if HexEdit.Modified then begin
-    case DisplayMessage(AnsiReplaceStr(FileModifiedStr, '<filename>', '''' + ExtractFileName(HexEdit.FileName) + ''''), mtWarning, [mbYes, mbNo, mbCancel]) of
+    case DisplayMessage(InjectStr(FileModifiedStr, ['''' + ExtractFileName(HexEdit.FileName) + '''']), mtWarning, [mbYes, mbNo, mbCancel]) of
       mrYes: SaveAsButtonClick(self);
       mrNo: ;
       mrCancel: begin
@@ -150,8 +151,7 @@ end;
 
 procedure THexEditForm.GotoAddressButtonClick(Sender: TObject);
 begin
-  GotoAddressForm.GotoAddressEdit.Text:= '';
-  GotoAddressForm.MaxAddress:= NonNegative(HexEdit.DataSize - 1);
+  GotoAddressForm.MaxAddress := NonNegative(HexEdit.DataSize - 1);
   if GotoAddressForm.ShowModal = mrOK then
     HexEdit.Seek(GotoAddressForm.Address, 0);
   HexEdit.SetFocus;
@@ -161,10 +161,10 @@ end;
 
 procedure THexEditForm.Translate;
 begin
-  SaveAsButton.Caption:= Translator.TranslateControl('HexEditForm', 'SaveAsButton');
-  GotoAddressButton.Caption:= Translator.TranslateControl('HexEditForm', 'GotoAddressButton');
-  UnsignedLabel.Caption:= Translator.TranslateControl('HexEditForm', 'UnsignedLabel');
-  SignedLabel.Caption:= Translator.TranslateControl('HexEditForm', 'SignedLabel');
+  SaveAsButton.Caption := Translator.TranslateControl('HexEditForm', 'SaveAsButton');
+  GotoAddressButton.Caption := Translator.TranslateControl('HexEditForm', 'GotoAddressButton');
+  UnsignedLabel.Caption := Translator.TranslateControl('HexEditForm', 'UnsignedLabel');
+  SignedLabel.Caption := Translator.TranslateControl('HexEditForm', 'SignedLabel');
 end;
 
 

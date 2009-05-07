@@ -9,10 +9,10 @@ WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 the specific language governing rights and limitations under the License.
 
 Code template generated with SynGen.
-The original code is: TatraDASHighlighter.pas, released 2004-11-06.
-Description: iyuiyi
+The original code is: TatraDASHighlighter.pas, released 2009-04-30.
+Description: Syntax Parser/Highlighter
 The initial author of this file is Ivan.
-Copyright (c) 2004, all rights reserved.
+Copyright (c) 2009, all rights reserved.
 
 Contributors to the SynEdit and mwEdit projects are listed in the
 Contributors.txt file.
@@ -41,18 +41,17 @@ unit TatraDASHighlighter;
 interface
 
 uses
-  SysUtils,
-  Classes,
 {$IFDEF SYN_CLX}
-  QControls,
   QGraphics,
+  QSynEditTypes,
+  QSynEditHighlighter,
 {$ELSE}
-  Windows,
-  Controls,
   Graphics,
-{$ENDIF}
   SynEditTypes,
-  SynEditHighlighter;
+  SynEditHighlighter,
+{$ENDIF}
+  SysUtils,
+  Classes;
 
 type
   TtkTokenKind = (
@@ -85,6 +84,7 @@ const
 type
   TSynTatraDASSyn = class(TSynCustomHighlighter)
   private
+    fLineRef: string;
     fLine: PChar;
     fLineNumber: Integer;
     fProcTable: array[#0..#255] of TProcTableProc;
@@ -281,14 +281,18 @@ type
 implementation
 
 uses
+{$IFDEF SYN_CLX}
+  QSynEditStrConst;
+{$ELSE}
   SynEditStrConst;
+{$ENDIF}
 
 {$IFDEF SYN_COMPILER_3_UP}
 resourcestring
 {$ELSE}
 const
 {$ENDIF}
-  SYNS_Filterx86AssemblyLanguage = '';
+  SYNS_LangTatraDAS = 'TatraDAS';
   SYNS_AttrCalls = 'Calls';
   SYNS_AttrEntryPoint = 'EntryPoint';
   SYNS_AttrInstructions = 'Instructions';
@@ -472,7 +476,7 @@ begin
     Result := True;
     for i := 1 to fStringLen do
     begin
-      if Temp^ <> aKey[i] then
+      if mHashTable[Temp^] <> mHashTable[aKey[i]] then
       begin
         Result := False;
         break;
@@ -559,27 +563,27 @@ end;
 
 function TSynTatraDASSyn.Func22: TtkTokenKind;
 begin
-  if KeyComp('BT') then Result := tkInstructions else
+  if KeyComp('FLD') then Result := tkInstructions else
     if KeyComp('FLD1') then Result := tkInstructions else
-      if KeyComp('FLD') then Result := tkInstructions else
+      if KeyComp('BT') then Result := tkInstructions else
         if KeyComp('JL') then Result := tkJumps else
           if KeyComp('JGE') then Result := tkJumps else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func23: TtkTokenKind;
 begin
-  if KeyComp('SBB') then Result := tkInstructions else
-    if KeyComp('IN') then Result := tkInstructions else Result := tkIdentifier;
+  if KeyComp('IN') then Result := tkInstructions else
+    if KeyComp('SBB') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func24: TtkTokenKind;
 begin
   if KeyComp('CLI') then Result := tkInstructions else
-    if KeyComp('DAS') then Result := tkInstructions else
-      if KeyComp('FBLD') then Result := tkInstructions else
-        if KeyComp('FIADD') then Result := tkInstructions else
-          if KeyComp('CDQ') then Result := tkInstructions else
-            if KeyComp('FIADD') then Result := tkInstructions else Result := tkIdentifier;
+    if KeyComp('FIADD') then Result := tkInstructions else
+      if KeyComp('CDQ') then Result := tkInstructions else
+        if KeyComp('FBLD') then Result := tkInstructions else
+          if KeyComp('FIADD') then Result := tkInstructions else
+            if KeyComp('DAS') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func25: TtkTokenKind;
@@ -594,8 +598,8 @@ function TSynTatraDASSyn.Func26: TtkTokenKind;
 begin
   if KeyComp('JP') then Result := tkJumps else
     if KeyComp('JNB') then Result := tkJumps else
-      if KeyComp('NEG') then Result := tkInstructions else
-        if KeyComp('INC') then Result := tkInstructions else Result := tkIdentifier;
+      if KeyComp('INC') then Result := tkInstructions else
+        if KeyComp('NEG') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func27: TtkTokenKind;
@@ -603,25 +607,25 @@ begin
   if KeyComp('JLE') then Result := tkJumps else
     if KeyComp('JNC') then Result := tkJumps else
       if KeyComp('BSF') then Result := tkInstructions else
-        if KeyComp('LAHF') then Result := tkInstructions else
-          if KeyComp('PADDB') then Result := tkInstructions else Result := tkIdentifier;
+        if KeyComp('PADDB') then Result := tkInstructions else
+          if KeyComp('LAHF') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func28: TtkTokenKind;
 begin
   if KeyComp('Call') then Result := tkKlucSlova else
-    if KeyComp('CBW') then Result := tkInstructions else
-      if KeyComp('FABS') then Result := tkInstructions else
+    if KeyComp('FABS') then Result := tkInstructions else
+      if KeyComp('CBW') then Result := tkInstructions else
         if KeyComp('CALL') then Result := tkCalls else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func29: TtkTokenKind;
 begin
-  if KeyComp('PFACC') then Result := tkInstructions else
+  if KeyComp('ADDPD') then Result := tkInstructions else
     if KeyComp('PADDD') then Result := tkInstructions else
       if KeyComp('JS') then Result := tkJumps else
         if KeyComp('JNE') then Result := tkJumps else
-          if KeyComp('ADDPD') then Result := tkInstructions else Result := tkIdentifier;
+          if KeyComp('PFACC') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func30: TtkTokenKind;
@@ -635,10 +639,10 @@ begin
   if KeyComp('JNG') then Result := tkJumps else
     if KeyComp('JNBE') then Result := tkJumps else
       if KeyComp('JPE') then Result := tkJumps else
-        if KeyComp('FILD') then Result := tkInstructions else
+        if KeyComp('LAR') then Result := tkInstructions else
           if KeyComp('PFADD') then Result := tkInstructions else
-            if KeyComp('LAR') then Result := tkInstructions else
-              if KeyComp('FADDP') then Result := tkInstructions else Result := tkIdentifier;
+            if KeyComp('FADDP') then Result := tkInstructions else
+              if KeyComp('FILD') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func32: TtkTokenKind;
@@ -662,27 +666,27 @@ end;
 
 function TSynTatraDASSyn.Func35: TtkTokenKind;
 begin
-  if KeyComp('PI2FD') then Result := tkInstructions else
-    if KeyComp('PAND') then Result := tkInstructions else
-      if KeyComp('PF2ID') then Result := tkInstructions else
-        if KeyComp('CWDE') then Result := tkInstructions else
-          if KeyComp('DIV') then Result := tkInstructions else
-            if KeyComp('LDS') then Result := tkInstructions else Result := tkIdentifier;
+  if KeyComp('PAND') then Result := tkInstructions else
+    if KeyComp('LDS') then Result := tkInstructions else
+      if KeyComp('CWDE') then Result := tkInstructions else
+        if KeyComp('PI2FD') then Result := tkInstructions else
+          if KeyComp('PF2ID') then Result := tkInstructions else
+            if KeyComp('DIV') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func36: TtkTokenKind;
 begin
   if KeyComp('JZ') then Result := tkJumps else
-    if KeyComp('FCHS') then Result := tkInstructions else
-      if KeyComp('LES') then Result := tkInstructions else
+    if KeyComp('LES') then Result := tkInstructions else
+      if KeyComp('FCHS') then Result := tkInstructions else
         if KeyComp('JNGE') then Result := tkJumps else
           if KeyComp('JNL') then Result := tkJumps else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func37: TtkTokenKind;
 begin
-  if KeyComp('LFS') then Result := tkInstructions else
-    if KeyComp('FCOM') then Result := tkInstructions else Result := tkIdentifier;
+  if KeyComp('FCOM') then Result := tkInstructions else
+    if KeyComp('LFS') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func38: TtkTokenKind;
@@ -693,115 +697,115 @@ end;
 
 function TSynTatraDASSyn.Func39: TtkTokenKind;
 begin
-  if KeyComp('RCR') then Result := tkInstructions else
+  if KeyComp('rep') then Result := tkInstructions else
     if KeyComp('FLDL2E') then Result := tkInstructions else
       if KeyComp('JNO') then Result := tkJumps else
         if KeyComp('JMP') then Result := tkJumps else
-          if KeyComp('rep') then Result := tkInstructions else
+          if KeyComp('BSR') then Result := tkInstructions else
             if KeyComp('SHL') then Result := tkInstructions else
               if KeyComp('ANDPD') then Result := tkInstructions else
-                if KeyComp('BSR') then Result := tkInstructions else Result := tkIdentifier;
+                if KeyComp('RCR') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func40: TtkTokenKind;
 begin
   if KeyComp('JNP') then Result := tkJumps else
-    if KeyComp('HLT') then Result := tkInstructions else
-      if KeyComp('BTR') then Result := tkInstructions else
-        if KeyComp('FFREE') then Result := tkInstructions else Result := tkIdentifier;
+    if KeyComp('BTR') then Result := tkInstructions else
+      if KeyComp('FFREE') then Result := tkInstructions else
+        if KeyComp('HLT') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func41: TtkTokenKind;
 begin
-  if KeyComp('FXCH') then Result := tkInstructions else
+  if KeyComp('BTS') then Result := tkInstructions else
     if KeyComp('FLDLG2') then Result := tkInstructions else
-      if KeyComp('BTS') then Result := tkInstructions else
-        if KeyComp('FDIV') then Result := tkInstructions else
+      if KeyComp('FDIV') then Result := tkInstructions else
+        if KeyComp('FXCH') then Result := tkInstructions else
           if KeyComp('JNLE') then Result := tkJumps else
             if KeyComp('JPO') then Result := tkJumps else
-              if KeyComp('LOCK') then Result := tkInstructions else
-                if KeyComp('lock') then Result := tkInstructions else Result := tkIdentifier;
+              if KeyComp('lock') then Result := tkInstructions else
+                if KeyComp('LOCK') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func42: TtkTokenKind;
 begin
-  if KeyComp('STC') then Result := tkInstructions else
+  if KeyComp('XCHG') then Result := tkInstructions else
     if KeyComp('INS') then Result := tkInstructions else
       if KeyComp('PADDQ') then Result := tkInstructions else
-        if KeyComp('SUB') then Result := tkInstructions else
-          if KeyComp('XCHG') then Result := tkInstructions else
+        if KeyComp('STC') then Result := tkInstructions else
+          if KeyComp('SUB') then Result := tkInstructions else
             if KeyComp('SCAS') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func43: TtkTokenKind;
 begin
-  if KeyComp('FCOS') then Result := tkInstructions else
+  if KeyComp('LGDT') then Result := tkInstructions else
     if KeyComp('STD') then Result := tkInstructions else
       if KeyComp('RET') then Result := tkReturns else
         if KeyComp('JNS') then Result := tkJumps else
-          if KeyComp('LSL') then Result := tkInstructions else
-            if KeyComp('LGDT') then Result := tkInstructions else
+          if KeyComp('F2XM1') then Result := tkInstructions else
+            if KeyComp('FCOS') then Result := tkInstructions else
               if KeyComp('INT') then Result := tkInstructions else
-                if KeyComp('F2XM1') then Result := tkInstructions else
+                if KeyComp('LSL') then Result := tkInstructions else
                   if KeyComp('SHLD') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func44: TtkTokenKind;
 begin
   if KeyComp('FXAM') then Result := tkInstructions else
-    if KeyComp('SCASB') then Result := tkInstructions else
-      if KeyComp('INSB') then Result := tkInstructions else
-        if KeyComp('repe') then Result := tkInstructions else
-          if KeyComp('ADDPS') then Result := tkInstructions else
-            if KeyComp('IDIV') then Result := tkInstructions else Result := tkIdentifier;
+    if KeyComp('INSB') then Result := tkInstructions else
+      if KeyComp('IDIV') then Result := tkInstructions else
+        if KeyComp('SCASB') then Result := tkInstructions else
+          if KeyComp('repe') then Result := tkInstructions else
+            if KeyComp('ADDPS') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func45: TtkTokenKind;
 begin
-  if KeyComp('NOP') then Result := tkInstructions else
-    if KeyComp('SHR') then Result := tkInstructions else
-      if KeyComp('FST') then Result := tkInstructions else
-        if KeyComp('LIDT') then Result := tkInstructions else
-          if KeyComp('SETA') then Result := tkInstructions else
+  if KeyComp('LIDT') then Result := tkInstructions else
+    if KeyComp('LFENCE') then Result := tkInstructions else
+      if KeyComp('SETA') then Result := tkInstructions else
+        if KeyComp('LEAVE') then Result := tkInstructions else
+          if KeyComp('ROL') then Result := tkInstructions else
             if KeyComp('JMPF') then Result := tkJumps else
-              if KeyComp('LFENCE') then Result := tkInstructions else
-                if KeyComp('ROL') then Result := tkInstructions else
-                  if KeyComp('LEAVE') then Result := tkInstructions else Result := tkIdentifier;
+              if KeyComp('FST') then Result := tkInstructions else
+                if KeyComp('NOP') then Result := tkInstructions else
+                  if KeyComp('SHR') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func46: TtkTokenKind;
 begin
-  if KeyComp('SCASD') then Result := tkInstructions else
-    if KeyComp('FSCALE') then Result := tkInstructions else
-      if KeyComp('SETB') then Result := tkInstructions else
-        if KeyComp('MUL') then Result := tkInstructions else
-          if KeyComp('FCOMI') then Result := tkInstructions else
-            if KeyComp('PADDSB') then Result := tkInstructions else
-              if KeyComp('FICOM') then Result := tkInstructions else
-                if KeyComp('INSD') then Result := tkInstructions else
-                  if KeyComp('MFENCE') then Result := tkInstructions else Result := tkIdentifier;
+  if KeyComp('SETB') then Result := tkInstructions else
+    if KeyComp('PADDSB') then Result := tkInstructions else
+      if KeyComp('FSCALE') then Result := tkInstructions else
+        if KeyComp('INSD') then Result := tkInstructions else
+          if KeyComp('FICOM') then Result := tkInstructions else
+            if KeyComp('SCASD') then Result := tkInstructions else
+              if KeyComp('MFENCE') then Result := tkInstructions else
+                if KeyComp('MUL') then Result := tkInstructions else
+                  if KeyComp('FCOMI') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func47: TtkTokenKind;
 begin
-  if KeyComp('POP') then Result := tkInstructions else
-    if KeyComp('SETC') then Result := tkInstructions else
+  if KeyComp('SETC') then Result := tkInstructions else
+    if KeyComp('ADDSS') then Result := tkInstructions else
       if KeyComp('FLDPI') then Result := tkInstructions else
-        if KeyComp('ARPL') then Result := tkInstructions else
-          if KeyComp('ADDSS') then Result := tkInstructions else Result := tkIdentifier;
+        if KeyComp('POP') then Result := tkInstructions else
+          if KeyComp('ARPL') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func48: TtkTokenKind;
 begin
-  if KeyComp('PAVGB') then Result := tkInstructions else
-    if KeyComp('PADDW') then Result := tkInstructions else
-      if KeyComp('FSIN') then Result := tkInstructions else
-        if KeyComp('FLDCW') then Result := tkInstructions else
-          if KeyComp('POPA') then Result := tkInstructions else
-            if KeyComp('FLDLN2') then Result := tkInstructions else
-              if KeyComp('FLDZ') then Result := tkInstructions else
-                if KeyComp('FSUB') then Result := tkInstructions else
-                  if KeyComp('STI') then Result := tkInstructions else
+  if KeyComp('FLDZ') then Result := tkInstructions else
+    if KeyComp('FSIN') then Result := tkInstructions else
+      if KeyComp('PAVGB') then Result := tkInstructions else
+        if KeyComp('FSUB') then Result := tkInstructions else
+          if KeyComp('FLDLN2') then Result := tkInstructions else
+            if KeyComp('FLDCW') then Result := tkInstructions else
+              if KeyComp('PADDW') then Result := tkInstructions else
+                if KeyComp('STI') then Result := tkInstructions else
+                  if KeyComp('POPA') then Result := tkInstructions else
                     if KeyComp('LLDT') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
@@ -810,166 +814,166 @@ begin
   if KeyComp('POR') then Result := tkInstructions else
     if KeyComp('used') then Result := tkKlucSlova else
       if KeyComp('RETF') then Result := tkReturns else
-        if KeyComp('SHRD') then Result := tkInstructions else
-          if KeyComp('INVD') then Result := tkInstructions else
+        if KeyComp('INVD') then Result := tkInstructions else
+          if KeyComp('NOT') then Result := tkInstructions else
             if KeyComp('PANDN') then Result := tkInstructions else
               if KeyComp('SETE') then Result := tkInstructions else
-                if KeyComp('NOT') then Result := tkInstructions else Result := tkIdentifier;
+                if KeyComp('SHRD') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func50: TtkTokenKind;
 begin
   if KeyComp('JNZ') then Result := tkJumps else
-    if KeyComp('EMMS') then Result := tkInstructions else
+    if KeyComp('FCLEX') then Result := tkInstructions else
       if KeyComp('SGDT') then Result := tkInstructions else
-        if KeyComp('LODS') then Result := tkInstructions else
+        if KeyComp('LSS') then Result := tkInstructions else
           if KeyComp('FIDIV') then Result := tkInstructions else
             if KeyComp('SETAE') then Result := tkInstructions else
-              if KeyComp('FCLEX') then Result := tkInstructions else
-                if KeyComp('LSS') then Result := tkInstructions else
-                  if KeyComp('RSM') then Result := tkInstructions else
-                    if KeyComp('LTR') then Result := tkInstructions else
-                      if KeyComp('MOV') then Result := tkInstructions else Result := tkIdentifier;
+              if KeyComp('RSM') then Result := tkInstructions else
+                if KeyComp('LTR') then Result := tkInstructions else
+                  if KeyComp('EMMS') then Result := tkInstructions else
+                    if KeyComp('MOV') then Result := tkInstructions else
+                      if KeyComp('LODS') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func51: TtkTokenKind;
 begin
-  if KeyComp('SETG') then Result := tkInstructions else
-    if KeyComp('ROR') then Result := tkInstructions else
+  if KeyComp('ROR') then Result := tkInstructions else
+    if KeyComp('FNOP') then Result := tkInstructions else
       if KeyComp('SETBE') then Result := tkInstructions else
-        if KeyComp('FNOP') then Result := tkInstructions else
+        if KeyComp('SETG') then Result := tkInstructions else
           if KeyComp('CMPS') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func52: TtkTokenKind;
 begin
-  if KeyComp('FMUL') then Result := tkInstructions else
-    if KeyComp('CMPPD') then Result := tkInstructions else
+  if KeyComp('Hello') then Result := tkKey else
+    if KeyComp('POPAD') then Result := tkInstructions else
       if KeyComp('IRET') then Result := tkReturns else
-        if KeyComp('SIDT') then Result := tkInstructions else
-          if KeyComp('LODSB') then Result := tkInstructions else
+        if KeyComp('CMPPD') then Result := tkInstructions else
+          if KeyComp('FMUL') then Result := tkInstructions else
             if KeyComp('from') then Result := tkKlucSlova else
-              if KeyComp('Hello') then Result := tkKey else
-                if KeyComp('POPAD') then Result := tkInstructions else Result := tkIdentifier;
+              if KeyComp('LODSB') then Result := tkInstructions else
+                if KeyComp('SIDT') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func53: TtkTokenKind;
 begin
-  if KeyComp('ORPD') then Result := tkInstructions else
+  if KeyComp('CMPSB') then Result := tkInstructions else
     if KeyComp('ANDNPD') then Result := tkInstructions else
-      if KeyComp('POPF') then Result := tkInstructions else
+      if KeyComp('FCOMP') then Result := tkInstructions else
         if KeyComp('JMPN') then Result := tkJumps else
           if KeyComp('CPUID') then Result := tkInstructions else
-            if KeyComp('FSAVE') then Result := tkInstructions else
-              if KeyComp('CMPSB') then Result := tkInstructions else
-                if KeyComp('WAIT') then Result := tkInstructions else
-                  if KeyComp('FCOMP') then Result := tkInstructions else Result := tkIdentifier;
+            if KeyComp('WAIT') then Result := tkInstructions else
+              if KeyComp('FSAVE') then Result := tkInstructions else
+                if KeyComp('ORPD') then Result := tkInstructions else
+                  if KeyComp('POPF') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func54: TtkTokenKind;
 begin
-  if KeyComp('CLTS') then Result := tkInstructions else
-    if KeyComp('FLDL2T') then Result := tkInstructions else
-      if KeyComp('MOVD') then Result := tkInstructions else
+  if KeyComp('FIST') then Result := tkInstructions else
+    if KeyComp('MOVD') then Result := tkInstructions else
+      if KeyComp('ANDPS') then Result := tkInstructions else
         if KeyComp('LODSD') then Result := tkInstructions else
-          if KeyComp('FIST') then Result := tkInstructions else
-            if KeyComp('RDPMC') then Result := tkInstructions else
+          if KeyComp('RDPMC') then Result := tkInstructions else
+            if KeyComp('FLDL2T') then Result := tkInstructions else
               if KeyComp('CMOVA') then Result := tkInstructions else
-                if KeyComp('ANDPS') then Result := tkInstructions else Result := tkIdentifier;
+                if KeyComp('CLTS') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func55: TtkTokenKind;
 begin
-  if KeyComp('CMPSD') then Result := tkInstructions else
+  if KeyComp('SLDT') then Result := tkInstructions else
     if KeyComp('CMOVB') then Result := tkInstructions else
-      if KeyComp('DIVPD') then Result := tkInstructions else
-        if KeyComp('IMUL') then Result := tkInstructions else
-          if KeyComp('SLDT') then Result := tkInstructions else
-            if KeyComp('CMPSD') then Result := tkInstructions else Result := tkIdentifier;
+      if KeyComp('CMPSD') then Result := tkInstructions else
+        if KeyComp('DIVPD') then Result := tkInstructions else
+          if KeyComp('CMPSD') then Result := tkInstructions else
+            if KeyComp('IMUL') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func56: TtkTokenKind;
 begin
-  if KeyComp('SETGE') then Result := tkInstructions else
+  if KeyComp('MINPD') then Result := tkInstructions else
     if KeyComp('IRETD') then Result := tkReturns else
-      if KeyComp('SETL') then Result := tkInstructions else
-        if KeyComp('OUT') then Result := tkInstructions else
-          if KeyComp('FEMMS') then Result := tkInstructions else
-            if KeyComp('MINPD') then Result := tkInstructions else
-              if KeyComp('BOUND') then Result := tkInstructions else Result := tkIdentifier;
+      if KeyComp('BOUND') then Result := tkInstructions else
+        if KeyComp('SETL') then Result := tkInstructions else
+          if KeyComp('SETGE') then Result := tkInstructions else
+            if KeyComp('FEMMS') then Result := tkInstructions else
+              if KeyComp('OUT') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func57: TtkTokenKind;
 begin
   if KeyComp('FISUB') then Result := tkInstructions else
     if KeyComp('RETN') then Result := tkReturns else
-      if KeyComp('XOR') then Result := tkInstructions else
-        if KeyComp('FPTAN') then Result := tkInstructions else
-          if KeyComp('XLAT') then Result := tkInstructions else
-            if KeyComp('FDIVP') then Result := tkInstructions else
-              if KeyComp('STR') then Result := tkInstructions else
-                if KeyComp('POPFD') then Result := tkInstructions else Result := tkIdentifier;
+      if KeyComp('POPFD') then Result := tkInstructions else
+        if KeyComp('FDIVP') then Result := tkInstructions else
+          if KeyComp('STR') then Result := tkInstructions else
+            if KeyComp('XOR') then Result := tkInstructions else
+              if KeyComp('FPTAN') then Result := tkInstructions else
+                if KeyComp('XLAT') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func58: TtkTokenKind;
 begin
-  if KeyComp('PSRAD') then Result := tkInstructions else
+  if KeyComp('INTO') then Result := tkInstructions else
     if KeyComp('Loop') then Result := tkKlucSlova else
-      if KeyComp('FINIT') then Result := tkInstructions else
-        if KeyComp('FUCOM') then Result := tkInstructions else
-          if KeyComp('DIVSD') then Result := tkInstructions else
-            if KeyComp('PFMIN') then Result := tkInstructions else
-              if KeyComp('CMOVE') then Result := tkInstructions else
-                if KeyComp('FPREM1') then Result := tkInstructions else
-                  if KeyComp('FPREM') then Result := tkInstructions else
+      if KeyComp('CMOVE') then Result := tkInstructions else
+        if KeyComp('FPREM1') then Result := tkInstructions else
+          if KeyComp('FPREM') then Result := tkInstructions else
+            if KeyComp('FINIT') then Result := tkInstructions else
+              if KeyComp('FPATAN') then Result := tkInstructions else
+                if KeyComp('PSRAD') then Result := tkInstructions else
+                  if KeyComp('repne') then Result := tkInstructions else
                     if KeyComp('LOOP') then Result := tkLoops else
-                      if KeyComp('repne') then Result := tkInstructions else
-                        if KeyComp('MAXPD') then Result := tkInstructions else
-                          if KeyComp('INTO') then Result := tkInstructions else
-                            if KeyComp('FPATAN') then Result := tkInstructions else Result := tkIdentifier;
+                      if KeyComp('PFMIN') then Result := tkInstructions else
+                        if KeyComp('DIVSD') then Result := tkInstructions else
+                          if KeyComp('MAXPD') then Result := tkInstructions else
+                            if KeyComp('FUCOM') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func59: TtkTokenKind;
 begin
-  if KeyComp('PFRCP') then Result := tkInstructions else
-    if KeyComp('SETNA') then Result := tkInstructions else
-      if KeyComp('FWAIT') then Result := tkInstructions else
-        if KeyComp('SETO') then Result := tkInstructions else
-          if KeyComp('MINSD') then Result := tkInstructions else
-            if KeyComp('XLATB') then Result := tkInstructions else
-              if KeyComp('CMOVAE') then Result := tkInstructions else
-                if KeyComp('FDIVR') then Result := tkInstructions else Result := tkIdentifier;
+  if KeyComp('MINSD') then Result := tkInstructions else
+    if KeyComp('FWAIT') then Result := tkInstructions else
+      if KeyComp('CMOVAE') then Result := tkInstructions else
+        if KeyComp('FDIVR') then Result := tkInstructions else
+          if KeyComp('SETNA') then Result := tkInstructions else
+            if KeyComp('PFRCP') then Result := tkInstructions else
+              if KeyComp('SETO') then Result := tkInstructions else
+                if KeyComp('XLATB') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func60: TtkTokenKind;
 begin
   if KeyComp('PSUBB') then Result := tkInstructions else
     if KeyComp('Jump') then Result := tkKlucSlova else
-      if KeyComp('CMOVBE') then Result := tkInstructions else
-        if KeyComp('PFMAX') then Result := tkInstructions else
-          if KeyComp('SETNB') then Result := tkInstructions else
-            if KeyComp('SETP') then Result := tkInstructions else Result := tkIdentifier;
+      if KeyComp('SETP') then Result := tkInstructions else
+        if KeyComp('SETNB') then Result := tkInstructions else
+          if KeyComp('PFMAX') then Result := tkInstructions else
+            if KeyComp('CMOVBE') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func61: TtkTokenKind;
 begin
-  if KeyComp('SETLE') then Result := tkInstructions else
-    if KeyComp('FIMUL') then Result := tkInstructions else
-      if KeyComp('MAXSD') then Result := tkInstructions else
-        if KeyComp('FCMOVB') then Result := tkInstructions else
-          if KeyComp('BSWAP') then Result := tkInstructions else
-            if KeyComp('FSTP') then Result := tkInstructions else
+  if KeyComp('FSTP') then Result := tkInstructions else
+    if KeyComp('FCMOVB') then Result := tkInstructions else
+      if KeyComp('BSWAP') then Result := tkInstructions else
+        if KeyComp('MAXSD') then Result := tkInstructions else
+          if KeyComp('FIMUL') then Result := tkInstructions else
+            if KeyComp('SETLE') then Result := tkInstructions else
               if KeyComp('SETNC') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func62: TtkTokenKind;
 begin
   if KeyComp('ENTER') then Result := tkInstructions else
-    if KeyComp('SUBPD') then Result := tkInstructions else
-      if KeyComp('FICOMP') then Result := tkInstructions else
-        if KeyComp('PAUSE') then Result := tkInstructions else
-          if KeyComp('FCOMIP') then Result := tkInstructions else
-            if KeyComp('PSUBD') then Result := tkInstructions else Result := tkIdentifier;
+    if KeyComp('PSUBD') then Result := tkInstructions else
+      if KeyComp('PAUSE') then Result := tkInstructions else
+        if KeyComp('FICOMP') then Result := tkInstructions else
+          if KeyComp('SUBPD') then Result := tkInstructions else
+            if KeyComp('FCOMIP') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func63: TtkTokenKind;
@@ -977,70 +981,70 @@ begin
   if KeyComp('SETS') then Result := tkInstructions else
     if KeyComp('JCXZ') then Result := tkJumps else
       if KeyComp('LOOPE') then Result := tkLoops else
-        if KeyComp('SETNE') then Result := tkInstructions else
+        if KeyComp('PSLLD') then Result := tkInstructions else
           if KeyComp('VERR') then Result := tkInstructions else
-            if KeyComp('COMISD') then Result := tkInstructions else
-              if KeyComp('PSLLD') then Result := tkInstructions else
-                if KeyComp('FBSTP') then Result := tkInstructions else
+            if KeyComp('SETNE') then Result := tkInstructions else
+              if KeyComp('FBSTP') then Result := tkInstructions else
+                if KeyComp('COMISD') then Result := tkInstructions else
                   if KeyComp('FLDENV') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func64: TtkTokenKind;
 begin
-  if KeyComp('FNCLEX') then Result := tkInstructions else
-    if KeyComp('SETNAE') then Result := tkInstructions else
-      if KeyComp('FSUBP') then Result := tkInstructions else
-        if KeyComp('FCMOVE') then Result := tkInstructions else
-          if KeyComp('FNCLEX') then Result := tkInstructions else
+  if KeyComp('FSUBP') then Result := tkInstructions else
+    if KeyComp('PUSH') then Result := tkInstructions else
+      if KeyComp('TEST') then Result := tkInstructions else
+        if KeyComp('FNCLEX') then Result := tkInstructions else
+          if KeyComp('FCMOVE') then Result := tkInstructions else
             if KeyComp('PFSUB') then Result := tkInstructions else
-              if KeyComp('TEST') then Result := tkInstructions else
-                if KeyComp('PUSH') then Result := tkInstructions else
-                  if KeyComp('RDTSC') then Result := tkInstructions else Result := tkIdentifier;
+              if KeyComp('RDTSC') then Result := tkInstructions else
+                if KeyComp('SETNAE') then Result := tkInstructions else
+                  if KeyComp('FNCLEX') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func65: TtkTokenKind;
 begin
-  if KeyComp('SETNBE') then Result := tkInstructions else
-    if KeyComp('CMOVL') then Result := tkInstructions else
-      if KeyComp('PUSHA') then Result := tkInstructions else
-        if KeyComp('INSW') then Result := tkInstructions else
-          if KeyComp('SUBSD') then Result := tkInstructions else
-            if KeyComp('repz') then Result := tkInstructions else
+  if KeyComp('CMOVL') then Result := tkInstructions else
+    if KeyComp('SETNBE') then Result := tkInstructions else
+      if KeyComp('repz') then Result := tkInstructions else
+        if KeyComp('SUBSD') then Result := tkInstructions else
+          if KeyComp('PUSHA') then Result := tkInstructions else
+            if KeyComp('PSADBW') then Result := tkInstructions else
               if KeyComp('PMADDWD') then Result := tkInstructions else
                 if KeyComp('SETNG') then Result := tkInstructions else
-                  if KeyComp('SCASW') then Result := tkInstructions else
-                    if KeyComp('PSADBW') then Result := tkInstructions else
-                      if KeyComp('FTST') then Result := tkInstructions else Result := tkIdentifier;
+                  if KeyComp('FTST') then Result := tkInstructions else
+                    if KeyComp('INSW') then Result := tkInstructions else
+                      if KeyComp('SCASW') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func66: TtkTokenKind;
 begin
-  if KeyComp('FCMOVBE') then Result := tkInstructions else
-    if KeyComp('FSUBR') then Result := tkInstructions else
-      if KeyComp('MULPD') then Result := tkInstructions else
+  if KeyComp('FSUBR') then Result := tkInstructions else
+    if KeyComp('MULPD') then Result := tkInstructions else
+      if KeyComp('FCMOVBE') then Result := tkInstructions else
         if KeyComp('PFCMPGE') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func67: TtkTokenKind;
 begin
-  if KeyComp('PADDUSB') then Result := tkInstructions else
-    if KeyComp('MOVQ') then Result := tkInstructions else
-      if KeyComp('LMSW') then Result := tkInstructions else
+  if KeyComp('MOVQ') then Result := tkInstructions else
+    if KeyComp('CMPPS') then Result := tkInstructions else
+      if KeyComp('FYL2X') then Result := tkInstructions else
         if KeyComp('FUCOMI') then Result := tkInstructions else
-          if KeyComp('FYL2X') then Result := tkInstructions else
-            if KeyComp('PADDSW') then Result := tkInstructions else
+          if KeyComp('PADDSW') then Result := tkInstructions else
+            if KeyComp('PADDUSB') then Result := tkInstructions else
               if KeyComp('FNSAVE') then Result := tkInstructions else
-                if KeyComp('CMPPS') then Result := tkInstructions else Result := tkIdentifier;
+                if KeyComp('LMSW') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func68: TtkTokenKind;
 begin
-  if KeyComp('ORPS') then Result := tkInstructions else
-    if KeyComp('CMOVO') then Result := tkInstructions else
-      if KeyComp('FIDIVR') then Result := tkInstructions else
-        if KeyComp('VERW') then Result := tkInstructions else
-          if KeyComp('PFMUL') then Result := tkInstructions else
-            if KeyComp('ANDNPS') then Result := tkInstructions else
+  if KeyComp('VERW') then Result := tkInstructions else
+    if KeyComp('ORPS') then Result := tkInstructions else
+      if KeyComp('PFMUL') then Result := tkInstructions else
+        if KeyComp('CMOVO') then Result := tkInstructions else
+          if KeyComp('ANDNPS') then Result := tkInstructions else
+            if KeyComp('FIDIVR') then Result := tkInstructions else
               if KeyComp('JECXZ') then Result := tkJumps else
                 if KeyComp('FMULP') then Result := tkInstructions else Result := tkIdentifier;
 end;
@@ -1048,209 +1052,209 @@ end;
 function TSynTatraDASSyn.Func69: TtkTokenKind;
 begin
   if KeyComp('CMOVP') then Result := tkInstructions else
-    if KeyComp('PUSHAD') then Result := tkInstructions else
-      if KeyComp('PSRLD') then Result := tkInstructions else
-        if KeyComp('MULSD') then Result := tkInstructions else
-          if KeyComp('FCOMPP') then Result := tkInstructions else
-            if KeyComp('PAVGW') then Result := tkInstructions else
+    if KeyComp('PSRLD') then Result := tkInstructions else
+      if KeyComp('PAVGW') then Result := tkInstructions else
+        if KeyComp('FCOMPP') then Result := tkInstructions else
+          if KeyComp('MULSD') then Result := tkInstructions else
+            if KeyComp('PUSHAD') then Result := tkInstructions else
               if KeyComp('MOVS') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func70: TtkTokenKind;
 begin
-  if KeyComp('DIVPS') then Result := tkInstructions else
+  if KeyComp('SETNL') then Result := tkInstructions else
     if KeyComp('CMPSS') then Result := tkInstructions else
-      if KeyComp('SETNL') then Result := tkInstructions else
-        if KeyComp('SETZ') then Result := tkInstructions else
-          if KeyComp('PUSHF') then Result := tkInstructions else
+      if KeyComp('PUSHF') then Result := tkInstructions else
+        if KeyComp('DIVPS') then Result := tkInstructions else
+          if KeyComp('CMOVLE') then Result := tkInstructions else
             if KeyComp('module') then Result := tkKlucSlova else
-              if KeyComp('CMOVLE') then Result := tkInstructions else
-                if KeyComp('SETNGE') then Result := tkInstructions else
-                  if KeyComp('FISTP') then Result := tkInstructions else Result := tkIdentifier;
+              if KeyComp('FISTP') then Result := tkInstructions else
+                if KeyComp('SETZ') then Result := tkInstructions else
+                  if KeyComp('SETNGE') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func71: TtkTokenKind;
 begin
-  if KeyComp('MOVSB') then Result := tkInstructions else
-    if KeyComp('POPAW') then Result := tkInstructions else
-      if KeyComp('MOVAPD') then Result := tkInstructions else
-        if KeyComp('FSTCW') then Result := tkInstructions else
-          if KeyComp('MINPS') then Result := tkInstructions else Result := tkIdentifier;
+  if KeyComp('POPAW') then Result := tkInstructions else
+    if KeyComp('MINPS') then Result := tkInstructions else
+      if KeyComp('FSTCW') then Result := tkInstructions else
+        if KeyComp('MOVAPD') then Result := tkInstructions else
+          if KeyComp('MOVSB') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func72: TtkTokenKind;
 begin
-  if KeyComp('RCPPS') then Result := tkInstructions else
-    if KeyComp('World') then Result := tkKey else
-      if KeyComp('CMOVNE') then Result := tkInstructions else
-        if KeyComp('RDMSR') then Result := tkInstructions else
-          if KeyComp('CMOVS') then Result := tkInstructions else
+  if KeyComp('CMOVS') then Result := tkInstructions else
+    if KeyComp('RDMSR') then Result := tkInstructions else
+      if KeyComp('FNINIT') then Result := tkInstructions else
+        if KeyComp('CMOVNE') then Result := tkInstructions else
+          if KeyComp('PCMPEQB') then Result := tkInstructions else
             if KeyComp('MOVDQA') then Result := tkInstructions else
-              if KeyComp('FNINIT') then Result := tkInstructions else
-                if KeyComp('PCMPEQB') then Result := tkInstructions else Result := tkIdentifier;
+              if KeyComp('RCPPS') then Result := tkInstructions else
+                if KeyComp('World') then Result := tkKey else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func73: TtkTokenKind;
 begin
-  if KeyComp('DIVSS') then Result := tkInstructions else
+  if KeyComp('STOS') then Result := tkInstructions else
     if KeyComp('SETNO') then Result := tkInstructions else
-      if KeyComp('MOVSD') then Result := tkInstructions else
-        if KeyComp('LODSW') then Result := tkInstructions else
+      if KeyComp('FDECSTP') then Result := tkInstructions else
+        if KeyComp('DIVSS') then Result := tkInstructions else
           if KeyComp('PXOR') then Result := tkInstructions else
-            if KeyComp('STOS') then Result := tkInstructions else
-              if KeyComp('MAXPS') then Result := tkInstructions else
-                if KeyComp('FDECSTP') then Result := tkInstructions else Result := tkIdentifier;
+            if KeyComp('LODSW') then Result := tkInstructions else
+              if KeyComp('MOVSD') then Result := tkInstructions else
+                if KeyComp('MAXPS') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func74: TtkTokenKind;
 begin
-  if KeyComp('MINSS') then Result := tkInstructions else
-    if KeyComp('WBINVD') then Result := tkInstructions else
-      if KeyComp('PUSHFD') then Result := tkInstructions else
-        if KeyComp('PCMPEQD') then Result := tkInstructions else
-          if KeyComp('CMPXCHG') then Result := tkInstructions else
-            if KeyComp('SETNP') then Result := tkInstructions else
-              if KeyComp('FUCOMP') then Result := tkInstructions else
-                if KeyComp('SMSW') then Result := tkInstructions else
-                  if KeyComp('PSHUFD') then Result := tkInstructions else
+  if KeyComp('PUSHFD') then Result := tkInstructions else
+    if KeyComp('SETNP') then Result := tkInstructions else
+      if KeyComp('FUCOMP') then Result := tkInstructions else
+        if KeyComp('SMSW') then Result := tkInstructions else
+          if KeyComp('CMPSW') then Result := tkInstructions else
+            if KeyComp('WBINVD') then Result := tkInstructions else
+              if KeyComp('PCMPEQD') then Result := tkInstructions else
+                if KeyComp('SHUFPD') then Result := tkInstructions else
+                  if KeyComp('CMPXCHG') then Result := tkInstructions else
                     if KeyComp('point') then Result := tkEntryPoint else
-                      if KeyComp('SHUFPD') then Result := tkInstructions else
-                        if KeyComp('CMPSW') then Result := tkInstructions else Result := tkIdentifier;
+                      if KeyComp('PSHUFD') then Result := tkInstructions else
+                        if KeyComp('MINSS') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func75: TtkTokenKind;
 begin
-  if KeyComp('SETNLE') then Result := tkInstructions else
-    if KeyComp('STOSB') then Result := tkInstructions else
+  if KeyComp('PMINUB') then Result := tkInstructions else
+    if KeyComp('OUTS') then Result := tkInstructions else
       if KeyComp('IRETW') then Result := tkReturns else
-        if KeyComp('SETPO') then Result := tkInstructions else
-          if KeyComp('PMINUB') then Result := tkInstructions else
-            if KeyComp('FDIVRP') then Result := tkInstructions else
+        if KeyComp('SETNLE') then Result := tkInstructions else
+          if KeyComp('SETPO') then Result := tkInstructions else
+            if KeyComp('STOSB') then Result := tkInstructions else
               if KeyComp('FISUBR') then Result := tkInstructions else
-                if KeyComp('OUTS') then Result := tkInstructions else
+                if KeyComp('FCMOVNB') then Result := tkInstructions else
                   if KeyComp('PSUBQ') then Result := tkInstructions else
-                    if KeyComp('FCMOVNB') then Result := tkInstructions else
+                    if KeyComp('FDIVRP') then Result := tkInstructions else
                       if KeyComp('RCPSS') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func76: TtkTokenKind;
 begin
-  if KeyComp('CMPXCHG8B') then Result := tkInstructions else
-    if KeyComp('POPFW') then Result := tkInstructions else
-      if KeyComp('PSLLQ') then Result := tkInstructions else
-        if KeyComp('MAXSS') then Result := tkInstructions else
-          if KeyComp('PFCMPEQ') then Result := tkInstructions else Result := tkIdentifier;
+  if KeyComp('PSLLQ') then Result := tkInstructions else
+    if KeyComp('MAXSS') then Result := tkInstructions else
+      if KeyComp('PFCMPEQ') then Result := tkInstructions else
+        if KeyComp('CMPXCHG8B') then Result := tkInstructions else
+          if KeyComp('POPFW') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func77: TtkTokenKind;
 begin
-  if KeyComp('PSRAW') then Result := tkInstructions else
-    if KeyComp('PCMPGTB') then Result := tkInstructions else
-      if KeyComp('PMAXUB') then Result := tkInstructions else
-        if KeyComp('XORPD') then Result := tkInstructions else
+  if KeyComp('STOSD') then Result := tkInstructions else
+    if KeyComp('SUBPS') then Result := tkInstructions else
+      if KeyComp('XORPD') then Result := tkInstructions else
+        if KeyComp('PSRAW') then Result := tkInstructions else
           if KeyComp('LOOPNE') then Result := tkLoops else
             if KeyComp('OUTSB') then Result := tkInstructions else
-              if KeyComp('STOSD') then Result := tkInstructions else
-                if KeyComp('SUBPS') then Result := tkInstructions else
-                  if KeyComp('FXSAVE') then Result := tkInstructions else
-                    if KeyComp('SETNS') then Result := tkInstructions else Result := tkIdentifier;
+              if KeyComp('SETNS') then Result := tkInstructions else
+                if KeyComp('FXSAVE') then Result := tkInstructions else
+                  if KeyComp('PCMPGTB') then Result := tkInstructions else
+                    if KeyComp('PMAXUB') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func78: TtkTokenKind;
 begin
-  if KeyComp('COMISS') then Result := tkInstructions else
+  if KeyComp('FCMOVNE') then Result := tkInstructions else
     if KeyComp('MOVHPD') then Result := tkInstructions else
-      if KeyComp('FCMOVNE') then Result := tkInstructions else Result := tkIdentifier;
+      if KeyComp('COMISS') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func79: TtkTokenKind;
 begin
-  if KeyComp('PCMPGTD') then Result := tkInstructions else
-    if KeyComp('OUTSD') then Result := tkInstructions else
-      if KeyComp('PSUBSB') then Result := tkInstructions else
+  if KeyComp('PSUBSB') then Result := tkInstructions else
+    if KeyComp('PCMPGTD') then Result := tkInstructions else
+      if KeyComp('OUTSD') then Result := tkInstructions else
         if KeyComp('CMOVNL') then Result := tkInstructions else
           if KeyComp('repnz') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func80: TtkTokenKind;
 begin
-  if KeyComp('PSLLDQ') then Result := tkInstructions else
-    if KeyComp('INVLPG') then Result := tkInstructions else
-      if KeyComp('SUBSS') then Result := tkInstructions else
-        if KeyComp('FCMOVNBE') then Result := tkInstructions else
+  if KeyComp('FSQRT') then Result := tkInstructions else
+    if KeyComp('SUBSS') then Result := tkInstructions else
+      if KeyComp('PSLLDQ') then Result := tkInstructions else
+        if KeyComp('INVLPG') then Result := tkInstructions else
           if KeyComp('FCMOVU') then Result := tkInstructions else
-            if KeyComp('FSQRT') then Result := tkInstructions else Result := tkIdentifier;
+            if KeyComp('FCMOVNBE') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func81: TtkTokenKind;
 begin
   if KeyComp('CLFLUSH') then Result := tkInstructions else
     if KeyComp('PSUBW') then Result := tkInstructions else
-      if KeyComp('MULPS') then Result := tkInstructions else
-        if KeyComp('PFCMPGT') then Result := tkInstructions else Result := tkIdentifier;
+      if KeyComp('PFCMPGT') then Result := tkInstructions else
+        if KeyComp('MULPS') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func82: TtkTokenKind;
 begin
   if KeyComp('PSRLQ') then Result := tkInstructions else
-    if KeyComp('PSLLW') then Result := tkInstructions else
-      if KeyComp('CMOVNO') then Result := tkInstructions else
-        if KeyComp('MOVLPD') then Result := tkInstructions else
+    if KeyComp('CMOVNO') then Result := tkInstructions else
+      if KeyComp('FSUBRP') then Result := tkInstructions else
+        if KeyComp('PSLLW') then Result := tkInstructions else
           if KeyComp('Entry') then Result := tkEntryPoint else
-            if KeyComp('PFSUBR') then Result := tkInstructions else
-              if KeyComp('FSUBRP') then Result := tkInstructions else Result := tkIdentifier;
+            if KeyComp('MOVLPD') then Result := tkInstructions else
+              if KeyComp('PFSUBR') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func83: TtkTokenKind;
 begin
   if KeyComp('CMOVNP') then Result := tkInstructions else
-    if KeyComp('FUCOMIP') then Result := tkInstructions else
-      if KeyComp('FYL2XP1') then Result := tkInstructions else Result := tkIdentifier;
+    if KeyComp('FYL2XP1') then Result := tkInstructions else
+      if KeyComp('FUCOMIP') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func84: TtkTokenKind;
 begin
-  if KeyComp('CMOVNLE') then Result := tkInstructions else
+  if KeyComp('UCOMISD') then Result := tkInstructions else
     if KeyComp('LOOPZ') then Result := tkLoops else
-      if KeyComp('UCOMISD') then Result := tkInstructions else
-        if KeyComp('SETNZ') then Result := tkInstructions else
-          if KeyComp('MULSS') then Result := tkInstructions else Result := tkIdentifier;
+      if KeyComp('SETNZ') then Result := tkInstructions else
+        if KeyComp('MULSS') then Result := tkInstructions else
+          if KeyComp('CMOVNLE') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func85: TtkTokenKind;
 begin
-  if KeyComp('FSINCOS') then Result := tkInstructions else
-    if KeyComp('FRNDINT') then Result := tkInstructions else
-      if KeyComp('FNSTCW') then Result := tkInstructions else Result := tkIdentifier;
+  if KeyComp('FNSTCW') then Result := tkInstructions else
+    if KeyComp('FSINCOS') then Result := tkInstructions else
+      if KeyComp('FRNDINT') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func86: TtkTokenKind;
 begin
-  if KeyComp('FSTENV') then Result := tkInstructions else
-    if KeyComp('PSRLDQ') then Result := tkInstructions else
-      if KeyComp('MOVAPS') then Result := tkInstructions else
+  if KeyComp('CVTDQ2PD') then Result := tkInstructions else
+    if KeyComp('CMOVNS') then Result := tkInstructions else
+      if KeyComp('PSRLDQ') then Result := tkInstructions else
         if KeyComp('CVTPD2DQ') then Result := tkInstructions else
-          if KeyComp('CMOVNS') then Result := tkInstructions else
-            if KeyComp('CVTDQ2PD') then Result := tkInstructions else Result := tkIdentifier;
+          if KeyComp('FSTENV') then Result := tkInstructions else
+            if KeyComp('MOVAPS') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func87: TtkTokenKind;
 begin
-  if KeyComp('FSTSW') then Result := tkInstructions else
-    if KeyComp('FINCSTP') then Result := tkInstructions else Result := tkIdentifier;
+  if KeyComp('FINCSTP') then Result := tkInstructions else
+    if KeyComp('FSTSW') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func88: TtkTokenKind;
 begin
   if KeyComp('MOVDQ2Q') then Result := tkInstructions else
-    if KeyComp('Program') then Result := tkEntryPoint else
+    if KeyComp('PSRLW') then Result := tkInstructions else
       if KeyComp('PFRCPIT1') then Result := tkInstructions else
-        if KeyComp('PSRLW') then Result := tkInstructions else
-          if KeyComp('PUSHAW') then Result := tkInstructions else
-            if KeyComp('MOVSS') then Result := tkInstructions else
-              if KeyComp('PFRCPIT2') then Result := tkInstructions else
-                if KeyComp('MOVQ2DQ') then Result := tkInstructions else
-                  if KeyComp('PADDUSW') then Result := tkInstructions else Result := tkIdentifier;
+        if KeyComp('MOVQ2DQ') then Result := tkInstructions else
+          if KeyComp('PADDUSW') then Result := tkInstructions else
+            if KeyComp('PUSHAW') then Result := tkInstructions else
+              if KeyComp('MOVSS') then Result := tkInstructions else
+                if KeyComp('PFRCPIT2') then Result := tkInstructions else
+                  if KeyComp('Program') then Result := tkEntryPoint else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func89: TtkTokenKind;
@@ -1260,9 +1264,10 @@ end;
 
 function TSynTatraDASSyn.Func90: TtkTokenKind;
 begin
-  if KeyComp('CVTPI2PD') then Result := tkInstructions else
-    if KeyComp('CVTPD2PI') then Result := tkInstructions else
-      if KeyComp('FUCOMPP') then Result := tkInstructions else Result := tkIdentifier;
+  if KeyComp('CVTPD2PI') then Result := tkInstructions else
+    if KeyComp('CVTPI2PD') then Result := tkInstructions else
+      if KeyComp('FISTTP') then Result := tkInstructions else
+        if KeyComp('FUCOMPP') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func91: TtkTokenKind;
@@ -1281,42 +1286,42 @@ end;
 
 function TSynTatraDASSyn.Func93: TtkTokenKind;
 begin
-  if KeyComp('MOVSX') then Result := tkInstructions else
-    if KeyComp('PUSHFW') then Result := tkInstructions else
-      if KeyComp('MOVHPS') then Result := tkInstructions else
-        if KeyComp('PSHUFW') then Result := tkInstructions else
-          if KeyComp('PCMPEQW') then Result := tkInstructions else
-            if KeyComp('UNPCKHPD') then Result := tkInstructions else
-              if KeyComp('MOVNTI') then Result := tkInstructions else
+  if KeyComp('PSHUFW') then Result := tkInstructions else
+    if KeyComp('MOVHPS') then Result := tkInstructions else
+      if KeyComp('PCMPEQW') then Result := tkInstructions else
+        if KeyComp('MOVNTI') then Result := tkInstructions else
+          if KeyComp('PMULHW') then Result := tkInstructions else
+            if KeyComp('MOVSX') then Result := tkInstructions else
+              if KeyComp('UNPCKHPD') then Result := tkInstructions else
                 if KeyComp('LDMXCSR') then Result := tkInstructions else
-                  if KeyComp('PMULHW') then Result := tkInstructions else Result := tkIdentifier;
+                  if KeyComp('PUSHFW') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func94: TtkTokenKind;
 begin
   if KeyComp('SQRTPD') then Result := tkInstructions else
     if KeyComp('FCMOVNU') then Result := tkInstructions else
-      if KeyComp('PMINWS') then Result := tkInstructions else
-        if KeyComp('PACKSSWB') then Result := tkInstructions else Result := tkIdentifier;
+      if KeyComp('PACKSSWB') then Result := tkInstructions else
+        if KeyComp('PMINWS') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func96: TtkTokenKind;
 begin
-  if KeyComp('FRSTOR') then Result := tkInstructions else
-    if KeyComp('SynEdit') then Result := tkTest else
-      if KeyComp('PACKUSWB') then Result := tkInstructions else
-        if KeyComp('CVTSD2SI') then Result := tkInstructions else
-          if KeyComp('PACKSSDW') then Result := tkInstructions else
-            if KeyComp('STOSW') then Result := tkInstructions else
-              if KeyComp('CVTSI2SD') then Result := tkInstructions else Result := tkIdentifier;
+  if KeyComp('CVTSI2SD') then Result := tkInstructions else
+    if KeyComp('PACKUSWB') then Result := tkInstructions else
+      if KeyComp('SynEdit') then Result := tkTest else
+        if KeyComp('STOSW') then Result := tkInstructions else
+          if KeyComp('CVTSD2SI') then Result := tkInstructions else
+            if KeyComp('FRSTOR') then Result := tkInstructions else
+              if KeyComp('PACKSSDW') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func97: TtkTokenKind;
 begin
-  if KeyComp('MOVLPS') then Result := tkInstructions else
-    if KeyComp('PMULLW') then Result := tkInstructions else
-      if KeyComp('UNPCKLPD') then Result := tkInstructions else
-        if KeyComp('SQRTSD') then Result := tkInstructions else Result := tkIdentifier;
+  if KeyComp('UNPCKLPD') then Result := tkInstructions else
+    if KeyComp('SQRTSD') then Result := tkInstructions else
+      if KeyComp('PMULLW') then Result := tkInstructions else
+        if KeyComp('MOVLPS') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func98: TtkTokenKind;
@@ -1334,26 +1339,26 @@ end;
 
 function TSynTatraDASSyn.Func100: TtkTokenKind;
 begin
-  if KeyComp('PSUBUSB') then Result := tkInstructions else
-    if KeyComp('PSUBSW') then Result := tkInstructions else
-      if KeyComp('Imported') then Result := tkKlucSlova else
-        if KeyComp('CVTPD2PS') then Result := tkInstructions else
-          if KeyComp('FNSTENV') then Result := tkInstructions else
-            if KeyComp('MOVZX') then Result := tkInstructions else
-              if KeyComp('CVTPS2PD') then Result := tkInstructions else Result := tkIdentifier;
+  if KeyComp('MOVZX') then Result := tkInstructions else
+    if KeyComp('Imported') then Result := tkKlucSlova else
+      if KeyComp('CVTPD2PS') then Result := tkInstructions else
+        if KeyComp('PSUBUSB') then Result := tkInstructions else
+          if KeyComp('CVTPS2PD') then Result := tkInstructions else
+            if KeyComp('PSUBSW') then Result := tkInstructions else
+              if KeyComp('FNSTENV') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func101: TtkTokenKind;
 begin
-  if KeyComp('CMOVXX') then Result := tkInstructions else
-    if KeyComp('PREFETCHT0') then Result := tkInstructions else
-      if KeyComp('PSHUFHW') then Result := tkInstructions else
-        if KeyComp('CVTDQ2PS') then Result := tkInstructions else
-          if KeyComp('MOVNTQ') then Result := tkInstructions else
-            if KeyComp('CVTPS2DQ') then Result := tkInstructions else
-              if KeyComp('PREFETCHT1') then Result := tkInstructions else
+  if KeyComp('PREFETCHT1') then Result := tkInstructions else
+    if KeyComp('MOVNTQ') then Result := tkInstructions else
+      if KeyComp('FNSTSW') then Result := tkInstructions else
+        if KeyComp('CVTPS2DQ') then Result := tkInstructions else
+          if KeyComp('PREFETCHT0') then Result := tkInstructions else
+            if KeyComp('PSHUFHW') then Result := tkInstructions else
+              if KeyComp('CVTDQ2PS') then Result := tkInstructions else
                 if KeyComp('PREFETCHT2') then Result := tkInstructions else
-                  if KeyComp('FNSTSW') then Result := tkInstructions else Result := tkIdentifier;
+                  if KeyComp('CMOVXX') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func102: TtkTokenKind;
@@ -1363,29 +1368,29 @@ end;
 
 function TSynTatraDASSyn.Func104: TtkTokenKind;
 begin
-  if KeyComp('PMULUDQ') then Result := tkInstructions else
-    if KeyComp('MOVNTPD') then Result := tkInstructions else Result := tkIdentifier;
+  if KeyComp('MOVNTPD') then Result := tkInstructions else
+    if KeyComp('PMULUDQ') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func105: TtkTokenKind;
 begin
-  if KeyComp('MOVNTDQ') then Result := tkInstructions else
+  if KeyComp('MOVLHPS') then Result := tkInstructions else
     if KeyComp('PSHUFLW') then Result := tkInstructions else
       if KeyComp('MOVHLPS') then Result := tkInstructions else
-        if KeyComp('PFRSQIT1') then Result := tkInstructions else
-          if KeyComp('MOVLHPS') then Result := tkInstructions else
+        if KeyComp('CVTPS2PI') then Result := tkInstructions else
+          if KeyComp('PFRSQIT1') then Result := tkInstructions else
             if KeyComp('CVTPI2PS') then Result := tkInstructions else
-              if KeyComp('CVTPS2PI') then Result := tkInstructions else Result := tkIdentifier;
+              if KeyComp('MOVNTDQ') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func106: TtkTokenKind;
 begin
-  if KeyComp('PEXTRW') then Result := tkInstructions else
-    if KeyComp('CVTTPD2DQ') then Result := tkInstructions else
-      if KeyComp('CVTSD2SS') then Result := tkInstructions else
-        if KeyComp('CVTSS2SD') then Result := tkInstructions else
-          if KeyComp('MOVUPS') then Result := tkInstructions else
-            if KeyComp('PWAXSW') then Result := tkInstructions else Result := tkIdentifier;
+  if KeyComp('PWAXSW') then Result := tkInstructions else
+    if KeyComp('PEXTRW') then Result := tkInstructions else
+      if KeyComp('CVTSS2SD') then Result := tkInstructions else
+        if KeyComp('CVTTPD2DQ') then Result := tkInstructions else
+          if KeyComp('CVTSD2SS') then Result := tkInstructions else
+            if KeyComp('MOVUPS') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func107: TtkTokenKind;
@@ -1405,22 +1410,22 @@ end;
 
 function TSynTatraDASSyn.Func110: TtkTokenKind;
 begin
-  if KeyComp('PUNPCKHDQ') then Result := tkInstructions else
-    if KeyComp('CVTTPD2PI') then Result := tkInstructions else Result := tkIdentifier;
+  if KeyComp('CVTTPD2PI') then Result := tkInstructions else
+    if KeyComp('PUNPCKHDQ') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func111: TtkTokenKind;
 begin
-  if KeyComp('PMOVMSKB') then Result := tkInstructions else
-    if KeyComp('CVTSI2SS') then Result := tkInstructions else
+  if KeyComp('CVTSS2SI') then Result := tkInstructions else
+    if KeyComp('PMOVMSKB') then Result := tkInstructions else
       if KeyComp('MASKMOVQ') then Result := tkInstructions else
-        if KeyComp('CVTSS2SI') then Result := tkInstructions else Result := tkIdentifier;
+        if KeyComp('CVTSI2SS') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func112: TtkTokenKind;
 begin
-  if KeyComp('UNPCKPLS') then Result := tkInstructions else
-    if KeyComp('SQRTSS') then Result := tkInstructions else Result := tkIdentifier;
+  if KeyComp('SQRTSS') then Result := tkInstructions else
+    if KeyComp('UNPCKPLS') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func113: TtkTokenKind;
@@ -1430,18 +1435,18 @@ end;
 
 function TSynTatraDASSyn.Func114: TtkTokenKind;
 begin
-  if KeyComp('PFRSQRT') then Result := tkInstructions else
-    if KeyComp('PUNPCKHBW') then Result := tkInstructions else
-      if KeyComp('PUNPCKLDQ') then Result := tkInstructions else
-        if KeyComp('PMULHUW') then Result := tkInstructions else Result := tkIdentifier;
+  if KeyComp('PUNPCKHBW') then Result := tkInstructions else
+    if KeyComp('PUNPCKLDQ') then Result := tkInstructions else
+      if KeyComp('PMULHUW') then Result := tkInstructions else
+        if KeyComp('PFRSQRT') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func116: TtkTokenKind;
 begin
   if KeyComp('CVTTSD2SI') then Result := tkInstructions else
-    if KeyComp('PUNPCKHWD') then Result := tkInstructions else
-      if KeyComp('PREFETCHNTA') then Result := tkInstructions else
-        if KeyComp('STMXCSR') then Result := tkInstructions else Result := tkIdentifier;
+    if KeyComp('PREFETCHNTA') then Result := tkInstructions else
+      if KeyComp('STMXCSR') then Result := tkInstructions else
+        if KeyComp('PUNPCKHWD') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func118: TtkTokenKind;
@@ -1462,15 +1467,15 @@ end;
 
 function TSynTatraDASSyn.Func121: TtkTokenKind;
 begin
-  if KeyComp('SYSEXIT') then Result := tkInstructions else
+  if KeyComp('CVTTPS2DQ') then Result := tkInstructions else
     if KeyComp('PSUBUSW') then Result := tkInstructions else
-      if KeyComp('CVTTPS2DQ') then Result := tkInstructions else Result := tkIdentifier;
+      if KeyComp('SYSEXIT') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func125: TtkTokenKind;
 begin
-  if KeyComp('SYSENTER') then Result := tkInstructions else
-    if KeyComp('CVTTPS2PI') then Result := tkInstructions else Result := tkIdentifier;
+  if KeyComp('CVTTPS2PI') then Result := tkInstructions else
+    if KeyComp('SYSENTER') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func127: TtkTokenKind;
@@ -1491,8 +1496,8 @@ end;
 
 function TSynTatraDASSyn.Func131: TtkTokenKind;
 begin
-  if KeyComp('PUNPCKLQDQ') then Result := tkInstructions else
-    if KeyComp('CVTTSS2SI') then Result := tkInstructions else Result := tkIdentifier;
+  if KeyComp('CVTTSS2SI') then Result := tkInstructions else
+    if KeyComp('PUNPCKLQDQ') then Result := tkInstructions else Result := tkIdentifier;
 end;
 
 function TSynTatraDASSyn.Func136: TtkTokenKind;
@@ -1710,13 +1715,14 @@ begin
   SetAttributesOnChange(DefHighlightChange);
   InitIdent;
   MakeMethodTables;
-  fDefaultFilter := SYNS_Filterx86AssemblyLanguage;
+  fDefaultFilter := SYNS_FilterGembase;
   fRange := rsUnknown;
 end;
 
 procedure TSynTatraDASSyn.SetLine(NewValue: String; LineNumber: Integer);
 begin
-  fLine := PChar(NewValue);
+  fLineRef := NewValue;
+  fLine := PChar(fLineRef);
   Run := 0;
   fLineNumber := LineNumber;
   Next;
@@ -1787,43 +1793,43 @@ begin
     'orted,F2XM1,FABS,FADD,FADDP,FBLD,FBSTP,FCLEX,FCMOVB,FCMOVBE,FCMOVE,FCM' +
     'OVNB,FCMOVNBE,FCMOVNE,FCMOVNU,FCMOVU,FCOM,FCOMI,FCOMIP,FCOMP,FCOMPP,FC' +
     'OS,FDECSTP,FDIV,FDIVP,FDIVR,FDIVRP,FEMMS,FFREE,FCHS,FIADD,FICOM,FICOMP' +
-    ',FIDIV,FIDIVR,FILD,FIMUL,FINCSTP,FINIT,FIST,FISTP,FISUB,FISUBR,FLD,FLD' +
-    '1,FLDCW,FLDENV,FLDL2E,FLDL2T,FLDLG2,FLDLN2,FLDPI,FLDZ,FMUL,FMULP,FNCLE' +
-    'X,FNINIT,FNOP,FNSAVE,FNSTCW,FNSTENV,FNSTSW,FPATAN,FPREM,FPREM1,FPTAN,F' +
-    'RNDINT,from,FRSTOR,FSAVE,FSCALE,FSIN,FSINCOS,FSQRT,FST,FSTCW,FSTENV,FS' +
-    'TP,FSTSW,FSUB,FSUBP,FSUBR,FSUBRP,FTST,FUCOM,FUCOMI,FUCOMIP,FUCOMP,FUCO' +
-    'MPP,function,FWAIT,FXAM,FXCH,FXRSTOR,FXSAVE,FXTRACT,FYL2X,FYL2XP1,Hell' +
-    'o,HLT,IDIV,Imported,IMUL,IN,INC,INS,INSB,INSD,INSW,INT,INTO,INVD,INVLP' +
-    'G,IRET,IRETD,IRETW,JA,JAE,JB,JBE,JC,JCXZ,JE,JECXZ,JG,JGE,JL,JLE,JMP,JM' +
-    'PF,JMPN,JNA,JNAE,JNB,JNBE,JNC,JNE,JNG,JNGE,JNL,JNLE,JNO,JNP,JNS,JNZ,JO' +
-    ',JP,JPE,JPO,JS,Jump,JZ,LAHF,LAR,LDMXCSR,LDS,LEA,LEAVE,LES,LFENCE,LFS,L' +
-    'GDT,LGS,LIDT,LLDT,LMSW,LOCK,LODS,LODSB,LODSD,LODSW,Loop,LOOPE,LOOPNE,L' +
-    'OOPNZ,LOOPZ,LSL,LSS,LTR,MASKMOVDQU,MASKMOVQ,MAXPD,MAXPS,MAXSD,MAXSS,MF' +
-    'ENCE,MINPD,MINPS,MINSD,MINSS,module,MOV,MOVAPD,MOVAPS,MOVD,MOVDQ2Q,MOV' +
-    'DQA,MOVDQU,MOVHLPS,MOVHPD,MOVHPS,MOVLHPS,MOVLPD,MOVLPS,MOVMSKPD,MOVMSK' +
-    'PS,MOVNTDQ,MOVNTI,MOVNTPD,MOVNTPS,MOVNTQ,MOVQ,MOVQ2DQ,MOVS,MOVSB,MOVSD' +
-    ',MOVSS,MOVSW,MOVSX,MOVUPD,MOVUPS,MOVZX,MUL,MULPD,MULPS,MULSD,MULSS,NEG' +
-    ',NOP,NOT,OR,ORPD,ORPS,OUT,OUTS,OUTSB,OUTSD,OUTSW,PACKSSDW,PACKSSWB,PAC' +
-    'KUSWB,PADDB,PADDD,PADDQ,PADDSB,PADDSW,PADDUSB,PADDUSW,PADDW,PAND,PANDN' +
-    ',PAUSE,PAVGB,PAVGW,PCMPEQB,PCMPEQD,PCMPEQW,PCMPGTB,PCMPGTD,PCMPGTW,PEX' +
-    'TRW,PF2ID,PFACC,PFADD,PFCMPEQ,PFCMPGE,PFCMPGT,PFMAX,PFMIN,PFMUL,PFRCP,' +
-    'PFRCPIT1,PFRCPIT2,PFRSQIT1,PFRSQRT,PFSUB,PFSUBR,PI2FD,PINSRW,PMADDWD,P' +
-    'MAXUB,PMINUB,PMINWS,PMOVMSKB,PMULHUW,PMULHW,PMULLW,PMULUDQ,point,POP,P' +
-    'OPA,POPAD,POPAW,POPF,POPFD,POPFW,POR,PREFETCHNTA,PREFETCHT0,PREFETCHT1' +
-    ',PREFETCHT2,Program,PSADBW,PSHUFD,PSHUFHW,PSHUFLW,PSHUFW,PSLLD,PSLLDQ,' +
-    'PSLLQ,PSLLW,PSRAD,PSRAW,PSRLD,PSRLDQ,PSRLQ,PSRLW,PSUBB,PSUBD,PSUBQ,PSU' +
-    'BSB,PSUBSW,PSUBUSB,PSUBUSW,PSUBW,PUNPCKHBW,PUNPCKHDQ,PUNPCKHQDQ,PUNPCK' +
-    'HWD,PUNPCKLBW,PUNPCKLDQ,PUNPCKLQDQ,PUNPCKLWD,PUSH,PUSHA,PUSHAD,PUSHAW,' +
-    'PUSHF,PUSHFD,PUSHFW,PWAXSW,PXOR,RCL,RCPPS,RCPSS,RCR,RDMSR,RDPMC,RDTSC,' +
-    'rep,repe,repne,repnz,repz,RET,RETF,RETN,ROL,ROR,RSM,RSQRTPS,RSQRTSS,SA' +
-    'HF,SAL,SAR,SBB,SCAS,SCASB,SCASD,SCASW,SETA,SETAE,SETB,SETBE,SETC,SETE,' +
-    'SETG,SETGE,SETL,SETLE,SETNA,SETNAE,SETNB,SETNBE,SETNC,SETNE,SETNG,SETN' +
-    'GE,SETNL,SETNLE,SETNO,SETNP,SETNS,SETNZ,SETO,SETP,SETPO,SETS,SETZ,SGDT' +
-    ',SHL,SHLD,SHR,SHRD,SHUFPD,SHUFPS,SIDT,SLDT,SMSW,SQRTPD,SQRTPS,SQRTSD,S' +
-    'QRTSS,STC,STD,STI,STMXCSR,STOS,STOSB,STOSD,STOSW,STR,SUB,SUBPD,SUBPS,S' +
-    'UBSD,SUBSS,SynEdit,SYSENTER,SYSEXIT,TEST,UCOMISD,UCOMISS,UD2,UNPCKHPD,' +
-    'UNPCKHPS,UNPCKLPD,UNPCKPLS,used,VERR,VERW,WAIT,WBINVD,World,WRMSR,XADD' +
-    ',XCHG,XLAT,XLATB,XOR,XORPD,XORPS';
+    ',FIDIV,FIDIVR,FILD,FIMUL,FINCSTP,FINIT,FIST,FISTP,FISTTP,FISUB,FISUBR,' +
+    'FLD,FLD1,FLDCW,FLDENV,FLDL2E,FLDL2T,FLDLG2,FLDLN2,FLDPI,FLDZ,FMUL,FMUL' +
+    'P,FNCLEX,FNINIT,FNOP,FNSAVE,FNSTCW,FNSTENV,FNSTSW,FPATAN,FPREM,FPREM1,' +
+    'FPTAN,FRNDINT,from,FRSTOR,FSAVE,FSCALE,FSIN,FSINCOS,FSQRT,FST,FSTCW,FS' +
+    'TENV,FSTP,FSTSW,FSUB,FSUBP,FSUBR,FSUBRP,FTST,FUCOM,FUCOMI,FUCOMIP,FUCO' +
+    'MP,FUCOMPP,function,FWAIT,FXAM,FXCH,FXRSTOR,FXSAVE,FXTRACT,FYL2X,FYL2X' +
+    'P1,Hello,HLT,IDIV,Imported,IMUL,IN,INC,INS,INSB,INSD,INSW,INT,INTO,INV' +
+    'D,INVLPG,IRET,IRETD,IRETW,JA,JAE,JB,JBE,JC,JCXZ,JE,JECXZ,JG,JGE,JL,JLE' +
+    ',JMP,JMPF,JMPN,JNA,JNAE,JNB,JNBE,JNC,JNE,JNG,JNGE,JNL,JNLE,JNO,JNP,JNS' +
+    ',JNZ,JO,JP,JPE,JPO,JS,Jump,JZ,LAHF,LAR,LDMXCSR,LDS,LEA,LEAVE,LES,LFENC' +
+    'E,LFS,LGDT,LGS,LIDT,LLDT,LMSW,lock,LODS,LODSB,LODSD,LODSW,Loop,LOOPE,L' +
+    'OOPNE,LOOPNZ,LOOPZ,LSL,LSS,LTR,MASKMOVDQU,MASKMOVQ,MAXPD,MAXPS,MAXSD,M' +
+    'AXSS,MFENCE,MINPD,MINPS,MINSD,MINSS,module,MOV,MOVAPD,MOVAPS,MOVD,MOVD' +
+    'Q2Q,MOVDQA,MOVDQU,MOVHLPS,MOVHPD,MOVHPS,MOVLHPS,MOVLPD,MOVLPS,MOVMSKPD' +
+    ',MOVMSKPS,MOVNTDQ,MOVNTI,MOVNTPD,MOVNTPS,MOVNTQ,MOVQ,MOVQ2DQ,MOVS,MOVS' +
+    'B,MOVSD,MOVSS,MOVSW,MOVSX,MOVUPD,MOVUPS,MOVZX,MUL,MULPD,MULPS,MULSD,MU' +
+    'LSS,NEG,NOP,NOT,OR,ORPD,ORPS,OUT,OUTS,OUTSB,OUTSD,OUTSW,PACKSSDW,PACKS' +
+    'SWB,PACKUSWB,PADDB,PADDD,PADDQ,PADDSB,PADDSW,PADDUSB,PADDUSW,PADDW,PAN' +
+    'D,PANDN,PAUSE,PAVGB,PAVGW,PCMPEQB,PCMPEQD,PCMPEQW,PCMPGTB,PCMPGTD,PCMP' +
+    'GTW,PEXTRW,PF2ID,PFACC,PFADD,PFCMPEQ,PFCMPGE,PFCMPGT,PFMAX,PFMIN,PFMUL' +
+    ',PFRCP,PFRCPIT1,PFRCPIT2,PFRSQIT1,PFRSQRT,PFSUB,PFSUBR,PI2FD,PINSRW,PM' +
+    'ADDWD,PMAXUB,PMINUB,PMINWS,PMOVMSKB,PMULHUW,PMULHW,PMULLW,PMULUDQ,poin' +
+    't,POP,POPA,POPAD,POPAW,POPF,POPFD,POPFW,POR,PREFETCHNTA,PREFETCHT0,PRE' +
+    'FETCHT1,PREFETCHT2,Program,PSADBW,PSHUFD,PSHUFHW,PSHUFLW,PSHUFW,PSLLD,' +
+    'PSLLDQ,PSLLQ,PSLLW,PSRAD,PSRAW,PSRLD,PSRLDQ,PSRLQ,PSRLW,PSUBB,PSUBD,PS' +
+    'UBQ,PSUBSB,PSUBSW,PSUBUSB,PSUBUSW,PSUBW,PUNPCKHBW,PUNPCKHDQ,PUNPCKHQDQ' +
+    ',PUNPCKHWD,PUNPCKLBW,PUNPCKLDQ,PUNPCKLQDQ,PUNPCKLWD,PUSH,PUSHA,PUSHAD,' +
+    'PUSHAW,PUSHF,PUSHFD,PUSHFW,PWAXSW,PXOR,RCL,RCPPS,RCPSS,RCR,RDMSR,RDPMC' +
+    ',RDTSC,rep,repe,repne,repnz,repz,RET,RETF,RETN,ROL,ROR,RSM,RSQRTPS,RSQ' +
+    'RTSS,SAHF,SAL,SAR,SBB,SCAS,SCASB,SCASD,SCASW,SETA,SETAE,SETB,SETBE,SET' +
+    'C,SETE,SETG,SETGE,SETL,SETLE,SETNA,SETNAE,SETNB,SETNBE,SETNC,SETNE,SET' +
+    'NG,SETNGE,SETNL,SETNLE,SETNO,SETNP,SETNS,SETNZ,SETO,SETP,SETPO,SETS,SE' +
+    'TZ,SGDT,SHL,SHLD,SHR,SHRD,SHUFPD,SHUFPS,SIDT,SLDT,SMSW,SQRTPD,SQRTPS,S' +
+    'QRTSD,SQRTSS,STC,STD,STI,STMXCSR,STOS,STOSB,STOSD,STOSW,STR,SUB,SUBPD,' +
+    'SUBPS,SUBSD,SUBSS,SynEdit,SYSENTER,SYSEXIT,TEST,UCOMISD,UCOMISS,UD2,UN' +
+    'PCKHPD,UNPCKHPS,UNPCKLPD,UNPCKPLS,used,VERR,VERW,WAIT,WBINVD,World,WRM' +
+    'SR,XADD,XCHG,XLAT,XLATB,XOR,XORPD,XORPS';
 end;
 
 function TSynTatraDASSyn.GetToken: String;
@@ -1890,13 +1896,13 @@ end;
 
 function TSynTatraDASSyn.IsFilterStored: Boolean;
 begin
-  Result := fDefaultFilter <> SYNS_Filterx86AssemblyLanguage;
+  Result := fDefaultFilter <> SYNS_FilterGembase;
 end;
 
 {$IFNDEF SYN_CPPB_1} class {$ENDIF}
 function TSynTatraDASSyn.GetLanguageName: string;
 begin
-  Result := SYNS_LangX86Asm;
+  Result := SYNS_LangTatraDAS;
 end;
 
 procedure TSynTatraDASSyn.ResetRange;

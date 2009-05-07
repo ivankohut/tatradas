@@ -171,8 +171,8 @@ type
     constructor Create; overload; override;
     constructor Create(InputFile: TStream; aFileName: TFileName); overload; override;
 
-    function SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean; override;
-    function LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; override;
+    procedure SaveToFile(DHF: TStream; var DAS: TextFile); override;
+    procedure LoadFromFile(DHF: TStream; var DAS: TextFile); override;
   end;
 
 
@@ -182,18 +182,18 @@ implementation
 constructor TELFFile.Create;
 begin
   inherited;
-  fExecFormat:= ffELF;
+  fExecFormat := ffELF;
 end;
 
 
 
 constructor TELFFile.Create(InputFile: TStream; aFileName: TFileName);
 var
-  i: integer;
+  i: Integer;
   CodeSection: TCodeSection;
 begin
   inherited;
-  InputFile.Position:= 0;
+  InputFile.Position := 0;
   InputFile.Read(Header, SizeOf(TELFHeader));
 
   // check if file is 32
@@ -207,21 +207,21 @@ begin
 
   // Read Program header table
   SetLength(ProgramHeaders, Header.e_phnum);
-  InputFile.Position:= header.e_phoff;
-  InputFile.Read(ProgramHeaders[0], SizeOf(TProgramHeader)*header.e_phnum);
+  InputFile.Position := Header.e_phoff;
+  InputFile.Read(ProgramHeaders[0], SizeOf(TProgramHeader) * Header.e_phnum);
 {  for i:=0 to header.e_phnum-1 do
     if ProgramHeaders[i].p_type = PT_INTERP then
       showmessage(inttostr(ProgramHeaders[i].p_filesz));
 }
 
   // Read Section header table
-  SetLength(SectionHeaders, header.e_shnum);
-  InputFile.Position:= header.e_shoff;
-  for i:= 0 to header.e_shnum - 1 do
+  SetLength(SectionHeaders, Header.e_shnum);
+  InputFile.Position := Header.e_shoff;
+  for i := 0 to header.e_shnum - 1 do
     InputFile.Read(SectionHeaders[i], SizeOf(TSectionHeaderTableEntry));
 
-  for i:= 0 to header.e_shnum - 1 do begin
-    ReadStringFromStream(InputFile, SectionHeaders[header.e_shstrndx].sh_offset + SectionHeaders[i].sh_name, SectionHeaders[i].name);
+  for i := 0 to header.e_shnum - 1 do begin
+    ReadStringFromStream(InputFile, SectionHeaders[Header.e_shstrndx].sh_offset + SectionHeaders[i].sh_name, SectionHeaders[i].name);
 
     // Create code sections
     if (SectionHeaders[i].sh_type = SHT_PROGBITS) then
@@ -263,32 +263,30 @@ end;
 }
 
 
-function TELFFile.SaveToFile(DHF: TStream; var DAS: TextFile; SaveOptions: TSaveOptions): boolean;
+procedure TELFFile.SaveToFile(DHF: TStream; var DAS: TextFile);
 var
-  i: integer;
+  i: Integer;
 begin
-  result:= inherited SaveToFile(DHF, DAS, SaveOptions);
-  if soProject in SaveOptions then begin
-    DHF.Write(Header, SizeOf(TELFHeader));
-    for i:= 0 to header.e_shnum - 1 do begin
-      DHF.Write(SectionHeaders[i], SizeOf(TSectionHeaderTableEntry));
-      StreamWriteAnsiString(DHF, SectionHeaders[i].name)
-    end;
+  inherited SaveToFile(DHF, DAS);
+  DHF.Write(Header, SizeOf(TELFHeader));
+  for i := 0 to header.e_shnum - 1 do begin
+    DHF.Write(SectionHeaders[i], SizeOf(TSectionHeaderTableEntry));
+    StreamWriteAnsiString(DHF, SectionHeaders[i].name)
   end;
 end;
 
 
 
-function TELFFile.LoadFromFile(DHF: TStream; var DAS: TextFile): boolean;
+procedure TELFFile.LoadFromFile(DHF: TStream; var DAS: TextFile);
 var
-  i: integer;
+  i: Integer;
 begin
-  result:= inherited LoadFromFile(DHF, DAS);
-  DHF.Read(header, SizeOf(TELFHeader));
-  SetLength(SectionHeaders, header.e_shnum);
-  for i:= 0 to header.e_shnum - 1 do begin
+  inherited LoadFromFile(DHF, DAS);
+  DHF.Read(Header, SizeOf(TELFHeader));
+  SetLength(SectionHeaders, Header.e_shnum);
+  for i:= 0 to Header.e_shnum - 1 do begin
     DHF.Read(SectionHeaders[i], SizeOf(TSectionHeaderTableEntry));
-    SectionHeaders[i].name:= StreamReadAnsiString(DHF);
+    SectionHeaders[i].name := StreamReadAnsiString(DHF);
   end;
 end;
 

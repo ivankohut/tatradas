@@ -22,13 +22,13 @@ type
     procedure FormDestroy(Sender: TObject);
     procedure FormCreate(Sender: TObject);
   private
-    procedure SetMaxAddress(MaxAddress: cardinal);
-    function GetAddress: cardinal;
-  public
     GotoLineEdit: TDecimalPositiveEdit;
+    procedure SetMaxLineIndex(MaxLineIndex: Cardinal);
+    function GetLineIndex: Cardinal;
+  public
     procedure Translate;
-    property MaxAddress: cardinal write SetMaxAddress;
-    property Address: cardinal read GetAddress;
+    property MaxLineIndex: Cardinal write SetMaxLineIndex;
+    property LineIndex: Cardinal read GetLineIndex;
   end;
 
 var
@@ -42,16 +42,16 @@ uses
 {$R *.dfm}
 
 
-procedure TGotoLineForm.SetMaxAddress(MaxAddress: cardinal);
+procedure TGotoLineForm.SetMaxLineIndex(MaxLineIndex: Cardinal);
 begin
-  GotoLineEdit.MaxValue := MaxAddress;
+  GotoLineEdit.MaxValue := MaxLineIndex;
 end;
 
 
 
-function TGotoLineForm.GetAddress: cardinal;
+function TGotoLineForm.GetLineIndex: Cardinal;
 begin
-  result := GotoLineEdit.AsCardinal;
+  Result := GotoLineEdit.AsCardinal;
 end;
 
 
@@ -73,6 +73,7 @@ end;
 procedure TGotoLineForm.FormActivate(Sender: TObject);
 begin
   GotoLineEdit.SetFocus;
+  GotoLineEdit.SelectAll;
 end;
 
 
