@@ -53,34 +53,37 @@ var
   MajorVerStr: string;
   MinorVerStr: string;
   FixVerStr: string;
-  Index: integer;
+  Index: Integer;
 begin
-  Index:= 1;
+  Index := 1;
+  MajorVerStr := '';
+  MinorVerStr := '';
+  FixVerStr := '';
 
   // Read major version number
   while Index <= Length(AVersion) do begin
     if AVersion[Index] = '.' then Break;
-    MajorVerStr:=MajorVerStr + AVersion[Index];
+    MajorVerStr := MajorVerStr + AVersion[Index];
     Inc(Index);
   end;
   Inc(Index);
-  fMajor:= StrToIntDef(MajorVerStr, 0);
+  fMajor := StrToIntDef(MajorVerStr, 0);
 
   // Read minor version number
   while Index <= Length(AVersion) do begin
     if AVersion[Index] = '.' then Break;
-    MinorVerStr:=MinorVerStr + AVersion[Index];
+    MinorVerStr := MinorVerStr + AVersion[Index];
     Inc(Index);
   end;
   Inc(Index);
-  fMinor:= StrToIntDef(MinorVerStr, 0);
+  fMinor := StrToIntDef(MinorVerStr, 0);
 
   // Read fix version number
   while Index <= Length(AVersion) do begin
-    FixVerStr:=FixVerStr + AVersion[Index];
+    FixVerStr := FixVerStr + AVersion[Index];
     Inc(Index);
   end;
-  fFix:= StrToIntDef(FixVerStr, 0);
+  fFix := StrToIntDef(FixVerStr, 0);
 end;
 
 

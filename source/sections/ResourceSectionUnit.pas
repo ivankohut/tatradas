@@ -142,7 +142,7 @@ type
     constructor Create(efile:TObject); overload;
     destructor Destroy; override;
     procedure SaveToFile(DHF: TStream; var DAS: TextFile); override;
-    function LoadFromFile(DHF: TStream; var DAS: TextFile):boolean; overload; override;
+    procedure LoadFromFile(DHF: TStream; var DAS: TextFile); overload; override;
   end;
 
 {$IFDEF GUI_B}
@@ -363,10 +363,9 @@ begin
   inherited SaveToFile(DHF, DAS);
 end;
 
-function TResourceSection.LoadFromFile(DHF: TStream; var DAS: TextFile): boolean;
+procedure TResourceSection.LoadFromFile(DHF: TStream; var DAS: TextFile);
 begin
   inherited LoadFromFile(DHF, DAS);
-  result:=true;
 end;
 
 //============================================================================================================

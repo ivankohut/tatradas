@@ -3,157 +3,177 @@ unit Exporters;
 interface
 
 uses
-  procmat, 
+  SysUtils, Classes, Types,
+  procmat,
   ExecFileUnit;
 
+const
+  cNasmLineIndent = '  ';
 
-procedure ExportToFile(AExportOption: TExportOption; AExportCustomDASOptions: TExportCustomDASOptions; AExecFile: TExecutableFile; ADestFileName: string);
-
+type
+  TExporter = class
+  protected
+    class function ExportLineToNASM(const ALine: string): string;
+    class function NasmIsReferenceFromCode(const ALine: string): Boolean;
+    class procedure ExportSectionToNASM(Disassembled: TStrings; Bit32: Boolean; AStream: TStream);
+  public
+    class procedure ExportToFile(AExportOption: TExportOption; AExportCustomDASOptions: TExportCustomDASOptions; AExecFile: TExecutableFile; ADestFileName: string);
+  end;
 
 implementation
 
 
 uses
-  SysUtils, Classes, Types, StrUtils, Math,
+  StrUtils, Math,
   LoggerUnit, CodeSectionUnit, StringUtilities, SectionUnit;
 
-  
 
-
-procedure ExportSectionToNASM(Disassembled: TStrings; Bit32: Boolean; CodeArray: TByteDynArray; var DAS: TextFile);
-var
-  LineIndex: integer;
-  Line: string;
-
-  IsTargetAddress: boolean;
-  TargetAddress: cardinal;
-  InsertIndex: integer;
-  buf, adresa: cardinal;
-  InstructionStr: string;
-  RelativeAddress: integer;
-
+class function TExporter.NasmIsReferenceFromCode(const ALine: string): Boolean;
 begin
-  case Bit32 of
-    true:  Writeln(DAS, 'BITS 32');
-    false: Writeln(DAS, 'BITS 16');
-  end;
-  Writeln(DAS);
-
-  IsTargetAddress := false;
-  for LineIndex := 0 to Disassembled.Count - 1 do begin
-    Inc(ProgressData.Position);
-    if ProgressData.ErrorStatus = errUserTerminated then
-      raise EUserTerminatedProcess.Create('');
-
-    Line := Disassembled[LineIndex];
-
-    // Empty line
-    if Length(Line) = 0 then begin
-      WriteLn(DAS);
-      Continue;
-    end;
-
-    // Comment line
-    if Line[1] = ';' then begin
-      WriteLn(DAS, Line);
-      Continue;
-    end;
-
-    case Line[2] of
-
-      // Jump reference, Call reference or Loop reference
-      'u', 'a', 'o': begin
-        WriteLn(DAS, ';' + Line);
-        IsTargetAddress := true;
-      end;
-
-      // Exported function, Imported function or Program entry point
-      'x', 'm', 'r': WriteLn(DAS, ';' + Line);
-
-      else begin
-        // Create new label from address if it is target of s jump, call or loop instruction
-        if IsTargetAddress then begin
-          WriteLn(DAS, '_0x' + LeftStr(Line, 8) + ':');
-          IsTargetAddress := false;
-        end;
-        InstructionStr := Copy(Line, ilInstructionMnemonicIndex, maxInt);
-
-        // Control flow instruction - insert appropriate NASM keyword and change target address to label by adding "_" prefix
-        if GetTargetAddress(Line, TargetAddress) then begin
-          InsertIndex := 1;
-          while InstructionStr[InsertIndex] <> ' ' do
-            Inc(InsertIndex);
-          Inc(InsertIndex);
-
-          RelativeAddress := Integer(TargetAddress - (GetLineAddress(Line) + GetLineBytes(Line)));
-
-          // same segment, relative JMP, Jxx, CALL
-          if (RelativeAddress < -128) or (RelativeAddress > 127) then
-            Writeln(DAS, '  ' + InsertStr('near _', InstructionStr, InsertIndex))
-          // short (-127 .. 128) JMP, Jxx, JxCXZ, LOOP
-          else
-            // JMP - must use "short" to use short range JMP
-            if InstructionStr[2] = 'M' then
-              Writeln(DAS, '  ' + InsertStr('short _', InstructionStr, InsertIndex))
-            // Jxx, JxCXZ, LOOP
-            else
-              Writeln(DAS, '  ' + InsertStr('_', InstructionStr, InsertIndex))
-        end
-
-        // Non-Control flow instruction
-        else begin
-//          parsed8:=StrToInt('$'+Line[10]+Line[11]);
-              if InstructionStr <> '' then
-              case InstructionStr[1] of
-                'b': InstructionStr:='db '+TrimRight(Copy(InstructionStr, 6, 5));
-                'w': InstructionStr:='dw '+Copy(InstructionStr,6,7);
-                'd': case InstructionStr[2] of
-                      'w':InstructionStr:='dd '+Copy(InstructionStr, 7, 11);
-                      'o':InstructionStr:='dq '+Copy(InstructionStr, 8, 30);
-                    end;
-                'q': begin
-                      adresa:= GetLineAddress(Line);
-                      buf:= Cardinal(CodeArray[adresa]);
-                      Writeln(DAS, '  ' + 'dd 0x'+IntToHex(buf, 8));
-                      buf:= Cardinal(CodeArray[adresa]);
-
-                      InstructionStr:= 'dd 0x' + IntToHex(buf, 8);
-                    end;
-                's': InstructionStr:= 'dd ' + Copy(InstructionStr, 8, 30);
-                'e': InstructionStr:= 'dt ' + Copy(InstructionStr, 10, 30);
-                'p': begin
-                      adresa:= GetLineAddress(Line);
-                      InstructionStr:= 'db 0x'+IntToHex(CodeArray[adresa], 2)+','+Copy(InstructionStr, 9, 255);
-                    end;
-                'c': InstructionStr:= 'db '+ Copy(InstructionStr, 9, 255) + ',0x00';
-              end;
-              Writeln(DAS, '  ' + InstructionStr);
-        end;
-      end;
-    end;
-  end;
-  Writeln(DAS);
-
+  Result := GetLineType(ALine) in [ltJumpRef, ltCallRef, ltLoopRef];
 end;
 
 
 
-procedure ExportSectionToDAS(Disassembled: TStrings; var DAS: TextFile);
+class function TExporter.ExportLineToNASM(const ALine: string): string;
+var
+  InstructionStr: string;
+  TargetAddress: Cardinal;
+  InsertIndex: Integer;
+  RelativeAddress: Integer;
+begin
+  // Empty line
+  if Length(ALine) = 0 then begin
+    Result := '';
+    Exit;
+  end;
+
+  // Comment line
+  if ALine[1] = ';' then begin
+    Result := ALine;
+    Exit;
+  end;
+
+  case ALine[2] of
+
+    // Jump reference, Call reference or Loop reference, Exported function, Imported function or Program entry point
+    'u', 'a', 'o', 'x', 'm', 'r': Result := ';' + ALine;
+
+    else begin
+      InstructionStr := Copy(ALine, ilInstructionMnemonicIndex, maxInt);
+
+      // Control flow instruction - insert appropriate NASM keyword and change target address to label by adding "_" prefix
+      if GetTargetAddress(ALine, TargetAddress) then begin
+        InsertIndex := 1;
+        while InstructionStr[InsertIndex] <> ' ' do
+          Inc(InsertIndex);
+        Inc(InsertIndex);
+
+        RelativeAddress := Integer(TargetAddress - (GetLineAddress(ALine) + GetLineBytes(ALine)));
+
+        // same segment, relative JMP, Jxx, CALL
+        if (RelativeAddress < -128) or (RelativeAddress > 127) then
+          Result := cNasmLineIndent + InsertStr('near _', InstructionStr, InsertIndex)
+        // short (-127 .. 128) JMP, Jxx, JxCXZ, LOOP
+        else
+          // JMP - must use "short" to use short range JMP
+          if InstructionStr[2] = 'M' then
+            Result := cNasmLineIndent + InsertStr('short _', InstructionStr, InsertIndex)
+          // Jxx, JxCXZ, LOOP
+          else
+            Result := cNasmLineIndent + InsertStr('_', InstructionStr, InsertIndex);
+      end
+
+      // Non-Control flow instruction
+      else begin
+        if InstructionStr <> '' then
+          case InstructionStr[1] of
+            // byte
+            'b': begin
+              if InstructionStr[6] = '-' then
+                InstructionStr := 'db ' + Copy(InstructionStr, 6, 5)
+              else
+                InstructionStr := 'db ' + Copy(InstructionStr, 6, 4);
+            end;
+            // word
+            'w': InstructionStr := 'dw ' + Copy(InstructionStr, 6, 7);
+            // dword or double
+            'd': case InstructionStr[2] of
+                  'w': InstructionStr := 'dd ' + Copy(InstructionStr, 7, 11);
+                  'o': InstructionStr := 'dq ' + Copy(InstructionStr, 8, 30);
+                end;
+            // qword
+            'q': InstructionStr := 'dq ' + Copy(InstructionStr, 7, 19);
+            // single
+            's': InstructionStr := 'dd ' + Copy(InstructionStr, 8, 30);
+            // extended
+            'e': InstructionStr := 'dt ' + Copy(InstructionStr, 10, 30);
+            // Pascal string
+            'p': InstructionStr := 'db 0x' + IntToHex(GetLineBytes(ALine) - 1, 2) + ',' + Copy(InstructionStr, 9, 255);
+            // C string
+            'c': InstructionStr := 'db '+ Copy(InstructionStr, 9, 255) + ',0x00';
+          end;
+        Result := cNasmLineIndent + InstructionStr;
+      end;
+    end;
+  end;
+end;
+
+
+
+class procedure TExporter.ExportSectionToNASM(Disassembled: TStrings; Bit32: Boolean; AStream: TStream);
+var
+  LineIndex: integer;
+  Line: string;
+  IsTargetAddress: boolean;
+begin
+  case Bit32 of
+    true:  WriteLnToStream(AStream, 'BITS 32');
+    false: WriteLnToStream(AStream, 'BITS 16');
+  end;
+  WriteLnToStream(AStream);
+
+  IsTargetAddress := false;
+  for LineIndex := 0 to Disassembled.Count - 1 do begin
+    ProgressManager.IncPosition;
+    if ProgressData.ErrorStatus = errUserTerminated then
+      raise EUserTerminatedProcess.Create('');
+
+    // Labels creation
+    Line := Disassembled[LineIndex];
+    if IsTargetAddress then begin
+      if GetLineType(Line) = ltInstruction then begin
+        WriteLnToStream(AStream, '_0x' + LeftStr(Line, 8) + ':');
+        IsTargetAddress := False;
+      end;
+    end
+    else
+     if NasmIsReferenceFromCode(Line) then
+       IsTargetAddress := True;
+
+    WriteLnToStream(AStream, ExportLineToNASM(Line));
+  end;
+  WriteLnToStream(AStream);
+end;
+
+
+
+procedure ExportSectionToDAS(Disassembled: TStrings; AStream: TStream);
 var
   LineIndex: Integer;
 begin
   for LineIndex := 0 to Disassembled.Count - 1 do begin
-    WriteLn(DAS, Disassembled[LineIndex]);
-    Inc(ProgressData.Position);
+    WriteLnToStream(AStream, Disassembled[LineIndex]);
+    ProgressManager.IncPosition;
     if ProgressData.ErrorStatus = errUserTerminated then
       raise EUserTerminatedProcess.Create('');
-   end;
-  Writeln(DAS);
+  end;
+  WriteLnToStream(AStream);
 end;
 
 
 
-procedure ExportSectionToCustomDAS(Disassembled: TStrings; var DAS: TextFile; AExportCustomDASOptions: TExportCustomDASOptions);
+procedure ExportSectionToCustomDAS(Disassembled: TStrings; AStream: TStream; AExportCustomDASOptions: TExportCustomDASOptions);
 type
   TSaveInstruction = (siNone, siAddr, siPar, siDis, siAddr_Par, siPar_Dis, siAddr_Dis, siAll);
 var
@@ -170,14 +190,14 @@ begin
   else if (soParsed in AExportCustomDASOptions) then si:=siPar
   else if (soDisassembled in AExportCustomDASOptions) then si:=siDis;
 
-  for LineIndex:= 0 to Disassembled.Count - 1 do begin
-    Inc(ProgressData.Position);
+  for LineIndex := 0 to Disassembled.Count - 1 do begin
+    ProgressManager.IncPosition;
     if ProgressData.ErrorStatus = errUserTerminated then
       raise EUserTerminatedProcess.Create('');
 
     Line:= Disassembled[LineIndex];
     if Line = '' then begin
-      WriteLn(DAS);
+      WriteLnToStream(AStream);
       Continue;
     end;
     case Line[2] of
@@ -198,45 +218,42 @@ begin
         end;
       end;
     end;
-    WriteLn(DAS, Line);
+    WriteLnToStream(AStream, Line);
   end;
-  WriteLn(DAS);
+  WriteLnToStream(AStream);
 end;
 
 
 
-procedure ExportToFile(AExportOption: TExportOption; AExportCustomDASOptions: TExportCustomDASOptions; AExecFile: TExecutableFile; ADestFileName: string);
+class procedure TExporter.ExportToFile(AExportOption: TExportOption; AExportCustomDASOptions: TExportCustomDASOptions; AExecFile: TExecutableFile; ADestFileName: string);
 var
-  DAS: TextFile;
   SectionIndex: Integer;
   CodeSection: TCodeSection;
+  OutStream: TStream;
 begin
-  AssignFile(DAS, ADestFileName);
-  Rewrite(DAS);
-
-  // Save disassembled code sections
-  WriteLn(DAS, InjectStr(DASFileFirstLine, [AExecFile.FileName]));
-  Writeln(DAS);
-  for SectionIndex := 0 to AExecFile.Sections.Count - 1 do begin
-    if AExecFile.Sections[SectionIndex].typ = stCode then begin
-      CodeSection := (AExecFile.Sections[SectionIndex] as TCodeSection);
-      Logger.Info('Start: Exporting code section ' + IntToStr(CodeSection.CodeSectionIndex));
-      ProgressData.Name := ProcessText.SavingDAS + IntToStr(CodeSection.CodeSectionIndex);
-      ProgressData.Position := 0;
-      ProgressData.Maximum := CodeSection.Disassembled.Count;
-
-      Writeln(DAS, '; ********************************************');
-      Writeln(DAS, '; Code Section Number: '  + IntToStr(CodeSection.CodeSectionIndex));
-      Writeln(DAS, '; ********************************************');
-      case AExportOption of
-        eoDAS: ExportSectionToDAS(CodeSection.Disassembled, DAS);
-        eoCustomDAS: ExportSectionToCustomDAS(CodeSection.Disassembled, DAS, AExportCustomDASOptions);
-        eoNASM: ExportSectionToNASM(CodeSection.Disassembled, CodeSection.Bit32, CodeSection.CodeArray, DAS);
+  OutStream := TFileStream.Create(ADestFileName, fmCreate);
+  try
+    // Save disassembled code sections
+    WriteLnToStream(OutStream, InjectStr(DASFileFirstLine, [AExecFile.FileName]));
+    WriteLnToStream(OutStream);
+    for SectionIndex := 0 to AExecFile.Sections.Count - 1 do begin
+      if AExecFile.Sections[SectionIndex].typ = stCode then begin
+        CodeSection := (AExecFile.Sections[SectionIndex] as TCodeSection);
+        Logger.Info('Start: Exporting code section ' + IntToStr(CodeSection.CodeSectionIndex));
+        ProgressManager.StartPhase(ProcessText.SavingDAS + IntToStr(CodeSection.CodeSectionIndex), CodeSection.Disassembled.Count);
+        WriteLnToStream(OutStream, '; ********************************************');
+        WriteLnToStream(OutStream, '; Code Section Number: '  + IntToStr(CodeSection.CodeSectionIndex));
+        WriteLnToStream(OutStream, '; ********************************************');
+        case AExportOption of
+          eoDAS: ExportSectionToDAS(CodeSection.Disassembled, OutStream);
+          eoCustomDAS: ExportSectionToCustomDAS(CodeSection.Disassembled, OutStream, AExportCustomDASOptions);
+          eoNASM: ExportSectionToNASM(CodeSection.Disassembled, CodeSection.Bit32, OutStream);
+        end;
       end;
     end;
+  finally
+    OutStream.Free;
   end;
-
-  CloseFile(DAS);
 end;
 
 

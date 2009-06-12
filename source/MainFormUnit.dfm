@@ -3,7 +3,7 @@ object MainForm: TMainForm
   Top = 2
   BorderIcons = [biSystemMenu, biMinimize]
   Caption = 'TatraDAS disassembler 2.9.9'
-  ClientHeight = 711
+  ClientHeight = 730
   ClientWidth = 773
   Color = clBtnFace
   Constraints.MinHeight = 450
@@ -34,17 +34,18 @@ object MainForm: TMainForm
     Left = 0
     Top = 92
     Width = 773
-    Height = 600
+    Height = 619
     Align = alClient
     Constraints.MinHeight = 300
     Constraints.MinWidth = 565
     HotTrack = True
     TabOrder = 0
     OnChange = MainPageControlChange
+    ExplicitHeight = 600
   end
   object StatusBar2: TStatusBar
     Left = 0
-    Top = 692
+    Top = 711
     Width = 773
     Height = 19
     AutoHint = True
@@ -59,6 +60,7 @@ object MainForm: TMainForm
       end>
     ParentShowHint = False
     ShowHint = True
+    ExplicitTop = 692
   end
   object Panel1: TPanel
     Left = 0

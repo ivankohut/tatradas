@@ -18,8 +18,9 @@ type
     procedure TestReplaceFirstLastLine;
     procedure TestGetLineData;
     procedure TestPrepareInnerReplaceLines;
-
+    procedure TestGetLineType;
     procedure TestGetReplacingLines;
+    procedure TestGetTargetAddress;
   end;
 
 
@@ -70,6 +71,22 @@ begin
   Check((Length(LineData) = 0));
   LineData := GetLineData('');
   Check((Length(LineData) = 0));
+end;
+
+
+
+procedure TCodeSectionTests.TestGetLineType;
+begin
+  Check(GetLineType('') = ltEmpty);
+  Check(GetLineType(';bla bla') = ltComment);
+  Check(GetLineType('Imported bla bla') = ltImportRef);
+  Check(GetLineType('Exported bla bla') = ltExportRef);
+  Check(GetLineType('Program exntry point') = ltEntryPointRef);
+  Check(GetLineType('Call from 0x00000001') = ltCallRef);
+  Check(GetLineType('Jump from 0x00000001') = ltJumpRef);
+  Check(GetLineType('Loop from 0x00000001') = ltLoopRef);
+  Check(GetLineType('CADE0012 bla bla') = ltInstruction);
+  Check(GetLineType('05782EF7 bla bla') = ltInstruction);
 end;
 
 
@@ -279,6 +296,32 @@ begin
   Check(ResultLines[3]  = '00000003 74                       byte 0x74 ''t''');
   Check(ResultLines[4]  = '00000004 65                       byte 0x65 ''e''');
 end;
+
+
+
+procedure TCodeSectionTests.TestGetTargetAddress;
+var
+  Address: cardinal;
+begin
+  Check(GetTargetAddress('00000000 04                       CALL 0x00001234', Address));
+  Check(Address = $00001234);
+  Check(GetTargetAddress('00000000 04                       LOOP 0x00001235', Address));
+  Check(Address = $00001235);
+  Check(GetTargetAddress('00000000 04                       LOOPE 0x00001235', Address));
+  Check(Address = $00001235);
+  Check(GetTargetAddress('00000000 04                       LOOPNE 0x00001235', Address));
+  Check(Address = $00001235);
+  Check(GetTargetAddress('00000000 04                       JMP 0x00001236', Address));
+  Check(Address = $00001236);
+  Check(GetTargetAddress('00000000 04                       JE 0x00001237', Address));
+  Check(Address = $00001237);
+
+  Check(not GetTargetAddress('00000000 04                       INC 0x00001237', Address));
+  Check(not GetTargetAddress('00000000 04                       CALL EAX', Address));
+  Check(not GetTargetAddress('00000000 04                       CALL [EAX]', Address));
+  Check(not GetTargetAddress('00000000 04                       CALL [0x00001237]', Address));
+end;
+
 
 
 initialization

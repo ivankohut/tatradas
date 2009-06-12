@@ -1,5 +1,7 @@
 unit CliUnit;
 
+{$INCLUDE 'delver.inc'}
+
 interface
 
 uses
@@ -37,6 +39,7 @@ implementation
 uses
 // Temporary
 //  CodeSectionUnit,
+  ProgressManagerUnit,
   StrUtils,
   LoggerUnit,
   CustomFileUnit;
@@ -50,7 +53,8 @@ type
     OutputFileName: string;
     IsCustomFile: boolean;
     CustomFileParameters: TCustomFileParameters;
-    SaveOptions: TSaveOptions;
+    IsOutputProject: Boolean;
+    ExportOption: TExportOption;
   end;
 
 const
@@ -82,7 +86,8 @@ var
 begin
   // Defaults
   result.IsCustomFile := false;
-  result.SaveOptions := [soDisassembly];
+  result.IsOutputProject := false;
+  result.ExportOption := eoDAS;
   result.CustomFileParameters.EntrypointOffset := 0;
   result.CustomFileParameters.FileOffset := 0;
   result.CustomFileParameters.Size := $FFFFFFFF;
@@ -120,11 +125,11 @@ begin
         // Output format
         else if ParamKey = '-o' then begin
           if ParamValue = 'proj' then
-            result.SaveOptions := [soProject]
+            result.IsOutputProject := true
           else if ParamValue = 'das' then
-            result.SaveOptions := [soDisassembly]
+            result.ExportOption := eoDAS
           else if ParamValue = 'nasm' then
-            result.SaveOptions := [soNASM]
+            result.ExportOption := eoNASM
           else begin
             result.BadParameters := true;
             result.ErrorMessage := 'Bad output format';
@@ -241,11 +246,11 @@ begin
           'Bit32: ' + BoolToStr(CustomFileParameters.Bit32, true) + CRLF;
       end;
       result := result + 'OutputFormat: ';
-      if soProject in SaveOptions then
+      if IsOutputProject then
         result := result + 'project' + CRLF
-      else if soNasm in SaveOptions then
+      else if eoNASM = ExportOption then
         result := result + 'nasm' + CRLF
-      else if soDisassembly in SaveOptions then
+      else if eoDAS = ExportOption then
         result := result + 'das' + CRLF
       else
         raise ETatraDASException.Create('Internal error');
@@ -270,59 +275,57 @@ end;
 
 function GetProgramIdentification: string;
 begin
-  result := TatraDASFullNameVersion + ' - console version, Ivan Kohut (c) 2008';
-  result := DupeString('-', Length(result)) + CRLF + result + CRLF + DupeString('-', Length(result)) + CRLF;
+  Result := TatraDASFullNameVersion + ' - console version, Ivan Kohut (c) 2009';
+  Result := DupeString('-', Length(Result)) + CRLF + Result + CRLF + DupeString('-', Length(Result)) + CRLF;
+end;
+
+
+
+var CurrentPhaseName: String;
+
+procedure ConsoleShowProgress(APhase: string; AProgress: Double);
+begin
+  {$IFDEF LINUX}
+    {$IFDEF FPC}
+    if CurrentPhaseName <> APhase then begin
+      WriteLn;
+      CurrentPhaseName := APhase;
+    end;
+
+    GotoXY(3, WhereY);
+    Write(
+      StringRightPad(CurrentPhaseName + ':', MaxProgressNameLength + 1) +
+      StringRightPad(DupeString('.', Round(20 * AProgress)), 20 + 1) +
+      IntToStr(Round(100 * AProgress)) + '%'
+    );
+    {$ENDIF}
+  {$ENDIF}
+
+  {$IFDEF MSWINDOWS}
+    if CurrentPhaseName <> APhase then begin
+      CurrentPhaseName := APhase;
+      WriteLn(CurrentPhaseName + ':');
+    end;
+  {$ENDIF}
 end;
 
 
 
 procedure ExecuteProgress(AThread: TThread);
-var
-  ProgressCharsCount: integer;
-  CurrentProgress: string;
-  SavedXPosition: integer;
 begin
-  ProgressData.Finished:= false;
-  ProgressData.ErrorStatus:= errNone;
-  ProgressData.Maximum:= 0;
-  ProgressData.Position:= 0;
-  ProgressData.Name:= '';
-
-  ProgressCharsCount:= 0;
-  CurrentProgress:= '';
-  AThread.Resume;
-  while not ProgressData.Finished do begin
-    if ProgressData.Maximum <> 0 then begin
-      // Display progress name and reset progress shower after progress change
-      if CurrentProgress <> ProgressData.Name then begin
-        CurrentProgress:= ProgressData.Name;
-        ProgressCharsCount:= 0;
-        WriteLn;
-        Write(StringRightPad(ProgressData.Name + ':', MaxProgressNameLength + 1));
-      end;
-      // Show progress
-      while ProgressCharsCount < Round(20 * ProgressData.Position / ProgressData.Maximum) do begin
-        Write('.');
-        Inc(ProgressCharsCount);
-      end;
-      {$IFDEF FPC}
-       {$IFDEF LINUX}
-        SavedXPosition:= WhereX;
-        GotoXY(MaxProgressNameLength + 2 + 20 + 1, WhereY);
-        Write(Round(100 * ProgressData.Position / ProgressData.Maximum), '%');
-        GotoXY(SavedXPosition, WhereY);
-       {$ENDIF}
-      {$ENDIF}
-    end;
-    Sleep(100);
+  CurrentPhaseName := '';
+  ProgressManager := TProgressManager.Create(ConsoleShowProgress);
+  try
+    ProgressManager.StartProgress(AThread);
+  finally
+    FreeAndNil(ProgressManager);
   end;
-  AThread.WaitFor;
   WriteLn;
 end;
 
 
 
-procedure RunDisassembler(ExecFile: TExecutableFile; OutputFileName: string; SaveOptions: TSaveOptions);
+procedure RunDisassembler(ExecFile: TExecutableFile; OutputFileName: string; IsOutputProject: Boolean; ExportOption: TExportOption);
 begin
   if ProgressData.ErrorStatus <> errNone then
     raise ETatraDASException.Create('');
@@ -336,7 +339,11 @@ begin
     raise ETatraDASException.Create('');
 
   // Save it
-  ExecuteProgress(TSaveThread.Create(ExecFileManager, ExecFile, OutputFileName, SaveOptions));
+  if IsOutputProject then
+    ExecuteProgress(TSaveThread.Create(ExecFileManager, ExecFile, OutputFileName))
+  else
+    ExecuteProgress(TExportThread.Create(ExecFileManager, ExecFile, OutputFileName, ExportOption, []));
+
 
   // Rename it
   RenameFile(ChangeFileExt(OutputFileName, '.das'), OutputFileName);
@@ -365,7 +372,7 @@ begin
   else
     ExecFile := ExecFileManager.CreateNewExecFile(RunOptions.InputFileName);
   try
-    RunDisassembler(ExecFile, RunOptions.OutputFileName, RunOptions.SaveOptions);
+    RunDisassembler(ExecFile, RunOptions.OutputFileName, RunOptions.IsOutputProject, RunOptions.ExportOption);
   finally
     ExecFile.Free;
   end;

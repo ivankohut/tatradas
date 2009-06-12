@@ -28,8 +28,9 @@ type
     fThread: TThread;
     PauseStr: string;
     ResumeStr: string;
+    fCurrentPhaseName: string;
   public
-    procedure Execute(AThread: TThread);
+    procedure Execute(AThread: TProgressThread);
     procedure Translate;
   end;
 
@@ -41,15 +42,27 @@ implementation
 
 
 uses
- MainFormUnit;
+  MainFormUnit, ProgressManagerUnit;
 
 {$R *.dfm}
 
 
-procedure TProgressForm.Execute(AThread: TThread);
+procedure GuiShowProgress(APhase: string; AProgress: Double);
+begin
+  Application.ProcessMessages;
+  ProgressForm.ProgressLabel.Caption := APhase;
+  ProgressForm.ProgressBar1.Position := Round(1000 * AProgress);
+  Application.ProcessMessages;
+end;
+
+
+
+procedure TProgressForm.Execute(AThread: TProgressThread);
 begin
   fThread := AThread;
   MainForm.Enabled := False;
+
+  fCurrentPhaseName := '';
 
   // Reset ProgressForm components
   ProgressLabel.Caption := '';
@@ -58,21 +71,15 @@ begin
   Application.ProcessMessages;
 
   // Reset ProgressData
-  ProgressData.Finished := False;
   ProgressData.ErrorStatus := errNone;
-  ProgressData.Maximum := 0;
-  ProgressData.Position := 0;
-  ProgressData.Name := '';
 
-
-  fThread.Resume;
-  while not ProgressData.Finished do begin
-    Application.ProcessMessages;
-    ProgressBar1.Max := ProgressData.Maximum;
-    ProgressBar1.Position := ProgressData.Position;
-    ProgressLabel.Caption := ProgressData.Name;
-    Sleep(100);
+  ProgressManager := TProgressManager.Create(GuiShowProgress);
+  try
+    ProgressManager.StartProgress(fThread);
+  finally
+    FreeAndNil(ProgressManager);
   end;
+
   Close;
   MainForm.Enabled := True;
   MainForm.SetFocus;
@@ -97,7 +104,7 @@ end;
 procedure TProgressForm.CancelButtonClick(Sender: TObject);
 begin
   ProgressData.ErrorStatus := errUserTerminated;
-  ProgressData.Finished := True;
+  ProgressManager.Finish(False);
   if fThread.Suspended then
     PauseButtonClick(self);
 end;
@@ -113,6 +120,7 @@ begin
   // Set PauseButton caption (PauseButton is in pause state during translating)
   PauseButton.Caption := PauseStr;
 end;
+
 
 
 end.

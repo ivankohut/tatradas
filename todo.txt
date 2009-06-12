@@ -18,6 +18,8 @@ Disassembler
 - problemy (disasm & yasm/nasm): (skoky a volania medzi sekciam)
     snowcraft.exe undefined symbol (yasm) - problem je v tom, ze v CALL a jeho ciel su v roznych sekciach -> CALL v jednej sekcii nevytvori referenciu v druhej sekcii a teda tam nedisassemblujeme od ciela CALL-u
 - operand size atribute pri instrukciach s implicitnou adresaciou (to je to zakomentovane a16 a spol. pri spracovani prefixu)
+- kompilovatelnost s NASM
+  - upravit aby NASM nehadzal warningy (hadze "value does not fit in signed 8 bit field", lebo ocakava signed hodnoty, TatraDAS dava unsigned, najvhodnejsi by bol specialny mod disassemblovania)
 
 GUI
 - optimalizacia ImportTabFrame - nahradit ListView StringGrid-om, aby sa v pripade obrovskeho mnzostva importovanych funkcii z jedneho modulu nenacitaval zoznam funkcii prilis dlho
@@ -35,26 +37,20 @@ Misc
 - porozmyslat na rozdelenim SaveToFile na dve metody (DAS a DHF)
 
 2.9.9
-OptionsForm - co s tym ? nastavenia sa ukladaju od INI, aj preklady su pripravene
+- ukladanie cez GUI trva dlho
+- memory leaky - thready
 
 General
+- OptionsForm - co s tym ? nastavenia sa ukladaju od INI, aj preklady su pripravene
 - errory a vynimky (o.i. ako osetrovat pristup do poli v array propertoch), ExecFileManager
 - zamysliet sa nad zmyslom ExecFileManagera, co jej jeho ulohou, neda sa to spravit inak ? (nema ziaden stav(premenne))
 
 Disassembler:
 - refactorizacia disassemblera!
 - zmenit typ parametra FPU instrukcii ? (aby nemusel byt "case" v FPU vetve)
-- pri znovu disassemblovani celeho suboru treba nejak spravit to, aby disassemblovanie nevkladalo output do toho isteho TatradasStringList-u, v ktorom je uz disassemblovany kod, lebo to ide potom strasne pomaly
 
 Misc
 - procmat - rozdelit na viac unitov ?
-- refaktorizacia
-    - ExportSectionToNASM (testy)
-- kompilovatelnost s NASM
-  - upravit aby NASM nehadzal warningy
-  - optimalizovat ukladanie do NASM (stringy)
-  - najvhodnejsi by bol specialny mod disassemblovania
-
 - osetrenie viacerych vynimiek v ProgressThreads a nasledne v MainForm-e(GUI) a TatraDAS-e(console)
 - mozno je to OK - pe import lookup table NULL error
 - po stlaceni zrusit vlakno stale bezi
@@ -63,10 +59,13 @@ Misc
 GUI
 - refaktorovat MyEdits
 
-CLI
-- textovy progress - dobiehanie do 100%, aj je progress naozaj kratky, tak sa nezobrazi ani jeho nazov
-
 DONE:
+- ProgressManager:
+  - zjednotenie refreshovania zobrazovania progressu pre GUI a console mode,
+  - zabezpecuje dobiehanie do 100% (aby sa zobrazil progress, akokolvek kratky, aspon 100%), prejavuje sa v console mode (FPC and Linux)
+- pri znovu disassemblovani celeho suboru su zatvorene zalozky Code sekcii, lebo ich automaticke refreshovanie vo faze "priprava vystupu" tuto fazu strasne spomaluje
+- refaktorizacia ExportSectionToNASM (+ tvorba testov)
+
 - save - rozdelit na Save Project a Export (Disassembly, NASM, lubovolne)
 - stringy rozhadzane po suboroch
 - ReplaceLines (zatial nevyhadzuje ziadne bezadresne riadky, iba nahradzovane adresne riadky)
@@ -101,7 +100,7 @@ DONE:
 - oprava ChangeToString nezamrzne ak Pascal string pretrca cez sekciu -> nespravi sa nic
 - oprava instrukcia FXRSTOR bola nazvana FXSTOR (chybalo 'R', dosledkom bolo nezvyraznenie)
 - oprava instrukcie LDMXCSR, STMXCSR, FXSAVE, FXRSTOR, CLFLUSH nemali operand
-
+- oprava padu pri exporte do NASM v prapade "qword" a "pascal string"
 
 -----------------------------
 

@@ -27,7 +27,7 @@ type
     constructor Create(aName: string; aExecFile: TObject); overload; virtual;
 
     procedure SaveToFile(DHF: TStream; var DAS: TextFile); virtual;
-    function LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; virtual;
+    procedure LoadFromFile(DHF: TStream; var DAS: TextFile); virtual;
 
     property Name: string read fName;
     property Typ: TSectionType read fTyp;
@@ -85,11 +85,10 @@ end;
 
 
 
-function TSection.LoadFromFile(DHF: TStream; var DAS: TextFile): Boolean;
+procedure TSection.LoadFromFile(DHF: TStream; var DAS: TextFile);
 begin
   fName := StreamReadAnsiString(DHF);
   DHF.Read(fSectionIndex, 4);
-  Result := True;
 end;
 
 

@@ -46,7 +46,7 @@ type
 
     destructor Destroy; override;
     procedure SaveToFile(DHF: TStream; var DAS: TextFile); override;
-    function LoadFromFile(DHF: TStream; var DAS: TextFile): Boolean; overload; override;
+    procedure LoadFromFile(DHF: TStream; var DAS: TextFile); overload; override;
 
     property FunctionCount: Integer read fFunctionCount;
     property Functions[Index: Integer]: TExportFunction read GetFunction;
@@ -245,7 +245,7 @@ end;
 
 
 
-function TExportSection.LoadFromFile(DHF: TStream; var DAS: TextFile): Boolean;
+procedure TExportSection.LoadFromFile(DHF: TStream; var DAS: TextFile);
 var
   FunctionIndex: Integer;
 begin
@@ -256,7 +256,6 @@ begin
     DHF.Read(fFunctions[FunctionIndex], SizeOf(TExportFunction) - 4);
     fFunctions[FunctionIndex].name:= StreamReadAnsiString(DHF);
   end;
-  Result := True;
 end;
 
 

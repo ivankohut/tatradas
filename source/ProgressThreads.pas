@@ -14,9 +14,15 @@ uses
   ExecFileUnit;
 
 type
+  TProgressThread = class(TThread)
+  protected
+    fSuccess: Boolean;
+  public
+    constructor Create;
+  end;
 
 
-  TDisassembleThread = class(TThread)
+  TDisassembleThread = class(TProgressThread)
   private
     fExecFile: TExecutableFile;
   protected
@@ -26,7 +32,7 @@ type
   end;
 
 
-  TDisassemblePartThread = class(TThread)
+  TDisassemblePartThread = class(TProgressThread)
   private
     fCodeSection: TCodeSection;
     fOptions: TDisassembleOptions;
@@ -37,7 +43,7 @@ type
   end;
 
 
-  TSaveThread = class(TThread)
+  TSaveThread = class(TProgressThread)
   private
     fManager: TExecFileManager;
     fExecFile: TExecutableFile;
@@ -49,7 +55,7 @@ type
   end;
 
 
-  TExportThread = class(TThread)
+  TExportThread = class(TProgressThread)
   private
     fManager: TExecFileManager;
     fExecFile: TExecutableFile;
@@ -63,7 +69,7 @@ type
   end;
 
 
-  TLoadThread = class(TThread)
+  TLoadThread = class(TProgressThread)
   private
     fManager: TExecFileManager;
     fFileName: string;
@@ -79,12 +85,22 @@ Implementation
 uses Exporters;
 
 
+{ TProgressThread }
+
+
+constructor TProgressThread.Create;
+begin
+  inherited Create(True);
+  fSuccess := False;
+end;
+
+
 { TDisassembleThread }
 
 
 constructor TDisassembleThread.Create(AExecFile: TExecutableFile);
 begin
-  inherited Create(True);
+  inherited Create;
   fExecFile := AExecFile;
 end;
 
@@ -94,13 +110,14 @@ procedure TDisassembleThread.Execute;
 begin
   try
     fExecFile.Disassemble;
+    fSuccess := True;
   except
     on EUserTerminatedProcess do
       ProgressData.ErrorStatus := errUserTerminated;
     on Exception do
       ProgressData.ErrorStatus := errUnspecified;
   end;
-  ProgressData.Finished := True;
+  ProgressManager.Finish(fSuccess);
 end;
 
 
@@ -109,7 +126,7 @@ end;
 
 constructor TDisassemblePartThread.Create(ACodeSection: TCodeSection; AOptions: TDisassembleOptions);
 begin
-  inherited Create(True);
+  inherited Create;
   fCodeSection := ACodeSection;
   fOptions := AOptions;
 end;
@@ -120,13 +137,14 @@ procedure TDisassemblePartThread.Execute;
 begin
   try
     fCodeSection.DisassemblePart(fOptions);
+    fSuccess := True;
   except
     on EUserTerminatedProcess do
       ProgressData.ErrorStatus := errUserTerminated;
     on Exception do
       ProgressData.ErrorStatus := errUnspecified;
   end;
-  ProgressData.Finished := True;
+  ProgressManager.Finish(fSuccess);
 end;
 
 
@@ -135,7 +153,7 @@ end;
 
 constructor TSaveThread.Create(Manager: TExecFileManager; AExecFile: TExecutableFile; AFileName: string);
 begin
-  inherited Create(True);
+  inherited Create;
   fManager := Manager;
   fExecFile := AExecFile;
   fFileName := AFileName;
@@ -147,13 +165,14 @@ procedure TSaveThread.Execute;
 begin
   try
     fManager.SaveExecFileToFile(fExecFile, fFileName);
+    fSuccess := True;
   except
     on EUserTerminatedProcess do
       ProgressData.ErrorStatus := errUserTerminated;
     on Exception do
       ProgressData.ErrorStatus := errUnspecified;
   end;
-  ProgressData.Finished := True;
+  ProgressManager.Finish(fSuccess);
 end;
 
 
@@ -162,7 +181,7 @@ end;
 
 constructor TExportThread.Create(Manager: TExecFileManager; AExecFile: TExecutableFile; AFileName: string; AExportOption: TExportOption; AExportCustomDASOptions: TExportCustomDASOptions);
 begin
-  inherited Create(True);
+  inherited Create;
   fManager := Manager;
   fExecFile := AExecFile;
   fFileName := AFileName;
@@ -176,14 +195,15 @@ procedure TExportThread.Execute;
 begin
   inherited;
   try
-    ExportToFile(fExportOption, fExportCustomDASOptions, fExecFile, fFileName);
+    TExporter.ExportToFile(fExportOption, fExportCustomDASOptions, fExecFile, fFileName);
+    fSuccess := True;
   except
     on EUserTerminatedProcess do
       ProgressData.ErrorStatus := errUserTerminated;
     on Exception do
       ProgressData.ErrorStatus := errUnspecified;
   end;
-  ProgressData.Finished := True;
+  ProgressManager.Finish(fSuccess);
 end;
 
 
@@ -192,7 +212,7 @@ end;
 
 constructor TLoadThread.Create(Manager: TExecFileManager; AFileName: string);
 begin
-  inherited Create(True);
+  inherited Create;
   fManager := Manager;
   fFileName := AFileName;
 end;
@@ -203,13 +223,14 @@ procedure TLoadThread.Execute;
 begin
   try
     ProgressData.Result := Pointer(fManager.LoadExecFileFromFile(fFileName));
+    fSuccess := True;
   except
     on EUserTerminatedProcess do
       ProgressData.ErrorStatus := errUserTerminated;
     on Exception do
       ProgressData.ErrorStatus := errUnspecified;
   end;
-  ProgressData.Finished := True;
+  ProgressManager.Finish(fSuccess);
 end;
 
 

@@ -328,8 +328,17 @@ end;
 procedure TMainForm.DisassembleClick(Sender: TObject);
 var
   PageIndex, SectionIndex: integer;
+  DisassembleThread: TDisassembleThread;
 begin
-  ProgressForm.Execute(TDisassembleThread.Create(ExecFile));
+  // Clear code tabs
+  for PageIndex := MainPageControl.PageCount - 1 downto 0 do
+    if (MainPageControl.Pages[PageIndex] as TTabSheetTemplate).PageType = ttCode then
+      MainPageControl.Pages[PageIndex].Free;
+
+  DisassembleThread := TDisassembleThread.Create(ExecFile);
+  ProgressForm.Execute(DisassembleThread);
+  FreeAndNil(DisassembleThread);
+
   //ExecFile.Disassemble; //= non-thread way
 
   if ProgressData.ErrorStatus = errNone then begin
@@ -337,11 +346,6 @@ begin
     SaveProject1.Enabled := True;
     Export1.Enabled := True;
     Modified := True;
-
-    // Clear old code tabs
-    for PageIndex := MainPageControl.PageCount - 1 downto 0 do
-      if (MainPageControl.Pages[PageIndex] as TTabSheetTemplate).PageType = ttCode then
-        MainPageControl.Pages[PageIndex].Free;
 
     // Create section tabs and frames
     for SectionIndex:= 0 to ExecFile.Sections.Count - 1 do

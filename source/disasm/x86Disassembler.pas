@@ -694,9 +694,6 @@ var
   SpaceIndex: integer;
   MemAddress: cardinal;
 begin
-  ProgressData.Maximum:= fCodeSize;
-  ProgressData.Position:= 0;
-
   //****************************************************************************
   // 1. Phase - Disassemble
   //****************************************************************************
@@ -756,7 +753,7 @@ begin
   // Find all non-disassembled bytes and make then "byte data"
   for CodeIndex := 0 to fCodeSize - 1 do
     if fDisasmMap[CodeIndex] = dfNone then begin
-      Inc(ProgressData.Position);
+      ProgressManager.IncPosition;
 
       // Address
       MemAddress:= CodeIndex + fMemOffset;
@@ -839,8 +836,7 @@ begin
 
     // Main loop of disassembler
     while (i<=finish) and ((fDisasmMap[i] and dfPart)=0) and (not EndBlock) do begin
-
-      Inc(ProgressData.Position, i - InstrAddress);
+      ProgressManager.Position := ProgressManager.Position + i - InstrAddress;
       if ProgressData.ErrorStatus = errUserTerminated then
         raise EUserTerminatedProcess.Create('');
 

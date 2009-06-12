@@ -10,7 +10,7 @@ uses
   SysUtils,
   Classes,
   Math,
-
+  ProgressManagerUnit,
   {$IFDEF GUI_B}
     SynEditTextBuffer
   {$ELSE}
@@ -158,16 +158,41 @@ type
     LoadingDAS, LoadingDHF, SavingDAS, SavingDHF: string;
   end;
 
+  TPhaseFinishedProc = procedure;
+
   TProgressError = (errNone, errOpen, errBadFormat, errDASNotFound, errBadProjectVersion, errSave, errCanceled, errUserTerminated, errUnspecified);
 
   TProgressData = record
+{
     Name: string;
     Position: cardinal;
     Maximum: cardinal;
     Finished: boolean;
+}
+    PhaseFinishedProc: TPhaseFinishedProc;
     ErrorStatus: TProgressError;
     Result: Pointer;
   end;
+
+
+
+{
+  TProgressCounter = class
+  private
+    fPosition: Boolean;
+    fMaximum: Cardinal;
+    fPhaseName: String;
+  public
+    procedure StartPhase(AName: string; AMaximum: cardinal);
+    procedure Finish;
+    property Position: cardinal write fPosition;
+  end;
+
+  TProgressManager = class
+  public
+    function StartProgress(AProgressCounter: TProgressCounter);
+  end;
+}
 
   ITranslatable = interface
     ['{E293B4CE-B91A-42FE-884A-27F54EEAD8DD}']
@@ -178,6 +203,7 @@ type
 var
   ProcessText: TProcessText;
   ProgressData: TProgressData;
+  ProgressManager: TProgressManager;
 
 
 procedure ReadStringFromStream(a:TStream; pos:cardinal; var retazec:string);
@@ -190,6 +216,9 @@ function MyIsNan(const AValue: Single): Boolean; overload;
 function MyIsNan(const AValue: Double): Boolean; overload;
 
 function CompareValue(n1, n2: cardinal): integer;
+
+procedure WriteLnToStream(AStream: TStream); overload;
+procedure WriteLnToStream(AStream: TStream; const ALine: string); overload;
 
 {$IFDEF GUI_B}
 procedure SM(msg: string);
@@ -312,6 +341,19 @@ begin
     result:= 1;
 end;
 
+
+
+procedure WriteLnToStream(AStream: TStream; const ALine: string);
+begin
+  AStream.Write((PChar(ALine + #13#10))^, Length(ALine) + 2);
+end;
+
+
+
+procedure WriteLnToStream(AStream: TStream);
+begin
+  WriteLnToStream(AStream, '');
+end;
 
 
 

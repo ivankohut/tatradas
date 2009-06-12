@@ -72,6 +72,7 @@ type
     destructor Destroy; override;
 
     procedure Disassemble; virtual;
+    procedure ClearDisassembled;
 
     procedure SaveToFile(DHF: TStream; var DAS: TextFile); overload; virtual;
     procedure LoadFromFile(DHF: TStream; var DAS: TextFile); virtual;
@@ -126,17 +127,27 @@ end;
 
 
 
+procedure TExecutableFile.ClearDisassembled;
+var
+  SectionIndex: Integer;
+begin
+  // Reset all code sections if file is already disassembled
+  if fIsDisassembled then begin
+    for SectionIndex := 0 to Sections.Count - 1 do
+      if Sections[SectionIndex].Typ = stCode then
+        (Sections[SectionIndex] as TCodeSection).ClearDisassembled;
+    fIsDisassembled := false;
+  end;
+end;
+
+
+
 procedure TExecutableFile.Disassemble;
 var
   SectionIndex, ExceptionSectionIndex: Integer;
   Options: TDisassembleOptions;
 begin
-  // Reset code section if file is already disassembled
-  if IsDisassembled then
-    for SectionIndex := 0 to Sections.Count - 1 do
-      if Sections[SectionIndex].Typ = stCode then
-        (Sections[SectionIndex] as TCodeSection).ClearDisassembled;
-  fIsDisassembled := false;
+  ClearDisassembled;
 
   // Nastavime parametre a disassemblujme
   for SectionIndex := 0 to Sections.Count - 1 do
@@ -221,8 +232,7 @@ begin
         raise EIllegalState.Create('Executable.LoadFromFile: Bad section type');
     end;
 
-    if not Section.LoadFromFile(DHF, DAS) then
-      Exit;
+    Section.LoadFromFile(DHF, DAS);
     Sections.Add(Section);
   end;
   fIsDisassembled := True;

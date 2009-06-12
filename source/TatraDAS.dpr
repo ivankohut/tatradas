@@ -53,6 +53,7 @@ uses
   RegionsUnit in 'RegionsUnit.pas',
   ProgressThreads in 'ProgressThreads.pas',
   Exporters in 'Exporters.pas',
+  ProgressManagerUnit in 'ProgressManagerUnit.pas',
 
 {$IFDEF MSWINDOWS}
 

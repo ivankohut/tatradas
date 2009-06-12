@@ -108,7 +108,7 @@ type
       procedure ReplaceLines(StartLineIndex, StartAddress, ByteCount: Cardinal; NewLines: TStrings);
 
       procedure SaveToFile(DHF: TStream; var DAS: TextFile); override;
-      function LoadFromFile(DHF: TStream; var DAS: TextFile): boolean; overload; override;
+      procedure LoadFromFile(DHF: TStream; var DAS: TextFile); overload; override;
 
       property Bit32: boolean read fBit32;
       property CodeSize: cardinal read fCodeSize;                  // Velkost kodu tejto sekcie v bajtoch
@@ -269,7 +269,6 @@ end;
 class function TCodeSection.ReplaceFirstLastLine(ALine: string; AReplaceAddress: Cardinal; AIsFirst: Boolean): TStrings;
 var
   LineData: TByteDynArray;
-  ReplaceDataSize: Integer;
 begin
   LineData := GetLineData(ALine);
   if AIsFirst then
@@ -365,11 +364,11 @@ var
   NewLines: TStrings;
   Disassembler: TDisassembler;
 begin
-  ProgressData.Name:= ProcessText.Disassembling;
   NewLines:= nil;
   Disassembler:= nil;
   try
     // Disassemble
+    ProgressManager.StartPhase(ProcessText.Disassembling, fCodeSize);
     Disassembler:= Tx86Disassembler.Create(CodeArray, DisassemblerMap, MemOffset, Options.Bit32);
     Disassembler.CAJ.Add(Options.Address - MemOffset);
     Disassembler.CAJ.Process(Options.Address - MemOffset + Options.Size);
@@ -378,14 +377,12 @@ begin
   //  Statistics:=Disassembler.Statistics;
 
     // Process all disassembled blocks
-    ProgressData.Name:= ProcessText.PreparingOutput;
-    ProgressData.Position:= 0;
-    ProgressData.Maximum:= Disassembler.BlockCount;
+    ProgressManager.StartPhase(ProcessText.PreparingOutput, Disassembler.BlockCount);
 
     Disassembled.BeginUpdate;
     NewLines:= TStringList.Create;
     for BlockIndex := 0 to Disassembler.BlockCount - 1 do begin
-      Inc(ProgressData.Position);
+      ProgressManager.IncPosition;
       if ProgressData.ErrorStatus = errUserTerminated then
         raise EUserTerminatedProcess.Create('');
 
@@ -423,7 +420,6 @@ begin
     while (((DisassemblerMap[CodeIndex] and dfInstruction) = 0) and (DisassemblerMap[CodeIndex] <> 0)) do
       Dec(CodeIndex);
     fLastItem := CodeIndex;
-
   finally
     NewLines.Free;
     Disassembler.Free;
@@ -472,15 +468,15 @@ begin
   if CodeSize = 0 then
     Exit;
 
-  Disassembler:= nil;
+  ProgressManager.StartPhase(ProcessText.Disassembling + IntToStr(CodeSectionIndex), fCodeSize);
+
+  Disassembler := nil;
 
   try
     SetLength(CodeLineTexts, CodeSize);
 
     ImportSection:= (ExecFile as TExecutableFile).ImportSection;
     ExportSection:= (ExecFile as TExecutableFile).ExportSection;
-
-    ProgressData.Name:= ProcessText.Disassembling + IntToStr(CodeSectionIndex);
 
     Disassembler:= Tx86Disassembler.Create(CodeArray, DisassemblerMap, MemOffset, Bit32);
 
@@ -618,16 +614,14 @@ begin
 
     //  Inc(Statistics.Blanks);                             // prazdny riadok na zaciatku
 
-    ProgressData.Name:= ProcessText.PreparingOutput + IntToStr(CodeSectionIndex);
-    ProgressData.Position:= 0;
-    ProgressData.Maximum:= CodeSize - 1;
+    ProgressManager.StartPhase(ProcessText.PreparingOutput + IntToStr(CodeSectionIndex), fCodeSize - 1);
 
     fDisassembled.Add('');  // prazdny riadok na zaciatku
 
     Logger.Info('Start: Preparing output');
 
     for i:= 0 to CodeSize - 1 do begin
-      Inc(ProgressData.Position);
+      ProgressManager.IncPosition;
       if ProgressData.ErrorStatus = errUserTerminated then
         raise EUserTerminatedProcess.Create('');
 
@@ -724,9 +718,7 @@ begin
   // DAS file
 
   Logger.Info('Start: Saving DAS - code section ' + IntToStr(CodeSectionIndex));
-  ProgressData.Name:= ProcessText.SavingDAS + IntToStr(CodeSectionIndex);
-  ProgressData.Position:= 0;
-  ProgressData.Maximum:= Disassembled.Count;
+  ProgressManager.StartPhase(ProcessText.SavingDAS + IntToStr(CodeSectionIndex), Disassembled.Count);
   Writeln(DAS, '; ********************************************');
   Writeln(DAS, '; Code Section Number: '  + IntToStr(CodeSectionIndex));
   Writeln(DAS, '; ********************************************');
@@ -734,7 +726,7 @@ begin
   // Standard DAS file
   for LineIndex := 0 to Disassembled.Count - 1 do begin
     WriteLn(DAS, Disassembled[LineIndex]);
-    Inc(ProgressData.Position);
+    ProgressManager.IncPosition;
     if ProgressData.ErrorStatus = errUserTerminated then
       raise EUserTerminatedProcess.Create('');
   end;
@@ -744,7 +736,7 @@ end;
 
 
 
-function TCodeSection.LoadFromFile(DHF: TStream; var DAS: TextFile): boolean;
+procedure TCodeSection.LoadFromFile(DHF: TStream; var DAS: TextFile);
 var
   Line: string;
   LineIndex: integer;
@@ -784,9 +776,8 @@ begin
 
   // DAS file
 
-  ProgressData.Position:= 0;
-  ProgressData.Maximum:= DisasmCount;
-  ProgressData.Name := ProcessText.LoadingDAS + IntToStr(CodeSectionIndex);
+  ProgressManager.StartPhase(ProcessText.LoadingDAS + IntToStr(CodeSectionIndex), DisasmCount);
+
   Readln(DAS);
   Readln(DAS);
   Readln(DAS);
@@ -794,8 +785,8 @@ begin
   fDisassembled:= TTatraDASStringList.Create;
   fDisassembled.Capacity:= DisasmCount;
   try
-    for LineIndex:= 0 to DisasmCount - 1 do begin
-      ProgressData.Position:= LineIndex;
+    for LineIndex := 0 to DisasmCount - 1 do begin
+      ProgressManager.IncPosition;
       if ProgressData.ErrorStatus = errUserTerminated then
         raise EUserTerminatedProcess.Create('');
       ReadLn(DAS, line);
@@ -808,10 +799,6 @@ begin
     else
       raise;
   end;
-
-  ProgressData.Position:= 0;
-  ProgressData.Finished:= true;
-  result:=true;
 end;
 
 
@@ -1030,14 +1017,14 @@ end;
 
 
 
-function GetLineAddress(line: string): cardinal;
+function GetLineAddress(line: string): Cardinal;
 begin
   Result := Cardinal(StrToIntDef('$' + LeftStr(Line, ilAddressLength), -1));
 end;
 
 
 
-function GetLineBytes(line: string): cardinal;
+function GetLineBytes(line: string): Cardinal;
 var
   i: Cardinal;
 begin
@@ -1047,7 +1034,7 @@ begin
   // Normalna instrukcia alebo jednoduche data
   else begin
     i := ilParsedIndex;
-    while (i < Length(Line)) and (Line[i] <> ' ') do
+    while (i < Cardinal(Length(Line))) and (Line[i] <> ' ') do
       Inc(i, 2);
 
     Result := (i - ilParsedIndex) div 2;
@@ -1057,21 +1044,21 @@ end;
 
 
 // type of Line is ltInstruction
-function GetTargetAddress(Line: string; var Address: cardinal): boolean;
+function GetTargetAddress(Line: string; var Address: Cardinal): Boolean;
 
-  function HexToAddress(Index: integer): boolean;
+  function HexToAddress(Index: Integer): Boolean;
   begin
     // Exit if target address does not begin with '0x' or if it is far pointer (0x????:?...)
-    if (Line[Index] <> '0') or (Line[Index + 1] <> 'x') or (Line[Index+6] = ':') then begin
-      result:= false;
+    if (Line[Index] <> '0') or (Line[Index + 1] <> 'x') or (Line[Index + 6] = ':') then begin
+      Result := False;
       Exit;
     end;
     Inc(Index, 2);
     try
-      Address:= cardinal(StrToInt('$' + Trim(Copy(Line, Index, 8))));
-      result:= true;
+      Address := Cardinal(StrToInt('$' + Copy(Line, Index, 8)));
+      Result := True;
     except
-      result:= false;
+      Result := False;
     end;
   end;
 
@@ -1084,27 +1071,27 @@ begin
   if Length(Line) < ilInstructionMnemonicIndex + 10 then
     Exit;
 
-  Index:= ilInstructionMnemonicIndex;
+  Index := ilInstructionMnemonicIndex;
 
   // JMP, Jxx
   if Line[Index] = 'J' then begin
     while Line[Index] <> ' ' do
       Inc(Index);
     Inc(Index);
-    result:= HexToAddress(Index);
+    result := HexToAddress(Index);
   end
 
-  // CALL
-  else if Copy(Line, Index ,4) = 'CALL' then begin
+  // CALL - Copy(Line, Index, 4) = 'CALL'
+  else if (Cardinal((@(Line[Index]))^)) = $4C4C4143 then begin
     Inc(Index, 5);
-    result:= HexToAddress(Index);
+    result := HexToAddress(Index);
   end
 
-  // LOOPxx
-  else if Copy(Line, Index, 4) = 'LOOP' then begin
+  // LOOPxx - Copy(Line, Index, 4) = 'LOOP'
+  else if (Cardinal((@(Line[Index]))^)) = $504f4f4c then begin
     while Line[Index] <> ' ' do Inc(Index);
     Inc(Index);
-    result:= HexToAddress(Index);
+    result := HexToAddress(Index);
   end
 end;
 

@@ -10,9 +10,11 @@ uses
     GUITestRunner,
   {$ENDIF}
 
-  StringUtilitiesTests,
-  VersionTests,
-  CodeSectionTests,
+  procmatTests in 'procmatTests.pas',
+  StringUtilitiesTests in 'StringUtilitiesTests.pas',
+  VersionTests in 'VersionTests.pas',
+  CodeSectionTests in 'CodeSectionTests.pas',
+  ExportersTests in 'ExportersTests.pas',
 
   {$IFDEF MSWINDOWS}
     {$IFDEF GUI_B}
@@ -67,6 +69,9 @@ uses
   ExportTabFrameUnit in '..\source\frames\ExportTabFrameUnit.pas',
   ResourceTabFrameUnit in '..\source\frames\ResourceTabFrameUnit.pas',
 *)
+
+  Exporters in '..\source\Exporters.pas',
+
   // Disassembler units
   DisassemblerUnit in '..\source\disasm\DisassemblerUnit.pas',
   DisassemblerUtils in '..\source\disasm\DisassemblerUtils.pas',

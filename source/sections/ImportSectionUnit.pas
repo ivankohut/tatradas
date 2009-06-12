@@ -66,7 +66,7 @@ type
     destructor Destroy; override;
 
     procedure SaveToFile(DHF: TStream; var DAS: TextFile); override;
-    function LoadFromFile(DHF: TStream; var DAS: TextFile): Boolean; overload; override;
+    procedure LoadFromFile(DHF: TStream; var DAS: TextFile); overload; override;
 
     function AddFunctionOccurence(IndexAddress: Cardinal; CallInstrAddress: Cardinal; aSectionIndex: Integer): string;
 //    procedure AddFunctionOccurence(ModulIndex, FunctionIndex: integer; Address: cardinal);
@@ -443,7 +443,7 @@ end;
 
 
 
-function TImportSection.LoadFromFile(DHF: TStream; var DAS: TextFile): Boolean;
+procedure TImportSection.LoadFromFile(DHF: TStream; var DAS: TextFile);
 var
   ModulIndex, FunctionIndex, OccurIndex: Integer;
   OccurenceCount: Integer;
@@ -469,7 +469,6 @@ begin
       end;
     end;
   end;
-  Result := True;
 end;
 
 

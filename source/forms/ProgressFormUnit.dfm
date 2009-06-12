@@ -1,10 +1,10 @@
 object ProgressForm: TProgressForm
   Left = 457
   Top = 294
-  Width = 337
-  Height = 123
   BorderStyle = bsSizeToolWin
   Caption = 'ProgressForm'
+  ClientHeight = 99
+  ClientWidth = 329
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -37,8 +37,7 @@ object ProgressForm: TProgressForm
     Top = 32
     Width = 313
     Height = 17
-    Min = 0
-    Max = 100
+    Max = 1000
     TabOrder = 1
   end
   object PauseButton: TButton
