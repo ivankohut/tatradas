@@ -7,6 +7,9 @@ uses
 
 type
   TExportersTests = class(TTestCase)
+  protected
+    procedure Setup; override;
+    procedure TearDown; override;
   published
     procedure TestNasmLineExport;
     procedure TestNasmIsReferenceFromCode;
@@ -18,13 +21,30 @@ implementation
 
 uses
   SysUtils, Classes, Types, StrUtils,
-  Exporters;
+  Exporters, ProgressManagerUnit, procmat;
 
 type
   TExporterChild = class(TExporter)
   end;
-    
+
+
 { TExportersTests }
+
+
+procedure TExportersTests.Setup;
+begin
+  inherited;
+  ProgressManager := TProgressManager.Create(nil);
+end;
+
+
+
+procedure TExportersTests.TearDown;
+begin
+  inherited;
+  FreeAndNil(ProgressManager);
+end;
+
 
 
 procedure TExportersTests.TestNasmDataExportStream;
@@ -109,6 +129,8 @@ begin
   Check(TExporterChild.ExportLineToNASM('00401005 bytes: 00000005(hex)     pstring ''Byte''') = cNasmLineIndent + 'db 0x04,''Byte''');
   Check(TExporterChild.ExportLineToNASM('00401005 bytes: 00000005(hex)     cstring ''Byte''') = cNasmLineIndent + 'db ''Byte'',0x00');
 end;
+
+
 
 
 initialization

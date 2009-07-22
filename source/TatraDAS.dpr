@@ -191,7 +191,10 @@ uses
 
 {$IFDEF GUI_B}
 
+
 begin
+  Logger.AddListener(TTextFileLoggerListener.Create('disasm.log'));
+
   Application.Initialize;
   Application.Title := 'TatraDAS';
   Application.Icon.Handle:=LoadIcon(hinstance,'mainicon');
@@ -215,6 +218,8 @@ begin
   end;
   OptionsForm.LoadSettings(MainForm.sINI);
 
+  Application.OnException := MainForm.GuiProcessException;
+
   Application.Run;
 end.
 
@@ -222,8 +227,10 @@ end.
 
 {$IFDEF CONSOLE}
 
-var
-  ErrorMessage: string;
+procedure WriteLnMessage(const AMessage: string);
+begin
+  WriteLn(AMessage);
+end;
 
 begin
   Logger.AddListener(TTextFileLoggerListener.Create('disasm.log'));
@@ -239,22 +246,8 @@ begin
   try
     RunTatraDAS;
   except
-    on ETatraDASException do begin
-      case ProgressData.ErrorStatus of
-        errOpen:
-          ErrorMessage:= CouldNotOpenFileStr + ' ''' + ExpandFilename(ParamStr(1)) + '''.';
-{
-        errUnknownFormat:
-          ErrorMessage:= 'Unknown file format.';
-}
-        errUnspecified:
-          ErrorMessage:= UnspecifiedErrorStr;
-      end;
-      WriteLn(ErrorMessage);
-      Logger.Fatal(ErrorMessage);
-    end
-    else
-      Logger.Fatal('Unhandled exception occured.');
+    on E: Exception do
+      ProcessException(E, WriteLnMessage);
   end;
 
 

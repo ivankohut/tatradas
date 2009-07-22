@@ -12,16 +12,16 @@ uses
   Math,
   ProgressManagerUnit,
   {$IFDEF GUI_B}
-    SynEditTextBuffer
+    SynEditTextBuffer,
   {$ELSE}
-    TatraDAS_SynEditStringList
+    TatraDAS_SynEditStringList,
   {$ENDIF}
+  LoggerUnit,
+  StringRes
   ;
 
 
 const
-
-  HEX_CIFRY : set of char = ['0'..'9', 'A'..'F'];
   MaxByte = 255;
   MaxCardinal = $FFFFFFFF;
 
@@ -64,7 +64,9 @@ const
   ShortTatraDASVersion: string = '2.9.9';
   TatraDASFullName: string = 'TatraDAS disassembler';
   TatraDASFullNameVersion = 'TatraDAS disassembler 2.9.9 devel';
-  DASFileFirstLine = ';DisASsembled file, Original file: %s  ' + TatraDASFullNameVersion + ', Ivan Kohut (c) 2009';
+  CopyrightStr = 'Ivan Kohut (c) 2009';
+  DASFileFirstLine = ';DisASsembled file, Original file: %s  ' + TatraDASFullNameVersion + ', ' + CopyrightStr;
+  DASFileExtension = '.das';
 
   CodeArrayReserveSize = 20;
   MaxProgressNameLength = 25;
@@ -108,13 +110,12 @@ type
 
   TLineType = (ltInstruction, ltComment, ltJumpRef, ltCallRef, ltLoopRef, ltImportRef, ltExportRef, ltEntryPointRef, ltEmpty);
 
-  TExecFileFormat = (ffError, ffUnknown, ffCustom, ffPE, ffMZ, ffCOM, ffNE, LE, LX, ffELF);
 
-  TCPUType = (_80386, _80486, Pentium);
 
+
+  // NE file format specific
 
   TEntryTableEntryType = (etEmpty, etFixed, etMovable);
-
 
   TFixedBundle = packed record
     Flag: byte;
@@ -143,9 +144,11 @@ type
   // Messages in English only
   EIllegalState = class (ETatraDASException);
 
+  // User exceptions,
+  // Should be translated
   // User terminated a process
-  EUserTerminatedProcess = class (ETatraDASException);
-  // User exception shold be translated
+//  EUserTerminatedProcess = class (ETatraDASException);
+  EFileCorrupted = class (ETatraDASException); // FileCorruptedStr // TODO
 
 
   TMyMemoryStream = class(TMemoryStream)
@@ -160,39 +163,11 @@ type
 
   TPhaseFinishedProc = procedure;
 
-  TProgressError = (errNone, errOpen, errBadFormat, errDASNotFound, errBadProjectVersion, errSave, errCanceled, errUserTerminated, errUnspecified);
-
   TProgressData = record
-{
-    Name: string;
-    Position: cardinal;
-    Maximum: cardinal;
-    Finished: boolean;
-}
-    PhaseFinishedProc: TPhaseFinishedProc;
-    ErrorStatus: TProgressError;
+    AbortExecution: Boolean;
     Result: Pointer;
   end;
 
-
-
-{
-  TProgressCounter = class
-  private
-    fPosition: Boolean;
-    fMaximum: Cardinal;
-    fPhaseName: String;
-  public
-    procedure StartPhase(AName: string; AMaximum: cardinal);
-    procedure Finish;
-    property Position: cardinal write fPosition;
-  end;
-
-  TProgressManager = class
-  public
-    function StartProgress(AProgressCounter: TProgressCounter);
-  end;
-}
 
   ITranslatable = interface
     ['{E293B4CE-B91A-42FE-884A-27F54EEAD8DD}']
@@ -223,6 +198,11 @@ procedure WriteLnToStream(AStream: TStream; const ALine: string); overload;
 {$IFDEF GUI_B}
 procedure SM(msg: string);
 {$ENDIF}
+
+type
+  TDisplayMessageProc = procedure (const AMessage: string);
+
+procedure ProcessException(E: Exception; DisplayMessageProc: TDisplayMessageProc);
 
 
 Implementation
@@ -356,6 +336,32 @@ begin
 end;
 
 
+
+procedure ProcessException(E: Exception; DisplayMessageProc: TDisplayMessageProc);
+var
+  ErrorMessage: string;
+begin
+  // Note: Logging is in english.
+  if E is EIllegalState then begin
+    ErrorMessage := IllegalStateStr + ' ' + E.Message;
+    Logger.Fatal(ErrorMessage);
+  end
+  else if E is ETatraDASException then begin
+    ErrorMessage := E.Message;
+    Logger.Fatal(E.ClassName + ': ' + E.Message);
+  end
+  else if E is EAbort then begin
+    ErrorMessage := '';
+    Logger.Info('Execution aborted by user.');
+  end
+  else begin
+    ErrorMessage := ErrorStr + ': ' + E.Message;
+    Logger.Fatal('Exception ' + E.ClassName + ': ' + E.Message);
+  end;
+
+  if ErrorMessage <> '' then
+    DisplayMessageProc(ErrorMessage);
+end;
 
 
 

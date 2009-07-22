@@ -285,6 +285,7 @@ var
   ListItem: TListItem;
   ExecFile: TPEFile;
   ListColumn: TListColumn;
+  CPUTypeStr: string;
 begin
   inherited Create(AOwner, aExecFile);
   ExecFile:= aExecFile as TPEFile;
@@ -327,7 +328,13 @@ begin
     AddAdvancedInfo('', '');
     AddAdvancedInfo('Time - Date stamp', IntToHex(header.TimeDateStamp, 8));
     AddAdvancedInfo('Flags: ', IntToHex(Header.Flags, 4) + ' = ' + PEFileType);
-    AddAdvancedInfo('CPU type required: ', CPUType);
+    case CPUType of
+      cpu386: CPUTypeStr := '80386';
+      cpu486: CPUTypeStr := '80486';
+      cpu586: CPUTypeStr := '80586';
+      cpuUnknown: CPUTypeStr := 'unknown';
+    end;
+    AddAdvancedInfo('CPU type required: ', CPUTypeStr);
     AddAdvancedInfo('', '');
     AddAdvancedInfo('Object align: ', IntToHex(header.ObjectAlign, 8));
     AddAdvancedInfo('File align: ', IntToHex(header.FileAlign, 8));

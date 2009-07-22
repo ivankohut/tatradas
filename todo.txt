@@ -37,29 +37,25 @@ Misc
 - porozmyslat na rozdelenim SaveToFile na dve metody (DAS a DHF)
 
 2.9.9
-- ukladanie cez GUI trva dlho
-- memory leaky - thready
+- ikona pre "Exportovat..."
 
 General
 - OptionsForm - co s tym ? nastavenia sa ukladaju od INI, aj preklady su pripravene
-- errory a vynimky (o.i. ako osetrovat pristup do poli v array propertoch), ExecFileManager
 - zamysliet sa nad zmyslom ExecFileManagera, co jej jeho ulohou, neda sa to spravit inak ? (nema ziaden stav(premenne))
 
 Disassembler:
 - refactorizacia disassemblera!
-- zmenit typ parametra FPU instrukcii ? (aby nemusel byt "case" v FPU vetve)
 
 Misc
 - procmat - rozdelit na viac unitov ?
-- osetrenie viacerych vynimiek v ProgressThreads a nasledne v MainForm-e(GUI) a TatraDAS-e(console)
 - mozno je to OK - pe import lookup table NULL error
-- po stlaceni zrusit vlakno stale bezi
 - dlho trvajuca zmena na ???
 
 GUI
 - refaktorovat MyEdits
 
 DONE:
+- errory a vynimky (ExecFileManager atd.)
 - ProgressManager:
   - zjednotenie refreshovania zobrazovania progressu pre GUI a console mode,
   - zabezpecuje dobiehanie do 100% (aby sa zobrazil progress, akokolvek kratky, aspon 100%), prejavuje sa v console mode (FPC and Linux)

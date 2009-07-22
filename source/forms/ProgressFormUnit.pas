@@ -71,18 +71,17 @@ begin
   Application.ProcessMessages;
 
   // Reset ProgressData
-  ProgressData.ErrorStatus := errNone;
+  ProgressData.AbortExecution := False;
 
   ProgressManager := TProgressManager.Create(GuiShowProgress);
   try
     ProgressManager.StartProgress(fThread);
   finally
     FreeAndNil(ProgressManager);
+    Close;
+    MainForm.Enabled := True;
+    MainForm.SetFocus;
   end;
-
-  Close;
-  MainForm.Enabled := True;
-  MainForm.SetFocus;
 end;
 
 
@@ -103,7 +102,7 @@ end;
 
 procedure TProgressForm.CancelButtonClick(Sender: TObject);
 begin
-  ProgressData.ErrorStatus := errUserTerminated;
+  ProgressData.AbortExecution := True;
   ProgressManager.Finish(False);
   if fThread.Suspended then
     PauseButtonClick(self);

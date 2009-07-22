@@ -8,77 +8,77 @@ const
   FPU_A_InstructionSet: array [0..63] of TFPUAInstruction = (
 
   // D8
-    (name: 'FADD'; par: szDword),
-    (name: 'FMUL'; par: szDword),
-    (name: 'FCOM'; par: szDword),
-    (name: 'FCOMP'; par: szDword),
-    (name: 'FSUB'; par: szDword),
-    (name: 'FSUBR'; par: szDword),
-    (name: 'FDIV'; par: szDword),
-    (name: 'FDIVR'; par: szDword),
+    (name: 'FADD'; Operand: M32),
+    (name: 'FMUL'; Operand: M32),
+    (name: 'FCOM'; Operand: M32),
+    (name: 'FCOMP'; Operand: M32),
+    (name: 'FSUB'; Operand: M32),
+    (name: 'FSUBR'; Operand: M32),
+    (name: 'FDIV'; Operand: M32),
+    (name: 'FDIVR'; Operand: M32),
   // D9
-    (name: 'FLD'; par: szDword),
-    (name: ''; par: szEmpty),
-    (name: 'FST'; par: szDword),
-    (name: 'FSTP'; par: szDword),
-    (name: 'FLDENV'; par: szEmpty), // TODO: 14/28
-    (name: 'FLDCW'; par: szWord),
-    (name: 'FNSTENV'; par: szEmpty), // TODO: 14/28
-    (name: 'FNSTCW'; par: szWord),
+    (name: 'FLD'; Operand: M32),
+    (name: ''; Operand: MMM),
+    (name: 'FST'; Operand: M32),
+    (name: 'FSTP'; Operand: M32),
+    (name: 'FLDENV'; Operand: MMM), // TODO: 14/28
+    (name: 'FLDCW'; Operand: M16),
+    (name: 'FNSTENV'; Operand: MMM), // TODO: 14/28
+    (name: 'FNSTCW'; Operand: M16),
   // DA
-    (name: 'FIADD'; par: szDword),
-    (name: 'FIMUL'; par: szDword),
-    (name: 'FICOM'; par: szDword),
-    (name: 'FICOMP'; par: szDword),
-    (name: 'FISUB'; par: szDword),
-    (name: 'FISUBR'; par: szDword),
-    (name: 'FIDIV'; par: szDword),
-    (name: 'FIDIVR'; par: szDword),
+    (name: 'FIADD'; Operand: M32),
+    (name: 'FIMUL'; Operand: M32),
+    (name: 'FICOM'; Operand: M32),
+    (name: 'FICOMP'; Operand: M32),
+    (name: 'FISUB'; Operand: M32),
+    (name: 'FISUBR'; Operand: M32),
+    (name: 'FIDIV'; Operand: M32),
+    (name: 'FIDIVR'; Operand: M32),
   // DB
-    (name: 'FILD'; par: szDword),
-    (name: 'FISTTP'; par: szDword), // TODO: SSE3 instruction
-    (name: 'FIST'; par: szDword),
-    (name: 'FISTP'; par: szDword),
-    (name: ''; par: szEmpty),
-    (name: 'FLD';  par: szTword),
-    (name: ''; par: szEmpty),
-    (name: 'FSTP'; par: szTword),
+    (name: 'FILD'; Operand: M32),
+    (name: 'FISTTP'; Operand: M32), // TODO: SSE3 instruction
+    (name: 'FIST'; Operand: M32),
+    (name: 'FISTP'; Operand: M32),
+    (name: ''; Operand: MMM),
+    (name: 'FLD';  Operand: M80),
+    (name: ''; Operand: MMM),
+    (name: 'FSTP'; Operand: M80),
   // DC
-    (name: 'FADD'; par: szQword),
-    (name: 'FMUL'; par: szQword),
-    (name: 'FCOM'; par: szQword),
-    (name: 'FCOMP'; par: szQword),
-    (name: 'FSUB'; par: szQword),
-    (name: 'FSUBR'; par: szQword),
-    (name: 'FDIV'; par: szQword),
-    (name: 'FDIVR'; par: szQword),
+    (name: 'FADD'; Operand: M64),
+    (name: 'FMUL'; Operand: M64),
+    (name: 'FCOM'; Operand: M64),
+    (name: 'FCOMP'; Operand: M64),
+    (name: 'FSUB'; Operand: M64),
+    (name: 'FSUBR'; Operand: M64),
+    (name: 'FDIV'; Operand: M64),
+    (name: 'FDIVR'; Operand: M64),
   // DD
-    (name: 'FLD'; par: szQword),
-    (name: 'FISTTP'; par: szQWord), // TODO: SSE3 instruction
-    (name: 'FST'; par: szQword),
-    (name: 'FSTP'; par: szQword),
-    (name: 'FRSTOR'; par: szEmpty), // 98/108
-    (name: ''; par: szEmpty),
-    (name: 'FNSAVE'; par: szEmpty), // 98/108
-    (name: 'FNSTSW'; par: szWord),
+    (name: 'FLD'; Operand: M64),
+    (name: 'FISTTP'; Operand: M64), // TODO: SSE3 instruction
+    (name: 'FST'; Operand: M64),
+    (name: 'FSTP'; Operand: M64),
+    (name: 'FRSTOR'; Operand: MMM), // 98/108
+    (name: ''; Operand: MMM),
+    (name: 'FNSAVE'; Operand: MMM), // 98/108
+    (name: 'FNSTSW'; Operand: M16),
   // DE
-    (name: 'FIADD'; par: szWord),
-    (name: 'FIMUL'; par: szWord),
-    (name: 'FICOM'; par: szWord),
-    (name: 'FICOMP'; par: szWord),
-    (name: 'FISUB'; par: szWord),
-    (name: 'FISUBR'; par: szWord),
-    (name: 'FIDIV'; par: szWord),
-    (name: 'FIDIVR'; par: szWord),
+    (name: 'FIADD'; Operand: M16),
+    (name: 'FIMUL'; Operand: M16),
+    (name: 'FICOM'; Operand: M16),
+    (name: 'FICOMP'; Operand: M16),
+    (name: 'FISUB'; Operand: M16),
+    (name: 'FISUBR'; Operand: M16),
+    (name: 'FIDIV'; Operand: M16),
+    (name: 'FIDIVR'; Operand: M16),
   // DF
-    (name: 'FILD'; par: szWord),
-    (name: 'FISTTP'; par: szWord), // TODO: SSE3 instruction
-    (name: 'FIST'; par: szWord),
-    (name: 'FISTP'; par: szWord),
-    (name: 'FBLD'; par: szTword),
-    (name: 'FILD'; par: szQword),
-    (name: 'FBSTP'; par: szTword),
-    (name: 'FISTP'; par: szQword)
+    (name: 'FILD'; Operand: M16),
+    (name: 'FISTTP'; Operand: M16), // TODO: SSE3 instruction
+    (name: 'FIST'; Operand: M16),
+    (name: 'FISTP'; Operand: M16),
+    (name: 'FBLD'; Operand: M80),
+    (name: 'FILD'; Operand: M64),
+    (name: 'FBSTP'; Operand: M80),
+    (name: 'FISTP'; Operand: M64)
   );
 
 

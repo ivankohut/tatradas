@@ -37,7 +37,9 @@ var
 // Common
   DivisionByZeroStr: string = 'Division by zero!';
   NotFoundStr: string = 'was not found!';
-  UnspecifiedErrorStr: string = 'An error has occured. Process stopped.';
+  ErrorStr: string = 'Error';
+  ExecAbortedStr: string = 'Execution aborted by user';
+  IllegalStateStr: string = 'Illegal state reached, report this bug, please. Error message:';
 
 implementation
 

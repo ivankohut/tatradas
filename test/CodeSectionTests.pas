@@ -94,7 +94,7 @@ end;
 procedure TCodeSectionTests.TestPrepareInnerReplaceLines;
 var
   OldLines, NewLines, ResultLines: TStrings;
-  OldLastLineIndex: Integer;
+  OldLastLineIndex: Cardinal;
   i: Integer;
 begin
   // 1. Adresy zaciatocnej starej a zaciatocnej novej instrukcie su rozne
@@ -202,7 +202,8 @@ procedure TCodeSectionTests.TestGetReplacingLines;
 var
   section: TCodeSectionChild;
   NewLines, ResultLines: TStrings;
-  LastLineIndex, i: Integer;
+  LastLineIndex: Cardinal;
+  i: Integer;
 begin
   // 1.
 

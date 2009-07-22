@@ -296,7 +296,9 @@ begin
 
   DivisionByZeroStr:= Translator.TranslateControl('Texty', 'DivisionByZero');
   NotFoundStr := Translator.TranslateControl('Texty', 'NotFound');
-  UnspecifiedErrorStr := Translator.TranslateControl('Texty', 'UnspecifiedError');
+  ErrorStr := Translator.TranslateControl('Texty', 'Error');
+  ExecAbortedStr := Translator.TranslateControl('Texty', 'ExecAborted');
+  IllegalStateStr := Translator.TranslateControl('Texty', 'IllegalState');
 end;
 
 

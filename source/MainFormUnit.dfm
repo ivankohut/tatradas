@@ -41,7 +41,6 @@ object MainForm: TMainForm
     HotTrack = True
     TabOrder = 0
     OnChange = MainPageControlChange
-    ExplicitHeight = 600
   end
   object StatusBar2: TStatusBar
     Left = 0
@@ -60,7 +59,6 @@ object MainForm: TMainForm
       end>
     ParentShowHint = False
     ShowHint = True
-    ExplicitTop = 692
   end
   object Panel1: TPanel
     Left = 0

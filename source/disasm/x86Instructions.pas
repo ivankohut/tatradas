@@ -40,8 +40,8 @@ type
   end;
 
   TFPUAInstruction = record
-    name: string[20];
-    par: TSize;
+    Name: string[20];
+    Operand: TOperand;
   end;
 
   TFPUBInstruction = record

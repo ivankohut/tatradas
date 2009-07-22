@@ -13,7 +13,6 @@ type
 
   TProgressManager = class
   private
-    fRunning: Boolean;
     fFinished: Boolean;
     fPosition: Cardinal;
     fMaximum: Cardinal;
@@ -33,7 +32,7 @@ type
     // Methods supposed to be called from slave thread
     procedure StartPhase(AName: String; AMaximum: Cardinal);
     procedure Finish(ASuccessful: Boolean);
-    procedure IncPosition;
+    procedure IncPosition; 
     property Position: Cardinal read fPosition write fPosition;
   end;
 
@@ -42,7 +41,7 @@ implementation
 
 
 uses
-  LoggerUnit, SysUtils;
+  LoggerUnit, SysUtils, ProgressThreads;
 
 
 constructor TProgressManager.Create(AShowProgressProc: TShowProgressProc);
@@ -85,6 +84,8 @@ end;
 
 
 procedure TProgressManager.StartProgress(AThread: TThread);
+var
+  ProgressThread: TProgressThread;
 begin
   fFinished := False;
   AThread.Resume;
@@ -94,8 +95,16 @@ begin
       fShowProgressProc(fPhaseName, fPosition / fMaximum);
     Sleep(cRefreshInterval);
   end;
+
   ShowFinishedPhases;
   AThread.WaitFor;
+
+  // Reraise thread's exception in main thread
+  if (AThread is TProgressThread) then begin
+    ProgressThread := (AThread as TProgressThread);
+    if ProgressThread.WasException then
+      raise ProgressThread.ExceptionClass.Create(ProgressThread.ExceptionMessage);
+  end;
 end;
 
 

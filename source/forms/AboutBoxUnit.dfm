@@ -142,6 +142,7 @@ object AboutBox: TAboutBox
     Top = 412
     Width = 75
     Height = 25
+    Cancel = True
     Caption = 'OK'
     Default = True
     ModalResult = 1

@@ -27,6 +27,8 @@ uses
 type
   TExecFileCreateSectionEvent = procedure (ASection: TSection) of object;
 
+  TExecFileFormat = (ffUnknown, ffCustom, ffPE, ffMZ, ffCOM, ffNE, LE, LX, ffELF);
+
 var
   OnExecFileCreateSection: TExecFileCreateSectionEvent;
 

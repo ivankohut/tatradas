@@ -83,9 +83,9 @@ type
       procedure SetDisassembled(ADisassembled: TTatraDASStringList);
 
       procedure ReplaceLinesInternal(StartLineIndex, StartAddress, ByteCount: Cardinal; NewLines: TStrings);
-      function GetReplacingLines(StartLineIndex, StartAddress, ByteCount: cardinal; NewLines: TStrings; out LastLineIndex: Integer): TStrings;
+      function GetReplacingLines(StartLineIndex, StartAddress, ByteCount: cardinal; NewLines: TStrings; out LastLineIndex: Cardinal): TStrings;
 
-      class function PrepareInnerReplaceLines(const OldStartLineIndex: Integer; OldLines, NewLines: TStrings; out OldLastLineIndex: Integer): TStrings;
+      class function PrepareInnerReplaceLines(const OldStartLineIndex: Integer; OldLines, NewLines: TStrings; out OldLastLineIndex: Cardinal): TStrings;
       class function ReplaceFirstLastLine(ALine: string; AReplaceAddress: Cardinal; AIsFirst: Boolean): TStrings;
 
     public
@@ -316,9 +316,9 @@ end;
 
 // StartLineIndex - index prveho instrukcneho riadka, ktory ideme nahradzovat
 // StartAddress is section address (not memory)
-procedure TCodeSection.ReplaceLinesInternal(StartLineIndex, StartAddress, ByteCount: cardinal; NewLines: TStrings);
+procedure TCodeSection.ReplaceLinesInternal(StartLineIndex, StartAddress, ByteCount: Cardinal; NewLines: TStrings);
 var
-  LastLineIndex: Integer;
+  LastLineIndex: Cardinal;
   FinalNewLines: TStrings;
 begin
   FinalNewLines := GetReplacingLines(StartLineIndex, StartAddress, ByteCount, NewLines, LastLineIndex);
@@ -329,16 +329,17 @@ end;
 
 // StartLineIndex - index prveho instrukcneho riadka, ktory ideme nahradzovat
 // StartAddress is section address (not memory)
-function TCodeSection.GetReplacingLines(StartLineIndex, StartAddress, ByteCount: cardinal; NewLines: TStrings; out LastLineIndex: Integer): TStrings;
+function TCodeSection.GetReplacingLines(StartLineIndex, StartAddress, ByteCount: Cardinal; NewLines: TStrings; out LastLineIndex: Cardinal): TStrings;
 var
   InnerLines, RestLines: TStrings;
-  PreCodeIndex, RestCodeIndex: Integer;
+  PreCodeIndex, RestCodeIndex: Cardinal;
 begin
   Logger.Debug('StartLineIndex: ' + IntToStr(StartLineIndex) + ', StartAddress: ' + IntToHex(StartAddress, 8) + ', ByteCount: ' + IntToStr(ByteCount));
   // Konverzia zaciatku instrukcie, v ktorej zaciname nahradzovanie, na typ "byte"
   Result := ReplaceFirstLastLine(Disassembled[StartLineIndex], StartAddress + MemOffset, True);
-  for PreCodeIndex := GetLineAddress(Disassembled[StartLineIndex]) to StartAddress + MemOffset - 1 do
-    DisassemblerMap[PreCodeIndex - MemOffset] := dfNone;
+  if (StartAddress + MemOffset) > 0 then
+    for PreCodeIndex := GetLineAddress(Disassembled[StartLineIndex]) to StartAddress + MemOffset - 1 do
+      DisassemblerMap[PreCodeIndex - MemOffset] := dfNone;
 
   // Hlavny merge starych a novych riadkov
   InnerLines := PrepareInnerReplaceLines(StartLineIndex, Disassembled, NewLines, LastLineIndex);
@@ -383,11 +384,10 @@ begin
     NewLines:= TStringList.Create;
     for BlockIndex := 0 to Disassembler.BlockCount - 1 do begin
       ProgressManager.IncPosition;
-      if ProgressData.ErrorStatus = errUserTerminated then
-        raise EUserTerminatedProcess.Create('');
+      if ProgressData.AbortExecution then
+        Abort;
 
       NewLines.Clear;
-      CodeIndex:= Disassembler.Blocks[BlockIndex].Address;
 
       StartBlockAddress := Disassembler.Blocks[BlockIndex].Address;
       for CodeIndex := StartBlockAddress to StartBlockAddress + Disassembler.Blocks[BlockIndex].Size - 1 do begin
@@ -622,8 +622,8 @@ begin
 
     for i:= 0 to CodeSize - 1 do begin
       ProgressManager.IncPosition;
-      if ProgressData.ErrorStatus = errUserTerminated then
-        raise EUserTerminatedProcess.Create('');
+      if ProgressData.AbortExecution then
+        Abort;
 
       // Continue if current address does not contain an instruction
       if (DisassemblerMap[i] <> 0) and ((DisassemblerMap[i] and dfNewInstr) = 0) then
@@ -727,8 +727,8 @@ begin
   for LineIndex := 0 to Disassembled.Count - 1 do begin
     WriteLn(DAS, Disassembled[LineIndex]);
     ProgressManager.IncPosition;
-    if ProgressData.ErrorStatus = errUserTerminated then
-      raise EUserTerminatedProcess.Create('');
+    if ProgressData.AbortExecution then
+      Abort;
   end;
   Writeln(DAS);
   Logger.Info('Finish: Saving DAS - code section ' + IntToStr(CodeSectionIndex));
@@ -787,8 +787,8 @@ begin
   try
     for LineIndex := 0 to DisasmCount - 1 do begin
       ProgressManager.IncPosition;
-      if ProgressData.ErrorStatus = errUserTerminated then
-        raise EUserTerminatedProcess.Create('');
+      if ProgressData.AbortExecution then
+        Abort;
       ReadLn(DAS, line);
       fDisassembled.Add(line);
     end;
@@ -1134,7 +1134,7 @@ end;
 
 
 // Merges NewLines and non-instruction lines from OldLines
-class function TCodeSection.PrepareInnerReplaceLines(const OldStartLineIndex: Integer; OldLines, NewLines: TStrings; out OldLastLineIndex: Integer): TStrings;
+class function TCodeSection.PrepareInnerReplaceLines(const OldStartLineIndex: Integer; OldLines, NewLines: TStrings; out OldLastLineIndex: Cardinal): TStrings;
 var
   OldIndex, NewIndex: Integer;
   OldNonInstrLineIndex, NewNonInstrLineIndex: Integer;
@@ -1143,7 +1143,6 @@ var
 begin
   Result := TStringList.Create;
   OldIndex := OldStartLineIndex;
-  NewIndex := 0;
 
   OldLineAddress := GetLineAddress(OldLines[OldIndex]);
   OldNonInstrLineIndex := OldIndex;

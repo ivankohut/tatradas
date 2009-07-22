@@ -46,7 +46,7 @@ type
 
    public
     function LoadExecFileFromFile(AProjectFileName: TFileName) : TExecutableFile;    // uses TextFile
-    function SaveExecFileToFile(ExecFile: TExecutableFile; AFileName: TFileName): boolean;
+    procedure SaveExecFileToFile(ExecFile: TExecutableFile; AFileName: TFileName);
     function CreateNewExecFile(AFileName: TFileName): TExecutableFile;
     function CreateNewCustomExecFile(AFileName: TFileName; AParameters: TCustomFileParameters): TExecutableFile;
 //    property Error: TFileError read fError;
@@ -63,7 +63,7 @@ uses StringUtilities, SectionUnit, CodeSectionUnit;
 
 function TExecFileManager.GetExecFileFormat(AFileStream: TFileStream): TExecFileFormat;
 var
-  LowID, HighID: word;
+  LowID, HighID: Word;
   Header: TMZHeader;
 begin
   if AFileStream.Size > SizeOf(Header) then begin
@@ -81,83 +81,78 @@ begin
           AFileStream.Seek(Header.Reserved[9], 0);
           AFileStream.Read(Header.Sign, 2);
           case Header.Sign of
-            c_PESign: result := ffPE;      // PE - Portable Executable 32-bit
-            c_NESign: result := ffNE;      // NE - New Executable 16-bit
-            c_LESign: result := ffUnknown; // LE - Linear Executable - not supported yet
-            c_LXSign: result := ffUnknown; // LX - Linear Executable 32-bit - not supported yet
+            c_PESign: Result := ffPE;      // PE - Portable Executable 32-bit
+            c_NESign: Result := ffNE;      // NE - New Executable 16-bit
+            c_LESign: Result := ffUnknown; // LE - Linear Executable - not supported yet
+            c_LXSign: Result := ffUnknown; // LX - Linear Executable 32-bit - not supported yet
             else
-              result := ffUnknown;
+              Result := ffUnknown;
           end;
         end
         // MZ file format
         else
-          result := ffMZ;
+          Result := ffMZ;
       end;
 
       // ELF class of executable file formats
       c_ELFLowID:
         if HighID = c_ELFHighID then
-          result := ffELF
+          Result := ffELF
         else
-          result := ffUnknown;
+          Result := ffUnknown;
 
       // other executable file formats
       else
         // If the first instruction is JUMP and the size of file is < 64K then it is probably 16 bit COM file
         if (((LowID mod $100) = $E9) or ((LowID mod $100) = $EB)) and (AFileStream.Size < High(Word) + 1) then
-          result := ffCOM
+          Result := ffCOM
         else
-          result := ffUnknown;
+          Result := ffUnknown;
     end;
   end
   else
-    result := ffUnknown;
+    Result := ffUnknown;
 end;
 
 
-
+{
+returns:
+  - TExecutableFile object if the format of input file is recognized, supported and correct 
+  - nil if the format of input file is not recognized or is not supported
+  - ETatraDASException
+  - EFileCorrupted
+}
 function TExecFileManager.CreateNewExecFile(aFileName: TFileName): TExecutableFile;
 var
   FileFormat: TExecFileFormat;
   InputFile: TFileStream;
 begin
-  ProgressData.ErrorStatus:= errNone;
-  result := nil;
-
   try
     InputFile := TFileStream.Create(aFileName, fmShareDenyNone);
   except
-    ProgressData.ErrorStatus := errOpen;
-    Exit;
+    raise ETatraDASException.Create(CouldNotOpenFileStr);
   end;
 
   try
     // Create appropriate ExecFile object
+    Result := nil;
     FileFormat := GetExecFileFormat(InputFile);
     case FileFormat of
-      ffPE:  result := TPEFile.Create(InputFile, aFileName);
-      ffCOM: result := TCOMFile.Create(InputFile, aFileName);
-      ffMZ:  result := TMZFile.Create(InputFile, aFileName);
-      ffNE:  result := TNEFile.Create(InputFile, aFileName);
-      ffELF: result := TELFFile.Create(InputFile, aFileName);
+      ffPE:  Result := TPEFile.Create(InputFile, aFileName);
+      ffCOM: Result := TCOMFile.Create(InputFile, aFileName);
+      ffMZ:  Result := TMZFile.Create(InputFile, aFileName);
+      ffNE:  Result := TNEFile.Create(InputFile, aFileName);
+      ffELF: Result := TELFFile.Create(InputFile, aFileName);
       // LE: result:=TLEFile.Create(InputFile, aFileName)
       // LX: result:=TLXFile.Create(InputFile, aFileName)
-      ffUnknown: begin
-        result := nil;
-        Exit;
-      end;
+      ffUnknown: Result := nil;
+      else
+        raise EIllegalState.Create('Bad file format');
     end;
-
-    if result.ExeFormat = ffError then begin
-      ProgressData.ErrorStatus := errBadFormat;
-      result.Free;
-    end;
-
   finally
     InputFile.Free;
   end;
 end;
-
 
 
 
@@ -165,16 +160,14 @@ function TExecFileManager.CreateNewCustomExecFile(AFileName: TFileName; AParamet
 var
   InputFile: TFileStream;
 begin
-  result := nil;
   try
     InputFile := TFileStream.Create(aFileName, fmShareDenyNone);
   except
-    ProgressData.ErrorStatus := errOpen;
-    Exit;
+    raise ETatraDASException.Create(CouldNotOpenFileStr);
   end;
 
   try
-    result := TCustomFile.Create(InputFile, AFileName, AParameters);
+    Result := TCustomFile.Create(InputFile, AFileName, AParameters);
   finally
     InputFile.Free;
   end;
@@ -182,7 +175,7 @@ end;
 
 
 // Save as TatraDAS Project
-function TExecFileManager.SaveExecFileToFile(ExecFile: TExecutableFile; AFileName: TFileName): boolean;
+procedure TExecFileManager.SaveExecFileToFile(ExecFile: TExecutableFile; AFileName: TFileName);
 var
   DAS: TextFile;
   DHF: TFileStream;
@@ -190,97 +183,91 @@ var
   DAS_FileName: string;
   Version: cardinal;
 begin
-  DHF := nil;
-
   // Initialize DHF project file
   DHF_FileName := ChangeFileExt(aFileName, '.dhf');;
+  DHF := TFileStream.Create(DHF_FileName, fmCreate);
   try
-    DHF := TFileStream.Create(DHF_FileName, fmCreate);
-  except
-    ProgressData.ErrorStatus := errSave;
-    DHF.Free;
-    result := False;
-    Exit;
-  end;
-  Version := TatraDASProjectVersion;
-  DHF.Write(Version, 4);
-  DHF.Write(ExecFile.ExeFormat, SizeOf(TExecFileFormat));
+    // Save project file version
+    Version := TatraDASProjectVersion;
+    DHF.Write(Version, 4);
+    DHF.Write(ExecFile.ExeFormat, SizeOf(TExecFileFormat));
 
-  // Save disassembled code sections
-  DAS_FileName := ChangeFileExt(aFileName, '.das');
-  AssignFile(DAS, DAS_FileName);
-  Rewrite(DAS);
-  ExecFile.SaveToFile(DHF, DAS);
-  CloseFile(DAS);
-  DHF.Free;
+    // Save disassembled code sections
+    DAS_FileName := ChangeFileExt(aFileName, DASFileExtension);
+    AssignFile(DAS, DAS_FileName);
+    Rewrite(DAS);
+    try
+      ExecFile.SaveToFile(DHF, DAS);
+    finally
+      CloseFile(DAS);
+    end;
+  finally
+    DHF.Free;
+  end;
 end;
 
 
-
+{
+  returns:
+  - TExecutableFile object
+  - exception in case of any problem
+}
 function TExecFileManager.LoadExecFileFromFile(AProjectFileName: TFileName): TExecutableFile;
 var
-    DHF_FileName, DAS_FileName: string;
-    DHF: TMemoryStream;
-    DAS: TextFile;
-    ProjectVersion: Cardinal;
-    ProjectExecFileFormat: TExecFileFormat;
+  DHF_FileName, DAS_FileName: string;
+  DHF: TMemoryStream;
+  DAS: TextFile;
+  ProjectVersion: Cardinal;
+  ProjectExecFileFormat: TExecFileFormat;
 begin
   Result := nil;
-  DHF_FileName:= AProjectFileName;
-  DAS_FileName:= ChangeFileExt(DHF_FileName, '.das');
+  DHF_FileName := AProjectFileName;
+  DAS_FileName := ChangeFileExt(DHF_FileName, DASFileExtension);
 
-  if not FileExists(DAS_FileName) then begin
-    ProgressData.ErrorStatus := errDASNotFound;
-    Result := nil;
-    Exit;
-  end;
+  if not FileExists(DAS_FileName) then
+    raise ETatraDASException.Create(CouldNotFindDASFileStr + ' - ' + DAS_FileName);
 
   DHF := TMemoryStream.Create;
-  DHF.LoadFromFile(DHF_FileName);
-  DHF.Read(ProjectVersion, 4);
-  case ProjectVersion of
-    TatraDASProjectVersion: begin
+  try
+    DHF.LoadFromFile(DHF_FileName);
+    DHF.Read(ProjectVersion, 4);
+    case ProjectVersion of
+      TatraDASProjectVersion: begin
 
-      DHF.Read(ProjectExecFileFormat, SizeOf(TExecFileFormat));
-      case ProjectExecFileFormat of
-        ffCOM: Result := TCOMFile.Create;
-        ffMZ:  Result := TMZFile.Create;
-        ffNE:  Result := TNEFile.Create;
-        ffPE:  Result := TPEFile.Create;
-        ffELF: Result := TELFFile.Create;
-        ffCustom: Result := TCustomFile.Create;
-        else begin
-          DHF.Free;
-          ProgressData.ErrorStatus := errBadFormat;
-          Exit;
+        DHF.Read(ProjectExecFileFormat, SizeOf(TExecFileFormat));
+        case ProjectExecFileFormat of
+          ffCOM: Result := TCOMFile.Create;
+          ffMZ:  Result := TMZFile.Create;
+          ffNE:  Result := TNEFile.Create;
+          ffPE:  Result := TPEFile.Create;
+          ffELF: Result := TELFFile.Create;
+          ffCustom: Result := TCustomFile.Create;
+          else
+            raise ETatraDASException.Create(FileCorruptedStr + ' - ' + AProjectFileName);
         end;
-      end;
 
-      AssignFile(DAS, DAS_FileName);
-      Reset(DAS);
-      Readln(DAS);
-      Readln(DAS);
+        AssignFile(DAS, DAS_FileName);
+        Reset(DAS);
+        try try
+          Readln(DAS);
+          Readln(DAS);
+          Result.LoadFromFile(DHF, DAS);
+        except
+          FreeAndNil(Result);
+          raise;
+        end;
+        finally
+          CloseFile(DAS);
+        end;
+      end
 
-      try
-        Result.LoadFromFile(DHF, DAS);
-      except
-        FreeAndNil(Result);
-        DHF.Free;
-        CloseFile(DAS);
-        raise;
-      end;
-
-      CloseFile(DAS);
-    end
-
-    else begin
-      ProgressData.ErrorStatus := errBadProjectVersion;
-      Result := nil;
-      DHF.Free;
-      Exit;
+      // Incompatible project file version
+      else
+        raise ETatraDASException.Create(InCompatibleProjectVersion + '.' + #13 + CurrentVersion + ' ' + IntToHex(TatraDASProjectVersion, 8) + '.');
     end;
+  finally
+    DHF.Free;
   end;
-  DHF.Free;
 end;
 
 

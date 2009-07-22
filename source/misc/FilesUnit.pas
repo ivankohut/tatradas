@@ -39,7 +39,7 @@ type
     function GetFileCount: Integer;
     function GetDirCount: Integer;
   public
-    constructor Create(const ARootDirName, ARelativeDirName: string; APathTopDir: string; AExtension: string; AFileNodeClass: TFileNodeClass); overload;
+    constructor Create(const ARootDirName, ARelativeDirName: string; APathTopDir: string; AExtension: string; AFileNodeClass: TFileNodeClass); reintroduce; overload; 
     destructor Destroy; override;
 
     property Files[Index: Integer]: TFileNode read GetFile;

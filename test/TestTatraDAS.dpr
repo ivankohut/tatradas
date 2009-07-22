@@ -41,6 +41,8 @@ uses
   LoggerUnit in '..\source\misc\LoggerUnit.pas',
   ListsUnit in '..\source\misc\ListsUnit.pas',
   StringUtilities in '..\source\StringUtilities.pas',
+  ProgressManagerUnit in '..\source\ProgressManagerUnit.pas',
+
 (*
   TatraDASHighlighter in '..\source\res\TatraDASHighlighter.pas',
   TranslatorUnit in '..\source\TranslatorUnit.pas',

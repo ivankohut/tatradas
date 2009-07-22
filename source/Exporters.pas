@@ -136,8 +136,8 @@ begin
   IsTargetAddress := false;
   for LineIndex := 0 to Disassembled.Count - 1 do begin
     ProgressManager.IncPosition;
-    if ProgressData.ErrorStatus = errUserTerminated then
-      raise EUserTerminatedProcess.Create('');
+    if ProgressData.AbortExecution then
+      Abort;
 
     // Labels creation
     Line := Disassembled[LineIndex];
@@ -165,8 +165,8 @@ begin
   for LineIndex := 0 to Disassembled.Count - 1 do begin
     WriteLnToStream(AStream, Disassembled[LineIndex]);
     ProgressManager.IncPosition;
-    if ProgressData.ErrorStatus = errUserTerminated then
-      raise EUserTerminatedProcess.Create('');
+    if ProgressData.AbortExecution then
+      Abort;
   end;
   WriteLnToStream(AStream);
 end;
@@ -192,8 +192,8 @@ begin
 
   for LineIndex := 0 to Disassembled.Count - 1 do begin
     ProgressManager.IncPosition;
-    if ProgressData.ErrorStatus = errUserTerminated then
-      raise EUserTerminatedProcess.Create('');
+    if ProgressData.AbortExecution then
+      Abort;
 
     Line:= Disassembled[LineIndex];
     if Line = '' then begin

@@ -623,6 +623,8 @@ begin
         'J': ReferenceType := rtJump;
         'C': ReferenceType := rtCall;
         'L': ReferenceType := rtLoop;
+        else
+          raise EIllegalState.Create('Tx86Disassembler.ProcessRelative: Bad char for reference type (' + FirstCharOfName + ')');
       end;
       AddReference(InstrAddress, address, ReferenceType);
     end;
@@ -837,8 +839,8 @@ begin
     // Main loop of disassembler
     while (i<=finish) and ((fDisasmMap[i] and dfPart)=0) and (not EndBlock) do begin
       ProgressManager.Position := ProgressManager.Position + i - InstrAddress;
-      if ProgressData.ErrorStatus = errUserTerminated then
-        raise EUserTerminatedProcess.Create('');
+      if ProgressData.AbortExecution then
+        Abort;
 
       // Set variables to default values
       operand32 := fBit32;
@@ -976,15 +978,7 @@ begin
                 raise EUndefinedOpcodeException.Create('FPU instruction');
 
               OperandsCount := 1;
-              case FPU_A_InstructionSet[FPUInstrIndex].par of
-                szWord: Operands.p1 := M16;
-                szDWord: Operands.p1 := M32;
-                szQWord: Operands.p1 := M64;
-                szTWord: Operands.p1 := M80;
-                szEmpty: Operands.p1 := MMM; // TODO: dalsie typ ako 14/28 alebo 98/108
-              end;
-              // TODO: asi jke vhodne spracovanie FPU parametrov riesit trochu zvlast (a nespinit tym standardny disassembler)
-
+              Operands.p1 := FPU_A_InstructionSet[FPUInstrIndex].Operand;
             end
             else begin
               InstructionName := FPU_B_InstructionSet[code[i]][code[i+1]].Name;

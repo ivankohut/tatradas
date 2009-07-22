@@ -18,6 +18,7 @@ uses
   ResourceSectionUnit;
 
 type
+
   TPEHeader = record
     Sign: cardinal;
     Machine: word;
@@ -74,13 +75,14 @@ type
     Name: string;
   end;
 
+  TCPUType = (cpuUnknown, cpu386, cpu486, cpu586);
 
   TPeFile = class(TExecutableFile)
   private
     fHeader: TPEHeader;
     fObjectTable: array of TObjectTableEntry;
 
-    function GetCPUType: string;
+    function GetCPUType: TCPUType;
     function GetPEFileType: string;
 
     function IsObjectExecutable(ObjectIndex: integer): boolean;
@@ -101,7 +103,7 @@ type
     property Header: TPEHeader read fHeader;
     property ObjectTable[Index: integer]: TObjectTableEntry read GetObjectTableEntry;
     property PEFileType: string read GetPEFileType;
-    property CPUType: string read GetCPUType;
+    property CPUType: TCPUType read GetCPUType;
   end;
 
 
@@ -285,12 +287,14 @@ end;
 
 
 
-function TPefile.GetCPUType: string;
+function TPefile.GetCPUType: TCPUType;
 begin
   case Header.Machine of
-    $014c: result := '80386';
-    $014d: result := '80486';
-    $014e: result := '80586';
+    $014c: Result := cpu386;
+    $014d: Result := cpu486;
+    $014e: Result := cpu586;
+    else
+      Result := cpuUnknown;
   end;
 end;
 

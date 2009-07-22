@@ -1,11 +1,13 @@
 inherited ImportTabFrame: TImportTabFrame
   Width = 558
+  ExplicitWidth = 558
   inherited Panel: TPanel
     Width = 558
+    ExplicitWidth = 558
     object OccurHintLabel: TLabel
       Left = 16
       Top = 790
-      Width = 74
+      Width = 72
       Height = 13
       Anchors = [akLeft, akBottom]
       Caption = 'OccurHintLabel'
@@ -14,24 +16,24 @@ inherited ImportTabFrame: TImportTabFrame
       Left = 408
       Top = 8
       Width = 11
-      Height = 261
-      Cursor = crHSplit
+      Height = 288
       Align = alRight
+      ExplicitHeight = 261
     end
     object Panel1: TPanel
       Left = 8
       Top = 8
       Width = 400
-      Height = 261
+      Height = 288
       Align = alClient
       BevelOuter = bvNone
       Constraints.MinWidth = 400
       TabOrder = 0
       object FunctionListView: TListView
         Left = 0
-        Top = 65
+        Top = 64
         Width = 400
-        Height = 196
+        Height = 224
         Align = alClient
         Columns = <
           item
@@ -60,26 +62,28 @@ inherited ImportTabFrame: TImportTabFrame
         OnColumnClick = FunctionListViewColumnClick
         OnDblClick = FunctionListViewDblClick
         OnSelectItem = FunctionListViewSelectItem
+        ExplicitTop = 65
+        ExplicitHeight = 223
       end
       object Panel3: TPanel
         Left = 0
         Top = 0
         Width = 400
-        Height = 65
+        Height = 64
         Align = alTop
         BevelOuter = bvNone
         TabOrder = 1
         object ModulLabel: TLabel
           Left = 0
           Top = 20
-          Width = 55
+          Width = 53
           Height = 13
           Caption = 'ModulLabel'
         end
         object FunctionLabel: TLabel
           Left = 0
           Top = 48
-          Width = 67
+          Width = 66
           Height = 13
           Caption = 'FunctionLabel'
         end
@@ -98,22 +102,22 @@ inherited ImportTabFrame: TImportTabFrame
       Left = 419
       Top = 8
       Width = 131
-      Height = 261
+      Height = 288
       Align = alRight
       BevelOuter = bvNone
       TabOrder = 1
       object FunctionCallsLabel: TLabel
         Left = 2
         Top = 48
-        Width = 89
+        Width = 88
         Height = 13
         Caption = 'FunctionCallsLabel'
       end
       object AddressListBox: TListBox
         Left = 0
-        Top = -375
+        Top = 64
         Width = 131
-        Height = 636
+        Height = 224
         Align = alBottom
         Anchors = [akLeft, akTop, akRight, akBottom]
         BevelEdges = [beTop, beRight, beBottom]

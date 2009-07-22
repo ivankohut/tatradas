@@ -229,6 +229,8 @@ type
     procedure SetOpenProjectPath(path: string);
     procedure SetSaveProjectPath(path: string);
 
+    procedure GuiProcessException(Sender: TObject; E: Exception);
+
     property OpenFilePath:string read fOpenFilePath write SetOpenFilePath;
     property OpenProjectPath:string read fOpenProjectPath write SetOpenProjectPath;
     property SaveProjectPath:string read fSaveProjectPath write SetSaveProjectPath;
@@ -275,7 +277,6 @@ end;
 
 procedure TMainForm.DoOpenFile(AFileName: string);
 var
-  ErrorMessage: string;
   i: integer;
 begin
   Application.ProcessMessages;
@@ -283,17 +284,13 @@ begin
   if ExecFile <> nil then
     CloseFileClick(nil);
 
-  ExecFile:= ExecFileManager.CreateNewExecFile(AFileName);
-
-  // Opening error handling
-  if ProgressData.ErrorStatus <> errNone then begin
-    ExecFile.Free;
-    case ProgressData.ErrorStatus of
-      errOpen: ErrorMessage := CouldNotOpenFileStr;
-      errBadFormat: ErrorMessage := FileCorruptedStr + ': ';
-    end;
-    DisplayMessage(ErrorMessage + '"' + AFileName + '"', mtError, [mbOK]);
-    Exit;
+  try
+    ExecFile := ExecFileManager.CreateNewExecFile(AFileName);
+  except
+    on E: EFileCorrupted do
+      DisplayMessage(E.Message, mtError, [mbOK]);
+    else
+      raise;
   end;
 
   // Unknown file format - custom file format offer
@@ -306,14 +303,14 @@ begin
       Exit;
   end;
 
-  Modified := false;
+  Modified := False;
 
   // Create section tabs and frames
   TTabSheetTemplate.CreateFileTab(ExecFile);
   for i := 0 to ExecFile.Sections.Count - 1 do
     if ExecFile.Sections[i].Typ <> stCode then
       TTabSheetTemplate.Create(ExecFile.Sections[i]);
-  MainPageControl.ActivePageIndex:= 0;
+  MainPageControl.ActivePageIndex := 0;
   MainPageControlChange(nil);
 
   HexEditor1.Enabled:= true;
@@ -328,46 +325,46 @@ end;
 procedure TMainForm.DisassembleClick(Sender: TObject);
 var
   PageIndex, SectionIndex: integer;
-  DisassembleThread: TDisassembleThread;
+  DisassembleThread: TProgressThread;
 begin
+  // Set TatraDAS to non-disassembled state
+  SaveMyButton.Enabled := False;
+  SaveProject1.Enabled := False;
+  Export1.Enabled := False;
   // Clear code tabs
   for PageIndex := MainPageControl.PageCount - 1 downto 0 do
     if (MainPageControl.Pages[PageIndex] as TTabSheetTemplate).PageType = ttCode then
       MainPageControl.Pages[PageIndex].Free;
 
+  // Disassemble
   DisassembleThread := TDisassembleThread.Create(ExecFile);
-  ProgressForm.Execute(DisassembleThread);
-  FreeAndNil(DisassembleThread);
+  try
+    ProgressForm.Execute(DisassembleThread);
+  finally
+    FreeAndNil(DisassembleThread);
+  end;
 
   //ExecFile.Disassemble; //= non-thread way
 
-  if ProgressData.ErrorStatus = errNone then begin
-    SaveMyButton.Enabled := True;
-    SaveProject1.Enabled := True;
-    Export1.Enabled := True;
-    Modified := True;
+  SaveMyButton.Enabled := True;
+  SaveProject1.Enabled := True;
+  Export1.Enabled := True;
+  Modified := True;
 
-    // Create section tabs and frames
-    for SectionIndex:= 0 to ExecFile.Sections.Count - 1 do
-      if ExecFile.Sections[SectionIndex].Typ = stCode then
-        if (ExecFile.Sections[SectionIndex] as TCodeSection).IsDisassembled then begin
-          TTabSheetTemplate.Create(ExecFile.Sections[SectionIndex]);
-          ((MainPageControl.Pages[MainPageControl.PageCount-1] as TTabSheetTemplate).Frame as TCodeTabFrame).OnChangeDisassembled:= ProjectModified;
-        end;
-  end
-  else begin
-    SaveMyButton.Enabled := False;
-    SaveProject1.Enabled := False;
-    Export1.Enabled := False;
-    case ProgressData.ErrorStatus of
-      errUserTerminated: ;
-    end
-  end;
+  // Create section tabs and frames
+  for SectionIndex:= 0 to ExecFile.Sections.Count - 1 do
+    if ExecFile.Sections[SectionIndex].Typ = stCode then
+      if (ExecFile.Sections[SectionIndex] as TCodeSection).IsDisassembled then begin
+        TTabSheetTemplate.Create(ExecFile.Sections[SectionIndex]);
+        ((MainPageControl.Pages[MainPageControl.PageCount-1] as TTabSheetTemplate).Frame as TCodeTabFrame).OnChangeDisassembled:= ProjectModified;
+      end;
 end;
 
 
 
 procedure TMainForm.ExportClick(Sender: TObject);
+var
+  ExportThread: TProgressThread;
 begin
   if SaveOptionsForm.ShowModal = mrOK then begin
     SaveProjectSaveDialog.FileName := '';
@@ -378,16 +375,14 @@ begin
       else
         SaveProjectSaveDialog.Filter := '';
     end;
-    if not SaveProjectSaveDialog.Execute then
-      Exit;
-
-    ProgressForm.Execute(TExportThread.Create(ExecFileManager, ExecFile, SaveProjectSaveDialog.FileName, SaveOptionsForm.ExportOption, SaveOptionsForm.ExportCustomDASOptions));
-    if ProgressData.ErrorStatus <> errNone then begin
-      // TODO:
-      case ProgressData.ErrorStatus of
-        errUserTerminated: ;
+    if SaveProjectSaveDialog.Execute then begin
+      SaveProjectPath := ExtractFilePath(SaveProjectSaveDialog.FileName);
+      ExportThread := TExportThread.Create(ExecFileManager, ExecFile, SaveProjectSaveDialog.FileName, SaveOptionsForm.ExportOption, SaveOptionsForm.ExportCustomDASOptions);
+      try
+        ProgressForm.Execute(ExportThread);
+      finally
+        FreeAndNil(ExportThread);
       end;
-      Exit;
     end;
   end;
 end;
@@ -395,20 +390,20 @@ end;
 
 
 procedure TMainForm.SaveProjectClick(Sender: TObject);
+var
+  SaveThread: TProgressThread;
 begin
   SaveProjectSaveDialog.Filter := ProjectFilterStr + '(*.DHF)|*.DHF';
   if SaveProjectSaveDialog.Execute then begin
-    ProgressForm.Execute(TSaveThread.Create(ExecFileManager, ExecFile, SaveProjectSaveDialog.FileName));
-    if ProgressData.ErrorStatus <> errNone then begin
-      // TODO:
-      case ProgressData.ErrorStatus of
-        errUserTerminated: ;
-      end;
-      Exit;
+    SaveProjectPath := ExtractFilePath(SaveProjectSaveDialog.FileName);
+    SaveThread := TSaveThread.Create(ExecFileManager, ExecFile, SaveProjectSaveDialog.FileName);
+    try
+      ProgressForm.Execute(SaveThread);
+    finally
+      FreeAndNil(SaveThread);
     end;
 
     Modified := False;
-    SaveProjectPath := ExtractFilePath(SaveProjectSaveDialog.FileName);
   end;
 end;
 
@@ -423,7 +418,7 @@ end;
 
 procedure TMainForm.OpenProjectClick(Sender: TObject);
 var
-  ErrorMessage: string;
+  LoadThread: TProgressThread;
   i: integer;
 begin
   OpenProjectOpenDialog.Filename:= '';
@@ -434,33 +429,14 @@ begin
   if ExecFile <> nil then
     CloseFileClick(nil);
 
-
-  ProgressForm.Execute(TLoadThread.Create(ExecFileManager, OpenProjectOpenDialog.FileName));
-  ExecFile:= ProgressData.Result;
-
-  if ProgressData.ErrorStatus <> ErrNone then begin
-    ExecFile.Free;
-    case ProgressData.ErrorStatus of
-      errCanceled: begin
-        Exit;
-      end;
-
-      errDASNotFound:
-        ErrorMessage := CouldNotFindDASFileStr;
-      errBadProjectVersion:
-        ErrorMessage := InCompatibleProjectVersion + '.' + #13 + CurrentVersion + ' ' + IntToHex(TatraDASProjectVersion,8) + '.';
-      errOpen: begin
-        ErrorMessage := CouldNotOpenFileStr;
-      end;
-      errBadFormat: begin
-        ErrorMessage := FileCorruptedStr + ': ';
-      end;
-      errUnspecified:
-        ErrorMessage := UnspecifiedErrorStr;
-    end;
-    DisplayMessage(ErrorMessage + '"' + OpenProjectOpenDialog.FileName + '"', mtError, [mbOK]);
-    Exit;
+  LoadThread := TLoadThread.Create(ExecFileManager, OpenProjectOpenDialog.FileName);
+  try
+    ProgressForm.Execute(LoadThread);
+  finally
+    FreeAndNil(LoadThread);
   end;
+
+  ExecFile := ProgressData.Result;
 
   // Create file and section tabs and frames
   TTabSheetTemplate.CreateFileTab(ExecFile);
@@ -1080,6 +1056,15 @@ begin
   else
     fOriginalWndProcOfMainPageControl(AMessage);
 end;
+
+
+
+procedure TMainForm.GuiProcessException(Sender: TObject; E: Exception);
+begin
+  ProcessException(E, ShowMessage);
+end;
+
+
 
 
 

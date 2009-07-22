@@ -58,21 +58,20 @@ type
   end;
 
 const
-  CRLF = #13#10;
   UsageStr =
-    'tdascon ([-i auto] | [-i custom  [-t <CodeSectionFileOffset>] [-s <CodeSectionSize>] [-e <EntryPointOffset>]])' + CRLF +
-    '        [-o (proj|das|nasm)] input_file_name output_file_name' + CRLF + CRLF +
-    'Options description:' + CRLF + CRLF +
-    '  -i <input file format> Specify the format of input file, possible options:' + CRLF +
-    '                           auto - automatic detection of input file format (default)' + CRLF +
-    '                           custom - custom input file format, accepts these options: ' + CRLF +
-    '                             -t  code section file offset' + CRLF +
-    '                             -s  code section size' + CRLF +
-    '                             -e  entry point file offset' + CRLF +
-    '  -o <output format>     Specify the output format, possible options are:' + CRLF +
-    '                           proj - TatraDAS project (*.das and *.dhf file), can be used by GUI version of TatraDAS' + CRLF +
-    '                           das - just a DAS file, contains disassembly listing (default)' + CRLF +
-    '                           nasm - NASM and YASM compilable (usually) file' + CRLF;
+    'tdascon ([-i auto] | [-i custom  [-t <CodeSectionFileOffset>] [-s <CodeSectionSize>] [-e <EntryPointOffset>]])' + sLineBreak +
+    '        [-o (proj|das|nasm)] input_file_name output_file_name' + sLineBreak + sLineBreak +
+    'Options description:' + sLineBreak + sLineBreak +
+    '  -i <input file format> Specify the format of input file, possible options:' + sLineBreak +
+    '                           auto - automatic detection of input file format (default)' + sLineBreak +
+    '                           custom - custom input file format, accepts these options: ' + sLineBreak +
+    '                             -t  code section file offset' + sLineBreak +
+    '                             -s  code section size' + sLineBreak +
+    '                             -e  entry point file offset' + sLineBreak +
+    '  -o <output format>     Specify the output format, possible options are:' + sLineBreak +
+    '                           proj - TatraDAS project (*.das and *.dhf file), can be used by GUI version of TatraDAS' + sLineBreak +
+    '                           das - just a DAS file, contains disassembly listing (default)' + sLineBreak +
+    '                           nasm - NASM and YASM compilable (usually) file' + sLineBreak;
 
 
 function ProcessParameters: TRunOptions;
@@ -236,22 +235,22 @@ begin
     if BadParameters then
       result := 'Bad parameters: ' + ErrorMessage
     else begin
-      result := 'Input file: ' + InputFileName + CRLF + 'Output file: ' + OutputFileName;
+      result := 'Input file: ' + InputFileName + sLineBreak + 'Output file: ' + OutputFileName;
       if IsCustomFile then begin
         result := result +
-          'Custom file.' + CRLF +
-          'EntryPointOffset: ' + CarToHex(CustomFileParameters.EntryPointOffset, 8) + CRLF +
-          'FileOffset: ' + CarToHex(CustomFileParameters.FileOffset, 8) + CRLF +
-          'Size: ' + CarToHex(CustomFileParameters.Size, 8) + CRLF +
-          'Bit32: ' + BoolToStr(CustomFileParameters.Bit32, true) + CRLF;
+          'Custom file.' + sLineBreak +
+          'EntryPointOffset: ' + CarToHex(CustomFileParameters.EntryPointOffset, 8) + sLineBreak +
+          'FileOffset: ' + CarToHex(CustomFileParameters.FileOffset, 8) + sLineBreak +
+          'Size: ' + CarToHex(CustomFileParameters.Size, 8) + sLineBreak +
+          'Bit32: ' + BoolToStr(CustomFileParameters.Bit32, true) + sLineBreak;
       end;
       result := result + 'OutputFormat: ';
       if IsOutputProject then
-        result := result + 'project' + CRLF
+        result := result + 'project' + sLineBreak
       else if eoNASM = ExportOption then
-        result := result + 'nasm' + CRLF
+        result := result + 'nasm' + sLineBreak
       else if eoDAS = ExportOption then
-        result := result + 'das' + CRLF
+        result := result + 'das' + sLineBreak
       else
         raise ETatraDASException.Create('Internal error');
     end;
@@ -275,8 +274,8 @@ end;
 
 function GetProgramIdentification: string;
 begin
-  Result := TatraDASFullNameVersion + ' - console version, Ivan Kohut (c) 2009';
-  Result := DupeString('-', Length(Result)) + CRLF + Result + CRLF + DupeString('-', Length(Result)) + CRLF;
+  Result := TatraDASFullNameVersion + ' - console version, ' + CopyrightStr;
+  Result := DupeString('-', Length(Result)) + sLineBreak + Result + sLineBreak + DupeString('-', Length(Result)) + sLineBreak;
 end;
 
 
@@ -314,6 +313,7 @@ end;
 procedure ExecuteProgress(AThread: TThread);
 begin
   CurrentPhaseName := '';
+  ProgressData.AbortExecution := False;
   ProgressManager := TProgressManager.Create(ConsoleShowProgress);
   try
     ProgressManager.StartProgress(AThread);
@@ -326,27 +326,33 @@ end;
 
 
 procedure RunDisassembler(ExecFile: TExecutableFile; OutputFileName: string; IsOutputProject: Boolean; ExportOption: TExportOption);
+var
+  DisassemblingThread, SavingThread: TThread;
 begin
-  if ProgressData.ErrorStatus <> errNone then
-    raise ETatraDASException.Create('');
-
   // Disassemble it
   Writeln;
   Writeln('CS_n  =  Code Section number ''n''.');
   Writeln;
-  ExecuteProgress(TDisassembleThread.Create(ExecFile));
-  if ProgressData.ErrorStatus <> errNone then
-    raise ETatraDASException.Create('');
+  DisassemblingThread := TDisassembleThread.Create(ExecFile);
+  try
+    ExecuteProgress(DisassemblingThread);
+  finally
+    FreeAndNil(DisassemblingThread);
+  end;
 
   // Save it
   if IsOutputProject then
-    ExecuteProgress(TSaveThread.Create(ExecFileManager, ExecFile, OutputFileName))
+    SavingThread := TSaveThread.Create(ExecFileManager, ExecFile, OutputFileName)
   else
-    ExecuteProgress(TExportThread.Create(ExecFileManager, ExecFile, OutputFileName, ExportOption, []));
-
+    SavingThread := TExportThread.Create(ExecFileManager, ExecFile, OutputFileName, ExportOption, []);
+  try
+    ExecuteProgress(SavingThread);
+  finally
+    FreeAndNil(SavingThread);
+  end;
 
   // Rename it
-  RenameFile(ChangeFileExt(OutputFileName, '.das'), OutputFileName);
+  RenameFile(ChangeFileExt(OutputFileName, DASFileExtension), OutputFileName);
   WriteLn;
   WriteLn;
   WriteLn('Disassembling finished, result saved to file ''', OutputFileName, '''.');
