@@ -29,7 +29,7 @@ type
   TUnknownFileFormatForm = class(TForm, ITranslatable)
     OKButton: TButton;
     CancelButton: TButton;
-    Panel1: TPanel;
+    MainPanel: TPanel;
     UnknownInfoLabel: TLabel;
     Bevel1: TBevel;
     OffsetLabel: TLabel;
@@ -47,25 +47,27 @@ type
     Bit1632GroupBox: TGroupBox;
     bit16Radiobutton: TRadioButton;
     bit32RadioButton: TRadioButton;
+    PanelForStartingOffset: TPanel;
+    PanelForEntryPointOffset: TPanel;
+    PanelForCodeSectionSize: TPanel;
     procedure OKButtonClick(Sender: TObject);
     procedure FormActivate(Sender: TObject);
     procedure FormCreate(Sender: TObject);
   private
-    { Private declarations }
-    function GetParameters: TCustomFileParameters;
-  public
     StartOffsetEdit: THexPositiveEdit;
     EntrypointEdit: THexPositiveEdit;
-    SizeEdit: THexPositiveEdit; 
-    filename: string;
-    filesize: cardinal;
+    SizeEdit: THexPositiveEdit;
+
     StartOffset: cardinal;
     Entrypoint: cardinal;
     Size: cardinal;
     Bit32: boolean;
+    function GetParameters: TCustomFileParameters;
+  public
+    FileName: string;
+    FileSize: cardinal;
     procedure Translate;
     property Parameters: TCustomFileParameters read GetParameters;
-    { Public declarations }
   end;
 
 
@@ -136,49 +138,41 @@ begin
   StartOffsetEdit.SetFocus;
 end;
 
+
+
 procedure TUnknownFileFormatForm.Translate;
 begin
-  Caption:= Translator.TranslateControl('UnknownFileFormatForm','Caption');
-  UnknownInfoLabel.Caption:= Translator.TranslateControl('UnknownFileFormatForm','UnknownInfoLabel');
-  FileNameLabel.Caption:= Translator.TranslateControl('UnknownFileFormatForm','FileNameLabel');
-  FileSizeLabel.Caption:= Translator.TranslateControl('UnknownFileFormatForm','FileSizeLabel');
+  Caption := Translator.TranslateControl('UnknownFileFormatForm', 'Caption');
+  UnknownInfoLabel.Caption := Translator.TranslateControl('UnknownFileFormatForm', 'UnknownInfoLabel');
+  FileNameLabel.Caption := Translator.TranslateControl('UnknownFileFormatForm', 'FileNameLabel');
+  FileSizeLabel.Caption := Translator.TranslateControl('UnknownFileFormatForm', 'FileSizeLabel');
 
-  OffsetLabel.Caption:= Translator.TranslateControl('UnknownFileFormatForm','OffsetLabel');
-  EntryPointLabel.Caption:= Translator.TranslateControl('UnknownFileFormatForm','EntryPointLabel');
-  SizeLabel.Caption:= Translator.TranslateControl('UnknownFileFormatForm','SizeLabel');
+  OffsetLabel.Caption := Translator.TranslateControl('UnknownFileFormatForm', 'OffsetLabel');
+  EntryPointLabel.Caption := Translator.TranslateControl('UnknownFileFormatForm', 'EntryPointLabel');
+  SizeLabel.Caption := Translator.TranslateControl('UnknownFileFormatForm', 'SizeLabel');
 
-  Bit1632GroupBox.Caption:= Translator.TranslateControl('UnknownFileFormatForm','Bit1632GroupBox');
-  SizeEndOffsetGroupBox.Caption:= Translator.TranslateControl('UnknownFileFormatForm','SizeEndOffsetGroupBox');
-  SizeRadioButton.Caption:= Translator.TranslateControl('UnknownFileFormatForm','SizeRadioButton');
-  EndOffsetRadioButton.Caption:= Translator.TranslateControl('UnknownFileFormatForm','EndOffsetRadioButton');
-  HexNoteLabel.Caption:= Translator.TranslateControl('UnknownFileFormatForm','HexNoteLabel');
-  CancelButton.Caption:= Translator.TranslateControl('Common','CancelButton');
+  Bit1632GroupBox.Caption := Translator.TranslateControl('UnknownFileFormatForm', 'Bit1632GroupBox');
+  SizeEndOffsetGroupBox.Caption := Translator.TranslateControl('UnknownFileFormatForm', 'SizeEndOffsetGroupBox');
+  SizeRadioButton.Caption := Translator.TranslateControl('UnknownFileFormatForm', 'SizeRadioButton');
+  EndOffsetRadioButton.Caption := Translator.TranslateControl('UnknownFileFormatForm', 'EndOffsetRadioButton');
+  HexNoteLabel.Caption := Translator.TranslateControl('UnknownFileFormatForm', 'HexNoteLabel');
+  CancelButton.Caption := Translator.TranslateControl('Common', 'CancelButton');
 end;
 
 
 procedure TUnknownFileFormatForm.FormCreate(Sender: TObject);
 begin
-  StartOffsetEdit:= THexPositiveEdit.Create(Panel1);
-  StartOffsetEdit.Left:=248;
-  StartOffsetEdit.Top:=124;
-  StartOffsetEdit.Width:=169;
-//  StartOffsetEdit.BaseFormat:=Hexadecimal;
-  StartOffsetEdit.Parent:=Panel1;
+  StartOffsetEdit := THexPositiveEdit.Create(MainPanel);
+  StartOffsetEdit.Parent := PanelForStartingOffset;
+  StartOffsetEdit.Align := alClient;
 
-  EntrypointEdit:= THexPositiveEdit.Create(Panel1); //TPBBinHexEdit.Create(Panel1);
-  EntrypointEdit.Left:=248;
-  EntrypointEdit.Top:=152;
-  EntrypointEdit.Width:=169;
-//  EntrypointEdit.BaseFormat:=Hexadecimal;
-  EntrypointEdit.Parent:=Panel1;
+  EntrypointEdit := THexPositiveEdit.Create(MainPanel);
+  EntrypointEdit.Parent := PanelForEntryPointOffset;
+  EntrypointEdit.Align := alClient;
 
-  SizeEdit:= THexPositiveEdit.Create(Panel1); //TPBBinHexEdit.Create(Panel1);
-  SizeEdit.Left:=248;
-  SizeEdit.Top:=180;
-  SizeEdit.Width:=169;
-//  SizeEdit.BaseFormat:=Hexadecimal;
-  SizeEdit.Parent:=Panel1;
-
+  SizeEdit := THexPositiveEdit.Create(MainPanel);
+  SizeEdit.Parent := PanelForCodeSectionSize;
+  SizeEdit.Align := alClient;
 end;
 
 

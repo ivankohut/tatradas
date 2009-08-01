@@ -1,5 +1,7 @@
 Prepare
-- skontrolovat memory leak-y pomocou FastMM
+- turn off logging
+- check for memory leaks using FastMM4
+- acceptance testing
 - update changelog.txt, readme.txt
 
 Build

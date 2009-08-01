@@ -1,5 +1,6 @@
 TSynTatraDASSyn   {first Identifier is considered to be the Class Name }
 tk              {second Identifier is considered to be the Identifier Prefix }
+Sensitive 
 IdentStart '_', '0'..'9', 'a'..'z', 'A'..'Z':: '_', '0'..'9', 'a'..'z', 'A'..'Z'::
 
 TOKENTYPES
@@ -140,7 +141,7 @@ EndProc
 
 ENCLOSEDBY
 Comment,PascalComment,{,},Multiline
-Comment,AsmComment,;,;,Singleline
+Comment,AsmComment,;,WhatDoIHaveToWriteHereToMakeItSingleLineComment,Singleline
 String,String,','
 
 |><|

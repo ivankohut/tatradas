@@ -1,64 +1,11 @@
-2.9.7
-CodeSectionUnit:
-  - 17.12.2004 - pridanie skakania z referencii
-  - obcas padlo pri zastaveni disasm = doplnene 'nieco:=nil' (CancelDesasemblying)      (22.10.04)
-  - zmena na data po zaciatok kodu
-  - zmena na data do konca sekcie nejde az do konca sekcie (az na male detaily)
-  - chvilka cakania po zdisassemblovani = uvolnenie Decodera(34%) + skopirovanie Dissasembled do plocha.lines(62%) + uvolnenie Disassembled(4%)
-  - zmena na data -> spojene 3 funkcie do 1 (ChangeToData)
-  - single a double NAN osetrene (MyIsNAN)
-?  - UNICODE strings
-Disassembler:
-  - spracovanie prefixov prerobene
-  - 18.12.2004 - opravene velkosti operandov FPU $DD instrukcii FLD,FST,FSTP
+Pre-GPL history of TatraDAS
 
 
-2.9.6
-Prelozeny dialog "File changed. Save ?"
-Pridane hinty na niektore polozky menu.(aj na jazyky)
-NE - Exportovane funkcie
-NE - Zoznam importovanych funkci bez detekcie vyskytu
-HexEditor - pridane "Go to address", vypis dat na kurzore, preklad
-klav. skratky na Goto bookmarks XY (Alt + XY) v menu
-zjednoteny preklad v StringRes.pas
-Kalkulacka (este nedokoncena), Options formular
-  - opravena chyba: spracovanie nedefinovanej 3DNow! instrukcie
-  - opravena chyba: exportovane funkcie, ktorych RVA sa nenachadza v ziadnej sekcii (cygwin1.dll)
-  - opravena chyba: kod. sekcia s vacsim memsize ako filesize prekroci koniec suboru -> stream read error
+Verzia 2.9.3
 
-  - SYSCALL a SYSRET instrukcie pridane (AMD)
-  - osetrenie nedefinovanej OBO instrukcie
+Verzia 2.9.2
 
-  - KERNEL32.DLL - kodova sekcia 1 je disassemblovana aj zo zaciatku (co nie je EntryPoint) bez dovodu
-  - disassemblovanie rozdelene na dve metody - DisassembleAll a DisassemblePart
-  - Advanced Disassemble okrem Instruction Count a (ne)Recursive
-
-  - retazec "nebolo najdene" doplneny
-
-
-2.9.5
-INTERNA HISTORIA
-
-- opravena chyba v disassembleri: osetrenie nedefinovanych opcodov u GroupOBOInstruction_set
-- opravena chyba v disassembleri: osetrenie nedefinovanych opcodov u FPUInstruction_set
-
-- dynamicky disassembled -> zmena disassemblovaneho na data - faza I
-
-- pridanie BookMark-ov, treba ich este ukladat do *.DHF
-
-- odstranenie PosIndex-u, zistovanie adresy instrukcie z textu
-
-- segment override prefix vo vnutri []
-
-- zmena disasm strategie - algoritmus disassemblovania podla skokovych referencii
-=>  - vyhladavanie skokov priamo pri disassemblovani => cast "Hladanie skokov" zrusena,
-    - funkcia TDisassembler.SpracujRelative ciastocne prepisana do assembleru
-    - funkcia TDisassembler.SpracujImmediate ciastocne prepisana do assembleru
-    - procedura TDisassembler.ReadFourBytes prepisana
-
-ROCNIKOVY PROJEKT
-
-================================================================================
+Verzia 2.9.1
 
 Verzia 2.2
 - upravene polozky v menu Subor a zmenene niektore klav. skratky

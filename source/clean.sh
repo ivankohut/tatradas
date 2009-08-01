@@ -12,6 +12,8 @@ find ./ -name "*.rst" -print | xargs /bin/rm -f
 find ./ -name "*.dcu" -print | xargs /bin/rm -f
 find ./ -name "*.ddp" -print | xargs /bin/rm -f
 find ./ -name "*.~*" -print | xargs /bin/rm -f
+find ./ -name "*.dsk" -print | xargs /bin/rm -f
+find ./ -name "*.identcache" -print | xargs /bin/rm -f
 
 find ./ -name "*.exe" -print | xargs /bin/rm -f
 find ./ -name "*.EXE" -print | xargs /bin/rm -f

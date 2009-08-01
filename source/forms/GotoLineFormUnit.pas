@@ -8,7 +8,7 @@ uses
 
   procmat,
   StringRes,
-  myedits;
+  myedits, ExtCtrls;
 
 
 type
@@ -16,6 +16,7 @@ type
     GotoLineLabel: TLabel;
     CancelButton: TButton;
     OKButton: TButton;
+    PanelForEdit: TPanel;
     procedure OKButtonClick(Sender: TObject);
     procedure CancelButtonClick(Sender: TObject);
     procedure FormActivate(Sender: TObject);
@@ -97,11 +98,8 @@ end;
 procedure TGotoLineForm.FormCreate(Sender: TObject);
 begin
   GotoLineEdit := TDecimalPositiveEdit.Create(self);
-  GotoLineEdit.Parent := self;
-  GotoLineEdit.Left := 110;
-  GotoLineEdit.Top := 16;
-  GotoLineEdit.Width := 121;
-  GotoLineEdit.Height := 21;
+  GotoLineEdit.Parent := PanelForEdit;
+  GotoLineEdit.Align := alClient;
 end;
 
 

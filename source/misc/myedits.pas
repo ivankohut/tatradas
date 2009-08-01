@@ -15,7 +15,7 @@ type
     function GetAsCardinal: cardinal;
     procedure SetAsCardinal(AValue: cardinal);
   public
-    procedure Change(Sender: TObject); virtual; abstract;
+//    procedure Change(Sender: TObject); virtual; abstract;
     property AsCardinal: cardinal read GetAsCardinal write SetAsCardinal;
     property MaxValue: cardinal read fMaxValue write fMaxValue;
   end;
@@ -33,7 +33,8 @@ type
     procedure MyHexEditKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
 //    procedure MyHexEditKeyPress(Sender: TObject; var Key: Char);
   public
-    procedure Change(Sender: TObject); override;
+    //procedure Change(Sender: TObject); override;
+    procedure Change; override;
     constructor Create(AOwner: TComponent); override;
     procedure SetFocus; override;
   end;
@@ -43,7 +44,7 @@ type
   private
     procedure MyNumEditKeyPress(Sender: TObject; var Key: Char);
   public
-    procedure Change(Sender: TObject); override;
+    procedure Change; override;
     constructor Create(AOwner: TComponent); override;
   end;
 
@@ -74,7 +75,7 @@ end;
 constructor THexPositiveEdit.Create(AOwner: TComponent);
 begin
   inherited;
-  OnChange := Change;
+//  OnChange := Change;
 //  OnKeyPress := MyHexEditKeyPress;
   OnKeyDown := MyHexEditKeyDown;
   Font.Name := HEX_FONT;
@@ -128,7 +129,7 @@ begin
 end;
 
 
-procedure THexPositiveEdit.Change(Sender: TObject);
+procedure THexPositiveEdit.Change;
 var
   CandidateValue: cardinal;
   CaretPositionAfterChange: Integer;
@@ -159,12 +160,12 @@ begin
     end;
 
     if CandidateValue <= MaxValue then begin
-      Text := HEX_PREFIX + CarToHex(candidateValue, 8);
+      Text := HEX_PREFIX + CarToHex(candidateValue, 0);
       fValue := candidateValue;
       //Inc(NewCaretPosition);
     end
     else begin
-      Text := HEX_PREFIX + CarToHex(fValue, 8);
+      Text := HEX_PREFIX + CarToHex(fValue, 0);
       if CaretPositionAfterChange < Length(HEX_PREFIX) then
         NewCaretPosition := Length(Text)
       else if UpCase(Char(fLastKeyPressChar)) in HEX_DIGITS then
@@ -178,12 +179,13 @@ begin
       fValue := candidateValue
     else begin
       CaretPosition := Max(2, SelStart - 1);
-      Text := HEX_PREFIX + CarToHex(fValue, 8);
+      Text := HEX_PREFIX + CarToHex(fValue, 0);
       SelStart := CaretPosition;
     end;
     }
   end;
   SelStart := NewCaretPosition;
+  inherited;
 end;
 
 
@@ -192,7 +194,6 @@ constructor TDecimalPositiveEdit.Create(AOwner: TComponent);
 begin
   inherited;
   OnKeyPress := MyNumEditKeyPress;
-  OnChange := Change;
   Font.Name := HEX_FONT;
   Font.Size := 10;
   MaxLength := 10;
@@ -212,17 +213,22 @@ end;
 
 
 
-procedure TDecimalPositiveEdit.Change(Sender: TObject);
+procedure TDecimalPositiveEdit.Change;
 var
   CandidateValue: cardinal;
+  CaretPositionAfterChange: Integer;
 begin
   if Text <> '' then begin
+    CaretPositionAfterChange := SelStart;
     CandidateValue := StrToInt64Def(Text, MaxValue + 1);
     if CandidateValue <= MaxValue then
       fValue := CandidateValue
-    else
+    else begin
       Text := CarToStr(fValue);
+      SelStart := CaretPositionAfterChange - 1;
+    end;
   end;
+  inherited;
 end;
 
 

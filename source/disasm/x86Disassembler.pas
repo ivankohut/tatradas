@@ -529,14 +529,12 @@ begin
     pop esi
   end;
   if OperandSize = os4or6 then
-    result:= '0x' + IntToHex(SegmentImmediate, 4) + ':' + '0x' + IntToHex(Immediate, ParsedCount)
+    Result := '0x' + IntToHex(SegmentImmediate, 4) + ':' + '0x' + IntToHex(Immediate, ParsedCount)
   else
-    // was: result:=result + '0x'+IntToHex(immediate,parsedcount);
-    // because of NASM compatibility:
     case ParsedCount of
-      2: result := 'byte 0x' + IntToHex(Immediate, 2);
-      4: result := 'word 0x' + IntToHex(Immediate, 4);
-      8: result := 'dword 0x' + IntToHex(Immediate, 8);
+      2: Result := 'byte 0x' + IntToHex(Immediate, 2);
+      4: Result := 'word 0x' + IntToHex(Immediate, 4);
+      8: Result := 'dword 0x' + IntToHex(Immediate, 8);
     end;
 end;
 
@@ -630,12 +628,12 @@ begin
     end;
   end;
 {
-Instrukcie skokove:
-   JMP - opcody E9 (rel8), EB( rel16/32)
-   Jxx - opcody 70 - 7F (rel8), 0F 80 - 0F 8F (rel16/32)
-   JCXZ - E3 (rel8)
-   LOOPxx - opcody E0 (rel8), E1 (rel8), E2 (rel8)
-   CALL - opcode E8 (rel16/32)
+  Jump instructions:
+    JMP - opcody E9 (rel8), EB( rel16/32)
+    Jxx - opcody 70 - 7F (rel8), 0F 80 - 0F 8F (rel16/32)
+    JCXZ - E3 (rel8)
+    LOOPxx - opcody E0 (rel8), E1 (rel8), E2 (rel8)
+    CALL - opcode E8 (rel16/32)
 }
 end;
 
@@ -644,9 +642,9 @@ end;
 function Tx86Disassembler.ProcessGenPurpRegister: string;
 begin
   if operand32 then
-    result:= 'E'
+    Result := 'E'
   else
-    result:= '';
+    Result := '';
 end;
 
 
@@ -669,13 +667,13 @@ end;
 constructor Tx86Disassembler.Create(SectionCode: TByteDynArray; var DisassemblerMap: TByteDynArray; MemOffset: cardinal; Bit32: boolean);
 begin
   inherited Create;
-  code:= SectionCode;
-  fCodeSize:= Length(code) - CodeArrayReserveSize;
-  fDisasmMap:= DisassemblerMap;
+  code := SectionCode;
+  fCodeSize := Length(code) - CodeArrayReserveSize;
+  fDisasmMap := DisassemblerMap;
   SetLength(Disassembled, fCodeSize);
-  CAJ:= TCallsAndJumps.Create(fDisasmMap);
-  fMemOffset:= MemOffset;
-  fBit32:= Bit32;
+  CAJ := TCallsAndJumps.Create(fDisasmMap);
+  fMemOffset := MemOffset;
+  fBit32 := Bit32;
 end;
 
 
@@ -704,7 +702,7 @@ begin
   DisassemblerCycle;
 
   //****************************************************************************
-  // 2. faza - najdenie zaciatkov procedur pomocou standartnych instrukcii
+  // 2. Phase - najdenie zaciatkov procedur pomocou standartnych instrukcii
   //****************************************************************************
 
   Logger.Info('TDisassembler.DisassembleAll - Phase 2a');

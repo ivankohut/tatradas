@@ -32,6 +32,9 @@ type
     MaxRadioButton: TRadioButton;
     EndSectionRadioButton: TRadioButton;
     CodeRadioButton: TRadioButton;
+    PanelForItemsCountEdit: TPanel;
+    PanelForBytesCountEdit: TPanel;
+    PanelForMaxAddressEdit: TPanel;
     procedure ItemsRadioButtonClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure BytesRadioButtonClick(Sender: TObject);
@@ -41,18 +44,20 @@ type
     procedure OKButtonClick(Sender: TObject);
     procedure CancelButtonClick(Sender: TObject);
     procedure DataTypeComboBoxChange(Sender: TObject);
-    procedure ValueChange(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
 
   private
     MaxAddressHexEdit: THexPositiveEdit;
     BytesBinHexEdit: TDecimalPositiveEdit;
     ItemsBinHexEdit: TDecimalPositiveEdit;
-    SelectedEdit: TPositiveEdit;
+    fSelectedEdit: TPositiveEdit;
+    fMaxAddressMinValue: Cardinal;
     function GetOptions: TDataChangeOptions;
+    procedure SetSelectedEdit(AEdit: TPositiveEdit);
   public
     procedure Translate;
     procedure SetMaxAdressMaxValue(AValue: Cardinal);
+    procedure SetMaxAdressMinValue(AValue: Cardinal);
     property Options: TDataChangeOptions read GetOptions;
   end;
 
@@ -69,6 +74,13 @@ implementation
 procedure TAdvancedChangingToDataForm.SetMaxAdressMaxValue(AValue: Cardinal);
 begin
   MaxAddressHexEdit.MaxValue := AValue;
+end;
+
+
+
+procedure TAdvancedChangingToDataForm.SetMaxAdressMinValue(AValue: Cardinal);
+begin
+  fMaxAddressMinValue := AValue;
 end;
 
 
@@ -90,95 +102,95 @@ begin
 
   Result.DataType := DataTypeComboBox.ItemIndex;
   Result.Signed := SignedRadioButton.Checked;
-  Result.Value := SelectedEdit.AsCardinal;
-  Result.DatatypeSize := 1; // ???
+  Result.Value := fSelectedEdit.AsCardinal;
 end;
 
 
 
 procedure TAdvancedChangingToDataForm.FormCreate(Sender: TObject);
 begin
+  // Create ItemsCountEdit
   ItemsBinHexEdit:= TDecimalPositiveEdit.Create(self);
-  ItemsBinHexEdit.Left:=132;
-  ItemsBinHexEdit.Top:=24;
-//  ItemsBinHexEdit.BaseFormat:=Number;
-  ItemsBinHexEdit.Parent:=self.OptionsGroupBox;
-  ItemsBinHexEdit.Enabled:=true;
-  ItemsBinHexEdit.OnChange:=ValueChange;
-  ItemsBinHexEdit.MaxValue:=$FFFFFFFF;
-  BytesBinHexEdit := TDecimalPositiveEdit.Create(self); //TPBBinHexEdit.Create(self);
-  BytesBinHexEdit.Left:=132;
-  BytesBinHexEdit.Top:=56;
-//  BytesBinHexEdit.BaseFormat:=Number;
-  BytesBinHexEdit.Parent:=self.OptionsGroupBox;
-  BytesBinHexEdit.Enabled:=false;
-  BytesBinHexEdit.OnChange:=ValueChange;
-  BytesBinHexEdit.MaxValue:=$FFFFFFFF;
-  MaxAddressHexEdit:=THexPositiveEdit.Create(self); //TPBBinHexEdit.Create(self);
-  MaxAddressHexEdit.Left:=132;
-  MaxAddressHexEdit.Top:=88;
-//  MaxAddressHexEdit.BaseFormat:=HexaDecimal;
-  MaxAddressHexEdit.Parent:=self.OptionsGroupBox;
-  MaxAddressHexEdit.Enabled:=false;
-  MaxAddressHexEdit.OnChange:=ValueChange;
+  ItemsBinHexEdit.Parent := PanelForItemsCountEdit;
+  ItemsBinHexEdit.Align := alClient;
+  ItemsBinHexEdit.Enabled := False;
+  ItemsBinHexEdit.MaxValue := $FFFFFFFF;
 
+  // Create BytesCountEdit
+  BytesBinHexEdit := TDecimalPositiveEdit.Create(self);
+  BytesBinHexEdit.Parent := PanelForBytesCountEdit;
+  BytesBinHexEdit.Align := alClient;
+  BytesBinHexEdit.Enabled := False;
+  BytesBinHexEdit.MaxValue := $FFFFFFFF;
+
+  // Create MaxAddressEdit
+  MaxAddressHexEdit := THexPositiveEdit.Create(self);
+  MaxAddressHexEdit.Parent := PanelForMaxAddressEdit;
+  MaxAddressHexEdit.Align := alClient;
+  MaxAddressHexEdit.Enabled := False;
+
+  // Set default values
   DataTypeComboBox.ItemIndex := 0;
   DataTypeComboBoxChange(DataTypeComboBox);
   UnsignedRadioButton.Checked := True;
   ItemsRadioButton.Checked := True;
-  SelectedEdit := ItemsBinHexEdit;
-  SelectedEdit.AsCardinal := 0;
+  SetSelectedEdit(ItemsBinHexEdit);
+end;
+
+
+procedure TAdvancedChangingToDataForm.SetSelectedEdit(AEdit: TPositiveEdit);
+begin
+  if fSelectedEdit <> nil then
+    fSelectedEdit.Enabled := False;
+  if AEdit <> nil then begin
+    fSelectedEdit := AEdit;
+    fSelectedEdit.Enabled := True;
+    if (self.Visible and self.Enabled) then
+      fSelectedEdit.SetFocus;
+  end;
 end;
 
 
 
 procedure TAdvancedChangingToDataForm.ItemsRadioButtonClick(Sender: TObject);
 begin
-  SelectedEdit.Enabled := False;
-  SelectedEdit := ItemsBinHexEdit;
-  SelectedEdit.Enabled := True;
-  SelectedEdit.SetFocus;
+  SetSelectedEdit(ItemsBinHexEdit);
 end;
 
 
 
 procedure TAdvancedChangingToDataForm.BytesRadioButtonClick(Sender: TObject);
 begin
-  SelectedEdit.Enabled := False;
-  SelectedEdit := BytesBinHexEdit;
-  SelectedEdit.Enabled := True;
-  SelectedEdit.SetFocus;
+  SetSelectedEdit(BytesBinHexEdit);
 end;
 
 
 
 procedure TAdvancedChangingToDataForm.MaxRadioButtonClick(Sender: TObject);
 begin
-  SelectedEdit.Enabled := False;
-  SelectedEdit := MaxAddressHexEdit;
-  SelectedEdit.Enabled := True;
-  SelectedEdit.SetFocus;
+  SetSelectedEdit(MaxAddressHexEdit);
 end;
 
 
 
 procedure TAdvancedChangingToDataForm.EndSectionRadioButtonClick(Sender: TObject);
 begin
-  SelectedEdit.Enabled := False;
+  SetSelectedEdit(nil);
 end;
 
 
 
 procedure TAdvancedChangingToDataForm.CodeRadioButtonClick(Sender: TObject);
 begin
-  SelectedEdit.Enabled := False;
+  SetSelectedEdit(nil);
 end;
 
 
 
 procedure TAdvancedChangingToDataForm.OKButtonClick(Sender: TObject);
 begin
-  ModalResult := mrOK;
+  if (not MaxRadioButton.Checked) or (MaxAddressHexEdit.AsCardinal >= fMaxAddressMinValue) then
+    ModalResult := mrOK;
 end;
 
 
@@ -197,13 +209,6 @@ begin
   SignGroupBoxEnabled := (DataTypeComboBox.ItemIndex <= dtQword);
   UnSignedRadioButton.Enabled := SignGroupBoxEnabled;
   SignedRadioButton.Enabled := SignGroupBoxEnabled;
-end;
-
-
-
-procedure TAdvancedChangingToDataForm.ValueChange(Sender: TObject);
-begin
-  TPositiveEdit(Sender).Change(Sender);
 end;
 
 

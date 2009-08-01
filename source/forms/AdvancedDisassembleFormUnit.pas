@@ -15,7 +15,7 @@ uses
   IniFiles,
 
   procmat,
-  TranslatorUnit;
+  TranslatorUnit, ExtCtrls;
 
 type
   TAdvancedDisassembleForm = class(TForm, ITranslatable)
@@ -29,19 +29,21 @@ type
     bit16Radiobutton: TRadioButton;
     bit32Radiobutton: TRadioButton;
     RecursiveCheckBox: TCheckBox;
+    PanelForBytesCountEdit: TPanel;
+    PanelForMaxAddressEdit: TPanel;
     procedure OKButtonClick(Sender: TObject);
     procedure CancelButtonClick(Sender: TObject);
     procedure BytesRadioButtonClick(Sender: TObject);
     procedure MaxRadioButtonClick(Sender: TObject);
     procedure NormalRadioButtonClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
-    procedure ValueChange(Sender: TObject);
     procedure FormShow(Sender: TObject);
   private
-    BytesBinHexEdit: TDecimalPositiveEdit;//TPBBinHexEdit;
-    MaxAddressBinHexEdit: THexPositiveEdit;//TPBBinHexEdit;
-    fIsChanging: Boolean; // true, ak prebieha spracovanie OnChange nejakeho editu
+    fSelectedEdit: TPositiveEdit;
+    BytesBinHexEdit: TDecimalPositiveEdit;
+    MaxAddressBinHexEdit: THexPositiveEdit;
     function GetOptions: TDisassembleFormOptions;
+    procedure SetSelectedEdit(AEdit: TPositiveEdit);
   public
     property Options: TDisassembleFormOptions read GetOptions;
     procedure Translate;
@@ -50,7 +52,6 @@ type
 
 var
   AdvancedDisassembleForm: TAdvancedDisassembleForm;
-  SelectedEdit: TCustomEdit;
 
 
 implementation
@@ -86,80 +87,65 @@ begin
 
   Result.Recursive := RecursiveCheckbox.Checked;
   Result.Bit32 := bit32Radiobutton.Checked;
-  Result.Value := TPositiveEdit(SelectedEdit).AsCardinal;
+  Result.Value := fSelectedEdit.AsCardinal;
+end;
+
+
+
+procedure TAdvancedDisassembleForm.SetSelectedEdit(AEdit: TPositiveEdit);
+begin
+  if fSelectedEdit <> nil then
+    fSelectedEdit.Enabled := False;
+  if AEdit <> nil then begin
+    fSelectedEdit := AEdit;
+    fSelectedEdit.Enabled := True;
+    if (self.Visible and self.Enabled) then
+      fSelectedEdit.SetFocus;
+  end;
 end;
 
 
 
 procedure TAdvancedDisassembleForm.BytesRadioButtonClick(Sender: TObject);
 begin
-  SelectedEdit.Enabled := False;
-  SelectedEdit := BytesBinHexEdit;
-  SelectedEdit.Enabled := True;
-  SelectedEdit.SetFocus;
+  SetSelectedEdit(BytesBinHexEdit);
 end;
 
 
 
 procedure TAdvancedDisassembleForm.MaxRadioButtonClick(Sender: TObject);
 begin
-  SelectedEdit.Enabled := False;
-  SelectedEdit := MaxAddressBinHexEdit;
-  SelectedEdit.Enabled := True;
-  SelectedEdit.SetFocus;
+  SetSelectedEdit(MaxAddressBinHexEdit);
 end;
 
 
 
 procedure TAdvancedDisassembleForm.NormalRadioButtonClick(Sender: TObject);
 begin
-  SelectedEdit.Enabled := False;
+  SetSelectedEdit(nil);
 end;
 
 
 
 procedure TAdvancedDisassembleForm.FormCreate(Sender: TObject);
 begin
-  BytesBinHexEdit:=TDecimalPositiveEdit.Create(self);//TPBBinHexEdit.Create(self);
-  BytesBinHexEdit.Left:= 128;
-  BytesBinHexEdit.Top:= 24;
-//  BytesBinHexEdit.BaseFormat:=Number;
-  BytesBinHexEdit.Parent:= self.OptionsGroupBox;
-  BytesBinHexEdit.Enabled:= false;
-  BytesBinHexEdit.OnChange:= ValueChange;
-  BytesBinHexEdit.MaxValue:= $FFFFFFFF;
+  BytesBinHexEdit := TDecimalPositiveEdit.Create(self);
+  BytesBinHexEdit.Parent := PanelForBytesCountEdit;
+  BytesBinHexEdit.Align := alClient;
+  BytesBinHexEdit.Enabled := false;
+  BytesBinHexEdit.MaxValue := $FFFFFFFF;
 
-  MaxAddressBinHexEdit := THexPositiveEdit.Create(self);//TPBBinHexEdit.Create(self);
-  MaxAddressBinHexEdit.Left := 128;
-  MaxAddressBinHexEdit.Top := 56;
-//  MaxAddressBinHexEdit.BaseFormat:=HexaDecimal;
-  MaxAddressBinHexEdit.Parent := self.OptionsGroupBox;
+  MaxAddressBinHexEdit := THexPositiveEdit.Create(self);
+  MaxAddressBinHexEdit.Parent := PanelForMaxAddressEdit;
+  MaxAddressBinHexEdit.Align := alClient;
   MaxAddressBinHexEdit.Enabled := False;
-  MaxAddressBinHexEdit.OnChange := ValueChange;
 
   BytesBinHexEdit.AsCardinal := 0;
-  SelectedEdit := BytesBinHexEdit;
+  SetSelectedEdit(BytesBinHexEdit);
 
   RecursiveCheckBox.Checked := True;
   bit32Radiobutton.Checked := True;
   BytesRadioButton.Checked := True;
-end;
-
-
-
-procedure TAdvancedDisassembleForm.ValueChange(Sender: TObject);
-var
-  MyEdit: TPositiveEdit;
-begin
-  if fIsChanging then
-    Exit
-  else
-    fIsChanging := True;
-  MyEdit := TPositiveEdit(Sender);
-  MyEdit.Change(Sender);
-  if MyEdit.Text = '' then
-    Exit;
-  fIsChanging := False;
 end;
 
 
@@ -191,8 +177,8 @@ end;
 
 procedure TAdvancedDisassembleForm.FormShow(Sender: TObject);
 begin
-  SelectedEdit.Enabled := True;
-  SelectedEdit.SetFocus;
+  if fSelectedEdit.Enabled then
+    fSelectedEdit.SetFocus;
 end;
 
 

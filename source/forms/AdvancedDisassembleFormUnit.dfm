@@ -53,6 +53,24 @@ object AdvancedDisassembleForm: TAdvancedDisassembleForm
       TabOrder = 2
       OnClick = NormalRadioButtonClick
     end
+    object PanelForBytesCountEdit: TPanel
+      Left = 128
+      Top = 20
+      Width = 121
+      Height = 25
+      BevelOuter = bvNone
+      Caption = 'PanelForBytesCountEdit'
+      TabOrder = 3
+    end
+    object PanelForMaxAddressEdit: TPanel
+      Left = 128
+      Top = 52
+      Width = 121
+      Height = 25
+      BevelOuter = bvNone
+      Caption = 'PanelForMaxAddressEdit'
+      TabOrder = 4
+    end
   end
   object OKButton: TButton
     Left = 114

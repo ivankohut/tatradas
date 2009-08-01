@@ -1,11 +1,88 @@
-2.9.9
-fix: vynimka pri prechode na koniec(posledne tri bajty) hexeditu, precistenie kodu hexeditForm-u
+TatraDAS disassembler 
+     changelog
+
++ <=> addition
+- <=> removal
+~ <=> change 
+! <=> bug fix
 
 
-2.9.8
-~ memory addresses in code sections
+[2.9.9 - 1. august 2009]
++ open file by drag & drop
++ SSSE3, SSE4.1, SSE4.2 instructions
++ more options in console versions (save as project, DAS, NASM, etc.)
++ "Go to line" function
++ message dialog buttons are now translatable 
++ calls of imported functions are now detected one level higher (call x, x: jump [0x...])
+~ Save function divided to Save Project and Export (Disassembly, NASM, Custom)
+~ optimized speed Exported functions displaying (noticable in case of 2000 or more functions)   
+~ disassembly lines replacing algorithm (used during each modification of disassembly text after initial disassembling)
+~ close all code sections before redisassembling (improves speed of "Preparing output" phase)   
+~ size of memory operand is now always displayed (=> files created by NASM export are now compilable by NASM :) )
+! Cancel behavior after in Choose file dialog during saving project  
+! hexedit - crash when caret moved to the last three bytes
+! operand size of some FPU instructions, FLD (only one operand, Inter manual bug), FUCOM similarly
+! Advanced changing to data - Bytes count 
+! crash - Advanced changing to data - Code begins 
+! Advanced disassemble - Max address  - works now
+! FPU instructions' operand size does not depend on operand-size attribute
+! XLATB instruction was XLAT/XLATB  
+! "undefined opcode" lines had address relative to code section beginning
+! some SSE(x) were missing third operand
+! NASM export - comments were exported incorrectly
+! correct distinguishing of MOVLPS/MOVHLPS, MOVHPS/MOVLHPS instructions (same opcode, different reg/mem addressing)
+! MOVD instruction with MMX register operand was 32 bit register
+! 0xDFE0 should be FNSTSW AX, not FSTSW AX (this was caused by bug in Intel manual (opcode map)), similarly FSTCW/FNSTCW, FSTSW/FNSTSW word [], FSTENV/FNSTENV, FSAVE/FNSAVE, FINIT/FNINIT, FCLEX/FNCLEX 
+! CALL far mem - "far" was missing (so it behaved like "near")
+! memory leaks fixed thanks to FastMM4 memory manager
+! freeze in case of change to Pascal string which excedds code section (now does nothing)
+! FXRSTOR was called FXSTOR (missing 'R') => not highlighted
+! instructons LDMXCSR, STMXCSR, FXSAVE, FXRSTOR, CLFLUSH did not have operand
+! crash of NASM export if disassembly constains "qword" or Pascal string
+
+[2.9.8 - 27. December 2007]
 + imported functions in NE files 
-- advanced disassemble - instruction count
 + sorting of columns in Import and Export 
-+ highlight active line in disassembly view
-~ preparing output takes 60% less time (simple string optimization :) ) 
++ highlighting of active line in disassembly view
+~ memory addresses in code sections instead of code section relative adresses
+~ heavy optimization - running time cut by 60%
+~ new icon set, thank you Maros 
+~ almost evething was refactorized, many parts rewritten 
+! lot of bugs discovered and fixed
+- instruction count option from Advanced disassemble dialog
+
+[2.9.7 - 23. December 2004] 
++ "Follow Jump/Call" enabled in case of jump/call/loop references
++ UNICODE strings
++ some new icons
+! "End of section", "Code begins" data change
+! floating point data change (single & double NAN)
+! stability in case of "Stop"
+! size of operands for FPU $DD opcodes FLD, FST and FSTP
+! some instructions (opcode, prefix etc.)
+ 
+
+[2.9.6 - 31. May 2004]
++ imported and exported functions in NE file format
++ hexeditor improved ("Go to address", display data on caret position, translation)
++ SYSCALL and SYSRET instructions (AMD)
++ Goto Bookmarks' shortcuts in main menu (Alt + XX)
++ all messages can be translated
++ more hints on menu items
++ shortcuts on bookmarks (Alt + XY) in menu
++ Advanced Disassemble function (Instruction Count and (Non)Recursive not implemented yet) 
+! handling of undefined one byte and 3DNow! opcodes 
+! handling of invalid exported functions (RVA not in any of code sections - cygwin1.dll)
+! handling of code sections with MemorySize > FileSize
+
+[2.9.5 - 2. April 2004]
++ basic ELF(Linux & comp.) file format support
++ it's now possible to use your own localization files (translations of TatraDAS)
++ bookmarks
+! handling of undefined One byte Group and FPU opcodes 
+
+[2.9.4 - 2. March 2004]
+~ license changed to GNU GPL
+
+
+Ivan Kohut

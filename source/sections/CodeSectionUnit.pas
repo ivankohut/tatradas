@@ -133,6 +133,8 @@ function GetLineBytes(line: string): cardinal;
 function GetLineType(line: string): TLineType;
 function GetLineData(Line: string): TByteDynArray;
 function GetTargetAddress(Line: string; var Address: cardinal): boolean;
+function GetNewLinesCount(CodeSize: Cardinal; Options: TDataChangeOptions; StartAddress: Cardinal): Integer;
+function IsCodeInstructionStr(const InstructionStr: string): Boolean;
 
 // StartAddress is memory address
 function GetLineFromDataEx(var InputData; DataType: cardinal; Signed: Boolean; const StartAddress: Cardinal; Count: Integer): TStrings;
@@ -572,8 +574,8 @@ begin
                   // Indirect imported function calls
                   with Disassembler.Disassembled[ReferencingAddress] do
                     for l := 0 to ReferencesCount - 1 do begin
-                      AddText(References[j].Address, '');
-                      AddText(References[j].Address, ImportedFunctionStr);
+                      AddText(References[l].Address, '');
+                      AddText(References[l].Address, ImportedFunctionStr);
                     end;
                 end;
               end;
@@ -1192,7 +1194,38 @@ end;
 
 
 
-initialization
-  Logger.AddListener(TTextFileLoggerListener.Create('test_disasm.log'));
+function IsCodeInstructionStr(const InstructionStr: string): Boolean;
+var
+  FirstChar: Char;
+begin
+  FirstChar := InstructionStr[1];
+  Result := (FirstChar in ['r', 'l']) or (FirstChar = UpCase(FirstChar));
+end;
+
+
+{
+  StartAddress - relative to code section beginning
+  Options.Value - relative address in case of dcMaxAddress
+}
+function GetNewLinesCount(CodeSize: Cardinal; Options: TDataChangeOptions; StartAddress: Cardinal): Integer;
+var
+  DataTypeSize: byte;
+begin
+  if StartAddress >= CodeSize then
+    raise EIllegalState.Create('GetNewLinesCount: StartAddress is bigger or equals to CodeSize');
+
+  DataTypeSize := DataTypeSizes[Options.DataType];
+
+  case Options.Option of
+    dcItems: Result := Min(Options.Value, (CodeSize - StartAddress) div DataTypeSize);
+    dcBytes: Result := Min(Options.Value, CodeSize - StartAddress) div DataTypeSize;
+    dcMaxAddress: Result := (Min(Options.Value, CodeSize) - StartAddress) div DataTypeSize;
+    dcEndSection: result:= (CodeSize - StartAddress) div DataTypeSize;
+    else
+      raise EIllegalState.Create('GetNewLinesCount: Bad dataChangeOptions.options');
+  end;
+end;
+
+
 
 end.

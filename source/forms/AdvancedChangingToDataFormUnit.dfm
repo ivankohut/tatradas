@@ -1,10 +1,10 @@
 object AdvancedChangingToDataForm: TAdvancedChangingToDataForm
-  Left = 19
-  Top = 111
+  Left = 630
+  Top = 189
   BorderStyle = bsDialog
   Caption = 'Advanced changing options'
   ClientHeight = 235
-  ClientWidth = 442
+  ClientWidth = 598
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -18,7 +18,7 @@ object AdvancedChangingToDataForm: TAdvancedChangingToDataForm
   PixelsPerInch = 96
   TextHeight = 13
   object OKButton: TButton
-    Left = 274
+    Left = 426
     Top = 202
     Width = 75
     Height = 25
@@ -28,7 +28,7 @@ object AdvancedChangingToDataForm: TAdvancedChangingToDataForm
     OnClick = OKButtonClick
   end
   object CancelButton: TButton
-    Left = 358
+    Left = 510
     Top = 202
     Width = 75
     Height = 25
@@ -40,14 +40,14 @@ object AdvancedChangingToDataForm: TAdvancedChangingToDataForm
   object DataTypeGroupBox: TGroupBox
     Left = 8
     Top = 8
-    Width = 161
+    Width = 297
     Height = 81
     Caption = 'Choose data type'
     TabOrder = 2
     object DataTypeComboBox: TComboBox
       Left = 16
       Top = 28
-      Width = 129
+      Width = 265
       Height = 21
       ItemHeight = 13
       ParentShowHint = False
@@ -67,7 +67,7 @@ object AdvancedChangingToDataForm: TAdvancedChangingToDataForm
   object SignGroupBox: TGroupBox
     Left = 8
     Top = 104
-    Width = 161
+    Width = 297
     Height = 89
     Caption = 'Signed or unsigned'
     TabOrder = 3
@@ -91,9 +91,9 @@ object AdvancedChangingToDataForm: TAdvancedChangingToDataForm
     end
   end
   object OptionsGroupBox: TGroupBox
-    Left = 184
+    Left = 320
     Top = 8
-    Width = 249
+    Width = 265
     Height = 185
     Caption = 'Conditions'
     TabOrder = 4
@@ -143,6 +143,33 @@ object AdvancedChangingToDataForm: TAdvancedChangingToDataForm
       Caption = 'Code begins'
       TabOrder = 4
       OnClick = CodeRadioButtonClick
+    end
+    object PanelForItemsCountEdit: TPanel
+      Left = 128
+      Top = 20
+      Width = 121
+      Height = 25
+      BevelOuter = bvNone
+      Caption = 'PanelForItemsCountEdit'
+      TabOrder = 5
+    end
+    object PanelForBytesCountEdit: TPanel
+      Left = 128
+      Top = 52
+      Width = 121
+      Height = 25
+      BevelOuter = bvNone
+      Caption = 'PanelForBytesCountEdit'
+      TabOrder = 6
+    end
+    object PanelForMaxAddressEdit: TPanel
+      Left = 128
+      Top = 84
+      Width = 121
+      Height = 25
+      BevelOuter = bvNone
+      Caption = 'PanelForMaxAddressEdit'
+      TabOrder = 7
     end
   end
 end

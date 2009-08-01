@@ -26,7 +26,7 @@ object GoToAddressForm: TGoToAddressForm
     Caption = 'Target address:'
   end
   object OKButton: TButton
-    Left = 72
+    Left = 74
     Top = 48
     Width = 75
     Height = 25
@@ -36,7 +36,7 @@ object GoToAddressForm: TGoToAddressForm
     OnClick = OKButtonClick
   end
   object CancelButton: TButton
-    Left = 156
+    Left = 158
     Top = 48
     Width = 75
     Height = 25
@@ -44,5 +44,14 @@ object GoToAddressForm: TGoToAddressForm
     Caption = 'Cancel'
     TabOrder = 1
     OnClick = CancelButtonClick
+  end
+  object PlaceForEditPanel: TPanel
+    Left = 96
+    Top = 14
+    Width = 137
+    Height = 25
+    BevelOuter = bvNone
+    Caption = 'Place for Edit'
+    TabOrder = 2
   end
 end

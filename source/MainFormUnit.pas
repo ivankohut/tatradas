@@ -156,7 +156,7 @@ type
     procedure CloseFileClick(Sender: TObject);
     procedure ExitClick(Sender: TObject);
 
-    function CloseMainFile: boolean;// Zavretie suboru
+//    function CloseMainFile: boolean;// Zavretie suboru
 
     procedure About1Click(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
@@ -206,6 +206,9 @@ type
     function GetActiveFrame: TTabFrameTemplate;
     procedure SetModified(AModified: boolean);
     procedure DoOpenFile(AFileName: string);
+    procedure DoCloseProject;
+    function DoSaveProject: Boolean;
+    function AskToSaveAndCloseProject: Boolean;
   private
     fOriginalWndProcOfMainPageControl: TWndMethod;
     procedure MainPageControlSubClassWndProc(var AMessage: TMessage);
@@ -281,8 +284,8 @@ var
 begin
   Application.ProcessMessages;
 
-  if ExecFile <> nil then
-    CloseFileClick(nil);
+  if not AskToSaveAndCloseProject then
+    Exit;
 
   try
     ExecFile := ExecFileManager.CreateNewExecFile(AFileName);
@@ -390,6 +393,15 @@ end;
 
 
 procedure TMainForm.SaveProjectClick(Sender: TObject);
+begin
+  DoSaveProject;
+end;
+
+
+{
+  Returns True after successful saving, False if user did not choose target file. 
+}
+function TMainForm.DoSaveProject: Boolean;
 var
   SaveThread: TProgressThread;
 begin
@@ -404,7 +416,10 @@ begin
     end;
 
     Modified := False;
-  end;
+    Result := True;
+  end
+  else
+    Result := False;
 end;
 
 
@@ -426,8 +441,9 @@ begin
   if not OpenProjectOpenDialog.Execute then Exit;
   OpenProjectPath:= ExtractFilePath(OpenProjectOpenDialog.FileName);
 
-  if ExecFile <> nil then
-    CloseFileClick(nil);
+  if not AskToSaveAndCloseProject then
+    Exit;
+
 
   LoadThread := TLoadThread.Create(ExecFileManager, OpenProjectOpenDialog.FileName);
   try
@@ -462,7 +478,62 @@ begin
 end;
 
 
+// Zatvorenie otvoreneho suboru/projektu - uvolnenie prislusnych objektov
+//a vycistenie uzivatelskeho rozhrania (zatvorenie tabov, nastavenie Enabled na tlacidlach, atd.) 
+procedure TMainForm.DoCloseProject;
+begin
+  if ExecFile = nil then
+    Exit;
 
+  // Close tabs
+  while MainPageControl.PageCount > 0 do
+    MainPageControl.Pages[0].Free;
+
+  // Buttons and menu items
+  DisassembleMyButton.Enabled:= false;
+  Disassemble1.Enabled:= false;
+  CloseFile1.Enabled:= false;
+  SaveProject1.Enabled:= false;
+  Export1.Enabled := false;
+  SaveMyButton.Enabled:= false;
+  HexEditor1.Enabled:= false;
+
+  // Other stuff
+  HexEditForm.Close;
+  Modified:= false;
+  Caption:= TatraDASFullNameVersion;
+
+  FreeAndNil(ExecFile);
+end;
+
+
+{
+//If project is modified, then ask user whether to save project.
+Return False, if project is modified, and
+1) user clicks cancel
+2) user wants to save a cancels savings during file selection.
+Otherwise return True (or exception).
+}
+function TMainForm.AskToSaveAndCloseProject: Boolean;
+begin
+  if Modified then begin
+    case DisplayMessage(InjectStr(ProjectModifiedStr, ['''' + ExecFile.FileName + '''']), mtConfirmation, mbYesNoCancel) of
+      mrYes: Result := DoSaveProject;
+      mrNo: Result := True;
+      mrCancel: Result := False;
+      else
+        Result := False; // Cannot happen
+    end;
+  end
+  else
+    Result := True;
+
+  if Result then
+    DoCloseProject;
+end;
+
+
+{
 function TMainForm.CloseMainFile: boolean;
 begin
   // nothing to close
@@ -479,23 +550,16 @@ begin
       mrCancel: Exit;
     end;
   end;
-
-  while MainPageControl.PageCount > 0 do
-    MainPageControl.Pages[0].Free;
-
-  ExecFile.Free;
-  ExecFile:= nil;
-  Modified:= false;
-  DisassembleMyButton.Enabled:= false;
-  Disassemble1.Enabled:= false;
-  CloseFile1.Enabled:= false;
-  SaveProject1.Enabled:= false;
-  Export1.Enabled := false;
-  SaveMyButton.Enabled:= false;
-  HexEditor1.Enabled:= false;
-  HexEditForm.Close;
-  Caption:= TatraDASFullNameVersion;
+  DoCloseProject;
   result:= true;
+end;
+}
+
+
+
+procedure TMainForm.CloseFileClick(Sender: TObject);
+begin
+  AskToSaveAndCloseProject;
 end;
 
 
@@ -507,24 +571,10 @@ end;
 
 
 
-procedure TMainForm.CloseFileClick(Sender: TObject);
-begin
-  CloseMainFile;
-end;
-
-
-
-procedure TMainForm.About1Click(Sender: TObject);
-begin
-  AboutBox.ShowModal;
-end;
-
-
-
 procedure TMainForm.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
-  if not CloseMainFile then begin // Vycistenie ExecFile
-    Action:=caNone;
+  if not AskToSaveAndCloseProject then begin
+    Action := caNone;
     Exit;
   end;
   sINI.WriteInteger('Settings', 'Top', Top);
@@ -633,8 +683,14 @@ begin
 
 //  OptionsForm.LoadSettings(sINI); - treba volat ked uz je OptionsForm vytvoreny
 
-  //Logger.AddListener(TTextFileLoggerListener.Create('disasm.log'));
   Logger.Info('----- START -----');
+end;
+
+
+
+procedure TMainForm.About1Click(Sender: TObject);
+begin
+  AboutBox.ShowModal;
 end;
 
 
@@ -701,6 +757,12 @@ begin
   Help2.Caption:= Translator.TranslateControl('MenuCaption','HelpTopic');
   About1.Caption:= Translator.TranslateControl('MenuCaption','About');
 
+  actGoToEntryPoint.Caption := Translator.TranslateControl('Code','EntrypointButton');
+  actGoToAddress.Caption := Translator.TranslateControl('Code','GotoAddressButton');
+  actGoToLine.Caption := Translator.TranslateControl('Code','GotoLineButton');
+  actReturnJump.Caption := Translator.TranslateControl('Code','ReturnButton');
+  actFollowJump.Caption := Translator.TranslateControl('Code','FollowButton');
+
   ToggleBookmarks.Caption:= Translator.TranslateControl('Code','ToggleBookmark');
   ToggleBookmarks.Hint:= Translator.TranslateControl('Code','MainToggleBookmarkHint');
   for BookMarkIndex:= 0 to 9 do begin
@@ -750,10 +812,6 @@ begin
   ProcessText.SavingDAS:= Translator.TranslateControl('LabelCaption','SavingDAS');
   ProcessText.SavingDHF:= Translator.TranslateControl('LabelCaption','SavingDHF');
 
-  GotoEntryPoint1.Caption:= Translator.TranslateControl('Code','EntrypointButton');
-  GotoAddress1.Caption:= Translator.TranslateControl('Code','GotoAddressButton');
-  FollowJUMPCALL1.Caption:= Translator.TranslateControl('Code','FollowButton');
-  ReturnfromJUMPCALL1.Caption:= Translator.TranslateControl('Code','ReturnButton');
 
 // Zmena hintov
 
@@ -793,7 +851,6 @@ begin
 
   Help2.Hint:= Translator.TranslateControl('MenuHint','Help');
   About1.Hint:= Translator.TranslateControl('MenuHint','About');
-
 end;
 
 

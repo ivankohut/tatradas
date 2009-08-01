@@ -7,7 +7,11 @@ uses
     Classes, ConsoleTestRunner,
   {$ELSE}
     TestFrameWork,
-    GUITestRunner,
+    {$IFDEF CONSOLE}
+      TextTestRunner,
+    {$ELSE}
+      GUITestRunner,
+    {$ENDIF}
   {$ENDIF}
 
   procmatTests in 'procmatTests.pas',
@@ -24,7 +28,7 @@ uses
     {$ENDIF}
   {$ENDIF}
 
-  TatraDAS_SynEditStringList in '../source/misc/TatraDAS_SynEditStringList.pas',
+  TatraDAS_SynEditStringList in '..\source\misc\TatraDAS_SynEditStringList.pas',
 
   procmat in '..\source\procmat.pas',
   ExecFileManagerUnit in '..\source\ExecFileManagerUnit.pas',
@@ -106,8 +110,11 @@ uses
 begin
   {$IFDEF MSWINDOWS}
     {$IFDEF GUI_B}
-    Application.Initialize;
-    TGUITestRunner.RunTest(RegisteredTests);
+      Application.Initialize;
+      TGUITestRunner.RunTest(RegisteredTests);
+    {$ENDIF}
+    {$IFDEF CONSOLE}
+      TextTestRunner.RunRegisteredTests;
     {$ENDIF}
   {$ENDIF}
 end.

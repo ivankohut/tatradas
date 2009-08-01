@@ -21,8 +21,7 @@ uses
   DisassemblerTypes,
   CodeSectionUnit,
   ImportSectionUnit,
-  ExportSectionUnit,
-  ResourceSectionUnit;
+  ExportSectionUnit;
 
 type
   TExecFileCreateSectionEvent = procedure (ASection: TSection) of object;
@@ -227,9 +226,11 @@ begin
         Section := TExportSection.Create(self);
         fExportSection := Section as TExportSection;
       end;
+      {
       stResource: begin
         Section := TResourceSection.Create(self);
       end;
+      }
       else
         raise EIllegalState.Create('Executable.LoadFromFile: Bad section type');
     end;

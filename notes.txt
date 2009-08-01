@@ -1,3 +1,0 @@
-uvolnenie Decodera | skopirovanie do plochy | uvolnenie Disassembled
-531=35%               953=62%                   47=3%               1531
-454=34%               812=61%                   63=5%              1329

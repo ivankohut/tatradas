@@ -59,11 +59,11 @@ const
 
   // TatraDAS version constants
   TatraDASVersion: cardinal = $00029900;
-  TatraDASDate: string = '31. 3. 2009';
+  TatraDASDate = '1. 8. 2009';
   TatraDASProjectVersion = $00030002;
-  ShortTatraDASVersion: string = '2.9.9';
-  TatraDASFullName: string = 'TatraDAS disassembler';
-  TatraDASFullNameVersion = 'TatraDAS disassembler 2.9.9 devel';
+  ShortTatraDASVersion = '2.9.9';
+  TatraDASFullName = 'TatraDAS disassembler';
+  TatraDASFullNameVersion = TatraDASFullName + ' ' + ShortTatraDASVersion;
   CopyrightStr = 'Ivan Kohut (c) 2009';
   DASFileFirstLine = ';DisASsembled file, Original file: %s  ' + TatraDASFullNameVersion + ', ' + CopyrightStr;
   DASFileExtension = '.das';
@@ -81,11 +81,10 @@ type
   TDisassembleType = (dtBytes, dtMaxAddress, dtNormal);
 
   TDataChangeOptions = record
-    DataType: byte;
-    DatatypeSize: byte;
-    Signed: boolean;
+    DataType: Byte;
+    Signed: Boolean;
     Option: TDataChangeType;
-    Value: cardinal;
+    Value: Cardinal;
   end;
 
   TDisassembleFormOptions = record
@@ -364,5 +363,10 @@ begin
 end;
 
 
+initialization
+{
+  Logger.AddListener(TTextFileLoggerListener.Create(ExpandFileName('disasm.log')));
+  Logger.LogLevel := llDebug;
+}
 
 end.

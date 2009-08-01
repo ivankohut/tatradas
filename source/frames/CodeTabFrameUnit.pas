@@ -373,11 +373,8 @@ var
   i: integer;
 begin
   (Parent as TTabSheet).Caption:= Translator.TranslateControl('Code','Caption') + IntToStr(fSection.CodeSectionIndex);
-// Popisky tlacidiel
-  GotoEntrypointButton.Caption:=Translator.TranslateControl('Code','EntrypointButton');
-  GotoAddressButton.Caption:=Translator.TranslateControl('Code','GotoAddressButton');
-  FollowButton.Caption:=Translator.TranslateControl('Code','FollowButton');
-  ReturnButton.Caption:=Translator.TranslateControl('Code','ReturnButton');
+
+  // Buttons - translated trough actions
 
 // Popisky Label
 {
@@ -429,7 +426,6 @@ begin
   CodePopupMenu.Items[12].Items[0].Caption:=Translator.TranslateControl('Code','InsertComment');
   CodePopupMenu.Items[12].Items[1].Caption:=Translator.TranslateControl('Code','InsertEmpty');
   CodePopupMenu.Items[13].Caption:=Translator.TranslateControl('Code','Remove');
-
 end;
 
 
@@ -446,6 +442,7 @@ end;
 
 procedure TCodeTabFrame.GotoAddressButtonClick(Sender: TObject);    // Premiestnenie na zadanu adresu
 begin
+  GotoAddressForm.MinAddress := fSection.MemOffset;
   GotoAddressForm.MaxAddress := fSection.MaxAddress;
   if GotoAddressForm.ShowModal = mrOK then
     GotoPosition(fSection.GetPosition(GotoAddressForm.Address), soBeginning);
@@ -597,7 +594,17 @@ end;
 
 
 procedure TCodeTabFrame.AdvancedChangeToDataClick(Sender: TObject);
+var
+  LineIndex: Cardinal;
+  MaxAddressMinValue: Cardinal;
 begin
+  LineIndex := fSection.FindAddressableLine(plocha.CaretY - 1);
+  if LineIndex = $FFFFFFFF then
+    MaxAddressMinValue := $FFFFFFFF
+  else
+    MaxAddressMinValue := GetLineAddress(plocha.Lines.Strings[LineIndex]);
+
+  AdvancedChangingToDataForm.SetMaxAdressMinValue(MaxAddressMinValue);
   AdvancedChangingToDataForm.SetMaxAdressMaxValue(fSection.MaxAddress);
   if AdvancedChangingToDataForm.ShowModal = mrOK then
     ChangeToData(AdvancedChangingToDataForm.Options);
@@ -656,32 +663,28 @@ end;
 
 // Conversion routines
 
-
 procedure TCodeTabFrame.ChangeToData(Options: TDataChangeOptions);
 
-  function GetNewLinesCount(Options: TDataChangeOptions; Address, Index: cardinal):integer;
+  function ComputeNewLinesCount(Options: TDataChangeOptions; StartAddress, Index: Cardinal): Integer;
   var
-    DataTypeSize: byte;
-    i: cardinal;
+    i: Cardinal;
   begin
-    result:= 0;
-    DataTypeSize:= DataTypeSizes[Options.datatype];
-    case Options.Option of
-      dcItems: result:= Min(Options.value, (fSection.MemSize - Address) div DataTypeSize);
-      dcBytes: result:= Min(Options.value + Address, fSection.MemSize) div DataTypeSize; //dcBytes: result:= Options.value shr Options.datatype
-      dcMaxAddress: result:= (Options.value - fSection.MemOffset - Address) div DataTypeSize;
-      dcEndSection: result:= (fSection.MemSize - Address) div DataTypeSize;
-      dcCode: begin
-        for i := Index to plocha.Lines.Count - 1 do begin
-          if (GetLineType(plocha.lines[i]) <> ltInstruction) then
-            Continue;
-          if plocha.lines[i][ilInstructionMnemonicIndex] <> UpCase(plocha.lines[i][ilInstructionMnemonicIndex]) then
-            Continue;
-          result := (GetLineAddress(plocha.lines[i]) - Address) div DataTypeSize;
-          Break;
-        end;
+    if Options.Option = dcCode then
+      for i := Index to plocha.Lines.Count - 1 do begin
+        if (GetLineType(plocha.lines[i]) <> ltInstruction) then
+          Continue;
+        if not IsCodeInstructionStr(Copy(plocha.lines[i], ilInstructionMnemonicIndex, MaxInt)) then
+          Continue;
+
+        Options.Option := dcMaxAddress;
+        Options.Value := GetLineAddress(plocha.lines[i]);
+        Break;
       end;
-    end;
+
+    if Options.Option = dcMaxAddress then
+      Options.Value := Options.Value - fSection.MemOffset;
+
+    Result := GetNewLinesCount(fSection.CodeSize, Options, StartAddress);
   end;
 
 var
@@ -701,7 +704,7 @@ begin
 
   StartAddress:= GetLineAddress(plocha.Lines.Strings[LineIndex]);
   StartOffset:= StartAddress - fSection.MemOffset;
-  NewLinesCount:= GetNewLinesCount(Options, StartOffset, LineIndex);
+  NewLinesCount:= ComputeNewLinesCount(Options, StartOffset, LineIndex);
   if NewLinesCount = 0 then
     Exit;
 
@@ -817,21 +820,22 @@ begin
   end;
 
   // Set options for disassembling
-  DisOptions.Address:= GetLineAddress(plocha.Lines[LineIndex]);
+  DisOptions.Address := GetLineAddress(plocha.Lines[LineIndex]);
   case Options.Option of
-    dtBytes: DisOptions.Size:= Options.Value;
-    dtMaxAddress: DisOptions.Size:= Max(DisOptions.Address - Options.Value, 0);
-    dtNormal: DisOptions.Size:=  fSection.CodeSize - (DisOptions.Address - fSection.MemOffset);
+    dtBytes: DisOptions.Size := Options.Value;
+    dtMaxAddress:
+      if Options.Value > DisOptions.Address then
+        DisOptions.Size := Options.Value - DisOptions.Address
+      else
+        Exit;
+
+    dtNormal: DisOptions.Size := fSection.CodeSize - (DisOptions.Address - fSection.MemOffset);
   end;
   DisOptions.Bit32:= Options.Bit32;
   DisOptions.Recursive:= Options.Recursive;
 
   // Disassemble // and move carret to the first instruction
-  {$IFDEF NOTHREADS}
-    fSection.DisassemblePart(DisOptions);
-  {$ELSE}
   ProgressForm.Execute(TDisassemblePartThread.Create(fSection, DisOptions));
-  {$ENDIF}
   GotoPosition(fSection.GetPosition(DisOptions.Address), soBeginning);
   if Assigned(fOnChangeDisassembled) then
     fOnChangeDisassembled(plocha);
@@ -841,7 +845,7 @@ end;
 
 function TCodeTabFrame.GetSection: TSection;
 begin
-  result:= fSection;
+  Result := fSection;
 end;
 
 
@@ -849,14 +853,15 @@ end;
 procedure TCodeTabFrame.UpdateActions;
 begin
   with MainForm do begin
-    actFollowJump.Enabled:= fCanFollowJump;
-    actReturnJump.Enabled:= (self.fJumpStack.Count > 0);
-    actGotoEntryPoint.Enabled:= fSection.HasEntryPoint;
-    actGoToAddress.Enabled:= (fSection.CodeSize > 0); 
+    actFollowJump.Enabled := fCanFollowJump;
+    actReturnJump.Enabled := (self.fJumpStack.Count > 0);
+    actGotoEntryPoint.Enabled := fSection.HasEntryPoint;
+    actGoToAddress.Enabled := (fSection.CodeSize > 0);
   end;
 end;
 
 {$R *.dfm}
+
 
 
 end.

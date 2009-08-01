@@ -14,8 +14,7 @@ uses
   SectionUnit,
   CodeSectionUnit,
   ImportSectionUnit,
-  ExportSectionUnit,
-  ResourceSectionUnit;
+  ExportSectionUnit;
 
 type
 

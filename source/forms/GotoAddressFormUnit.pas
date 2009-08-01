@@ -13,8 +13,6 @@ uses
     Classes,
     INIFiles,
 
-    {PBBinHexEdit, }
-
     procmat,
     StringRes,
     myedits;
@@ -24,18 +22,23 @@ type
     OKButton: TButton;
     CancelButton: TButton;
     GotoAddressLabel: TLabel;
+    PlaceForEditPanel: TPanel;
     procedure CancelButtonClick(Sender: TObject);
     procedure OKButtonClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormActivate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
   private
+    fMinAddress: Cardinal;
     GotoAddressEdit: THexPositiveEdit;
     procedure SetMaxAddress(MaxAddress: cardinal);
     function GetAddress: cardinal;
+    procedure RefreshOKButtonState;
+    procedure GotoAddressEditChange(Sender: TObject);
   public
     procedure Translate;
     property MaxAddress: Cardinal write SetMaxAddress;
+    property MinAddress: Cardinal write fMinAddress;
     property Address: Cardinal read GetAddress;
   end;
 
@@ -62,6 +65,20 @@ end;
 
 
 
+procedure TGoToAddressForm.RefreshOKButtonState;
+begin
+  OKButton.Enabled := (GotoAddressEdit.AsCardinal >= fMinAddress);
+end;
+
+
+
+procedure TGoToAddressForm.GotoAddressEditChange(Sender: TObject);
+begin
+  RefreshOKButtonState;
+end;
+
+
+
 procedure TGoToAddressForm.CancelButtonClick(Sender: TObject);
 begin
   ModalResult := mrCancel;
@@ -79,11 +96,9 @@ end;
 procedure TGoToAddressForm.FormCreate(Sender: TObject);
 begin
   GotoAddressEdit := THexPositiveEdit.Create(self);
-  GotoAddressEdit.Parent := self;
-  GotoAddressEdit.Left := 110;
-  GotoAddressEdit.Top := 16;
-  GotoAddressEdit.Width := 121;
-  GotoAddressEdit.Height := 21;
+  GotoAddressEdit.Parent := PlaceForEditPanel;
+  GotoAddressEdit.Align := alClient;
+  GotoAddressEdit.OnChange := GotoAddressEditChange;
 end;
 
 
@@ -91,6 +106,7 @@ end;
 procedure TGoToAddressForm.FormActivate(Sender: TObject);
 begin
   GotoAddressEdit.SetFocus;
+  RefreshOKButtonState;
 end;
 
 

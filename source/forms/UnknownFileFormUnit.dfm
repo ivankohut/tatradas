@@ -17,7 +17,7 @@ object UnknownFileFormatForm: TUnknownFileFormatForm
   OnCreate = FormCreate
   PixelsPerInch = 96
   TextHeight = 13
-  object Panel1: TPanel
+  object MainPanel: TPanel
     Left = 16
     Top = 16
     Width = 433
@@ -92,14 +92,14 @@ object UnknownFileFormatForm: TUnknownFileFormatForm
     end
     object EntryPointLabel: TLabel
       Left = 48
-      Top = 156
+      Top = 160
       Width = 82
       Height = 13
       Caption = 'Entry point offset:'
     end
     object SizeLabel: TLabel
       Left = 48
-      Top = 184
+      Top = 192
       Width = 86
       Height = 13
       Caption = 'Code section size:'
@@ -162,6 +162,33 @@ object UnknownFileFormatForm: TUnknownFileFormatForm
         Caption = '32 bit'
         TabOrder = 1
       end
+    end
+    object PanelForStartingOffset: TPanel
+      Left = 256
+      Top = 122
+      Width = 161
+      Height = 25
+      BevelOuter = bvNone
+      Caption = 'PanelForStartingOffset'
+      TabOrder = 2
+    end
+    object PanelForEntryPointOffset: TPanel
+      Left = 256
+      Top = 154
+      Width = 161
+      Height = 25
+      BevelOuter = bvNone
+      Caption = 'PanelForEntryPointOffset'
+      TabOrder = 3
+    end
+    object PanelForCodeSectionSize: TPanel
+      Left = 256
+      Top = 186
+      Width = 161
+      Height = 25
+      BevelOuter = bvNone
+      Caption = 'PanelForCodeSectionSize'
+      TabOrder = 4
     end
   end
   object OKButton: TButton

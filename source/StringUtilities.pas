@@ -1,10 +1,3 @@
-{
-  TODO:
-     - CarToHex by mal asi nejako pouzivat parameter Digits, nie ???
-     - optimalizovat CarToHex
-
-}
-
 unit StringUtilities;
 
 interface
@@ -14,17 +7,27 @@ uses
   Math,
   StrUtils;
 
+// Convert AValue to string
+function CarToStr(AValue: Cardinal): string;
 
-function CarToStr(Value: cardinal): string;
-function CarToHex(Value: cardinal; Digits: integer): string;
+// Convert Value to hex string using at least Digits digits
+function CarToHex(Value: Cardinal; Digits: Integer): string;
 
 function IsHexNumber(HexNumber: string): boolean;
 
-function StringLeftPad(AString: string; Size: integer): string; overload;
-function StringLeftPad(AString: string; Size: integer; PadChar: char): string; overload;
+// Same as StringLeftPad(AString, Size, PadChar) using space as PadChar
+function StringLeftPad(AString: string; Size: Integer): string; overload;
 
-function StringRightPad(AString: string; Size: integer): string; overload;
-function StringRightPad(AString: string; Size: integer; PadChar: char): string; overload;
+// Append PadChar characters (to the left) to AString to make it at least Size characters long.
+// Returns AString if it's length is Size or more
+function StringLeftPad(AString: string; Size: Integer; PadChar: Char): string; overload;
+
+// Same as StringRightPad(AString, Size, PadChar) using space as PadChar 
+function StringRightPad(AString: string; Size: Integer): string; overload;
+
+// Append PadChar characters (to the right) to AString to make it at least Size characters long.
+// Returns AString if it's length is Size or more
+function StringRightPad(AString: string; Size: Integer; PadChar: Char): string; overload;
 
 function IntToSignedHex(Value: integer; Digits: Integer): string;
 function InsertStr(const Source: string; const Dest: string; Index: integer): string;
@@ -44,57 +47,61 @@ end;
 
 
 
-function StringLeftPad(AString: string; Size: integer; PadChar: char): string;
+function StringLeftPad(AString: string; Size: Integer; PadChar: Char): string;
 var
   i: integer;
   PadCharCount: integer;
 begin
-{
-  result:= AString;
-  for i:=1 to Size - Length(AString) do
-    result:= PadChar + result;
-}
-  PadCharCount:= Size - Length(AString);
-  SetLength(result, Max(Size, Length(AString)));
-  for i:=1 to PadCharCount do
-    result[i]:= PadChar;
-  result:= result + AString;
+  if Length(AString) >= Size then
+    Result := AString
+  else begin
+    PadCharCount := Size - Length(AString);
+    SetLength(Result, Size);
+    for i := 1 to PadCharCount do
+      Result[i] := PadChar;
+
+    Move(AString[1], Result[PadCharCount + 1], Length(AString));
+  end;
 end;
 
 
 
-function StringRightPad(AString: string; Size: integer): string;
+function StringRightPad(AString: string; Size: Integer): string;
 begin
   result:= StringRightPad(AString, Size, ' ');
 end;
 
 
 
-function StringRightPad(AString: string; Size: integer; PadChar: char): string;
+function StringRightPad(AString: string; Size: Integer; PadChar: Char): string;
 var
-  i: integer;
+  i: Integer;
 begin
-  SetLength(result, Max(Length(AString), Size));
+  SetLength(Result, Max(Length(AString), Size));
 
   // Copy AString into result
-  for i:=1 to Length(AString) do
-    result[i]:= AString[i];
+  for i := 1 to Length(AString) do
+    Result[i] := AString[i];
 
   // Fill the rest of result with PadChar
-  for i:=Length(AString)+1 to Size do
-    result[i]:= PadChar;
+  for i := Length(AString) + 1 to Size do
+    Result[i] := PadChar;
 end;
 
 
 
-function CarToStr(Value: cardinal): string;
+function CarToStr(AValue: Cardinal): string;
 begin
-  result:= '';
-  while Value <> 0 do begin
-    result:= result + Chr(Value mod 10);
-    value:= value div 10;
+  if AValue = 0 then
+    Result := '0'
+  else begin
+    Result := '';
+    while AValue <> 0 do begin
+      Result := Result + Chr((AValue mod 10) + 48);
+      AValue := AValue div 10;
+    end;
+    Result := ReverseString(Result);
   end;
-  result:= ReverseString(result);
 end;
 
 
@@ -111,6 +118,8 @@ begin
     end;
     result := ReverseString(result);
   end;
+  if Length(Result) < Digits then
+    Result := StringLeftPad(Result, Digits, '0');
 end;
 
 

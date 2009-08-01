@@ -64,7 +64,6 @@ uses
   FileTabFrameUnit,
   ImportTabFrameUnit,
   ExportTabFrameUnit,
-  ResourceTabFrameUnit,
   CodeTabFrameUnit;
 
 
@@ -84,7 +83,7 @@ begin
     stCode: Frame := TCodeTabFrame.Create(MainForm, ASection);
     stExport: Frame := TExportTabFrame.Create(MainForm, ASection);
     stImport: Frame := TImportTabFrame.Create(MainForm, ASection);
-    stResource: Frame := TResourceTabFrame.Create(MainForm, ASection);
+//    stResource: Frame := TResourceTabFrame.Create(MainForm, ASection);
     else
       Exit;
   end;

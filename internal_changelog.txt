@@ -1,0 +1,43 @@
+TatraDAS disassembler
+ internal changelog
+
+2.9.9
+~ refaktorizacia Translator-a
+~ zavedeny typ instrukcie (napr. normal alebo undefined), odstranena polozka "opcode"
+~ refaktorizacia GROUP instrukcii
+~ refaktorizacia a kontrola FPU instrukcii
+~ stringy rozhadzane po suboroch
++ vlastny MessageDlg, aby zobrazoval buttony v jazyku TatraDASu
+~ optimalizovany ExportTabFrame - ListView nahradenym StringGrid-om (ak mala kniznica vela exportovanych funkcii, ako napr. svx680mi.dll - 16000 alebo bf_svx680mi.dll - 31000, tak sa ListItem-y vytvarali strasne dlho)
+~ errory a vynimky (ExecFileManager atd.)
++ ProgressManager:
+  - zjednotenie refreshovania zobrazovania progressu pre GUI a console mode,
+  - zabezpecuje dobiehanie do 100% (aby sa zobrazil progress, akokolvek kratky, aspon 100%), prejavuje sa v console mode (FPC and Linux)
+- refaktorizacia ExportSectionToNASM (+ tvorba testov)
+- poriadok v changeLog-och
++ buildovaci skript (exe, testy, instalator, zip balik zdrojakov, konzolova verzia, zip balik zdrojakov third) 
+  - pre mna prakticky nepouzitelny, lebo finalne buildovanie robim cez Delphi 2006 Explorer, ktore nema konzolovy kompilator
+
+2.9.7
+CodeSectionUnit:
+  - chvilka cakania po zdisassemblovani = uvolnenie Decodera(34%) + skopirovanie Dissasembled do plocha.lines(62%) + uvolnenie Disassembled(4%)
+  - zmena na data -> spojene 3 funkcie do 1 (ChangeToData)
+  - UNICODE strings (napr. kernel32-winxp.dll)
+Disassembler:
+  - spracovanie prefixov prerobene
+
+2.9.6
+- zjednoteny preklad v StringRes.pas
+- Kalkulacka (este nedokoncena), Options formular
+  - KERNEL32.DLL - kodova sekcia 1 je disassemblovana aj zo zaciatku (co nie je EntryPoint) bez dovodu
+  - disassemblovanie rozdelene na dve metody - DisassembleAll a DisassemblePart
+
+2.9.5
+- dynamicky disassembled -> zmena disassemblovaneho na data - faza I
+- odstranenie PosIndex-u, zistovanie adresy instrukcie z textu
+- segment override prefix vo vnutri []
+- zmena disasm strategie - algoritmus disassemblovania podla skokovych referencii
+=>  - vyhladavanie skokov priamo pri disassemblovani => cast "Hladanie skokov" zrusena,
+    - funkcia TDisassembler.SpracujRelative ciastocne prepisana do assembleru
+    - funkcia TDisassembler.SpracujImmediate ciastocne prepisana do assembleru
+    - procedura TDisassembler.ReadFourBytes prepisana

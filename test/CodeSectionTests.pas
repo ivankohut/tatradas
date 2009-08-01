@@ -21,6 +21,8 @@ type
     procedure TestGetLineType;
     procedure TestGetReplacingLines;
     procedure TestGetTargetAddress;
+    procedure TestGetNewLinesCount;
+    procedure TestIsCodeInstructionStr;
   end;
 
 
@@ -323,6 +325,101 @@ begin
   Check(not GetTargetAddress('00000000 04                       CALL [0x00001237]', Address));
 end;
 
+
+
+procedure TCodeSectionTests.TestGetNewLinesCount;
+var
+  Options: TDataChangeOptions;
+begin
+  Options.DataType := dtWord;
+  //Options.Signed := false; - unimportant
+  Options.Option := dcItems;
+  Options.Value := 2;
+
+  // Items
+  try
+    GetNewLinesCount(0, Options, 0);
+    Check(false);
+  except
+    on E: EIllegalState do ;
+    else raise;
+  end;
+  Check(GetNewLinesCount(10, Options, 5) = 2);
+  Check(GetNewLinesCount(10, Options, 7) = 1);
+
+  // Bytes
+  Options.Option := dcBytes;
+  Options.Value := 5;
+  try
+    GetNewLinesCount(0, Options, 0);
+    Check(false);
+  except
+    on E: EIllegalState do ;
+    else raise;
+  end;
+  Check(GetNewLinesCount(10, Options, 0) = 2);
+  Check(GetNewLinesCount(10, Options, 5) = 2);
+  Check(GetNewLinesCount(10, Options, 6) = 2);
+  Check(GetNewLinesCount(10, Options, 7) = 1);
+
+  // MaxAddress
+  Options.Option := dcMaxAddress;
+  Options.Value := 5;
+  try
+    GetNewLinesCount(0, Options, 0);
+    Check(false);
+  except
+    on E: EIllegalState do ;
+    else raise;
+  end;
+  Check(GetNewLinesCount(10, Options, 0) = 2);
+  Check(GetNewLinesCount(5, Options, 4) = 0);
+  Check(GetNewLinesCount(10, Options, 1) = 2);
+  Check(GetNewLinesCount(10, Options, 2) = 1);
+
+  // End of section
+  Options.Option := dcEndSection;
+//  Options.Value := 5; - unimportant
+  try
+    GetNewLinesCount(0, Options, 0);
+    Check(false);
+  except
+    on E: EIllegalState do ;
+    else raise;
+  end;
+  Check(GetNewLinesCount(1, Options, 0) = 0);
+  Check(GetNewLinesCount(10, Options, 9) = 0);
+  Check(GetNewLinesCount(10, Options, 8) = 1);
+  Check(GetNewLinesCount(10, Options, 7) = 1);
+  Check(GetNewLinesCount(10, Options, 6) = 2);
+  Check(GetNewLinesCount(10, Options, 5) = 2);
+end;
+
+
+procedure TCodeSectionTests.TestIsCodeInstructionStr;
+begin
+  Check(IsCodeInstructionStr('PUSH byte 0x42'));
+  Check(IsCodeInstructionStr('repe STOSD'));
+  Check(IsCodeInstructionStr('repne SCASB'));
+  Check(IsCodeInstructionStr('MOV ESI,dword [EBP+0x0C]'));
+  Check(IsCodeInstructionStr('lock ADD dword [0x12345678], EAX'));
+  Check(not IsCodeInstructionStr('byte 0x00'));
+  Check(not IsCodeInstructionStr('byte 0x57 ''W'''));
+  Check(not IsCodeInstructionStr('word 0xFFFE'));
+  Check(not IsCodeInstructionStr('word -0x0002'));
+  Check(not IsCodeInstructionStr('dword 0x4D8BFFFE'));
+  Check(not IsCodeInstructionStr('qword 0x49CCE8F04D8BFFFE'));
+  Check(not IsCodeInstructionStr('single 2.936012E0008'));
+  Check(not IsCodeInstructionStr('double 3.30092895611169E0047'));
+  Check(not IsCodeInstructionStr('extended 1.8981083089834215E-4566'));
+  Check(not IsCodeInstructionStr('single NAN'));
+  Check(not IsCodeInstructionStr('double NAN'));
+  Check(not IsCodeInstructionStr('unsupported extended real number'));
+  Check(not IsCodeInstructionStr('pstring ''aaa'''));
+  Check(not IsCodeInstructionStr('cstring ''aaa'''));
+  Check(not IsCodeInstructionStr('custring ''aaa'''));
+  Check(not IsCodeInstructionStr('pustring ''aaa'''));
+end;
 
 
 initialization

@@ -151,6 +151,7 @@ end;
 
 procedure THexEditForm.GotoAddressButtonClick(Sender: TObject);
 begin
+  GotoAddressForm.MinAddress := 0;
   GotoAddressForm.MaxAddress := NonNegative(HexEdit.DataSize - 1);
   if GotoAddressForm.ShowModal = mrOK then
     HexEdit.Seek(GotoAddressForm.Address, 0);

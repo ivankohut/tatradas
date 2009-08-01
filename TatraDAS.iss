@@ -10,7 +10,8 @@ DefaultGroupName=TatraDAS
 AllowNoIcons=yes
 SolidCompression=yes
 FlatComponentsList=no
-OutputBaseFilename=tdas299devel
+OutputBaseFilename=tdas299
+OutputDir=release
 PrivilegesRequired=none
 
 [Languages]

@@ -16,7 +16,10 @@ program TatraDAS;
 
 uses
   {$IFDEF MSWINDOWS}
-//    FastMM4,
+    {$IFNDEF FPC}                                                                                          
+      FastMM4 in '..\third\fastmm4\FastMM4.pas',
+      FastMM4Messages in '..\third\fastmm4\FastMM4Messages.pas',
+    {$ENDIF}
     {$IFDEF GUI_B}
       Windows,
       Forms,
@@ -92,7 +95,6 @@ uses
   CodeTabFrameUnit in 'frames\CodeTabFrameUnit.pas',
   ImportTabFrameUnit in 'frames\ImportTabFrameUnit.pas',
   ExportTabFrameUnit in 'frames\ExportTabFrameUnit.pas',
-  ResourceTabFrameUnit in 'frames\ResourceTabFrameUnit.pas',
 
 {$ELSE}
   CliUnit in 'CliUnit.pas',
@@ -122,8 +124,7 @@ uses
   // Sections' units
   CodeSectionUnit in 'sections\CodeSectionUnit.pas',
   ExportSectionUnit in 'sections\ExportSectionUnit.pas',
-  ImportSectionUnit in 'sections\ImportSectionUnit.pas',
-  ResourceSectionUnit in 'sections\ResourceSectionUnit.pas';
+  ImportSectionUnit in 'sections\ImportSectionUnit.pas';
 
 {$ENDIF}
 
@@ -175,7 +176,6 @@ uses
   CodeSectionUnit in 'sections/CodeSectionUnit.pas',
   ExportSectionUnit in 'sections/ExportSectionUnit.pas',
   ImportSectionUnit in 'sections/ImportSectionUnit.pas',
-  ResourceSectionUnit in 'sections/ResourceSectionUnit.pas',
 
   // Executable formats' units
   MZFileUnit in 'exefiles/MZFileUnit.pas',
@@ -193,8 +193,6 @@ uses
 
 
 begin
-  Logger.AddListener(TTextFileLoggerListener.Create('disasm.log'));
-
   Application.Initialize;
   Application.Title := 'TatraDAS';
   Application.Icon.Handle:=LoadIcon(hinstance,'mainicon');
@@ -233,7 +231,6 @@ begin
 end;
 
 begin
-  Logger.AddListener(TTextFileLoggerListener.Create('disasm.log'));
   Logger.Info('----- START -----');
 
   ProcessText.Disassembling:= 'Disassembling CS_';

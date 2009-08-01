@@ -35,68 +35,13 @@ Misc
     - pridat inicializaciu Regionov
     - exefily by mali mat len take polia, ktore su hodne ukladania do projektu (resp. existencie po otvoreni projektu), zvysok by sa mal posuvat pri vytvarani ako parametre
 - porozmyslat na rozdelenim SaveToFile na dve metody (DAS a DHF)
-
-2.9.9
-- ikona pre "Exportovat..."
-
-General
-- OptionsForm - co s tym ? nastavenia sa ukladaju od INI, aj preklady su pripravene
-- zamysliet sa nad zmyslom ExecFileManagera, co jej jeho ulohou, neda sa to spravit inak ? (nema ziaden stav(premenne))
-
-Disassembler:
-- refactorizacia disassemblera!
-
-Misc
-- procmat - rozdelit na viac unitov ?
 - mozno je to OK - pe import lookup table NULL error
-- dlho trvajuca zmena na ???
-
-GUI
+- povazovat sekciu do ktorej ukazuje EntryPoint za code sekciu aj ked jej flagy hovoria nieco ine, ide o subory komprimovane ASPackom (di.exe, Elpi.exe)
 - refaktorovat MyEdits
+  - HexPositiveEdit - pri stlaceni nepovolenych klaves (pismena) by sa nemal hybat kurzor
+- OptionsForm - co s tym ? nastavenia sa ukladaju od INI, aj preklady su pripravene
+- dlho trvajuca zmena na = napr. totalcmd.exe - 0x00569005 -> Pascal string ('Boolean')
 
-DONE:
-- errory a vynimky (ExecFileManager atd.)
-- ProgressManager:
-  - zjednotenie refreshovania zobrazovania progressu pre GUI a console mode,
-  - zabezpecuje dobiehanie do 100% (aby sa zobrazil progress, akokolvek kratky, aspon 100%), prejavuje sa v console mode (FPC and Linux)
-- pri znovu disassemblovani celeho suboru su zatvorene zalozky Code sekcii, lebo ich automaticke refreshovanie vo faze "priprava vystupu" tuto fazu strasne spomaluje
-- refaktorizacia ExportSectionToNASM (+ tvorba testov)
-
-- save - rozdelit na Save Project a Export (Disassembly, NASM, lubovolne)
-- stringy rozhadzane po suboroch
-- ReplaceLines (zatial nevyhadzuje ziadne bezadresne riadky, iba nahradzovane adresne riadky)
-- optimalizovany ExportTabFrame - ListView nahradenym StringGrid-om (ak mala kniznica vela exportovanych funkcii, ako napr. svx680mi.dll - 16000 alebo bf_svx680mi.dll - 31000, tak sa ListItem-y vytvarali strasne dlho)
-- vlastny MessageDlg, aby zobrazoval buttony v jazyku TatraDASu
-- detekovat imported o uroven volania skor "call x, x: jump [0x...]"
-
-- vacsie moznosti z konzoly - napr. save as projekt, DAS, NASM
-- pozriet co pise SVN log
-- refaktorizacia GROUP instrukcii
-- refaktorizacia a kontrola FPU instrukcii
-- SSSE3, SSE41, SSE42
-- zavedeny typ instrukcie (napr. normal alebo undefined), odstranena polozka "opcode"
-- drag & drop
-- refaktorizacia Translator-a
-
-- oprava - uvadzanie velkosti operandu vzdy, ak je v pamati; -> dosledkom je kompilovatelnost s NASM (hoci este stale hadze warningy)
-- oprava velkosti operandu u niektorych FPU instrukcii,
-    oprava FLD (ma mat iba jeden parameter, chyba je v Intel manuale), podobne FUCOM
-
-- oprava - velkost operandu FPU instrukcii nezavisi na operand-size attribute
-- oprava XLAT, bolo XLAT/XLATB, ma byt XLATB
-- oprava: "undefined opcode" mal adresu relativnu k zaciatku sekcie, ma byt pamatova (t.j. + fMemOffset), taktiez nie je dobre zarovnany (boli tam napevno medzery)
-- oprava viacerym SSE(x) instrukciam chybal treti operand
-- oprava NASM export - komentare (riadky zacinajuce ;) mali odseknuty zaciatok a potom nemali ; na zaciatku -> NASM nezozral
-- oprava Disassembler - rozlisovanie MOVLPS/MOVHLPS, MOVHPS/MOVLHPS - rovnaky opcode, lisia sa reg/mem adresaciou (obsahuje to napr. Chessmaster.exe)
-- pridat Go to line (cislo riadku)
-- oprava MOVD instrukcie (prvy parameter ked mal byt MMX, tak bol 32 bit register)
-- oprava DFE0 ma byt FNSTSW AX, nie FSTSW AX - sposobobalo to problemy : short jump out of range, chyba je v manuali (opcode map), podobne FSTCW/FNSTCW, FSTSW/FNSTSW word [], FSTENV/FNSTENV, FSAVE/FNSAVE, FINIT/FNINIT, FCLEX/FNCLEX
-- oprava CALL far mem - chybalo "far", teda tvarilo sa ako "near"
-- oprava ODstranene memory leak-y vdaka FastMM
-- oprava ChangeToString nezamrzne ak Pascal string pretrca cez sekciu -> nespravi sa nic
-- oprava instrukcia FXRSTOR bola nazvana FXSTOR (chybalo 'R', dosledkom bolo nezvyraznenie)
-- oprava instrukcie LDMXCSR, STMXCSR, FXSAVE, FXRSTOR, CLFLUSH nemali operand
-- oprava padu pri exporte do NASM v prapade "qword" a "pascal string"
 
 -----------------------------
 
