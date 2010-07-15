@@ -42,7 +42,7 @@ implementation
 
 
 uses
-  MainFormUnit, ProgressManagerUnit;
+  MainFormUnit, ProgressManagerUnit, GlobalsUnit;
 
 {$R *.dfm}
 

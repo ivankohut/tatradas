@@ -6,14 +6,10 @@ interface
 
 uses
 {$IFDEF MSWINDOWS}
-  Windows, Messages,
-  Controls, Forms, Dialogs, ShellAPI,  ActnList,
+  Windows, Messages, ShellAPI,
+{$ENDIF}
+  Controls, Forms, Dialogs, ActnList,
   Graphics, StdCtrls, ComCtrls, ImgList, Menus, ExtCtrls, Grids,
-{$ENDIF}
-{$IFDEF LINUX}
-  QDialogs, QImgList, QMenus, QTypes, QGraphics,
-  QExtCtrls, QComCtrls, QGrids, QStdCtrls, QControls,
-{$ENDIF}
   SysUtils,
   Classes,
   IniFiles,
@@ -21,8 +17,9 @@ uses
   StrUtils,
 
   SynEdit,
-
-  ButtonsX,
+  ExceptionsUnit,
+  GlobalsUnit,
+//  ButtonsX,
   FilesUnit,
   TranslatorUnit,
   StringRes,
@@ -34,7 +31,7 @@ uses
   ExecFileManagerUnit,
   ExecFileUnit,
   CodeSectionUnit,
-  HexEditFormUnit,
+//  HexEditFormUnit,
   LoggerUnit,
   ProgressThreads;
 
@@ -209,18 +206,28 @@ type
     procedure DoCloseProject;
     function DoSaveProject: Boolean;
     function AskToSaveAndCloseProject: Boolean;
+  {$IFDEF DELPHI}
   private
     fOriginalWndProcOfMainPageControl: TWndMethod;
     procedure MainPageControlSubClassWndProc(var AMessage: TMessage);
+  {$ENDIF}
   public
     ExecFile: TExecutableFile;
 
   public
+  {
     OpenMyButton: TIvanSpeedButton;
     DisassembleMyButton: TIvanSpeedButton;
     ProjectMyButton: TIvanSpeedButton;
     SaveMyButton: TIvanSpeedButton;
     //HelpMyButton: TIvanSpeedButton;
+  }
+    OpenMyButton: TButton;
+    DisassembleMyButton: TButton;
+    ProjectMyButton: TButton;
+    SaveMyButton: TButton;
+    //HelpMyButton: TButton;
+
 
     sINI: TMemINIFile;
 
@@ -262,7 +269,7 @@ uses
   UnknownFileFormUnit,
   MessageFormUnit;
 
-{$R *.DFM}
+{$R *.dfm}
 
 
 
@@ -499,7 +506,7 @@ begin
   HexEditor1.Enabled:= false;
 
   // Other stuff
-  HexEditForm.Close;
+//  HexEditForm.Close;
   Modified:= false;
   Caption:= TatraDASFullNameVersion;
 
@@ -614,7 +621,7 @@ begin
   DoubleBuffered:= true;
 
   Image1.Picture.Bitmap.LoadFromResourceName(hinstance,'buttons_background');
-
+{
   OpenMyButton:= TIvanSpeedButton.Create(self);
   OpenMyButton.Parent:=self;
   OpenMyButton.ObrMimo.LoadFromResourceName(hinstance,'open1');
@@ -649,7 +656,7 @@ begin
   SaveMyButton.OnClick := SaveProjectClick;
   SaveMyButton.Glyph := SaveMyButton.ObrMimo;
   SaveMyButton.Enabled := False;
-
+}
 { Keep commented until english documentation becomes available
   HelpMyButton:=TIvanSpeedButton.Create(self);
   HelpMyButton.Parent:=self;
@@ -659,11 +666,35 @@ begin
   HelpMyButton.OnClick:=Help2Click;
   HelpMyButton.Glyph:=HelpMyButton.ObrMimo;
 }
+  OpenMyButton:= TButton.Create(self);
+  OpenMyButton.Parent:=self;
+  OpenMyButton.Left:=0;
+  OpenMyButton.Action := actOpen;
 
+  DisassembleMyButton:= TButton.Create(self);
+  DisassembleMyButton.Parent:=self;
+  DisassembleMyButton.Left:=72;
+  DisassembleMyButton.OnClick:=DisassembleClick;
+  DisassembleMyButton.Enabled:=false;
+
+  ProjectMyButton:= TButton.Create(self);
+  ProjectMyButton.Parent:=self;
+  ProjectMyButton.Left:=220;
+  ProjectMyButton.Action := actOpenProject;
+
+  SaveMyButton:= TButton.Create(self);
+  SaveMyButton.Parent:=self;
+  SaveMyButton.Left:=295;
+  SaveMyButton.OnClick := SaveProjectClick;
+  SaveMyButton.Enabled := False;
+
+
+  {$IFDEF DELPHI}
   // Drag & drop opening files
   fOriginalWndProcOfMainPageControl := MainPageControl.WindowProc;
   MainPageControl.WindowProc := MainPageControlSubClassWndProc;
   DragAcceptFiles(MainPageControl.Handle, true);
+  {$ENDIF}
 
   Caption:=TatraDASFullNameVersion;
   StatusBar2.Panels[1].Text:=TatraDASFullNameVersion;
@@ -706,7 +737,7 @@ end;
 
 procedure TMainForm.Help2Click(Sender: TObject);      // Spustenie helpu
 begin
-  ShellExecute(Application.Handle, Pchar('open'), Pchar('hh.exe'), Pchar(ExtractFilePath(Application.ExeName) + 'doc' + PathDelim + 'TatraDAS.chm'), nil, sw_show);
+//  ShellExecute(Application.Handle, Pchar('open'), Pchar('hh.exe'), Pchar(ExtractFilePath(Application.ExeName) + 'doc' + PathDelim + 'TatraDAS.chm'), nil, sw_show);
 end;
 
 
@@ -726,11 +757,18 @@ begin
 // Zmena popisov komponent
 
   //  [ButtonCaption]
+{
   OpenMyButton.ChangeCaption(Translator.TranslateControl('ButtonCaption', 'OpenFile'));
   ProjectMyButton.ChangeCaption(Translator.TranslateControl('ButtonCaption','OpenDisasm'));
   DisassembleMyButton.ChangeCaption(Translator.TranslateControl('ButtonCaption','Disassemble'));
   SaveMyButton.ChangeCaption(Translator.TranslateControl('ButtonCaption','SaveDisasm'));
   //HelpMyButton.ChangeCaption(Translator.TranslateControl('ButtonCaption','Help'));
+}
+  OpenMyButton.Caption := Translator.TranslateControl('ButtonCaption', 'OpenFile');
+  ProjectMyButton.Caption := Translator.TranslateControl('ButtonCaption','OpenDisasm');
+  DisassembleMyButton.Caption := Translator.TranslateControl('ButtonCaption','Disassemble');
+  SaveMyButton.Caption := Translator.TranslateControl('ButtonCaption','SaveDisasm');
+  //HelpMyButton.Caption := Translator.TranslateControl('ButtonCaption','Help');
 
   // [MenuCaption]
   File1.Caption:= Translator.TranslateControl('MenuCaption','file');
@@ -1048,7 +1086,7 @@ end;
 
 procedure TMainForm.HexEditor1Click(Sender: TObject);
 begin
-  HexEditForm.OpenAndLoad(MainForm.ExecFile.FullPath);
+//  HexEditForm.OpenAndLoad(MainForm.ExecFile.FullPath);
 end;
 
 
@@ -1093,7 +1131,7 @@ begin
 end;
 
 
-
+{$IFDEF DELPHI}
 procedure TMainForm.MainPageControlSubClassWndProc(var AMessage: TMessage);
 const
   MaxFileNameLength = 255;
@@ -1113,7 +1151,7 @@ begin
   else
     fOriginalWndProcOfMainPageControl(AMessage);
 end;
-
+{$ENDIF}
 
 
 procedure TMainForm.GuiProcessException(Sender: TObject; E: Exception);

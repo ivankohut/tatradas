@@ -16,7 +16,7 @@ object AboutBox: TAboutBox
   OnActivate = FormActivate
   OnCreate = FormCreate
   PixelsPerInch = 96
-  TextHeight = 13
+
   object Panel1: TPanel
     Left = 8
     Top = 8
@@ -38,7 +38,6 @@ object AboutBox: TAboutBox
       Font.Name = 'MS Sans Serif'
       Font.Style = [fsBold]
       ParentFont = False
-      IsControl = True
     end
     object VersionLabel: TLabel
       Left = 26
@@ -54,7 +53,6 @@ object AboutBox: TAboutBox
       Font.Style = [fsBold]
       ParentFont = False
       Layout = tlCenter
-      IsControl = True
     end
     object LicenseLabel: TLabel
       Left = 16
@@ -68,7 +66,6 @@ object AboutBox: TAboutBox
       Font.Name = 'MS Sans Serif'
       Font.Style = []
       ParentFont = False
-      IsControl = True
     end
     object ProgrammingLabel: TLabel
       Left = 16
@@ -1664,11 +1661,5 @@ object AboutBox: TAboutBox
   object ActionList1: TActionList
     Left = 8
     Top = 376
-    object BrowseURL1: TBrowseURL
-      Category = 'Internet'
-      Caption = '&Browse URL'
-      Hint = 'Browse URL'
-      URL = 'http://tatradas.sourceforge.net'
-    end
   end
 end

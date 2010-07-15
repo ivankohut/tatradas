@@ -16,7 +16,7 @@ object AdvancedChangingToDataForm: TAdvancedChangingToDataForm
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   PixelsPerInch = 96
-  TextHeight = 13
+
   object OKButton: TButton
     Left = 426
     Top = 202

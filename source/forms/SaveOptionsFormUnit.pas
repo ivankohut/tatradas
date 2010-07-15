@@ -3,16 +3,12 @@ unit SaveOptionsFormUnit;
 interface
 
 uses
-{$IFDEF MSWINDOWS}
   Controls, Forms, StdCtrls,
-{$ENDIF}
-{$IFDEF LINUX}
-  QControls, QForms, QStdCtrls, 
-{$ENDIF}
   SysUtils,
   Classes,
   IniFiles,
 
+  ExceptionsUnit,
   procmat,
   TranslatorUnit;
 

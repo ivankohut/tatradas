@@ -28,9 +28,6 @@ inherited FileTabFrame: TFileTabFrame
         Constraints.MinHeight = 129
         Constraints.MinWidth = 220
         TabOrder = 0
-        DesignSize = (
-          569
-          129)
         object FilenameLabel: TLabel
           Left = 16
           Top = 24

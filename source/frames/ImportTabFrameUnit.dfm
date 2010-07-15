@@ -115,9 +115,7 @@ inherited ImportTabFrame: TImportTabFrame
         Height = 198
         Align = alBottom
         Anchors = [akLeft, akTop, akRight, akBottom]
-        BevelEdges = [beTop, beRight, beBottom]
         ItemHeight = 13
-        ScrollWidth = 1
         TabOrder = 0
         OnDblClick = AddressListBoxDblClick
       end

@@ -11,13 +11,12 @@ interface
 
 uses
   Classes,
-  IniFiles,
   SysUtils,
 
+  ExceptionsUnit,
   procmat,
   SectionUnit,
   RegionsUnit,
-  DisassemblerUnit,
   DisassemblerTypes,
   CodeSectionUnit,
   ImportSectionUnit,

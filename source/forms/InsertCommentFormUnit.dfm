@@ -15,7 +15,7 @@ object InsertCommentForm: TInsertCommentForm
   Position = poMainFormCenter
   OnActivate = FormActivate
   PixelsPerInch = 96
-  TextHeight = 13
+
   object InsertCommentLabel: TLabel
     Left = 8
     Top = 20

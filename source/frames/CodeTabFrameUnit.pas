@@ -21,6 +21,7 @@ uses
   StrUtils,
   Graphics,
 
+  IvanSynEdit,
   SynEdit,
   SynEditTypes,
   SynEditTextBuffer,
@@ -47,7 +48,7 @@ uses
 type
   TCodeTabFrame = class(TTabFrameTemplate)
   published
-    plocha: TSynEdit;
+    plocha: TIvanSynEdit;
     GotoEntryPointButton: TButton;
     GotoAddressButton: TButton;
     Bevel1: TBevel;
@@ -179,7 +180,9 @@ uses
   ExecFileUnit,
   ExportSectionUnit,
   PEFileUnit,
-  MainFormUnit, GotoLineFormUnit;
+  MainFormUnit,
+  ExceptionsUnit,
+  GotoLineFormUnit;
 
 
 constructor TCodeTabFrame.Create(AOwner: TComponent; ASection: TSection);
@@ -191,7 +194,7 @@ begin
   Caption:= 'Code section #' + IntToStr(fSection.CodeSectionIndex);
 
   // Vytvorenie Textovej plochy SynEdit
-  plocha:= TSynEdit.Create(Panel);
+  plocha:= TIvanSynEdit.Create(Panel);
   plocha.Parent:= Panel;
   plocha.SetSubComponent(true);
   plocha.TabOrder:= 0;
@@ -233,7 +236,11 @@ end;
 
 procedure TCodeTabFrame.PlochaMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 begin
-  plocha.CaretXY:= TBufferCoord(plocha.PixelsToRowColumn(X,Y));
+  {$IFDEF LCL}
+  plocha.CaretXY := plocha.PixelsToRowColumn(Point(X,Y));
+  {$ELSE}
+  plocha.CaretXY := TBufferCoord(plocha.PixelsToRowColumn(X, Y));
+  {$ENDIF}
 end;
 
 

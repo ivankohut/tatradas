@@ -16,7 +16,7 @@ object UnknownFileFormatForm: TUnknownFileFormatForm
   OnActivate = FormActivate
   OnCreate = FormCreate
   PixelsPerInch = 96
-  TextHeight = 13
+
   object MainPanel: TPanel
     Left = 16
     Top = 16

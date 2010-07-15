@@ -1,12 +1,21 @@
 TO DO list (TatraDAS)
 
 3.x
+Chyby
+- ak nenajde pri spusteni langove subory tak padne na AV namiesto zobrazenia hlasky (lebo aj tu sa snazi prelozit)
+
 General
 - automaticka detekcia retazcov (najma Pascal a C)
 - rozne znakove sady v synedit
 - zdroje (PE, NE, atd) ?
 - paralelne disassemblovanie viacerych sekcii
 - Lazarus GUI
+  - vypol som: 
+     ButtonsX - TIvanSpeedButton (vyzaduje Delphi), 
+     HexEditorFormUnit (lebo MPHexEditor ide len v Delphi), 
+     Drag and Drop (MainPageControlSubClassWndProc v MainFormUnit-e)
+     TBrowseURL, CompilerVersion (AboutBox)
+     otvranie helpu (ShellExecute)
 - nastroj pre dokumentaciu zdrojoveho kodu (komentare na zaciatku metod) - kedze zatial kod je okomentovany dost slabo, taky nastroj nema velmi zmysel
 
 Disassembler
@@ -42,6 +51,14 @@ Misc
 - OptionsForm - co s tym ? nastavenia sa ukladaju od INI, aj preklady su pripravene
 - dlho trvajuca zmena na = napr. totalcmd.exe - 0x00569005 -> Pascal string ('Boolean')
 
+
+- program na odstranenie nepouzivanych Delphi properties (aby nepadalo v Lazarus-e):
+"TextHeight is probably a holdover from early versions of Delphi, but Delphi still puts TextHeight in the .dfm."
+
+DONE
+- prerobenie ASM metod do Pascalu kvoli kompilovatelnosti na AMD64, vykon sa tym nezhorsil, skor jemne zlepsil :)
+- odstranenie nepotrebnych properties z DFM suborov aby to fungovalo aj v Lazaruse
+- program na odstranenie TextHeight property z DFM suborov (TFOrm) aby to fungovalo aj v Lazaruse
 
 -----------------------------
 

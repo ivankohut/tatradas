@@ -108,6 +108,8 @@ type
 
 implementation
 
+uses
+  ExceptionsUnit;
 
 const
   c_ExecutableSection =  $20000000;

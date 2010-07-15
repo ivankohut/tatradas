@@ -5,12 +5,7 @@ unit HexEditFormUnit;
 interface
 
 uses
-{$IFDEF MSWINDOWS}
   Controls, Forms, StdCtrls, ExtCtrls, ComCtrls, Dialogs,
-{$ENDIF}
-{$IFDEF LINUX}
-  QControls, QForms, QStdCtrls, QExtCtrls, QComCtrls, QDialogs,
-{$ENDIF}
   SysUtils,
   Classes,
   IniFiles,

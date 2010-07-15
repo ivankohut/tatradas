@@ -7,15 +7,11 @@ unit ButtonsX;
 
 interface
 
-uses 
-{$IFDEF MSWINDOWS}
-  Windows, Messages, Controls, Forms, Graphics, StdCtrls,
-  ExtCtrls, CommCtrl,
-{$ENDIF}
-{$IFDEF LINUX}
-  QControls, QForms, QGraphics, QStdCtrls,
-  QExtCtrls, //QCommCtrl,
-{$ENDIF}
+uses
+  Windows,
+  Messages, Controls, Forms, Graphics, StdCtrls,
+  ExtCtrls,
+  CommCtrl,
   Classes;
 
 type

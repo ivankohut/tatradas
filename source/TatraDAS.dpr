@@ -14,28 +14,21 @@ program TatraDAS;
   {$ENDIF}
 {$ENDIF}
 
-uses
+{$IFDEF LCL}
   {$IFDEF MSWINDOWS}
-    {$IFNDEF FPC}                                                                                          
-      FastMM4 in '..\third\fastmm4\FastMM4.pas',
-      FastMM4Messages in '..\third\fastmm4\FastMM4Messages.pas',
-    {$ENDIF}
-    {$IFDEF GUI_B}
-      Windows,
-      Forms,
-      Dialogs,
-      SynEdit,
-    {$ENDIF}
+    {$R 'res\tatradas.res' 'res\tatradas.rc'}
   {$ENDIF}
+{$ENDIF}
 
-  {$IFDEF LINUX}
-    {$IFDEF GUI_B}
-      QForms,
-      SynEdit,
-    {$ENDIF}
-  {$ENDIF}
+{$IFDEF GUI_B}
+  {$DEFINE GUI}
+{$ENDIF}
 
+{$IFDEF LCL}
+  {$DEFINE GUI}
+{$ENDIF}
 
+uses
   {$IFNDEF GUI_B}
     {$IFDEF FPC}
       {$IFDEF LINUX}
@@ -44,9 +37,44 @@ uses
     {$ENDIF}
   {$ENDIF}
 
+  {$IFDEF LCL}
+    Interfaces, // this includes the LCL widgetset
+    LResources,
+  {$ENDIF}
+
+  {$IFDEF MSWINDOWS}
+    {$IFNDEF FPC}                                                                                          
+      FastMM4 in '..\third\fastmm4\FastMM4.pas',
+      FastMM4Messages in '..\third\fastmm4\FastMM4Messages.pas',
+    {$ENDIF}
+    {$IFDEF GUI_B}
+      Windows,
+    {$ENDIF}
+    {$IFDEF GUI}
+      Forms,
+      Dialogs,
+    {$ENDIF}
+  {$ENDIF}
+
+  {$IFDEF LINUX}
+    {$IFDEF GUI_B}
+      QForms,
+    {$ENDIF}
+    {$IFDEF LCL}
+      Forms,
+      Dialogs,
+    {$ENDIF}
+  {$ENDIF}
+
+  {$IFDEF GUI}
+    IvanSynEdit in 'misc\IvanSynEdit.pas',
+  {$ENDIF}
+
   SysUtils,
   Classes,
   StrUtils,
+  GlobalsUnit,
+  ExceptionsUnit in 'ExceptionsUnit.pas',
   procmat in 'procmat.pas',
   StringUtilities in 'StringUtilities.pas',
   SortingUnit in 'SortingUnit.pas',
@@ -66,16 +94,16 @@ uses
   FilesUnit in 'misc\FilesUnit.pas',
   ListsUnit in 'misc\ListsUnit.pas',
 
-{$IFDEF GUI_B}
+{$IFDEF GUI}
   TatraDASHighlighter in 'res\TatraDASHighlighter.pas',
-  ButtonsX in 'misc\ButtonsX.pas',
+//  ButtonsX in 'misc\ButtonsX.pas',
   myedits in 'misc\myedits.pas',
   TranslatorUnit in 'TranslatorUnit.pas',
   VersionUnit in 'VersionUnit.pas',
 
   // Forms' units
   MainFormUnit in 'MainFormUnit.pas' {MainForm},
-  HexEditFormUnit in 'forms\HexEditFormUnit.pas' {HexEditForm},
+//  HexEditFormUnit in 'forms\HexEditFormUnit.pas' {HexEditForm},
   CalculatorUnit in 'forms\CalculatorUnit.pas' {Calculator},
   OptionsFormUnit in 'forms\OptionsFormUnit.pas' {OptionsForm},
   AdvancedChangingToDataFormUnit in 'forms\AdvancedChangingToDataFormUnit.pas' {AdvancedChangingToDataForm},
@@ -135,8 +163,8 @@ uses
   FilesUnit in 'misc/FilesUnit.pas',
   ListsUnit in 'misc/ListsUnit.pas',
 
-{$IFDEF GUI_B}
-  ButtonsX in 'misc/ButtonsX.pas',
+{$IFDEF GUI}
+//  ButtonsX in 'misc/ButtonsX.pas',
   myedits in 'misc/myedits.pas',
   TranslatorUnit in 'TranslatorUnit.pas',
   TatraDASHighlighter in 'res/TatraDASHighlighter.pas',
@@ -144,7 +172,7 @@ uses
 
   // Forms' units
   MainFormUnit in 'MainFormUnit.pas' {MainForm},
-  HexEditFormUnit in 'forms/HexEditFormUnit.pas' {HexEditForm},
+//  HexEditFormUnit in 'forms/HexEditFormUnit.pas' {HexEditForm},
   CalculatorUnit in 'forms/CalculatorUnit.pas' {Calculator},
   OptionsFormUnit in 'forms/OptionsFormUnit.pas' {OptionsForm},
   AdvancedChangingToDataFormUnit in 'forms/AdvancedChangingToDataFormUnit.pas' {AdvancedChangingToDataForm},
@@ -157,6 +185,13 @@ uses
   GotoLineFormUnit in 'forms/GotoLineFormUnit.pas' {GoToLineForm},
   GotoAddressFormUnit in 'forms/GotoAddressFormUnit.pas' {GoToAddressForm},
   MessageFormUnit in 'forms/MessageFormUnit.pas' {MessageForm},
+
+  // Frames' units
+  TabFrameTemplateUnit in 'frames/TabFrameTemplateUnit.pas',
+  FileTabFrameUnit in 'frames/FileTabFrameUnit.pas',
+  CodeTabFrameUnit in 'frames/CodeTabFrameUnit.pas',
+  ImportTabFrameUnit in 'frames/ImportTabFrameUnit.pas',
+  ExportTabFrameUnit in 'frames/ExportTabFrameUnit.pas',
 
 {$ELSE}
   CliUnit in 'CliUnit.pas',
@@ -189,13 +224,15 @@ uses
 
 {$ENDIF}
 
-{$IFDEF GUI_B}
 
+{$IFDEF GUI}
+
+//{$IFDEF WINDOWS}{$R TatraDAS.rc}{$ENDIF}
 
 begin
+//  {$I TatraDAS.lrs}
   Application.Initialize;
-  Application.Title := 'TatraDAS';
-  Application.Icon.Handle:=LoadIcon(hinstance,'mainicon');
+//  Application.Icon.Handle:=LoadIcon(hinstance,'mainicon');
   Application.CreateForm(TMainForm, MainForm);
   Application.CreateForm(TAboutBox, AboutBox);
   Application.CreateForm(TUnknownFileFormatForm, UnknownFileFormatForm);
@@ -205,7 +242,7 @@ begin
   Application.CreateForm(TInsertCommentForm, InsertCommentForm);
   Application.CreateForm(TCalculator, Calculator);
   Application.CreateForm(TOptionsForm, OptionsForm);
-  Application.CreateForm(THexEditForm, HexEditForm);
+//  Application.CreateForm(THexEditForm, HexEditForm);
   Application.CreateForm(TProgressForm, ProgressForm);
   Application.CreateForm(TGotoLineForm, GotoLineForm);
   Application.CreateForm(TGoToAddressForm, GoToAddressForm);
@@ -221,9 +258,7 @@ begin
   Application.Run;
 end.
 
-{$ENDIF}
-
-{$IFDEF CONSOLE}
+{$ELSE}
 
 procedure WriteLnMessage(const AMessage: string);
 begin

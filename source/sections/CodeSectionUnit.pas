@@ -36,6 +36,8 @@ uses
   StrUtils,
   Types,
 
+  GlobalsUnit,
+  ExceptionsUnit,
   procmat,
   StringUtilities,
   DisassemblerUnit,
@@ -919,7 +921,7 @@ begin
     BytePtr:= DataPtr;
     for i:= 1 to ItemSize do begin
       Line:= Line + IntToHex(Byte(BytePtr^), 2);
-      Inc(cardinal(BytePtr));
+      Inc(PByte(BytePtr));
     end;
     Line:= StringRightPad(Line, ilInstructionMnemonicIndex - 1);
 
@@ -978,7 +980,7 @@ begin
     Result.Add(Line);
 
     Inc(Address, ItemSize);
-    Inc(cardinal(DataPtr), ItemSize);
+    Inc(PByte(DataPtr), ItemSize);
   end;
 end;
 

@@ -21,10 +21,11 @@ interface
 uses
   Classes,
   SysUtils,
+  StrUtils,
   Math,
   Types,
 
-  procmat,
+  ExceptionsUnit,
   LoggerUnit,
   StringUtilities,
   CallsAndJumpsTableUnit,
@@ -34,12 +35,15 @@ uses
   DisassemblerUnit,
   x86DisassemblerTypes,
   x86Instructions,
-  StrUtils
+  GlobalsUnit
   ;
 
 type
 
   Tx86Disassembler = class(TDisassembler)
+  public
+    class function LoadModRM(ModRMValue: byte): TModRM;
+    class function LoadSIB(SIBValue: byte): TSIB;
   private
     code: TByteDynArray; // machine code to be disassembled
     fDisasmMap: TByteDynArray;
@@ -57,30 +61,26 @@ type
     address32: boolean; // Address size attribute
     ModRM: TModRM;
     SIB: TSIB;
-
+    
     function ProcessOperand(Operand: TOperand): string;
-    function LoadModRM(ModRMValue: byte): TModRM;
     function ProcessModRM(OperandType: TModRMOperandType; OperandSize: TModRMOperandSize): string;
-    function LoadSIB(SIBValue: byte): TSIB;
     function ProcessSIB: string;
     function ProcessImmediate(OperandSize: TModRMOperandSize): string;
     function ProcessRelative(OperandSize: TModRMOperandSize): string;
     function ProcessOffset: string;
     function ProcessGenPurpRegister: string;
 
-//    function SpracujImmediatePascal(OperandSize: TModRMOperandSize): string;
-
   protected
     function DisassembleBlock(Start, Finish: cardinal): boolean; override;
 
   public
-    constructor Create(SectionCode: TByteDynArray; var DisassemblerMap: TByteDynArray; MemOffset: cardinal; Bit32: boolean);
+    constructor Create(SectionCode: TByteDynArray; var DisassemblerMap: TByteDynArray; MemOffset: cardinal; Bit32: Boolean);
     destructor Destroy; override;
     procedure DisassembleAll; override;
   end;
 
 
-Implementation
+implementation
 
 
 const
@@ -196,49 +196,30 @@ const
   );
 
 {
-  Nacita ModRM do struktury TModRM
+  Loads TModRM structure from ModRM byte
   ModRM = 2 + 3 + 3 bits (Moder + RegOp + RM)
-  Pouzivam assembler, lebo operatory "shl" a "shr" v Delphi pracuju s typom integer (4 bajty) a my potrebujeme 1 bajt
-  Parametre:
-    EAX - self
-    EDX - ModRM byte
-    ECX - adresa vysledku
 }
-function Tx86Disassembler.LoadModRM(ModRMValue: byte): TModRM;
-asm
-  and edx,$000000FF // DL <- Full ModRM
-  mov dh,dl
-  shr dh,6          // DH <- Moder
-  mov [ecx],edx
-  mov dh,dl
-  shl dl,2
-  shr dl,5          // DL <- RegOp
-  and dh,7          // DH <- RM
-  mov [ecx+2],edx
+class function Tx86Disassembler.LoadModRM(ModRMValue: byte): TModRM;
+begin
+  Result.FullModRM := ModRMValue;
+  Result.Moder := ModRMValue shr 6;
+  Result.Regop := (ModRMValue shr 3) and 7;
+  Result.RM := (ModRMValue and 7);
+  Result.Loaded := True;
 end;
 
 
 
 {
-  Nacita SIB do struktury TSIB
-  SIB = 2 + 3 + 3 bity (scale + index + base)
-  Pouzivam assembler, lebo operatory "shl" a "shr" v Delphi pracuju s typom integer (4 bajty) a my potrebujeme 1 bajt
-  Parametre:
-    EAX - self
-    EDX - SIB byte
-    ECX - adresa vysledku
+  Loads TSIB structure from SIB byte
+  SIB = 2 + 3 + 3 bits (scale + index + base)
 }
-function Tx86Disassembler.LoadSIB(SIBValue: byte): TSIB;
-asm
-  and edx,$000000FF // DL <- Full SIB
-  mov dh,dl
-  shr dh,6          // DH <- scale
-  mov [ecx],edx
-  mov dh,dl
-  shl dl,2
-  shr dl,5          // DL <- index
-  and dh,7          // DH <- base
-  mov [ecx+2],edx   // 16 - 23 <- Loaded (0)
+class function Tx86Disassembler.LoadSIB(SIBValue: byte): TSIB;
+begin
+  Result.FullSIB := SIBValue;
+  Result.Scale := SIBValue shr 6;
+  Result.Index := (SIBValue shr 3) and 7;
+  Result.Base := (SIBValue and 7);
 end;
 
 
@@ -409,8 +390,8 @@ begin
 end;
 
 
-{
-function Tx86Disassembler.SpracujImmediatePascal(OperandSize: TModRMOperandSize): string;
+
+function Tx86Disassembler.ProcessImmediate(OperandSize: TModRMOperandSize): string;
 begin
   Inc(i);
   case OperandSize of
@@ -450,161 +431,39 @@ begin
       raise EUndefinedOpcodeException.Create('Immediate - bad operand size -  ' + IntToStr(Ord(OperandSize)));
   end;
 end;
-}
-
-
-function Tx86Disassembler.ProcessImmediate(OperandSize: TModRMOperandSize): string;
-var
-  Immediate: cardinal;
-  SegmentImmediate: word;
-  ParsedCount: integer;
-begin
-  asm
-    push esi
-    push ebx
-    mov esi,self       // pointer na instanciu TDisassembler
-    mov ebx,[esi].i    // index v poli code
-    inc ebx
-    mov eax,[esi].code // adresa pola code
-    add eax,ebx        // adresa prvku pola v pamati
-    xor ecx,ecx        // vysledny immediate
-  // Case
-    cmp OperandSize,os1           // ONE BYTE
-    jne @CheckTwobyte
-    movzx ecx,byte[eax]     // parameter instrukcie -> ECX
-    jmp @EndCase
-
-  @CheckTwobyte:
-    cmp OperandSize,os2           // TWO BYTE
-    jne @CheckTwoOrFour
-
-  @_16:
-    movzx ecx,word ptr[eax]
-    inc ebx
-    jmp @EndCase
-
-  @CheckTwoOrFour:
-    cmp OperandSize,os2or4
-    jne @CheckFourOrSix
-    cmp byte ptr [esi].operand32,0
-    je @_16
-
-  @_32:
-    mov ecx,[eax] //  predtym: mov ecx,cardinal ptr [eax]
-    add ebx,3
-    jmp @EndCase
-
-  @CheckFourOrSix:
-    cmp byte ptr [esi].operand32,0
-    je @_16_16
-
-  @_16_32:
-    mov ecx,[eax] // predtym: mov ecx,cardinal ptr [eax]
-    add eax,4
-    add ebx,4
-    jmp @_segment
-
-  @_16_16:
-  //  movzx ecx,word ptr [eax]
-    mov cx, word ptr [eax]
-    add eax,2
-    add ebx,2
-
-  @_segment:
-  //  movzx edx,word ptr [eax]
-    mov dx,[eax]
-
-    mov SegmentImmediate,dx
-    inc ebx
-
-  @EndCase:
-    mov immediate,ecx
-    mov ecx,ebx // save value of new "i" to ECX
-    sub ebx,[esi].i // compute and set ParsedCount
-    shl ebx,1
-    mov ParsedCount,ebx
-    mov [esi].i,ecx // set new "i"
-
-    pop ebx
-    pop esi
-  end;
-  if OperandSize = os4or6 then
-    Result := '0x' + IntToHex(SegmentImmediate, 4) + ':' + '0x' + IntToHex(Immediate, ParsedCount)
-  else
-    case ParsedCount of
-      2: Result := 'byte 0x' + IntToHex(Immediate, 2);
-      4: Result := 'word 0x' + IntToHex(Immediate, 4);
-      8: Result := 'dword 0x' + IntToHex(Immediate, 8);
-    end;
-end;
 
 
 
 function Tx86Disassembler.ProcessRelative(OperandSize: TModRMOperandSize): string;
 var
+  Address: Integer;
   ReferenceType: TReferenceType;
-  address: integer;
-  parsed: cardinal;
-  parsedcount: byte;
 begin
-  asm
-    push esi
-    push ebx
-    mov esi,self       // pointer na instanciu TDisassembler
-    mov ebx,[esi].i    // index v poli code
-    inc ebx
-    mov eax,[esi].code // adresa pola code
-    add eax,ebx        // adresa prvku pola v pamati
-    xor ecx,ecx        // vysledna adresa skoku
-    xor edx,edx        // vysledny Parsed
-  // Case
-    cmp OperandSize,os1           // ONE BYTE
-    jne @CheckTwobyte
-    mov dl,byte[eax]     // parameter instrukcie -> ECX
-    movsx ecx,dl          //
-    mov parsedcount,2       // pocet cifier PARSED
-    add ecx,ebx             // pripocitame aktualnu pozicu
-    inc ecx                 // zvysime o 1, lebo skok je relativny od nasledujucej instrukcie
-    jmp @EndCase
-
-
-  @CheckTwobyte:
-    cmp OperandSize,os2           // TWO BYTE
-    jne @CheckTwoOrFour
-
-  @TwoByteOnly:
-    movsx ecx,word ptr [eax]
-    mov dh,cl
-    mov dl,ch
-    mov parsedcount,4
-    inc ebx
-    add ecx,ebx             // pricitame aktualny index
-    inc ecx
-    jmp @EndCase
-
-  @CheckTwoOrFour:
-    cmp OperandSize,os2or4
-    jne @EndCase
-    cmp byte ptr [esi].operand32,0
-    je @TwoByteOnly
-
-  @FourByte:
-    mov ecx,[eax] // predtym: mov ecx,cardinal ptr [eax]
-    mov edx,ecx
-    bswap edx
-    mov parsedcount,8
-    add ebx,3
-    add ecx,ebx
-    inc ecx
-
-  @EndCase:
-    mov cardinal(address),ecx
-    mov cardinal(parsed),edx
-    mov [esi].i,ebx
-
-    pop ebx
-    pop esi
-
+  Inc(i);
+  case OperandSize of 
+    os1: begin
+      Address := i + ShortInt(code[i]) + 1;
+    end;
+    os2: begin
+      Address := i + SmallInt((@code[i])^) + 2;
+      Inc(i, 1);
+    end;
+    os2or4: begin
+      if operand32 then begin
+        Address := i + Integer((@code[i])^) + 4;
+        Inc(i, 3);
+      end
+      else begin
+        Address := i + SmallInt((@code[i])^) + 2;
+        Inc(i, 1);
+      end;
+    end;
+    os4: begin
+      Address := i + Integer((@code[i])^) + 4;
+      Inc(i, 3);
+    end;
+    else
+      raise EUndefinedOpcodeException.Create('Relative - bad operand size -  ' + IntToStr(Ord(OperandSize)));
   end;
 
   // skok na zapornu adresu (treba este zohladnit MemOffset !!!)
@@ -693,6 +552,7 @@ var
   Line: string[ilInstructionMnemonicIndex + 12 + 1];
   SpaceIndex: integer;
   MemAddress: cardinal;
+  TwoBytes: cardinal;
 begin
   //****************************************************************************
   // 1. Phase - Disassemble
@@ -702,36 +562,21 @@ begin
   DisassemblerCycle;
 
   //****************************************************************************
-  // 2. Phase - najdenie zaciatkov procedur pomocou standartnych instrukcii
+  // 2. Phase - najdenie zaciatkov procedur pomocou standardnych instrukcii
   //****************************************************************************
 
   Logger.Info('TDisassembler.DisassembleAll - Phase 2a');
-  if fCodeSize >= 3 then begin
+
+  if fCodeSize >= 3 then
     for CodeIndex := 0 to fCodeSize - 3 do
-      if fDisasmMap[CodeIndex] = dfNone then begin
-        case code[CodeIndex] of
-          $55:       // PUSH (E)BP
-            asm
-              mov eax,self
-              mov eax,[eax].code
-              add eax,CodeIndex
-              inc eax
-              mov ax,[eax]
-              cmp ax,$EC8B  // 8B EC = MOV (E)BP,(E)SP
-              je @nasiel
-              cmp ax,$E589  // 89 E5 = MOV (E)BP,(E)SP
-              je @nasiel
-              jmp @koniec
-            @nasiel:
-              mov edx,CodeIndex
-              mov eax,self
-              mov eax,[eax].CAJ
-              call TCallsAndJumps.Add
-            @koniec:
-          end;
+      if fDisasmMap[CodeIndex] = dfNone then
+        // PUSH (E)BP
+        if code[CodeIndex] = $55 then begin
+          TwoBytes := Word((@(code[CodeIndex + 1]))^);
+          // // 0x89 0xE5 - MOV (E)BP,(E)SP   or   0x8B 0xEC - MOV (E)BP,(E)SP
+          if (TwoBytes = $E589) or (TwoBytes = $EC8B) then
+            CAJ.Add(CodeIndex);
         end;
-      end;
-  end;
 
   // Disassemblovanie najdenych procedur a kodu na ktory sa odkazuju
   Logger.Info('TDisassembler.DisassembleAll - Phase 2b');
@@ -828,7 +673,7 @@ begin
 
   LastParsedIndex := 0;
   Line[9] := ' ';
-  for SpaceIndex := 10 to procmat.ilInstructionMnemonicIndex - 1 do
+  for SpaceIndex := 10 to ilInstructionMnemonicIndex - 1 do
     Line[SpaceIndex] := ' ';
 
 
@@ -959,11 +804,12 @@ begin
                 Inc(GroupMapIndex);
             end;
             if GroupInstruction.typ = itUndefined then
-              raise EUndefinedOpcodeException.Create('Group instruction');
+              raise EUndefinedOpcodeException.Create('Group instruction (one byte) at ' + IntToHex(i + fMemOffset, 8));
 
             Operands := GroupInstruction.Operands;
             OperandsCount := GroupInstruction.OperandsCount;
             InstructionName := GroupInstruction.Name;
+            Inc(i); // because of LoadModRM
           end;
 
           // FPU Instructions
@@ -977,6 +823,7 @@ begin
 
               OperandsCount := 1;
               Operands.p1 := FPU_A_InstructionSet[FPUInstrIndex].Operand;
+              Inc(i); // because of LoadModRM
             end
             else begin
               InstructionName := FPU_B_InstructionSet[code[i]][code[i+1]].Name;
@@ -1007,8 +854,10 @@ begin
                   else
                     Inc(GroupMapIndex);
                 end;
+                Inc(i); // because of LoadModRM
+
                 case GroupInstruction.typ of
-                  itUndefined: raise EUndefinedOpcodeException.Create('Group instruction');
+                  itUndefined: raise EUndefinedOpcodeException.Create('Group instruction (two byte) at ' + IntToHex(i - 2 + fMemOffset, 8));
 
                   // SIMD group instructions
                   itSIMD: begin
@@ -1212,7 +1061,7 @@ begin
         LineIndex := ilInstructionMnemonicIndex;
         if InstructionPrefix <> '' then begin
           for ParsedIndex := 1 to Length(InstructionPrefix) do
-            Line[procmat.ilInstructionMnemonicIndex - 1 + ParsedIndex] := InstructionPrefix[ParsedIndex];
+            Line[ilInstructionMnemonicIndex - 1 + ParsedIndex] := InstructionPrefix[ParsedIndex];
           Inc(LineIndex, Length(InstructionPrefix));
           Line[LineIndex] := ' ';
           Inc(LineIndex);

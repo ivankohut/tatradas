@@ -36,7 +36,7 @@ located at http://SynEdit.SourceForge.net
 
 unit TatraDASHighlighter;
 
-{$I SynEdit.inc}
+
 
 interface
 
@@ -255,7 +255,7 @@ type
     function GetEol: Boolean; override;
     function GetKeyWords: string;
     function GetTokenID: TtkTokenKind;
-    procedure SetLine(NewValue: String; LineNumber: Integer); override;
+    procedure SetLine({$IFDEF FPC}const {$ENDIF}NewValue: String; LineNumber: Integer); override;
     function GetToken: String; override;
     function GetTokenAttribute: TSynHighlighterAttributes; override;
     function GetTokenKind: integer; override;
@@ -1763,7 +1763,7 @@ begin
   fRange := rsUnknown;
 end;
 
-procedure TSynTatraDASSyn.SetLine(NewValue: String; LineNumber: Integer);
+procedure TSynTatraDASSyn.SetLine({$IFDEF FPC}const {$ENDIF}NewValue: String; LineNumber: Integer);
 begin
   fLineRef := NewValue;
   fLine := PChar(fLineRef);

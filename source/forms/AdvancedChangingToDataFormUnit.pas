@@ -3,16 +3,12 @@ unit AdvancedChangingToDataFormUnit;
 interface
 
 uses
-{$IFDEF MSWINDOWS}
   Controls, Forms, StdCtrls, ExtCtrls,
-{$ENDIF}
-{$IFDEF LINUX}
-  QControls, QForms, QStdCtrls, QExtCtrls,
-{$ENDIF}
   SysUtils,
   Classes,
   IniFiles,
 
+  ExceptionsUnit,
   procmat,
   TranslatorUnit,
   myedits;

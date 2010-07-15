@@ -66,6 +66,15 @@ const
 
   PowersOfTwoStr: array [0..7] of string = ('1', '2', '4', '8', '16', '32', '64', '128');
 
+  // Instruction line constants
+  ilAddressLength = 8;
+  ilMaxParsedLength = 24;
+
+    // 1 based (string) indices
+  ilParsedIndex = ilAddressLength + 2;
+  ilInstructionMnemonicIndex = ilAddressLength + 1 + ilMaxParsedLength + 1 + 1;
+
+  CodeArrayReserveSize = 20;
 
 implementation
 

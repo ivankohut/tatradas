@@ -7,7 +7,6 @@ uses
   SysUtils,
 
   procmat,
-  DisassemblerUnit,
   DisassemblerTypes,
   CodeSectionUnit,
   ExecFileManagerUnit,
@@ -89,7 +88,9 @@ type
 
 implementation
 
-uses Exporters;
+uses
+  GlobalsUnit, 
+  Exporters;
 
 
 { TProgressThread }
@@ -125,6 +126,7 @@ function TProgressThread.WasException: Boolean;
 begin
   Result := fExceptionClass <> nil;
 end;
+
 
 { TDisassembleThread }
 

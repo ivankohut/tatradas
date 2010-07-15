@@ -14,7 +14,7 @@ object Calculator: TCalculator
   OldCreateOrder = False
   OnCreate = FormCreate
   PixelsPerInch = 96
-  TextHeight = 13
+
   object HexadecimalLabel: TLabel
     Left = 8
     Top = 56

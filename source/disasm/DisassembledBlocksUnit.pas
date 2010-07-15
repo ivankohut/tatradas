@@ -27,7 +27,7 @@ type
 implementation
 
 uses
-  SysUtils, procmat;
+  SysUtils;
 
 
 procedure TDisassembledBlocks.Add(Address, Size: Cardinal);
@@ -46,9 +46,7 @@ end;
 function TDisassembledBlocks.GetBlock(Index: Integer): TDisassembledBlock;
 begin
   if (Index >= 0) and (Index < fCount) then
-    Result := fBlocks[Index]
-  else
-    raise EIllegalState.Create('Index out of bounds');
+    Result := fBlocks[Index];
 end;
 
 

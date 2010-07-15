@@ -64,7 +64,7 @@ uses
   FileTabFrameUnit,
   ImportTabFrameUnit,
   ExportTabFrameUnit,
-  CodeTabFrameUnit;
+  CodeTabFrameUnit, ExceptionsUnit;
 
 
 //******************************************************************************
@@ -98,7 +98,7 @@ constructor TTabSheetTemplate.CreateFileTab(aExecFile: TExecutableFile);
 begin
   inherited Create(MainForm);
   PageControl := MainForm.MainPageControl;
-  PageIndex := 0;
+//  PageIndex := 0; - Lazarus BUG
   case aExecFile.ExeFormat of
     ffCOM: Frame:= TCOMFileTabFrame.Create(MainForm, aExecFile);
     ffMZ: Frame:= TMZFileTabFrame.Create(MainForm, aExecFile);

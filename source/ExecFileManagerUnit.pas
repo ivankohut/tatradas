@@ -12,6 +12,7 @@ uses
   SysUtils,
   Classes,
 
+  ExceptionsUnit,
   procmat,
   ExecFileUnit,
   PEFileUnit,
@@ -57,9 +58,9 @@ var
 
 implementation
 
-uses StringUtilities, SectionUnit, CodeSectionUnit;
 
 { TExecFileManager }
+
 
 function TExecFileManager.GetExecFileFormat(AFileStream: TFileStream): TExecFileFormat;
 var

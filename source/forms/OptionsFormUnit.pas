@@ -3,12 +3,7 @@ unit OptionsFormUnit;
 interface
 
 uses
-{$IFDEF MSWINDOWS}
   Controls, Forms, Dialogs, StdCtrls, ComCtrls,
-{$ENDIF}
-{$IFDEF LINUX}
-  QControls, QForms, QDialogs, QStdCtrls, QComCtrls,
-{$ENDIF}
   SysUtils,
   Classes,
   INIFiles,

@@ -17,7 +17,7 @@ object GoToAddressForm: TGoToAddressForm
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   PixelsPerInch = 96
-  TextHeight = 13
+
   object GotoAddressLabel: TLabel
     Left = 13
     Top = 20

@@ -20,7 +20,7 @@ object HexEditForm: THexEditForm
     803
     461)
   PixelsPerInch = 96
-  TextHeight = 13
+
   object UnsignedWordLabel: TLabel
     Left = 689
     Top = 288
@@ -188,7 +188,6 @@ object HexEditForm: THexEditForm
         Text = 'TatraDAS disassembler'
         Width = 50
       end>
-    SimplePanel = False
   end
   object GotoAddressButton: TButton
     Left = 689

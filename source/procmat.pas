@@ -10,8 +10,9 @@ uses
   SysUtils,
   Classes,
   Math,
+  ExceptionsUnit,
   ProgressManagerUnit,
-  {$IFDEF GUI_B}
+  {$IFDEF GUI}
     SynEditTextBuffer,
   {$ELSE}
     TatraDAS_SynEditStringList,
@@ -41,13 +42,6 @@ const
   DataTypesCount = 11;
   DataTypeSizes: array [0..DataTypesCount-1] of Byte = ( (1),(2),(4),(8),(4),(8),(10),(1),(1),(1),(1) );
 
-  // Instruction line constants
-  ilAddressLength = 8;
-  ilMaxParsedLength = 24;
-
-    // 1 based (string) indices
-  ilParsedIndex = ilAddressLength + 2;
-  ilInstructionMnemonicIndex = ilAddressLength + 1 + ilMaxParsedLength + 1 + 1;
 
   // Exe format descriptions
   fdCOM = 'COM (16-bit)';
@@ -68,7 +62,6 @@ const
   DASFileFirstLine = ';DisASsembled file, Original file: %s  ' + TatraDASFullNameVersion + ', ' + CopyrightStr;
   DASFileExtension = '.das';
 
-  CodeArrayReserveSize = 20;
   MaxProgressNameLength = 25;
 
 
@@ -135,20 +128,6 @@ type
     Movable: array of TMovableBundle;
   end;
 
-  // Exceptions - general exceptions which can be used everywhere in TatraDAS
-
-  ETatraDASException = class (Exception);
-
-  // Raise in case of unexpected state = indicates bug
-  // Messages in English only
-  EIllegalState = class (ETatraDASException);
-
-  // User exceptions,
-  // Should be translated
-  // User terminated a process
-//  EUserTerminatedProcess = class (ETatraDASException);
-  EFileCorrupted = class (ETatraDASException); // FileCorruptedStr // TODO
-
 
   TMyMemoryStream = class(TMemoryStream)
     procedure SetMemory(Ptr: pointer; Size: LongInt);
@@ -162,11 +141,6 @@ type
 
   TPhaseFinishedProc = procedure;
 
-  TProgressData = record
-    AbortExecution: Boolean;
-    Result: Pointer;
-  end;
-
 
   ITranslatable = interface
     ['{E293B4CE-B91A-42FE-884A-27F54EEAD8DD}']
@@ -176,8 +150,6 @@ type
 
 var
   ProcessText: TProcessText;
-  ProgressData: TProgressData;
-  ProgressManager: TProgressManager;
 
 
 procedure ReadStringFromStream(a:TStream; pos:cardinal; var retazec:string);
@@ -364,9 +336,9 @@ end;
 
 
 initialization
-{
+
   Logger.AddListener(TTextFileLoggerListener.Create(ExpandFileName('disasm.log')));
   Logger.LogLevel := llDebug;
-}
+
 
 end.

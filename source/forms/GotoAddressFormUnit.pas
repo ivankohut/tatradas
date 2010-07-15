@@ -3,12 +3,7 @@ unit GotoAddressFormUnit;
 interface
 
 uses
-{$IFDEF MSWINDOWS}
     Forms, StdCtrls, Controls, ExtCtrls, Dialogs,
-{$ENDIF}
-{$IFDEF LINUX}
-    QForms, QStdCtrls, QControls, QExtCtrls, QDialogs,
-{$ENDIF}
     SysUtils,
     Classes,
     INIFiles,

@@ -8,8 +8,7 @@ uses
   Math,
   Types,
 
-  DisassemblerTypes,
-  procmat;
+  DisassemblerTypes;
 
 
 type

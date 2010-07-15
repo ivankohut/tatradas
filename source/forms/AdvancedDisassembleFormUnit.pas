@@ -3,17 +3,13 @@ unit AdvancedDisassembleFormUnit;
 interface
 
 uses
-{$IFDEF MSWINDOWS}
   Controls, Forms, Dialogs, StdCtrls,
-{$ENDIF}
-{$IFDEF LINUX}
-  QControls, QForms, QStdCtrls, QExtCtrls,
-{$ENDIF}
   SysUtils,
   Classes,
   myedits,
   IniFiles,
 
+  ExceptionsUnit,
   procmat,
   TranslatorUnit, ExtCtrls;
 

@@ -16,7 +16,7 @@ object AdvancedDisassembleForm: TAdvancedDisassembleForm
   OnCreate = FormCreate
   OnShow = FormShow
   PixelsPerInch = 96
-  TextHeight = 13
+
   object OptionsGroupBox: TGroupBox
     Left = 8
     Top = 8

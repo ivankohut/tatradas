@@ -15,7 +15,7 @@ object SaveOptionsForm: TSaveOptionsForm
   OldCreateOrder = False
   OnShow = FormShow
   PixelsPerInch = 96
-  TextHeight = 13
+
   object OKButton: TButton
     Left = 320
     Top = 223

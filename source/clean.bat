@@ -10,4 +10,4 @@ del /S *.exe         rem Executable files
 del /S *.das         rem Disassembled text
 del /S *.log         rem Logs
 del /S *.dsk         rem Delphi desktop file
-del /S *.identcache  rem BDS ? file
+del /S *.identcache  rem a BDS file

@@ -22,6 +22,8 @@ uses
   Classes,
   SysUtils,
 
+  ExceptionsUnit,
+  GlobalsUnit,
   StringUtilities,
   FilesUnit,
   procmat,
@@ -333,6 +335,11 @@ begin
   Writeln;
   Writeln('CS_n  =  Code Section number ''n''.');
   Writeln;
+
+  // Non thread way
+//  ExecFile.Disassemble;
+
+  // Thread way
   DisassemblingThread := TDisassembleThread.Create(ExecFile);
   try
     ExecuteProgress(DisassemblingThread);

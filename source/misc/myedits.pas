@@ -3,7 +3,13 @@ unit myedits;
 interface
 
 uses
-  SysUtils, StdCtrls, Classes, Windows, StrUtils;
+  {$IFDEF MSWINDOWS}
+    Windows,
+  {$ELSE}
+    LCLType,
+  {$ENDIF}
+
+  SysUtils, StdCtrls, Classes, StrUtils;
 
 type
 //  TMyEditMode = (emBinary,emOctal,emDecimal,emHexadecimal);

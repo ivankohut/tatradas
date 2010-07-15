@@ -53,7 +53,6 @@ type
   TSIB = record
     FullSIB: byte;
     Scale, Index, Base: byte;
-    Loaded: boolean;
   end;
 
 

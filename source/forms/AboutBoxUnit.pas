@@ -3,12 +3,9 @@ unit AboutBoxUnit;
 interface
 
 uses
-{$IFDEF MSWINDOWS}
-  Forms, ExtCtrls, StdCtrls, Controls, Graphics, ExtActns, ActnList,
-{$ENDIF}
-{$IFDEF LINUX}
-  QForms, QExtCtrls, QStdCtrls, QControls, QGraphics, QActnList,
-{$ENDIF}
+  Forms, ExtCtrls, StdCtrls, Controls, Graphics,
+  //ExtActns,
+  ActnList,
 
   Classes,
   SysUtils,
@@ -26,7 +23,7 @@ type
     OKButton: TButton;
     ProgrammingLabel: TLabel;
     ActionList1: TActionList;
-    BrowseURL1: TBrowseURL;
+//    BrowseURL1: TBrowseURL;
     Panel2: TPanel;
     Image1: TImage;
     Panel3: TPanel;
@@ -113,7 +110,7 @@ var
 begin
   DecSepar := DecimalSeparator;
   DecimalSeparator := '.';
-  CompilerDataLabel.Caption := CompilerDataLabel.Caption + ' ' + FloatToStrF(CompilerVersion, ffFixed, 5, 1);
+//  CompilerDataLabel.Caption := CompilerDataLabel.Caption + ' ' + FloatToStrF(CompilerVersion, ffFixed, 5, 1);
   DecimalSeparator := DecSepar;
 end;
 

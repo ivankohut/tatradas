@@ -252,9 +252,11 @@ end;
 procedure TImportTabFrame.FunctionListViewColumnClick(Sender: TObject; Column: TListColumn);
 begin
   inherited;
+  {$IFNDEF LCL}
   FunctionListView.Items.BeginUpdate;
   FunctionListView.CustomSort(ImportTabFrameSortListView, Column.Index);
   FunctionListView.Items.EndUpdate;
+  {$ENDIF}
 end;
 
 

@@ -14,7 +14,7 @@ object OptionsForm: TOptionsForm
   OldCreateOrder = False
   OnShow = FormShow
   PixelsPerInch = 96
-  TextHeight = 13
+
   object Label1: TLabel
     Left = 8
     Top = 8

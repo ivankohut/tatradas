@@ -2,7 +2,7 @@ object MainForm: TMainForm
   Left = 243
   Top = 2
   Width = 781
-  Height = 776
+  Height = 920
   BorderIcons = [biSystemMenu, biMinimize]
   Caption = 'TatraDAS disassembler 2.9.9'
   Color = clBtnFace
@@ -19,7 +19,7 @@ object MainForm: TMainForm
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   PixelsPerInch = 96
-  TextHeight = 13
+
   object Image1: TImage
     Left = 0
     Top = 0
@@ -34,17 +34,16 @@ object MainForm: TMainForm
     Left = 0
     Top = 92
     Width = 773
-    Height = 619
+    Height = 763
     Align = alClient
     Constraints.MinHeight = 300
     Constraints.MinWidth = 565
-    HotTrack = True
     TabOrder = 0
     OnChange = MainPageControlChange
   end
   object StatusBar2: TStatusBar
     Left = 0
-    Top = 711
+    Top = 855
     Width = 773
     Height = 19
     AutoHint = True
@@ -476,7 +475,7 @@ object MainForm: TMainForm
     Left = 40
     Top = 8
     Bitmap = {
-      494C01010D00100010001000100080008000FF00FFFFFFFFFFFFFFFF424D3600
+      494C01010D00100010001000100080008000FF10FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000400000004000000001002000000000000040
       0000000000000000000000000000000000008000800080008000C88E3300C88E
       3300C88E3300C88E3300C88E3300C88E3300C88E3300C88E3300C88E3300C88E
@@ -1008,7 +1007,8 @@ object MainForm: TMainForm
       0000000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
       0000000000000000000000000000000000000000000000000000000000000000
-      8001800180018001C003C003C003C003}
+      8001800180018001C003C003C003C00300000000000000000000000000000000
+      000000000000}
   end
   object SaveProjectSaveDialog: TSaveDialog
     Left = 136

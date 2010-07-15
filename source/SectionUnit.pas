@@ -7,7 +7,6 @@ interface
 uses
   Classes,
   SysUtils,
-  IniFiles,
 
   procmat;
 
@@ -65,7 +64,9 @@ type
 
 implementation
 
-uses CodeSectionUnit;
+uses 
+  ExceptionsUnit,
+  CodeSectionUnit;
 
 { TSection }
 

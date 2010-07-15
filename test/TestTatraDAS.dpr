@@ -19,6 +19,7 @@ uses
   VersionTests in 'VersionTests.pas',
   CodeSectionTests in 'CodeSectionTests.pas',
   ExportersTests in 'ExportersTests.pas',
+  x86DisassemblerTests in 'x86DisassemblerTests.pas',
 
   {$IFDEF MSWINDOWS}
     {$IFDEF GUI_B}

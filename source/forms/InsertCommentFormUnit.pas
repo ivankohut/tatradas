@@ -3,16 +3,12 @@ unit InsertCommentFormUnit;
 interface
 
 uses
-{$IFDEF MSWINDOWS}
   Controls, Forms, Dialogs, StdCtrls,
-{$ENDIF}
-{$IFDEF LINUX}
-  QControls, QForms, QStdCtrls,
-{$ENDIF}
   SysUtils,
   Classes,
   INIFiles,
 
+  LResources,
   procmat,
   TranslatorUnit;
 

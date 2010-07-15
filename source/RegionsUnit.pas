@@ -9,7 +9,6 @@ uses
   SysUtils,
   Classes,
   Contnrs,
-  Math,
 
   procmat;
 
@@ -46,6 +45,9 @@ type
 
 
 implementation
+
+uses
+  ExceptionsUnit;
 
 
 //******************************************************************************

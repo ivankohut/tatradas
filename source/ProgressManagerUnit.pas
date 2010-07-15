@@ -3,7 +3,7 @@ unit ProgressManagerUnit;
 interface
 
 uses
-  Classes, SyncObjs;
+  Classes, SyncObjs, AbstractProgressManager;
 
 const
   cRefreshInterval = 50; // milliseconds
@@ -11,10 +11,9 @@ const
 type
   TShowProgressProc = procedure (APhase: string; AProgress: Double);
 
-  TProgressManager = class
+  TProgressManager = class(TAbstractProgressManager)
   private
     fFinished: Boolean;
-    fPosition: Cardinal;
     fMaximum: Cardinal;
     fPhaseName: String;
     fShowProgressProc: TShowProgressProc;
@@ -27,13 +26,11 @@ type
     // Methods supposed to called from main thread
     constructor Create(AShowProgressProc: TShowProgressProc);
     destructor Destroy; override;
-    procedure StartProgress(AThread: TThread);
+    procedure StartProgress(AThread: TThread); override;
 
     // Methods supposed to be called from slave thread
-    procedure StartPhase(AName: String; AMaximum: Cardinal);
-    procedure Finish(ASuccessful: Boolean);
-    procedure IncPosition; 
-    property Position: Cardinal read fPosition write fPosition;
+    procedure StartPhase(AName: String; AMaximum: Cardinal); override;
+    procedure Finish(ASuccessful: Boolean); override;
   end;
 
 
@@ -41,7 +38,9 @@ implementation
 
 
 uses
-  LoggerUnit, SysUtils, ProgressThreads;
+  LoggerUnit, 
+  ProgressThreads, 
+  SysUtils;
 
 
 constructor TProgressManager.Create(AShowProgressProc: TShowProgressProc);
@@ -92,7 +91,7 @@ begin
   while not fFinished do begin
     ShowFinishedPhases;
     if (fPhaseName <> '') and (fMaximum > 0) then
-      fShowProgressProc(fPhaseName, fPosition / fMaximum);
+      fShowProgressProc(fPhaseName, Position / fMaximum);
     Sleep(cRefreshInterval);
   end;
 
@@ -113,7 +112,7 @@ procedure TProgressManager.StartPhase(AName: String; AMaximum: Cardinal);
 begin
   FinishPhase;
   fPhaseName := AName;
-  fPosition := 0;
+  Position := 0;
   fMaximum := AMaximum;
 end;
 
@@ -141,13 +140,6 @@ begin
       fLock.Release;
     end;
   end;
-end;
-
-
-
-procedure TProgressManager.IncPosition;
-begin
-  Inc(fPosition);
 end;
 
 

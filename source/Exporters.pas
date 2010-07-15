@@ -3,7 +3,7 @@ unit Exporters;
 interface
 
 uses
-  SysUtils, Classes, Types,
+  SysUtils, Classes,
   procmat,
   ExecFileUnit;
 
@@ -24,8 +24,8 @@ implementation
 
 
 uses
-  StrUtils, Math,
-  LoggerUnit, CodeSectionUnit, StringUtilities, SectionUnit;
+  StrUtils,
+  LoggerUnit, CodeSectionUnit, StringUtilities, SectionUnit, DisassemblerTypes, GlobalsUnit;
 
 
 class function TExporter.NasmIsReferenceFromCode(const ALine: string): Boolean;

@@ -15,7 +15,7 @@ object MessageForm: TMessageForm
   OldCreateOrder = False
   Position = poMainFormCenter
   PixelsPerInch = 96
-  TextHeight = 13
+
   object MessageLabel: TLabel
     Left = 16
     Top = 16

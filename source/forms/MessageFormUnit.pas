@@ -3,8 +3,8 @@ unit MessageFormUnit;
 interface
 
 uses
-  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls;
+  SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, StdCtrls, FileUtil, LResources;
 
 type
   TMessageForm = class(TForm)
@@ -24,7 +24,8 @@ var
 
 implementation
 
-uses TranslatorUnit, procmat;
+uses
+  TranslatorUnit, ExceptionsUnit;
 
 {$R *.dfm}
 

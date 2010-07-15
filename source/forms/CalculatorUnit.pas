@@ -12,7 +12,6 @@ unit CalculatorUnit;
 interface
 
 uses
-  Windows,
   IniFiles,
   SysUtils,
   Variants,
@@ -80,6 +79,7 @@ implementation
 
 procedure TCalculator.EditKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
 begin
+{
   case key of
     Ord('+'),VK_ADD: PlusButtonClick(PlusButton);
     Ord('-'),VK_SUBTRACT: begin
@@ -92,6 +92,7 @@ begin
     VK_RETURN: EqualButtonClick(EqualButton);
     VK_ESCAPE: self.Close;
   end;
+}
 end;
 
 procedure TCalculator.EditChange(Sender: TObject);

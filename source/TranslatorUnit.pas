@@ -7,13 +7,7 @@ unit TranslatorUnit;
 interface
 
 uses
-
-{$IFDEF MSWINDOWS}
   Forms, Graphics,
-{$ENDIF}
-{$IFDEF LINUX}
-  QForms, QGraphics,
-{$ENDIF}
   INIFiles,
   SysUtils,
   Classes,

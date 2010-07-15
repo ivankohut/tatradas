@@ -8,13 +8,7 @@ unit UnknownFileFormUnit;
 interface
 
 uses
-{$IFDEF MSWINDOWS}
   ComCtrls, StdCtrls, ExtCtrls, Forms, Dialogs, Controls,
-{$ENDIF}
-{$IFDEF LINUX}
-  QComCtrls, QStdCtrls, QExtCtrls, QForms, QDialogs, QControls,
-{$ENDIF}
-
   SysUtils,
   Classes,
   INIFiles,

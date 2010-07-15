@@ -16,7 +16,7 @@ object GotoLineForm: TGotoLineForm
   OnCreate = FormCreate
   OnDestroy = FormDestroy
   PixelsPerInch = 96
-  TextHeight = 13
+
   object GotoLineLabel: TLabel
     Left = 13
     Top = 22
