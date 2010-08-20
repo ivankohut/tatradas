@@ -5,23 +5,10 @@ program TatraDAS;
 {%File 'TatraDASHighlighter.msg'}
 {%File 'res\tatradas.rc'}
 
-{$IFDEF GUI_B}
-  {$IFDEF MSWINDOWS}
-    {$R 'res\tatradas.res' 'res\tatradas.rc'}
-  {$ENDIF}
-  {$IFDEF LINUX}
-    {$R 'res/tatradas.res' 'res/tatradas.rc'}
-  {$ENDIF}
-{$ENDIF}
-
 {$IFDEF LCL}
   {$IFDEF MSWINDOWS}
     {$R 'res\tatradas.res' 'res\tatradas.rc'}
   {$ENDIF}
-{$ENDIF}
-
-{$IFDEF GUI_B}
-  {$DEFINE GUI}
 {$ENDIF}
 
 {$IFDEF LCL}
@@ -29,105 +16,46 @@ program TatraDAS;
 {$ENDIF}
 
 uses
-  {$IFNDEF GUI_B}
-    {$IFDEF FPC}
-      {$IFDEF LINUX}
-        cthreads,
-      {$ENDIF}
+  {$IFDEF FPC}
+    {$IFDEF LINUX}
+      cthreads,
     {$ENDIF}
-  {$ENDIF}
-
-  {$IFDEF LCL}
-    Interfaces, // this includes the LCL widgetset
-    LResources,
-  {$ENDIF}
-
-  {$IFDEF MSWINDOWS}
-    {$IFNDEF FPC}                                                                                          
-      FastMM4 in '..\third\fastmm4\FastMM4.pas',
-      FastMM4Messages in '..\third\fastmm4\FastMM4Messages.pas',
-    {$ENDIF}
-    {$IFDEF GUI_B}
-      Windows,
-    {$ENDIF}
-    {$IFDEF GUI}
-      Forms,
-      Dialogs,
-    {$ENDIF}
-  {$ENDIF}
-
-  {$IFDEF LINUX}
-    {$IFDEF GUI_B}
-      QForms,
-    {$ENDIF}
-    {$IFDEF LCL}
-      Forms,
-      Dialogs,
-    {$ENDIF}
-  {$ENDIF}
-
-  {$IFDEF GUI}
-    IvanSynEdit in 'misc\IvanSynEdit.pas',
   {$ENDIF}
 
   SysUtils,
   Classes,
   StrUtils,
-  GlobalsUnit,
-  ExceptionsUnit in 'ExceptionsUnit.pas',
-  procmat in 'procmat.pas',
-  StringUtilities in 'StringUtilities.pas',
-  SortingUnit in 'SortingUnit.pas',
-  ExecFileManagerUnit in 'ExecFileManagerUnit.pas',
-  ExecFileUnit in 'ExecFileUnit.pas',
-  SectionUnit in 'SectionUnit.pas',
-  RegionsUnit in 'RegionsUnit.pas',
-  ProgressThreads in 'ProgressThreads.pas',
-  Exporters in 'Exporters.pas',
-  ProgressManagerUnit in 'ProgressManagerUnit.pas',
 
-{$IFDEF MSWINDOWS}
+  {$IFDEF GUI}
+    Interfaces, // this includes the LCL widgetset
+    LResources,
+    
+    Forms,
+    Dialogs,
+  {$ENDIF}
+  
+  // Base units
+  AbstractProgressManager in 'base\AbstractProgressManager.pas',
+  ExceptionsUnit in 'base\ExceptionsUnit.pas',
+  ExecFileManagerUnit in 'base\ExecFileManagerUnit.pas',
+  ExecFileUnit in 'base\ExecFileUnit.pas',
+  Exporters in 'base\Exporters.pas',
+  GlobalsUnit in 'base\GlobalsUnit.pas',
+  procmat in 'base\procmat.pas',
+  ProgressManagerUnit in 'base\ProgressManagerUnit.pas',
+  ProgressThreads in 'base\ProgressThreads.pas',
+  RegionsUnit in 'base\RegionsUnit.pas',
+  SectionUnit in 'base\SectionUnit.pas',
+
+  // Utilities units
+  StringUtilities in 'utils\StringUtilities.pas',
+  SortingUnit in 'utils\SortingUnit.pas',
+  FilesUnit in 'utils\FilesUnit.pas',
+  ListsUnit in 'utils\ListsUnit.pas',
+  LoggerUnit in 'utils\LoggerUnit.pas',
 
   // Misc. units
   StringRes in 'res\StringRes.pas',
-  LoggerUnit in 'misc\LoggerUnit.pas',
-  FilesUnit in 'misc\FilesUnit.pas',
-  ListsUnit in 'misc\ListsUnit.pas',
-
-{$IFDEF GUI}
-  TatraDASHighlighter in 'res\TatraDASHighlighter.pas',
-//  ButtonsX in 'misc\ButtonsX.pas',
-  myedits in 'misc\myedits.pas',
-  TranslatorUnit in 'TranslatorUnit.pas',
-  VersionUnit in 'VersionUnit.pas',
-
-  // Forms' units
-  MainFormUnit in 'MainFormUnit.pas' {MainForm},
-//  HexEditFormUnit in 'forms\HexEditFormUnit.pas' {HexEditForm},
-  CalculatorUnit in 'forms\CalculatorUnit.pas' {Calculator},
-  OptionsFormUnit in 'forms\OptionsFormUnit.pas' {OptionsForm},
-  AdvancedChangingToDataFormUnit in 'forms\AdvancedChangingToDataFormUnit.pas' {AdvancedChangingToDataForm},
-  AdvancedDisassembleFormUnit in 'forms\AdvancedDisassembleFormUnit.pas' {AdvancedDisassembleForm},
-  InsertCommentFormUnit in 'forms\InsertCommentFormUnit.pas' {InsertCommentForm},
-  AboutBoxUnit in 'forms\AboutBoxUnit.pas' {AboutBox},
-  UnknownFileFormUnit in 'forms\UnknownFileFormUnit.pas' {UnknownFileFormatForm},
-  SaveOptionsFormUnit in 'forms\SaveOptionsFormUnit.pas' {SaveOptionsForm},
-  ProgressFormUnit in 'forms\ProgressFormUnit.pas' {ProgressForm},
-  GotoLineFormUnit in 'forms\GotoLineFormUnit.pas' {GoToLineForm},
-  GotoAddressFormUnit in 'forms\GotoAddressFormUnit.pas' {GoToAddressForm},
-  MessageFormUnit in 'forms\MessageFormUnit.pas' {MessageForm},
-
-  // Frames' units
-  TabFrameTemplateUnit in 'frames\TabFrameTemplateUnit.pas',
-  FileTabFrameUnit in 'frames\FileTabFrameUnit.pas',
-  CodeTabFrameUnit in 'frames\CodeTabFrameUnit.pas',
-  ImportTabFrameUnit in 'frames\ImportTabFrameUnit.pas',
-  ExportTabFrameUnit in 'frames\ExportTabFrameUnit.pas',
-
-{$ELSE}
-  CliUnit in 'CliUnit.pas',
-  TatraDAS_SynEditStringList in 'misc\TatraDAS_SynEditStringList.pas',
-{$ENDIF}
 
   // Disassembler units
   DisassemblerUnit in 'disasm\DisassemblerUnit.pas',
@@ -152,77 +80,42 @@ uses
   // Sections' units
   CodeSectionUnit in 'sections\CodeSectionUnit.pas',
   ExportSectionUnit in 'sections\ExportSectionUnit.pas',
-  ImportSectionUnit in 'sections\ImportSectionUnit.pas';
+  ImportSectionUnit in 'sections\ImportSectionUnit.pas',
 
-{$ENDIF}
+  {$IFDEF GUI}
+    TatraDASHighlighter in 'res\TatraDASHighlighter.pas',
+  //  ButtonsX in 'misc\ButtonsX.pas',
+    myedits in 'misc\myedits.pas',
+    TranslatorUnit in 'misc\TranslatorUnit.pas',
+    VersionUnit in 'utils\VersionUnit.pas',
 
-{$IFDEF LINUX}
-  // Misc. units
-  StringRes in 'res/StringRes.pas',
-  LoggerUnit in 'misc/LoggerUnit.pas',
-  FilesUnit in 'misc/FilesUnit.pas',
-  ListsUnit in 'misc/ListsUnit.pas',
+    // Forms' units
+    MainFormUnit in 'forms\MainFormUnit.pas' {MainForm},
+  //  HexEditFormUnit in 'forms\HexEditFormUnit.pas' {HexEditForm},
+    CalculatorUnit in 'forms\CalculatorUnit.pas' {Calculator},
+    OptionsFormUnit in 'forms\OptionsFormUnit.pas' {OptionsForm},
+    AdvancedChangingToDataFormUnit in 'forms\AdvancedChangingToDataFormUnit.pas' {AdvancedChangingToDataForm},
+    AdvancedDisassembleFormUnit in 'forms\AdvancedDisassembleFormUnit.pas' {AdvancedDisassembleForm},
+    InsertCommentFormUnit in 'forms\InsertCommentFormUnit.pas' {InsertCommentForm},
+    AboutBoxUnit in 'forms\AboutBoxUnit.pas' {AboutBox},
+    UnknownFileFormUnit in 'forms\UnknownFileFormUnit.pas' {UnknownFileFormatForm},
+    SaveOptionsFormUnit in 'forms\SaveOptionsFormUnit.pas' {SaveOptionsForm},
+    ProgressFormUnit in 'forms\ProgressFormUnit.pas' {ProgressForm},
+    GotoLineFormUnit in 'forms\GotoLineFormUnit.pas' {GoToLineForm},
+    GotoAddressFormUnit in 'forms\GotoAddressFormUnit.pas' {GoToAddressForm},
+    MessageFormUnit in 'forms\MessageFormUnit.pas' {MessageForm},
 
-{$IFDEF GUI}
-//  ButtonsX in 'misc/ButtonsX.pas',
-  myedits in 'misc/myedits.pas',
-  TranslatorUnit in 'TranslatorUnit.pas',
-  TatraDASHighlighter in 'res/TatraDASHighlighter.pas',
-  VersionUnit in 'VersionUnit.pas',
+    // Frames' units
+    TabFrameTemplateUnit in 'frames\TabFrameTemplateUnit.pas',
+    FileTabFrameUnit in 'frames\FileTabFrameUnit.pas',
+    CodeTabFrameUnit in 'frames\CodeTabFrameUnit.pas',
+    ImportTabFrameUnit in 'frames\ImportTabFrameUnit.pas',
+    ExportTabFrameUnit in 'frames\ExportTabFrameUnit.pas';
 
-  // Forms' units
-  MainFormUnit in 'MainFormUnit.pas' {MainForm},
-//  HexEditFormUnit in 'forms/HexEditFormUnit.pas' {HexEditForm},
-  CalculatorUnit in 'forms/CalculatorUnit.pas' {Calculator},
-  OptionsFormUnit in 'forms/OptionsFormUnit.pas' {OptionsForm},
-  AdvancedChangingToDataFormUnit in 'forms/AdvancedChangingToDataFormUnit.pas' {AdvancedChangingToDataForm},
-  AdvancedDisassembleFormUnit in 'forms/AdvancedDisassembleFormUnit.pas' {AdvancedDisassembleForm},
-  InsertCommentFormUnit in 'forms/InsertCommentFormUnit.pas' {InsertCommentForm},
-  AboutBoxUnit in 'forms/AboutBoxUnit.pas' {AboutBox},
-  UnknownFileFormUnit in 'forms/UnknownFileFormUnit.pas' {UnknownFileFormatForm},
-  SaveOptionsFormUnit in 'forms/SaveOptionsFormUnit.pas' {SaveOptionsForm},
-  ProgressFormUnit in 'forms/ProgressFormUnit.pas' {ProgressForm},
-  GotoLineFormUnit in 'forms/GotoLineFormUnit.pas' {GoToLineForm},
-  GotoAddressFormUnit in 'forms/GotoAddressFormUnit.pas' {GoToAddressForm},
-  MessageFormUnit in 'forms/MessageFormUnit.pas' {MessageForm},
-
-  // Frames' units
-  TabFrameTemplateUnit in 'frames/TabFrameTemplateUnit.pas',
-  FileTabFrameUnit in 'frames/FileTabFrameUnit.pas',
-  CodeTabFrameUnit in 'frames/CodeTabFrameUnit.pas',
-  ImportTabFrameUnit in 'frames/ImportTabFrameUnit.pas',
-  ExportTabFrameUnit in 'frames/ExportTabFrameUnit.pas',
-
-{$ELSE}
-  CliUnit in 'CliUnit.pas',
-  TatraDAS_SynEditStringList in 'misc/TatraDAS_SynEditStringList.pas',
-{$ENDIF}
-  // Disassembler units
-  DisassemblerUnit in 'disasm/DisassemblerUnit.pas',
-  DisassemblerUtils in 'disasm/DisassemblerUtils.pas',
-  DisassemblerTypes in 'disasm/DisassemblerTypes.pas',
-  x86DisassemblerTypes in 'disasm/x86DisassemblerTypes.pas',
-  x86Instructions in 'disasm/x86Instructions.pas',
-  x86Disassembler in 'disasm/x86Disassembler.pas',
-  DisassembledBlocksUnit in 'disasm/DisassembledBlocksUnit.pas',
-  CallsAndJumpsTableUnit in 'disasm/CallsAndJumpsTableUnit.pas',
-
-  // Sections' units
-  CodeSectionUnit in 'sections/CodeSectionUnit.pas',
-  ExportSectionUnit in 'sections/ExportSectionUnit.pas',
-  ImportSectionUnit in 'sections/ImportSectionUnit.pas',
-
-  // Executable formats' units
-  MZFileUnit in 'exefiles/MZFileUnit.pas',
-  COMFileUnit in 'exefiles/COMFileUnit.pas',
-  LEFileUnit in 'exefiles/LEFileUnit.pas',
-  LXFileUnit in 'exefiles/LXFileUnit.pas',
-  NEFileUnit in 'exefiles/NEFileUnit.pas',
-  PEFileUnit in 'exefiles/PEFileUnit.pas',
-  ELFFileUnit in 'exefiles/ELFFileUnit.pas',
-  CustomFileUnit in 'exefiles/CustomFileUnit.pas';
-
-{$ENDIF}
+  {$ELSE}
+    CliUnit in 'misc\CliUnit.pas',
+    TatraDAS_SynEditStringList in 'misc\TatraDAS_SynEditStringList.pas';
+  {$ENDIF}
 
 
 {$IFDEF GUI}

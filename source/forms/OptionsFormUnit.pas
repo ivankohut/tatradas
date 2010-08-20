@@ -42,7 +42,7 @@ var
 
 implementation
 
-{$R *.dfm}
+{$R *.lfm}
 
 procedure TOptionsForm.CancelButtonClick(Sender: TObject);
 begin

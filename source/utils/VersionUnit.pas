@@ -1,15 +1,11 @@
 unit VersionUnit;
 
-
 interface
 
 uses
   Math,
   SysUtils,
-  Types,
-
-  procmat
-  ;
+  Types;
 
 type
 
@@ -31,10 +27,6 @@ type
   end;
 
 
-var
-  TatraDAS_Version: TVersion;
-
-
 implementation
 
 
@@ -44,7 +36,6 @@ begin
   fMinor:= Min;
   fFix:= Fix;
 end;
-
 
 
 
@@ -107,11 +98,5 @@ begin
       result:=CompareValue(AVersion.Fix, self.Fix);
 end;
 
-
-initialization
-  TatraDAS_Version := TVersion.Create(ShortTatraDASVersion);
-
-finalization
-  TatraDAS_Version.Free;
 
 end.

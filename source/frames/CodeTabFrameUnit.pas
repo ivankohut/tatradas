@@ -21,7 +21,6 @@ uses
   StrUtils,
   Graphics,
 
-  IvanSynEdit,
   SynEdit,
   SynEditTypes,
   SynEditTextBuffer,
@@ -48,7 +47,7 @@ uses
 type
   TCodeTabFrame = class(TTabFrameTemplate)
   published
-    plocha: TIvanSynEdit;
+    plocha: TSynEdit;
     GotoEntryPointButton: TButton;
     GotoAddressButton: TButton;
     Bevel1: TBevel;
@@ -194,7 +193,7 @@ begin
   Caption:= 'Code section #' + IntToStr(fSection.CodeSectionIndex);
 
   // Vytvorenie Textovej plochy SynEdit
-  plocha:= TIvanSynEdit.Create(Panel);
+  plocha:= TSynEdit.Create(Panel);
   plocha.Parent:= Panel;
   plocha.SetSubComponent(true);
   plocha.TabOrder:= 0;
@@ -208,13 +207,13 @@ begin
   plocha.Font.Size:= 8;
   plocha.HideSelection:= true;
   plocha.ScrollBars:= ssVertical;
-  plocha.ActiveLineColor:= $FFE8E0;
+//  plocha.ActiveLineColor:= $FFE8E0; FIXME
 
   plocha.Highlighter:= TSynTatraDASSyn.Create(plocha);
   plocha.OnChange:= PlochaChange;
   plocha.OnStatusChange:= PlochaStatusChange;
   plocha.OnMouseDown:= PlochaMouseDown;
-  plocha.HookTextBuffer(fSection.Disassembled, plocha.UndoList, plocha.RedoList);
+//  plocha.HookTextBuffer(fSection.Disassembled, plocha.UndoList, plocha.RedoList); FIXME
 
   fCanFollowJump := false;
   LineDataLabel.Caption:='1';

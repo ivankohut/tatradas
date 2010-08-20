@@ -60,7 +60,7 @@ var
 
 implementation
 
-{$R *.dfm}
+{$R *.lfm}
 
 uses
   MainFormUnit, GotoAddressFormUnit, ExecFileUnit, MessageFormUnit;

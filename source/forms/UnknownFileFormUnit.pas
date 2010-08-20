@@ -72,7 +72,7 @@ implementation
 
 uses MessageFormUnit;
 
-{$R *.dfm}
+{$R *.lfm}
 
 {
   Po stlaceni tlacidla OK funkcia overi ci dana adresa zadana uzivatelom je

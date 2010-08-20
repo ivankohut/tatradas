@@ -9,22 +9,16 @@ unit ResourceSectionUnit;
 interface
 
 uses
-{$IFDEF GUI_B}
-  {$IFDEF MSWINDOWS}
-     ComCtrls, StdCtrls, Controls, ExtCtrls, ImgList,
-  {$ENDIF}
-  {$IFDEF LINUX}
-     QComCtrls, QStdCtrls, QControls, QExtCtrls, QImgList,
-  {$ENDIF}
-  Graphics,
+{$IFDEF GUI}
+  ComCtrls, StdCtrls, Controls, ExtCtrls, ImgList, Graphics,
 {$ENDIF}
-     classes, INIFiles, SysUtils,
-     procmat,
-     SectionUnit;
+  Classes, IniFiles, SysUtils,
+  procmat,
+  SectionUnit;
 
 type
 
-{$IFDEF GUI_B}
+{$IFDEF GUI}
   TResourceTabSheet = class;
 {$ENDIF}
   TResourceType = (
@@ -131,7 +125,7 @@ type
   end;
 }
   TResourceSection = class(TSection)
-{$IFDEF GUI_B}
+{$IFDEF GUI}
 ///    tab: TResourceTabSheet;
 {$ENDIF}
     MemOffset: cardinal;
@@ -145,7 +139,7 @@ type
     procedure LoadFromFile(DHF: TStream; var DAS: TextFile); overload; override;
   end;
 
-{$IFDEF GUI_B}
+{$IFDEF GUI}
   TNodeData = record
     typ: TResourceType;
     Resource: PTResourceData;
@@ -182,7 +176,7 @@ destructor TResourceSection.Destroy;
 
 begin
   FreeDirectory(@TypeDir);
-{$IFDEF GUI_B}
+{$IFDEF GUI}
 {
   tab.Free;
   tab:=nil;
@@ -372,7 +366,7 @@ end;
 // TResourceTabSheet class
 //============================================================================================================
 
-{$IFDEF GUI_B}
+{$IFDEF GUI}
 constructor TResourceTabSheet.Create(AOwner:TComponent; ssection: TResourceSection);
 
 procedure DisplayTree(Directory: TResourceDirectory; Node: TTreeNode);

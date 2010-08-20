@@ -52,7 +52,7 @@ var
 implementation
 
 
-{$R *.dfm}
+{$R *.lfm}
 
 
 function TSaveOptionsForm.GetExportCustomDASOptions: TExportCustomDASOptions;

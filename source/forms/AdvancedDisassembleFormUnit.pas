@@ -53,7 +53,7 @@ var
 implementation
 
 
-{$R *.dfm}
+{$R *.lfm}
 
 
 procedure TAdvancedDisassembleForm.OKButtonClick(Sender: TObject);

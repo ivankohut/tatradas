@@ -75,7 +75,7 @@ var
 
 implementation
 
-{$R *.dfm}
+{$R *.lfm}
 
 procedure TCalculator.EditKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
 begin

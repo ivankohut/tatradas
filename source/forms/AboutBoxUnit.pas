@@ -52,7 +52,7 @@ implementation
 
 uses MainFormUnit;
 
-{$R *.dfm}
+{$R *.lfm}
 
 procedure TAboutBox.OKButtonClick(Sender: TObject);
 begin

@@ -64,7 +64,7 @@ var
 implementation
 
 
-{$R *.dfm}
+{$R *.lfm}
 
 
 procedure TAdvancedChangingToDataForm.SetMaxAdressMaxValue(AValue: Cardinal);

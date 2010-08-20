@@ -269,7 +269,7 @@ uses
   UnknownFileFormUnit,
   MessageFormUnit;
 
-{$R *.dfm}
+{$R *.lfm}
 
 
 

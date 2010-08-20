@@ -32,7 +32,7 @@ var
 implementation
 
 
-{$R *.dfm}
+{$R *.lfm}
 
 
 procedure TInsertCommentForm.OKButtonClick(Sender: TObject);

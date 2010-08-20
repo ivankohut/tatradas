@@ -1154,12 +1154,6 @@ begin
     IMMv: result := ProcessImmediate(os2or4);
     IMMw: result := ProcessImmediate(os2);
     IMMp: result := ProcessImmediate(os4or6);
-{
-    IMMb: result := SpracujImmediatePascal(os1);
-    IMMv: result := SpracujImmediatePascal(os2or4);
-    IMMw: result := SpracujImmediatePascal(os2);
-    IMMp: result := SpracujImmediatePascal(os4or6);
-}
 
     RELb: result := ProcessRelative(os1);
     RELv: result := ProcessRelative(os2or4);

@@ -27,7 +27,7 @@ implementation
 uses
   TranslatorUnit, ExceptionsUnit;
 
-{$R *.dfm}
+{$R *.lfm}
 
 
 function DisplayMessage(AMessage: string; AMessageType: TMsgDlgType; AButtons: TMsgDlgButtons): Integer;

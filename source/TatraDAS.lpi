@@ -37,11 +37,9 @@
       <Unit0>
         <Filename Value="TatraDAS.dpr"/>
         <IsPartOfProject Value="True"/>
-        <CursorPos X="42" Y="3"/>
+        <CursorPos X="43" Y="17"/>
         <TopLine Value="1"/>
-        <EditorIndex Value="0"/>
-        <UsageCount Value="35"/>
-        <Loaded Value="True"/>
+        <UsageCount Value="36"/>
         <SyntaxHighlighter Value="Delphi"/>
       </Unit0>
       <Unit1>
@@ -50,7 +48,7 @@
         <UnitName Value="LoggerUnit"/>
         <CursorPos X="1" Y="1"/>
         <TopLine Value="1"/>
-        <UsageCount Value="30"/>
+        <UsageCount Value="31"/>
         <SyntaxHighlighter Value="Delphi"/>
       </Unit1>
       <Unit2>
@@ -63,11 +61,9 @@
         <Filename Value="disasm/x86Disassembler.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="x86Disassembler"/>
-        <CursorPos X="10" Y="1174"/>
-        <TopLine Value="1163"/>
-        <EditorIndex Value="7"/>
-        <UsageCount Value="27"/>
-        <Loaded Value="True"/>
+        <CursorPos X="57" Y="1106"/>
+        <TopLine Value="1091"/>
+        <UsageCount Value="28"/>
         <SyntaxHighlighter Value="Delphi"/>
       </Unit3>
       <Unit4>
@@ -75,16 +71,16 @@
         <IsPartOfProject Value="True"/>
         <CursorPos X="1" Y="1"/>
         <TopLine Value="1"/>
-        <UsageCount Value="35"/>
+        <UsageCount Value="36"/>
         <SyntaxHighlighter Value="Delphi"/>
       </Unit4>
       <Unit5>
         <Filename Value="sections/CodeSectionUnit.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="CodeSectionUnit"/>
-        <CursorPos X="16" Y="982"/>
-        <TopLine Value="944"/>
-        <UsageCount Value="27"/>
+        <CursorPos X="53" Y="11"/>
+        <TopLine Value="16"/>
+        <UsageCount Value="28"/>
         <SyntaxHighlighter Value="Delphi"/>
       </Unit5>
       <Unit6>
@@ -110,12 +106,12 @@
         <SyntaxHighlighter Value="Delphi"/>
       </Unit8>
       <Unit9>
-        <Filename Value="procmat.pas"/>
+        <Filename Value="base/procmat.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="procmat"/>
         <CursorPos X="25" Y="14"/>
         <TopLine Value="1"/>
-        <UsageCount Value="27"/>
+        <UsageCount Value="28"/>
         <SyntaxHighlighter Value="Delphi"/>
       </Unit9>
       <Unit10>
@@ -124,18 +120,16 @@
         <UnitName Value="myedits"/>
         <CursorPos X="39" Y="10"/>
         <TopLine Value="1"/>
-        <UsageCount Value="27"/>
+        <UsageCount Value="28"/>
         <SyntaxHighlighter Value="Delphi"/>
       </Unit10>
       <Unit11>
-        <Filename Value="TranslatorUnit.pas"/>
+        <Filename Value="misc/TranslatorUnit.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="TranslatorUnit"/>
         <CursorPos X="33" Y="252"/>
         <TopLine Value="238"/>
-        <EditorIndex Value="6"/>
-        <UsageCount Value="27"/>
-        <Loaded Value="True"/>
+        <UsageCount Value="28"/>
         <SyntaxHighlighter Value="Delphi"/>
       </Unit11>
       <Unit12>
@@ -144,16 +138,16 @@
         <UnitName Value="TatraDASHighlighter"/>
         <CursorPos X="1" Y="37"/>
         <TopLine Value="33"/>
-        <UsageCount Value="27"/>
+        <UsageCount Value="28"/>
         <SyntaxHighlighter Value="Delphi"/>
       </Unit12>
       <Unit13>
-        <Filename Value="Exporters.pas"/>
+        <Filename Value="base/Exporters.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="Exporters"/>
         <CursorPos X="47" Y="66"/>
         <TopLine Value="48"/>
-        <UsageCount Value="27"/>
+        <UsageCount Value="28"/>
         <SyntaxHighlighter Value="Delphi"/>
       </Unit13>
       <Unit14>
@@ -163,16 +157,14 @@
         <UsageCount Value="11"/>
       </Unit14>
       <Unit15>
-        <Filename Value="MainFormUnit.pas"/>
+        <Filename Value="forms/MainFormUnit.pas"/>
         <IsPartOfProject Value="True"/>
         <ComponentName Value="MainForm"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="MainFormUnit"/>
         <CursorPos X="1" Y="319"/>
         <TopLine Value="282"/>
-        <EditorIndex Value="2"/>
-        <UsageCount Value="27"/>
-        <Loaded Value="True"/>
+        <UsageCount Value="28"/>
         <SyntaxHighlighter Value="Delphi"/>
       </Unit15>
       <Unit16>
@@ -182,10 +174,8 @@
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="MessageFormUnit"/>
         <CursorPos X="30" Y="35"/>
-        <TopLine Value="16"/>
-        <EditorIndex Value="5"/>
-        <UsageCount Value="27"/>
-        <Loaded Value="True"/>
+        <TopLine Value="1"/>
+        <UsageCount Value="28"/>
         <SyntaxHighlighter Value="Delphi"/>
       </Unit16>
       <Unit17>
@@ -194,9 +184,11 @@
         <ComponentName Value="GoToAddressForm"/>
         <ResourceBaseClass Value="Form"/>
         <UnitName Value="GotoAddressFormUnit"/>
-        <CursorPos X="1" Y="6"/>
-        <TopLine Value="1"/>
-        <UsageCount Value="27"/>
+        <CursorPos X="45" Y="44"/>
+        <TopLine Value="34"/>
+        <EditorIndex Value="0"/>
+        <UsageCount Value="28"/>
+        <Loaded Value="True"/>
         <SyntaxHighlighter Value="Delphi"/>
       </Unit17>
       <Unit18>
@@ -207,7 +199,7 @@
         <UnitName Value="AdvancedChangingToDataFormUnit"/>
         <CursorPos X="1" Y="7"/>
         <TopLine Value="1"/>
-        <UsageCount Value="27"/>
+        <UsageCount Value="28"/>
         <SyntaxHighlighter Value="Delphi"/>
       </Unit18>
       <Unit19>
@@ -218,7 +210,7 @@
         <UnitName Value="AdvancedDisassembleFormUnit"/>
         <CursorPos X="47" Y="16"/>
         <TopLine Value="1"/>
-        <UsageCount Value="27"/>
+        <UsageCount Value="28"/>
         <SyntaxHighlighter Value="Delphi"/>
       </Unit19>
       <Unit20>
@@ -229,9 +221,7 @@
         <UnitName Value="InsertCommentFormUnit"/>
         <CursorPos X="14" Y="11"/>
         <TopLine Value="1"/>
-        <EditorIndex Value="4"/>
-        <UsageCount Value="27"/>
-        <Loaded Value="True"/>
+        <UsageCount Value="28"/>
         <SyntaxHighlighter Value="Delphi"/>
       </Unit20>
       <Unit21>
@@ -243,39 +233,39 @@
         <SyntaxHighlighter Value="Delphi"/>
       </Unit21>
       <Unit22>
-        <Filename Value="ExecFileManagerUnit.pas"/>
+        <Filename Value="base/ExecFileManagerUnit.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="ExecFileManagerUnit"/>
         <CursorPos X="1" Y="61"/>
         <TopLine Value="42"/>
-        <UsageCount Value="27"/>
+        <UsageCount Value="28"/>
         <SyntaxHighlighter Value="Delphi"/>
       </Unit22>
       <Unit23>
-        <Filename Value="ProgressThreads.pas"/>
+        <Filename Value="base/ProgressThreads.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="ProgressThreads"/>
         <CursorPos X="3" Y="8"/>
         <TopLine Value="1"/>
-        <UsageCount Value="27"/>
+        <UsageCount Value="28"/>
         <SyntaxHighlighter Value="Delphi"/>
       </Unit23>
       <Unit24>
-        <Filename Value="ExecFileUnit.pas"/>
+        <Filename Value="base/ExecFileUnit.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="ExecFileUnit"/>
         <CursorPos X="34" Y="98"/>
         <TopLine Value="85"/>
-        <UsageCount Value="27"/>
+        <UsageCount Value="28"/>
         <SyntaxHighlighter Value="Delphi"/>
       </Unit24>
       <Unit25>
-        <Filename Value="RegionsUnit.pas"/>
+        <Filename Value="base/RegionsUnit.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="RegionsUnit"/>
         <CursorPos X="47" Y="13"/>
         <TopLine Value="1"/>
-        <UsageCount Value="27"/>
+        <UsageCount Value="28"/>
         <SyntaxHighlighter Value="Delphi"/>
       </Unit25>
       <Unit26>
@@ -286,12 +276,12 @@
         <UsageCount Value="10"/>
       </Unit26>
       <Unit27>
-        <Filename Value="SectionUnit.pas"/>
+        <Filename Value="base/SectionUnit.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="SectionUnit"/>
         <CursorPos X="1" Y="10"/>
         <TopLine Value="1"/>
-        <UsageCount Value="27"/>
+        <UsageCount Value="28"/>
         <SyntaxHighlighter Value="Delphi"/>
       </Unit27>
       <Unit28>
@@ -302,7 +292,7 @@
         <UnitName Value="AboutBoxUnit"/>
         <CursorPos X="1" Y="7"/>
         <TopLine Value="1"/>
-        <UsageCount Value="27"/>
+        <UsageCount Value="28"/>
         <SyntaxHighlighter Value="Delphi"/>
       </Unit28>
       <Unit29>
@@ -313,16 +303,17 @@
         <UnitName Value="SaveOptionsFormUnit"/>
         <CursorPos X="26" Y="8"/>
         <TopLine Value="1"/>
-        <UsageCount Value="27"/>
+        <UsageCount Value="28"/>
         <SyntaxHighlighter Value="Delphi"/>
       </Unit29>
       <Unit30>
         <Filename Value="forms/CalculatorUnit.pas"/>
         <IsPartOfProject Value="True"/>
+        <HasResources Value="True"/>
         <UnitName Value="CalculatorUnit"/>
         <CursorPos X="2" Y="122"/>
         <TopLine Value="86"/>
-        <UsageCount Value="27"/>
+        <UsageCount Value="28"/>
         <SyntaxHighlighter Value="Delphi"/>
       </Unit30>
       <Unit31>
@@ -333,7 +324,7 @@
         <UnitName Value="OptionsFormUnit"/>
         <CursorPos X="1" Y="7"/>
         <TopLine Value="1"/>
-        <UsageCount Value="27"/>
+        <UsageCount Value="28"/>
         <SyntaxHighlighter Value="Delphi"/>
       </Unit31>
       <Unit32>
@@ -344,7 +335,7 @@
         <UnitName Value="UnknownFileFormUnit"/>
         <CursorPos X="1" Y="12"/>
         <TopLine Value="1"/>
-        <UsageCount Value="27"/>
+        <UsageCount Value="28"/>
         <SyntaxHighlighter Value="Delphi"/>
       </Unit32>
       <Unit33>
@@ -353,7 +344,7 @@
         <UnitName Value="CodeTabFrameUnit"/>
         <CursorPos X="11" Y="15"/>
         <TopLine Value="1"/>
-        <UsageCount Value="27"/>
+        <UsageCount Value="28"/>
         <SyntaxHighlighter Value="Delphi"/>
       </Unit33>
       <Unit34>
@@ -383,7 +374,7 @@
         <UnitName Value="IvanSynEdit"/>
         <CursorPos X="1" Y="30"/>
         <TopLine Value="1"/>
-        <UsageCount Value="31"/>
+        <UsageCount Value="32"/>
         <SyntaxHighlighter Value="Delphi"/>
       </Unit37>
       <Unit38>
@@ -447,7 +438,7 @@
         <UnitName Value="ImportTabFrameUnit"/>
         <CursorPos X="11" Y="259"/>
         <TopLine Value="225"/>
-        <UsageCount Value="27"/>
+        <UsageCount Value="28"/>
         <SyntaxHighlighter Value="Delphi"/>
       </Unit46>
       <Unit47>
@@ -463,7 +454,7 @@
         <UnitName Value="NEFileUnit"/>
         <CursorPos X="28" Y="23"/>
         <TopLine Value="1"/>
-        <UsageCount Value="27"/>
+        <UsageCount Value="28"/>
         <SyntaxHighlighter Value="Delphi"/>
       </Unit48>
       <Unit49>
@@ -471,9 +462,7 @@
         <UnitName Value="TabFrameTemplateUnit"/>
         <CursorPos X="62" Y="99"/>
         <TopLine Value="82"/>
-        <EditorIndex Value="1"/>
         <UsageCount Value="11"/>
-        <Loaded Value="True"/>
         <SyntaxHighlighter Value="Delphi"/>
       </Unit49>
       <Unit50>
@@ -505,9 +494,7 @@
         <UnitName Value="FileTabFrameUnit"/>
         <CursorPos X="31" Y="105"/>
         <TopLine Value="87"/>
-        <EditorIndex Value="3"/>
         <UsageCount Value="10"/>
-        <Loaded Value="True"/>
         <SyntaxHighlighter Value="Delphi"/>
       </Unit54>
       <Unit55>
@@ -517,116 +504,7 @@
         <UsageCount Value="10"/>
       </Unit55>
     </Units>
-    <JumpHistory Count="27" HistoryIndex="26">
-      <Position1>
-        <Filename Value="MainFormUnit.pas"/>
-        <Caret Line="914" Column="1" TopLine="895"/>
-      </Position1>
-      <Position2>
-        <Filename Value="MainFormUnit.pas"/>
-        <Caret Line="319" Column="1" TopLine="300"/>
-      </Position2>
-      <Position3>
-        <Filename Value="frames/TabFrameTemplateUnit.pas"/>
-        <Caret Line="101" Column="1" TopLine="82"/>
-      </Position3>
-      <Position4>
-        <Filename Value="MainFormUnit.pas"/>
-        <Caret Line="319" Column="1" TopLine="301"/>
-      </Position4>
-      <Position5>
-        <Filename Value="frames/TabFrameTemplateUnit.pas"/>
-        <Caret Line="100" Column="23" TopLine="82"/>
-      </Position5>
-      <Position6>
-        <Filename Value="frames/TabFrameTemplateUnit.pas"/>
-        <Caret Line="101" Column="1" TopLine="82"/>
-      </Position6>
-      <Position7>
-        <Filename Value="MainFormUnit.pas"/>
-        <Caret Line="319" Column="1" TopLine="300"/>
-      </Position7>
-      <Position8>
-        <Filename Value="frames/TabFrameTemplateUnit.pas"/>
-        <Caret Line="101" Column="1" TopLine="82"/>
-      </Position8>
-      <Position9>
-        <Filename Value="frames/TabFrameTemplateUnit.pas"/>
-        <Caret Line="101" Column="34" TopLine="82"/>
-      </Position9>
-      <Position10>
-        <Filename Value="frames/TabFrameTemplateUnit.pas"/>
-        <Caret Line="165" Column="1" TopLine="143"/>
-      </Position10>
-      <Position11>
-        <Filename Value="frames/TabFrameTemplateUnit.pas"/>
-        <Caret Line="101" Column="1" TopLine="82"/>
-      </Position11>
-      <Position12>
-        <Filename Value="frames/TabFrameTemplateUnit.pas"/>
-        <Caret Line="98" Column="11" TopLine="82"/>
-      </Position12>
-      <Position13>
-        <Filename Value="frames/TabFrameTemplateUnit.pas"/>
-        <Caret Line="165" Column="1" TopLine="143"/>
-      </Position13>
-      <Position14>
-        <Filename Value="MainFormUnit.pas"/>
-        <Caret Line="319" Column="1" TopLine="300"/>
-      </Position14>
-      <Position15>
-        <Filename Value="frames/TabFrameTemplateUnit.pas"/>
-        <Caret Line="101" Column="1" TopLine="82"/>
-      </Position15>
-      <Position16>
-        <Filename Value="MainFormUnit.pas"/>
-        <Caret Line="319" Column="1" TopLine="300"/>
-      </Position16>
-      <Position17>
-        <Filename Value="frames/TabFrameTemplateUnit.pas"/>
-        <Caret Line="101" Column="1" TopLine="83"/>
-      </Position17>
-      <Position18>
-        <Filename Value="frames/TabFrameTemplateUnit.pas"/>
-        <Caret Line="101" Column="1" TopLine="82"/>
-      </Position18>
-      <Position19>
-        <Filename Value="frames/TabFrameTemplateUnit.pas"/>
-        <Caret Line="99" Column="62" TopLine="82"/>
-      </Position19>
-      <Position20>
-        <Filename Value="TranslatorUnit.pas"/>
-        <Caret Line="257" Column="1" TopLine="238"/>
-      </Position20>
-      <Position21>
-        <Filename Value="TatraDAS.dpr"/>
-        <Caret Line="251" Column="1" TopLine="232"/>
-      </Position21>
-      <Position22>
-        <Filename Value="forms/MessageFormUnit.pas"/>
-        <Caret Line="35" Column="30" TopLine="16"/>
-      </Position22>
-      <Position23>
-        <Filename Value="TranslatorUnit.pas"/>
-        <Caret Line="252" Column="33" TopLine="238"/>
-      </Position23>
-      <Position24>
-        <Filename Value="MainFormUnit.pas"/>
-        <Caret Line="282" Column="1" TopLine="263"/>
-      </Position24>
-      <Position25>
-        <Filename Value="MainFormUnit.pas"/>
-        <Caret Line="319" Column="1" TopLine="300"/>
-      </Position25>
-      <Position26>
-        <Filename Value="frames/FileTabFrameUnit.pas"/>
-        <Caret Line="171" Column="1" TopLine="152"/>
-      </Position26>
-      <Position27>
-        <Filename Value="forms/InsertCommentFormUnit.pas"/>
-        <Caret Line="11" Column="14" TopLine="1"/>
-      </Position27>
-    </JumpHistory>
+    <JumpHistory Count="0" HistoryIndex="-1"/>
   </ProjectOptions>
   <CompilerOptions>
     <Version Value="8"/>

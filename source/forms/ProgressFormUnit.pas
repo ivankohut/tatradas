@@ -44,7 +44,7 @@ implementation
 uses
   MainFormUnit, ProgressManagerUnit, GlobalsUnit;
 
-{$R *.dfm}
+{$R *.lfm}
 
 
 procedure GuiShowProgress(APhase: string; AProgress: Double);

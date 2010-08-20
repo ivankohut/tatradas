@@ -63,6 +63,7 @@ type
 
 var
   Translator: TTranslator;
+  TatraDAS_Version: TVersion;
 
 implementation
 
@@ -297,9 +298,12 @@ end;
 
 
 initialization
+  TatraDAS_Version := TVersion.Create(ShortTatraDASVersion);
   Translator := TTranslator.Create;
 
 finalization
   Translator.Free;
+  TatraDAS_Version.Free;
+
 
 end.

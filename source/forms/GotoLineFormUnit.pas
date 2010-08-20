@@ -40,7 +40,7 @@ implementation
 uses
   TranslatorUnit; 
 
-{$R *.dfm}
+{$R *.lfm}
 
 
 procedure TGotoLineForm.SetMaxLineIndex(MaxLineIndex: Cardinal);

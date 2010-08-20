@@ -9,7 +9,6 @@ uses
     INIFiles,
 
     procmat,
-    StringRes,
     myedits;
 
 type
@@ -42,9 +41,10 @@ var
 
 implementation
 
-uses MainFormUnit, TranslatorUnit, OptionsFormUnit;
+uses
+  TranslatorUnit;
 
-{$R *.dfm}
+{$R *.lfm}
 
 procedure TGoToAddressForm.SetMaxAddress(MaxAddress: cardinal);
 begin
