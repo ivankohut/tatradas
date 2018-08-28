@@ -29,7 +29,7 @@ type
 implementation
 
 uses
-  Types, Classes, SysUtils, LoggerUnit,
+  Types, Classes, SysUtils, LoggerUnit, ExceptionsUnit,
   procmat;
 
 procedure TCodeSectionTests.TestGetLineAddress;

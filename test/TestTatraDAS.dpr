@@ -14,6 +14,7 @@ uses
     {$ENDIF}
   {$ENDIF}
 
+  // Unit tests
   procmatTests in 'procmatTests.pas',
   StringUtilitiesTests in 'StringUtilitiesTests.pas',
   VersionTests in 'VersionTests.pas',
@@ -31,22 +32,25 @@ uses
 
   TatraDAS_SynEditStringList in '..\source\misc\TatraDAS_SynEditStringList.pas',
 
-  procmat in '..\source\procmat.pas',
-  ExecFileManagerUnit in '..\source\ExecFileManagerUnit.pas',
-  ExecFileUnit in '..\source\ExecFileUnit.pas',
-  CliUnit in '..\source\CliUnit.pas',
-  SectionUnit in '..\source\SectionUnit.pas',
-  RegionsUnit in '..\source\RegionsUnit.pas',
-  ProgressThreads in '..\source\ProgressThreads.pas',
-  SortingUnit in '..\source\SortingUnit.pas',
+  procmat in '..\source\base\procmat.pas',
+  ExceptionsUnit in '..\source\base\ExceptionsUnit.pas',
+  ExecFileManagerUnit in '..\source\base\ExecFileManagerUnit.pas',
+  ExecFileUnit in '..\source\base\ExecFileUnit.pas',
+  CliUnit in '..\source\misc\CliUnit.pas',
+  SectionUnit in '..\source\base\SectionUnit.pas',
+  RegionsUnit in '..\source\base\RegionsUnit.pas',
+  ProgressThreads in '..\source\base\ProgressThreads.pas',
+  GlobalsUnit in '..\source\base\GlobalsUnit.pas',
+  SortingUnit in '..\source\utils\SortingUnit.pas',
 
-  VersionUnit in '..\source\VersionUnit.pas',
+  VersionUnit in '..\source\utils\VersionUnit.pas',
   StringRes in '..\source\res\StringRes.pas',
-  FilesUnit in '..\source\misc\FilesUnit.pas',
-  LoggerUnit in '..\source\misc\LoggerUnit.pas',
-  ListsUnit in '..\source\misc\ListsUnit.pas',
-  StringUtilities in '..\source\StringUtilities.pas',
-  ProgressManagerUnit in '..\source\ProgressManagerUnit.pas',
+  FilesUnit in '..\source\utils\FilesUnit.pas',
+  LoggerUnit in '..\source\utils\LoggerUnit.pas',
+  ListsUnit in '..\source\utils\ListsUnit.pas',
+  StringUtilities in '..\source\utils\StringUtilities.pas',
+  AbstractProgressManager in '..\source\base\AbstractProgressManager.pas',
+  ProgressManagerUnit in '..\source\base\ProgressManagerUnit.pas',
 
 (*
   TatraDASHighlighter in '..\source\res\TatraDASHighlighter.pas',
@@ -77,7 +81,7 @@ uses
   ResourceTabFrameUnit in '..\source\frames\ResourceTabFrameUnit.pas',
 *)
 
-  Exporters in '..\source\Exporters.pas',
+  Exporters in '..\source\base\Exporters.pas',
 
   // Disassembler units
   DisassemblerUnit in '..\source\disasm\DisassemblerUnit.pas',
@@ -106,7 +110,17 @@ uses
   ResourceSectionUnit in '..\source\sections\ResourceSectionUnit.pas';
 
 
-//{$R *.res}
+{$R *.res}
+
+{$IFDEF FPC}
+type
+  TFpcTestRunner = class(TTestRunner)
+  end;
+var
+  Application: TFpcTestRunner;
+
+{$ENDIF}
+
 
 begin
   {$IFDEF MSWINDOWS}
@@ -117,5 +131,12 @@ begin
     {$IFDEF CONSOLE}
       TextTestRunner.RunRegisteredTests;
     {$ENDIF}
+  {$ENDIF}  
+  {$IFDEF FPC}
+    Application := TFpcTestRunner.Create(nil);
+    Application.Initialize;
+      //Application.CreateForm(TGuiTestRunner, TestRunner);
+    Application.Run;
+    Application.Free;
   {$ENDIF}
 end.

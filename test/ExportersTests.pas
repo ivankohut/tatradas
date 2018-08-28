@@ -13,7 +13,7 @@ type
   published
     procedure TestNasmLineExport;
     procedure TestNasmIsReferenceFromCode;
-    procedure TestNasmDataExportStream;
+    //procedure TestNasmDataExportStream;
   end;
 
 
@@ -27,6 +27,8 @@ type
   TExporterChild = class(TExporter)
   end;
 
+var
+  ProgressManager: TProgressManager;
 
 { TExportersTests }
 
@@ -46,7 +48,7 @@ begin
 end;
 
 
-
+{
 procedure TExportersTests.TestNasmDataExportStream;
 var
   sl: TStrings;
@@ -84,7 +86,7 @@ begin
   Expected.Free;
   sl.Free;
 end;
-
+}
 
 
 procedure TExportersTests.TestNasmIsReferenceFromCode;

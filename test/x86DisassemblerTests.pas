@@ -27,14 +27,14 @@ begin
   Check(ModRM.Moder = 2);
   Check(ModRM.RegOp = 5);
   Check(ModRM.RM = 2);
-  Check(not ModRM.Loaded);
+  Check(ModRM.Loaded);
 
   ModRM := Tx86Disassembler.LoadModRM($FF);
   Check(ModRM.FullModRM = $FF);
   Check(ModRM.Moder = 3);
   Check(ModRM.RegOp = 7);
   Check(ModRM.RM = 7);
-  Check(not ModRM.Loaded);
+  Check(ModRM.Loaded);
 end;
 
 
@@ -47,14 +47,12 @@ begin
   Check(SIB.Scale = 2);
   Check(SIB.Index = 5);
   Check(SIB.Base = 2);
-  Check(not SIB.Loaded);
 
   SIB := Tx86Disassembler.LoadSIB($FF);
   Check(SIB.FullSIB = $FF);
   Check(SIB.Scale = 3);
   Check(SIB.Index = 7);
   Check(SIB.Base = 7);
-  Check(not SIB.Loaded);
 end;
 
 
