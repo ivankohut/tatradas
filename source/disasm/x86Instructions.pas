@@ -20,12 +20,12 @@ type
   PSIMDInstruction = ^TSIMDInstruction;
 
   TInstruction = record
-    name: string[20]; // mnemonic
+    Name: string[20]; // mnemonic
     typ: TInstructionType;
-      AddOp: boolean; // Name16 and  name32 depends on Address(true) or Operand(false) size attribut
-        Name16: string[10];
-        Name32: string[10];
-    OperandsCount: byte;
+    AddOp: Boolean; // Name16 and  name32 depends on Address(true) or Operand(false) size attribut
+    Name16: string[10];
+    Name32: string[10];
+    OperandsCount: Byte;
     Operands: TOperands;
     SIMD, SIMD_66, SIMD_F2, SIMD_F3: PSIMDInstruction;
     InstrSet: TInstructionSet;
@@ -33,8 +33,8 @@ type
 
   TSIMDInstruction = record
     Name: string[20];
-    Opcode: word;
-    OperandsCount: byte;
+    Opcode: Word;
+    OperandsCount: Byte;
     Operands: TOperands;
     InstrSet: TInstructionSet;
   end;
@@ -45,7 +45,7 @@ type
   end;
 
   TFPUBInstruction = record
-    name: string[20];
+    Name: string[20];
     par: string;
   end;
 

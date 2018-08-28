@@ -30,43 +30,43 @@ Verzia 2.1.2
 Verzia 2.1.1
 - po znovuzdisassemblovani je enabled Search aj ked si na karte Subor
 
-Verzia 2.1 – 17. 6. 2003
-- nové logo
-- drobné úpravy
-- opravené chyby:
-  nestabilita pri otváraní projektu
+Verzia 2.1 ï¿½ 17. 6. 2003
+- novï¿½ logo
+- drobnï¿½ ï¿½pravy
+- opravenï¿½ chyby:
+  nestabilita pri otvï¿½ranï¿½ projektu
 
-Verzia 2.1 beta 1 – 6. 6. 2003
+Verzia 2.1 beta 1 ï¿½ 6. 6. 2003
 
-- pouitie komponentu SynEdit - lepšie farebné zvırazòovanie zdisassemblovaného textu(bez blikania)
-- nové klávesové skratky
-- referencia o importovanej funkcii je hneï nad skokom na funkciu
-- z disassemblovania vynechanı koniec kódovej sekcie obsahujúci len bajty 0x00
+- pouï¿½itie komponentu SynEdit - lepï¿½ie farebnï¿½ zvï¿½razï¿½ovanie zdisassemblovanï¿½ho textu(bez blikania)
+- novï¿½ klï¿½vesovï¿½ skratky
+- referencia o importovanej funkcii je hneï¿½ nad skokom na funkciu
+- z disassemblovania vynechanï¿½ koniec kï¿½dovej sekcie obsahujï¿½ci len bajty 0x00
 - preklad do jazyka si kazdy formular zabezpecuje sam
-- opravené chyby:
-  skok na adresu vo vnútri poslednej inštrukcie
-  pri zadávaní ve¾kosti kódovej sekcie súboru neznámeho alebo nepodporovaného typu sa nedali poui hexadecimálne cifry A,B,C,D,E a F (a pritom sa to vyaduje)
-  na tlaèidlá Skoè na funkciu v kóde sa niekedy dalo kliknú, aj keï súbor nebol ešte zdisassemblovanı
-  niekedy chybnı preklad  názvu karty Kódová sekcia
-  súbor formátu COM sa nedal disassemblova
-  hinty na tlaèidlách karty Kódová sekcia sa nezobrazili, ak bol TatraDAS spustenı v anglickom jazyku
-  otvorenı projekt sa dal uloi (TatraDAS pri tej èinnosti vyhlásil chybu a ukladanie prerušil)
+- opravenï¿½ chyby:
+  skok na adresu vo vnï¿½tri poslednej inï¿½trukcie
+  pri zadï¿½vanï¿½ veï¿½kosti kï¿½dovej sekcie sï¿½boru neznï¿½meho alebo nepodporovanï¿½ho typu sa nedali pouï¿½iï¿½ hexadecimï¿½lne cifry A,B,C,D,E aï¿½F (a pritom sa to vyï¿½aduje)
+  na tlaï¿½idlï¿½ Skoï¿½ na funkciu v kï¿½de sa niekedy dalo kliknï¿½ï¿½, aj keï¿½ sï¿½bor nebol eï¿½te zdisassemblovanï¿½
+  niekedy chybnï¿½ preklad  nï¿½zvu karty Kï¿½dovï¿½ sekcia
+  sï¿½bor formï¿½tu COM sa nedal disassemblovaï¿½
+  hinty na tlaï¿½idlï¿½ch karty Kï¿½dovï¿½ sekcia sa nezobrazili, ak bol TatraDAS spustenï¿½ v anglickom jazyku
+  otvorenï¿½ projekt sa dal uloï¿½iï¿½ (TatraDAS pri tej ï¿½innosti vyhlï¿½sil chybu a ukladanie preruï¿½il)
 
 Verzia 2.0
-- spracovanie všetkıch kódovıch sekcií
-- referencie o exportovanıch funkciách vo vıstupe
-- zobrazovanie priebehu ukladania a naèítavania projektu
-- zvırazòovanie vo vıstupe
-- otvorenie známych ale nepodporovanıch formátov ako "neznámy formát"
+- spracovanie vï¿½etkï¿½ch kï¿½dovï¿½ch sekciï¿½
+- referencie o exportovanï¿½ch funkciï¿½ch vo vï¿½stupe
+- zobrazovanie priebehu ukladania a naï¿½ï¿½tavania projektu
+- zvï¿½razï¿½ovanie vo vï¿½stupe
+- otvorenie znï¿½mych ale nepodporovanï¿½ch formï¿½tov ako "neznï¿½my formï¿½t"
 - oprava chyby:
   skok na adresu vo vnutri poslednej instrukcie
   skok alebo exportovama funkcia na zaciatok sekcie
 
 Verzia 1.6
-- skrolovanie nebliká
-- pouitie klávesou "home" a "end" pri skrolovaní
+- skrolovanie neblikï¿½
+- pouï¿½itie klï¿½vesou "home" a "end" pri skrolovanï¿½
 
 Verzia 1.5
-- podpora MMX, SSE, SSE2 inštrukcií
-- tvorba projektov = uloenie vıstupu na disk a jeho znovuotváranie
-- disassemblovanie o 10% rıchlejšie
+- podpora MMX, SSE, SSE2 inï¿½trukciï¿½
+- tvorba projektov = uloï¿½enie vï¿½stupu na disk a jeho znovuotvï¿½ranie
+- disassemblovanie o 10% rï¿½chlejï¿½ie

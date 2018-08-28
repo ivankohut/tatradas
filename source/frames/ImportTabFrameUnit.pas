@@ -12,7 +12,7 @@ uses
   StdCtrls,
   ComCtrls,
   IniFiles,
-
+  // project units
   procmat,
   SectionUnit,
   ExecFileUnit,
@@ -67,7 +67,7 @@ begin
   fSection := ASection as TImportSection;
   Caption := 'Import';
   for i := 0 to fSection.ModulCount - 1 do
-    ModulComboBox.Items.Add(fSection.Moduls[i].name);
+    ModulComboBox.Items.Add(fSection.Moduls[i].Name);
 end;
 
 
@@ -81,7 +81,7 @@ begin
   AddressListBox.Clear;
 
   with fSection.moduls[ModulCombobox.ItemIndex] do
-    for FunctionIndex := 0 to integer(FunctionCount) - 1 do begin
+    for FunctionIndex := 0 to Integer(FunctionCount) - 1 do begin
       ListItem := FunctionListView.Items.Add;
       ListItem.Data := Pointer(FunctionIndex);
       ListItem.Caption := IntToStr(FunctionIndex + 1) + '.';
@@ -115,7 +115,7 @@ var
   FunctionIndex: Integer;
   pocetvyskytov: Integer;
 begin
-  if (not Selected) or ( not (fSection.ExecFile as TExecutableFile).IsDisassembled) then
+  if (not Selected) or (not (fSection.ExecFile as TExecutableFile).IsDisassembled) then
     Exit;
 
   AddressListBox.Clear;
@@ -158,7 +158,8 @@ var
   Address: Cardinal;
   Tab: TTabSheetTemplate;
 begin
-  if (AddressListBox.Items.Count <> 1) then Exit;
+  if (AddressListBox.Items.Count <> 1) then
+    Exit;
 
   ModulIndex := ModulComboBox.ItemIndex;
   FunctionIndex := Integer(FunctionListView.Selected.Data);
@@ -225,21 +226,19 @@ begin
       num2 := StrToInt(Copy(str2, 1, Length(str2) - 1));
       if num1 > num2 then
         Result := +1
+      else if num1 < num2 then
+        Result := -1
       else
-        if num1 < num2 then
-          Result := -1
-        else
-          Result := 0;
+        Result := 0;
     end;
 
     1, 2, 3, 4: begin
       if str1 > str2 then
         Result := +1
+      else if str1 < str2 then
+        Result := -1
       else
-        if str1 < str2 then
-          Result := -1
-        else
-          Result := 0;
+        Result := 0;
     end;
 
     else

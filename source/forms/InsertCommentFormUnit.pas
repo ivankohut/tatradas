@@ -6,8 +6,8 @@ uses
   Controls, Forms, Dialogs, StdCtrls,
   SysUtils,
   Classes,
-  INIFiles,
-
+  IniFiles,
+  // project units
   LResources,
   procmat,
   TranslatorUnit;

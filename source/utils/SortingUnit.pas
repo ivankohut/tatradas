@@ -4,10 +4,10 @@ interface
 
 type
 
-  TCompareFun = function (Index1, Index2: Integer): Integer of object;
+  TCompareFun = function(Index1, Index2: Integer): Integer of object;
 //  TExchangeProc = procedure (Index1, Index2: Integer);
-  TGetItemFun = function (Index: Integer): TObject of object;
-  TSetItemProc = procedure (Index: Integer; Obj: TObject) of object;
+  TGetItemFun = function(Index: Integer): TObject of object;
+  TSetItemProc = procedure(Index: Integer; Obj: TObject) of object;
 
 procedure MergeSortObjects(CompareFun: TCompareFun; GetItemFun: TGetItemFun; SetItemProc: TSetItemProc; BeginIndex, EndIndex: Integer);
 
@@ -16,12 +16,14 @@ implementation
 uses
   Math, Types, Classes, SysUtils;
 
+
+
 procedure MergeSortObjects(CompareFun: TCompareFun; GetItemFun: TGetItemFun; SetItemProc: TSetItemProc; BeginIndex, EndIndex: Integer);
 
   procedure Merge(const Start1, Finish1, Start2, Finish2: Integer);
   var
     Temp: array of TObject;
-    TempIndex: integer;
+    TempIndex: Integer;
     ItemsCount: Integer;
     Index1, Index2: Integer;
     RestStart, RestFinish, RestIndex: Integer;
@@ -56,7 +58,7 @@ procedure MergeSortObjects(CompareFun: TCompareFun; GetItemFun: TGetItemFun; Set
       RestFinish := Finish1;
     end;
     for RestIndex := RestStart to RestFinish do begin
-      Temp[TempIndex]:= GetItemFun(RestIndex);
+      Temp[TempIndex] := GetItemFun(RestIndex);
       Inc(TempIndex);
     end;
 
@@ -64,6 +66,7 @@ procedure MergeSortObjects(CompareFun: TCompareFun; GetItemFun: TGetItemFun; Set
     for SortedIndex := 0 to ItemsCount - 1 do
       SetItemProc(Start1 + SortedIndex, Temp[SortedIndex]);
   end;
+
 
 
   procedure MergeSort(BeginIndex, EndIndex: Integer);
@@ -79,11 +82,9 @@ procedure MergeSortObjects(CompareFun: TCompareFun; GetItemFun: TGetItemFun; Set
     Merge(BeginIndex, MiddleIndex, Min(MiddleIndex + 1, EndIndex), EndIndex);
   end;
 
-  
 begin
   MergeSort(BeginIndex, EndIndex);
 end;
-
 
 
 

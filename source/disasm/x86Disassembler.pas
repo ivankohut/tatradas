@@ -24,7 +24,7 @@ uses
   StrUtils,
   Math,
   Types,
-
+  // project units
   ExceptionsUnit,
   LoggerUnit,
   StringUtilities,
@@ -35,33 +35,32 @@ uses
   DisassemblerUnit,
   x86DisassemblerTypes,
   x86Instructions,
-  GlobalsUnit
-  ;
+  GlobalsUnit;
 
 type
 
   Tx86Disassembler = class(TDisassembler)
   public
-    class function LoadModRM(ModRMValue: byte): TModRM;
-    class function LoadSIB(SIBValue: byte): TSIB;
+    class function LoadModRM(ModRMValue: Byte): TModRM;
+    class function LoadSIB(SIBValue: Byte): TSIB;
   private
     code: TByteDynArray; // machine code to be disassembled
     fDisasmMap: TByteDynArray;
     fStatistics: TStatistics;
-    fBit32: boolean;
-    fMemOffset: cardinal;
+    fBit32: Boolean;
+    fMemOffset: Cardinal;
 
-    i: cardinal; // Index in "code" array
+    i: Cardinal; // Index in "code" array
 
     // Fields containing values specific to the current instruction
-    InstrAddress: cardinal; // address of current instruction in "code" array <=> address of current instruction relative to the beginning of code section
+    InstrAddress: Cardinal; // address of current instruction in "code" array <=> address of current instruction relative to the beginning of code section
     SegmentOverride: string;
-    FirstCharOfName: char;
-    operand32: boolean; // Operand size attribute
-    address32: boolean; // Address size attribute
+    FirstCharOfName: Char;
+    operand32: Boolean; // Operand size attribute
+    address32: Boolean; // Address size attribute
     ModRM: TModRM;
     SIB: TSIB;
-    
+
     function ProcessOperand(Operand: TOperand): string;
     function ProcessModRM(OperandType: TModRMOperandType; OperandSize: TModRMOperandSize): string;
     function ProcessSIB: string;
@@ -71,10 +70,10 @@ type
     function ProcessGenPurpRegister: string;
 
   protected
-    function DisassembleBlock(Start, Finish: cardinal): boolean; override;
+    function DisassembleBlock(Start, Finish: Cardinal): Boolean; override;
 
   public
-    constructor Create(SectionCode: TByteDynArray; var DisassemblerMap: TByteDynArray; MemOffset: cardinal; Bit32: Boolean);
+    constructor Create(SectionCode: TByteDynArray; var DisassemblerMap: TByteDynArray; MemOffset: Cardinal; Bit32: Boolean);
     destructor Destroy; override;
     procedure DisassembleAll; override;
   end;
@@ -195,11 +194,12 @@ const
     ('BX')
   );
 
+
 {
   Loads TModRM structure from ModRM byte
   ModRM = 2 + 3 + 3 bits (Moder + RegOp + RM)
 }
-class function Tx86Disassembler.LoadModRM(ModRMValue: byte): TModRM;
+class function Tx86Disassembler.LoadModRM(ModRMValue: Byte): TModRM;
 begin
   Result.FullModRM := ModRMValue;
   Result.Moder := ModRMValue shr 6;
@@ -214,7 +214,7 @@ end;
   Loads TSIB structure from SIB byte
   SIB = 2 + 3 + 3 bits (scale + index + base)
 }
-class function Tx86Disassembler.LoadSIB(SIBValue: byte): TSIB;
+class function Tx86Disassembler.LoadSIB(SIBValue: Byte): TSIB;
 begin
   Result.FullSIB := SIBValue;
   Result.Scale := SIBValue shr 6;
@@ -229,23 +229,23 @@ begin
   Inc(i);
   SIB := LoadSIB(code[i]);
   if not ((ModRM.Moder = 0) and (SIB.Base = 5)) then begin
-    result := DWordRegister[SIB.Base];
+    Result := DWordRegister[SIB.Base];
 
     if SIB.Index <> 4 then begin
-      result := result + '+' + DWordRegister[SIB.Index];
+      Result := Result + '+' + DWordRegister[SIB.Index];
       if SIB.Scale <> 0 then
-        result := result + '*' + PowersOfTwoStr[SIB.Scale];
+        Result := Result + '*' + PowersOfTwoStr[SIB.Scale];
     end;
   end
   else begin
     Inc(i);
-    result := '0x' + IntToHex(cardinal((@code[i])^), 8);
+    Result := '0x' + IntToHex(Cardinal((@code[i])^), 8);
     Inc(i, 3);
 
     if SIB.index <> 4 then begin
-      result := result + '+' + DWordRegister[SIB.Index];
+      Result := Result + '+' + DWordRegister[SIB.Index];
       if SIB.scale <> 0 then
-        result := result + '*' + PowersOfTwoStr[SIB.Scale];
+        Result := Result + '*' + PowersOfTwoStr[SIB.Scale];
     end;
   end;
 end;
@@ -254,79 +254,79 @@ end;
 
 function Tx86Disassembler.ProcessModRM(OperandType: TModRMOperandType; OperandSize: TModRMOperandSize): string;
 
-  function GetRegister(Index: byte): string;
+  function GetRegister(Index: Byte): string;
   begin
     case OperandSize of
-      os1: result := ByteRegister[Index];
-      os2: result := WordRegister[Index];
+      os1: Result := ByteRegister[Index];
+      os2: Result := WordRegister[Index];
       os2Or4, os4Or6:
         if operand32 then
-          result := DWordRegister[Index]
+          Result := DWordRegister[Index]
         else
-          result := WordRegister[Index];
-      os4, osR4_M1, osR4_M2: result := DWordRegister[Index];
-      os8, osR8_M4: result := MMXRegister[Index];
-      os16, osR16_M8, osR16_M4, osR16_M2: result := XMMRegister[Index];
+          Result := WordRegister[Index];
+      os4, osR4_M1, osR4_M2: Result := DWordRegister[Index];
+      os8, osR8_M4: Result := MMXRegister[Index];
+      os16, osR16_M8, osR16_M4, osR16_M2: Result := XMMRegister[Index];
       else
-        raise EUndefinedOpcodeException.Create('ModRM - Bad register size.  OperandType = ' + IntToStr(Ord(OperandType)) + ', OperandSize = ' + IntToStr(Ord(OperandSize)) +
-          ', Moder = ' + IntToStr(ModRM.Moder) + ', RegOp = ' + IntToStr(ModRM.RegOp) + ', RM = ' + IntToStr(ModRM.RM));
-
+        raise EUndefinedOpcodeException.Create('ModRM - Bad register size.  OperandType = ' + IntToStr(Ord(OperandType)) +
+          ', OperandSize = ' + IntToStr(Ord(OperandSize)) + ', Moder = ' + IntToStr(ModRM.Moder) + ', RegOp = ' +
+          IntToStr(ModRM.RegOp) + ', RM = ' + IntToStr(ModRM.RM));
     end;
   end;
 
 begin
-  result := '';
+  Result := '';
 
   if not ModRM.Loaded then begin
     Inc(i);
     ModRM := LoadModRM(code[i]);
-    ModRM.Loaded := true;
+    ModRM.Loaded := True;
   end;
 
   if OperandType = otRegister then
-    result := GetRegister(ModRM.RegOp)
+    Result := GetRegister(ModRM.RegOp)
   else if (ModRM.Moder = 3) and ((OperandType = otRMReg) or (OperandType = otRMRegMem)) then
-    result := GetRegister(ModRM.RM)
+    Result := GetRegister(ModRM.RM)
   else if (ModRM.Moder <> 3) and ((OperandType = otRMMem) or (OperandType = otRMRegMem)) then begin
 
     // Address size 32 bit
     if Address32 then begin
       case modrm.moder of
         0: begin
-            result := '[' + SegmentOverride;
-            case ModRM.RM of
-              5: begin
-                Inc(i);
-                result := result + '0x' + IntToHex(cardinal((@code[i])^), 8);
-                Inc(i, 3);
-              end;
-              4: result := result + ProcessSIB;
-              else
-                result := result + DwordRegister[modrm.rm];
+          Result := '[' + SegmentOverride;
+          case ModRM.RM of
+            5: begin
+              Inc(i);
+              Result := Result + '0x' + IntToHex(Cardinal((@code[i])^), 8);
+              Inc(i, 3);
             end;
-            result := result + ']';
+            4: Result := Result + ProcessSIB;
+            else
+              Result := Result + DwordRegister[modrm.rm];
           end;
+          Result := Result + ']';
+        end;
 
         1: begin
-            result := '[' + SegmentOverride;
-            if modrm.rm = 4 then
-              result := result + ProcessSIB
-            else
-              result := result + DwordRegister[modrm.rm];
-            Inc(i);
-            result := result + ByteToSignedHex(code[i])+']';
-          end;
+          Result := '[' + SegmentOverride;
+          if modrm.rm = 4 then
+            Result := Result + ProcessSIB
+          else
+            Result := Result + DwordRegister[modrm.rm];
+          Inc(i);
+          Result := Result + ByteToSignedHex(code[i]) + ']';
+        end;
 
         2: begin
-            result := '[' + SegmentOverride;
-            if modrm.rm = 4 then
-              result := result + ProcessSIB
-            else
-              result := result + DwordRegister[modrm.rm];
-            Inc(i);
-            result := result + '+' + '0x' + IntToHex(cardinal((@code[i])^), 8) + ']';
-            Inc(i, 3);
-          end;
+          Result := '[' + SegmentOverride;
+          if modrm.rm = 4 then
+            Result := Result + ProcessSIB
+          else
+            Result := Result + DwordRegister[modrm.rm];
+          Inc(i);
+          Result := Result + '+' + '0x' + IntToHex(Cardinal((@code[i])^), 8) + ']';
+          Inc(i, 3);
+        end;
       end;
     end
 
@@ -334,59 +334,60 @@ begin
     else begin
       case Modrm.Moder of
         0: begin
-          result := '[' + SegmentOverride;
+          Result := '[' + SegmentOverride;
           if ModRM.RM = 6 then begin
             Inc(i, 2);
-            result := result + '0x' + IntToHex(code[i], 2) + IntToHex(code[i - 1], 2);
+            Result := Result + '0x' + IntToHex(code[i], 2) + IntToHex(code[i - 1], 2);
           end
           else
-            result := result + modrm16bitaddress_register[modrm.rm];
-          result := result + ']';
+            Result := Result + modrm16bitaddress_register[modrm.rm];
+          Result := Result + ']';
         end;
         1: begin
           Inc(i);
-          result := '[' + SegmentOverride + modrm16bitaddress_register[modrm.rm] + ByteToSignedHex(code[i]) + ']';
+          Result := '[' + SegmentOverride + modrm16bitaddress_register[modrm.rm] + ByteToSignedHex(code[i]) + ']';
         end;
         2: begin
           Inc(i, 2);
-          result := '[' + SegmentOverride + modrm16bitaddress_register[modrm.rm] + '+' + '0x' + IntToHex(code[i], 2) + IntToHex(code[i - 1], 2) + ']';
+          Result := '[' + SegmentOverride + modrm16bitaddress_register[modrm.rm] + '+' + '0x' + IntToHex(code[i], 2) + IntToHex(code[i - 1], 2) + ']';
         end;
       end;
     end;
     case OperandSize of
       osNone: ; // LEA
-      os1, osR4_M1: result := 'byte ' + result;
-      os2, osR4_M2, osR16_M2: result := 'word ' + result;
+      os1, osR4_M1: Result := 'byte ' + Result;
+      os2, osR4_M2, osR16_M2: Result := 'word ' + Result;
       os2or4:
         if operand32 then
-          result := 'dword ' + result
+          Result := 'dword ' + Result
         else
-          result := 'word ' + result;
-      os4, osR8_M4, osR16_M4: result := 'dword ' + result;
+          Result := 'word ' + Result;
+      os4, osR8_M4, osR16_M4: Result := 'dword ' + Result;
       os4Or6:
         // Indirect far pointer JMP or CALL (not LES and friends)
         if FirstCharOfName <> 'L' then begin
           if operand32 then
-            result := 'dword far' + result
+            Result := 'dword far' + Result
           else
-            result := 'word far' + result;
+            Result := 'word far' + Result;
         end;
-      os8, osR16_M8: result := 'qword ' + result;
-      os10: result := 'tword ' + result;
-      os16: result := 'dqword ' + result;
+      os8, osR16_M8: Result := 'qword ' + Result;
+      os10: Result := 'tword ' + Result;
+      os16: Result := 'dqword ' + Result;
     end;
   end
   else if (OperandType = otSegmentReg) and (OperandSize = os2) then
-    result := SegmentRegister[ModRM.RegOp]
+    Result := SegmentRegister[ModRM.RegOp]
   else if OperandType = otControlReg then
-    result := ControlRegister[ModRM.RegOp]
+    Result := ControlRegister[ModRM.RegOp]
   else if OperandType = otDebugReg then
-    result := DebugRegister[ModRM.RegOp]
+    Result := DebugRegister[ModRM.RegOp]
   else if OperandType = otTestReg then
-    result := TestRegister[ModRM.RegOp]
+    Result := TestRegister[ModRM.RegOp]
   else
-    raise EUndefinedOpcodeException.Create('ModRM - Bad operand type.  OperandType = ' + IntToStr(Ord(OperandType)) + ', OperandSize = ' + IntToStr(Ord(OperandSize)) +
-      ', Moder = ' + IntToStr(ModRM.Moder) + ', RegOp = ' + IntToStr(ModRM.RegOp) + ', RM = ' + IntToStr(ModRM.RM));
+    raise EUndefinedOpcodeException.Create('ModRM - Bad operand type.  OperandType = ' + IntToStr(Ord(OperandType)) +
+      ', OperandSize = ' + IntToStr(Ord(OperandSize)) + ', Moder = ' + IntToStr(ModRM.Moder) + ', RegOp = ' + IntToStr(ModRM.RegOp) +
+      ', RM = ' + IntToStr(ModRM.RM));
 end;
 
 
@@ -397,33 +398,33 @@ begin
   case OperandSize of
     osNone: ;
     os1: begin
-      result := 'byte 0x' + IntToHex(code[i], 2);
+      Result := 'byte 0x' + IntToHex(code[i], 2);
     end;
     os2: begin
-      result := 'word 0x' + IntToHex(word((@code[i])^), 4);
+      Result := 'word 0x' + IntToHex(Word((@code[i])^), 4);
       Inc(i);
     end;
     os2or4: begin
       if operand32 then begin
-        result := 'dword 0x' + IntToHex(cardinal((@code[i])^), 8);
+        Result := 'dword 0x' + IntToHex(Cardinal((@code[i])^), 8);
         Inc(i, 3);
       end
       else begin
-        result := 'word 0x' + IntToHex(word((@code[i])^), 4);
+        Result := 'word 0x' + IntToHex(Word((@code[i])^), 4);
         Inc(i);
       end;
     end;
     os4: begin
-      result := 'dword 0x' + IntToHex(cardinal((@code[i])^), 8);
+      Result := 'dword 0x' + IntToHex(Cardinal((@code[i])^), 8);
       Inc(i, 3);
     end;
     os4or6: begin
       if operand32 then begin
-        result := '0x' + IntToHex(word((@code[i + 4])^), 4) + ':' + '0x' + IntToHex(cardinal((@code[i])^), 8);
+        Result := '0x' + IntToHex(Word((@code[i + 4])^), 4) + ':' + '0x' + IntToHex(Cardinal((@code[i])^), 8);
         Inc(i, 5);
       end
       else begin
-        result := '0x' + IntToHex(word((@code[i + 2])^), 4) + ':' + '0x' + IntToHex(word((@code[i])^), 4);
+        Result := '0x' + IntToHex(Word((@code[i + 2])^), 4) + ':' + '0x' + IntToHex(Word((@code[i])^), 4);
         Inc(i, 3);
       end;
     end;
@@ -440,7 +441,7 @@ var
   ReferenceType: TReferenceType;
 begin
   Inc(i);
-  case OperandSize of 
+  case OperandSize of
     os1: begin
       Address := i + ShortInt(code[i]) + 1;
     end;
@@ -468,11 +469,11 @@ begin
 
   // skok na zapornu adresu (treba este zohladnit MemOffset !!!)
   if address < 0 then
-    result := '-0x' + IntToHex(Abs(address), 8)
+    Result := '-0x' + IntToHex(Abs(address), 8)
   else begin
-    result := '0x' + IntToHex(cardinal(address) + fMemOffset, 8);
+    Result := '0x' + IntToHex(Cardinal(address) + fMemOffset, 8);
     // skok za koniec kodovej sekcie
-    if cardinal(address) > fCodeSize-1 then
+    if Cardinal(address) > fCodeSize - 1 then
       Exit
     else begin
       CAJ.Add(address);
@@ -512,18 +513,18 @@ function Tx86Disassembler.ProcessOffset: string;
 begin
   Inc(i);
   if Address32 then begin
-    result := '[' + SegmentOverride + '0x' + IntToHex(cardinal((@code[i])^), 8) + ']';
+    Result := '[' + SegmentOverride + '0x' + IntToHex(Cardinal((@code[i])^), 8) + ']';
     Inc(i, 3);
   end
   else begin
-    result := '[' + SegmentOverride + '0x' + IntToHex(word((@code[i])^), 4) + ']';
+    Result := '[' + SegmentOverride + '0x' + IntToHex(Word((@code[i])^), 4) + ']';
     Inc(i);
   end;
 end;
 
 
 
-constructor Tx86Disassembler.Create(SectionCode: TByteDynArray; var DisassemblerMap: TByteDynArray; MemOffset: cardinal; Bit32: boolean);
+constructor Tx86Disassembler.Create(SectionCode: TByteDynArray; var DisassemblerMap: TByteDynArray; MemOffset: Cardinal; Bit32: Boolean);
 begin
   inherited Create;
   code := SectionCode;
@@ -547,12 +548,12 @@ end;
 
 procedure Tx86Disassembler.DisassembleAll;
 var
-  CodeIndex: cardinal;
-  HexAddressIndex: integer;
+  CodeIndex: Cardinal;
+  HexAddressIndex: Integer;
   Line: string[ilInstructionMnemonicIndex + 12 + 1];
-  SpaceIndex: integer;
-  MemAddress: cardinal;
-  TwoBytes: cardinal;
+  SpaceIndex: Integer;
+  MemAddress: Cardinal;
+  TwoBytes: Cardinal;
 begin
   //****************************************************************************
   // 1. Phase - Disassemble
@@ -591,8 +592,8 @@ begin
 
   // Set the static parts of the Line string
   Line := #0#0#0#0#0#0#0#0 + ' ' + #0#0;
-  for SpaceIndex:= 3 to ilMaxParsedLength do
-    Line := Line  + ' ';
+  for SpaceIndex := 3 to ilMaxParsedLength do
+    Line := Line + ' ';
   Line := Line + ' ' + 'byte 0x' + #0#0 + ' ''' + #0 + '''';
 
   // Find all non-disassembled bytes and make then "byte data"
@@ -601,15 +602,15 @@ begin
       ProgressManager.IncPosition;
 
       // Address
-      MemAddress:= CodeIndex + fMemOffset;
+      MemAddress := CodeIndex + fMemOffset;
       for HexAddressIndex := 1 to 8 do begin
-        Line[9 - HexAddressIndex]:= HexDigits[MemAddress and 15];
-        MemAddress:= MemAddress shr 4;
+        Line[9 - HexAddressIndex] := HexDigits[MemAddress and 15];
+        MemAddress := MemAddress shr 4;
       end;
 
       // Parsed TheByte
-      Line[10]:= HexDigits[(code[CodeIndex] shr 4) and 15];
-      Line[11]:= HexDigits[code[CodeIndex] and 15];
+      Line[10] := HexDigits[(code[CodeIndex] shr 4) and 15];
+      Line[11] := HexDigits[code[CodeIndex] and 15];
       Line[ilInstructionMnemonicIndex + 7] := Line[10];
       Line[ilInstructionMnemonicIndex + 8] := Line[11];
 
@@ -629,7 +630,7 @@ begin
 
   // Vypocet statistickych udajov
   Logger.Info('TDisassembler.DisassembleAll - Statistics');
-  fStatistics.InstructionBytes:= fCodeSize - fStatistics.Data;
+  fStatistics.InstructionBytes := fCodeSize - fStatistics.Data;
   CodeIndex := fCodeSize - 1;
   while (((fDisasmMap[CodeIndex] and dfNewInstr) = 0) and (fDisasmMap[CodeIndex] <> 0)) do
     Dec(CodeIndex);
@@ -638,7 +639,7 @@ end;
 
 
 
-function Tx86Disassembler.DisassembleBlock(Start, Finish: cardinal): boolean;
+function Tx86Disassembler.DisassembleBlock(Start, Finish: Cardinal): Boolean;
 var
   PrefixGroups: set of TPrefixGroup;
   PrefixStr: string;
@@ -646,7 +647,7 @@ var
 
   Operands: TOperands;  // Parametre aktualnej instrukcie
   OperandsCount: Byte;  // Pocet parametrov aktualnej instrukcie
-  EndBlock: boolean;
+  EndBlock: Boolean;
   GroupMapIndex: Integer;
   GroupInstruction, OneByteOpcodeInstruction, TwoByteOpcodeInstruction: TInstruction;
   SIMDInstructionPtr: PSIMDInstruction;
@@ -658,17 +659,17 @@ var
   InstructionOperands: string; // operands of current instruction
 
   Line: string[50 + ilInstructionMnemonicIndex];
-  MemAddress: cardinal;
-  HexAddressIndex, ParsedIndex, SpaceIndex, LineIndex: integer;
-  LastParsedIndex: integer;
-  InstrByteIndex: cardinal;
-  TheByte: byte;
+  MemAddress: Cardinal;
+  HexAddressIndex, ParsedIndex, SpaceIndex, LineIndex: Integer;
+  LastParsedIndex: Integer;
+  InstrByteIndex: Cardinal;
+  TheByte: Byte;
   InstrCodeIndex: Cardinal;
 
 begin
   i := Start;
   InstrAddress := i;
-  EndBlock := false;
+  EndBlock := False;
 
 
   LastParsedIndex := 0;
@@ -680,7 +681,7 @@ begin
   try
 
     // Main loop of disassembler
-    while (i<=finish) and ((fDisasmMap[i] and dfPart)=0) and (not EndBlock) do begin
+    while (i <= finish) and ((fDisasmMap[i] and dfPart) = 0) and (not EndBlock) do begin
       ProgressManager.Position := ProgressManager.Position + i - InstrAddress;
       if ProgressData.AbortExecution then
         Abort;
@@ -695,7 +696,7 @@ begin
       PrefixStr := '';
 
       OperandsCount := 0;
-      ModRM.Loaded := false;
+      ModRM.Loaded := False;
 
 
       InstructionPrefix := '';
@@ -706,7 +707,7 @@ begin
       try
 
         // Prefix processing
-        while true do begin
+        while True do begin
           case code[i] of
 
             // Group 1
@@ -790,7 +791,7 @@ begin
 
           // OneByte Opcode Group Instructions
           itGroup: begin
-            ModRM := LoadModRM(code[i+1]);
+            ModRM := LoadModRM(code[i + 1]);
             GroupMapIndex := 0;
             while GroupMapIndex < cOneByteOpcodeGroupMapSize do begin
               if OneByteOpcodeGroupMap[GroupMapIndex].Opcode = code[i] then begin
@@ -814,10 +815,10 @@ begin
 
           // FPU Instructions
           itFPU: begin
-            if code[i+1] <= $BF then begin
-              ModRM := LoadModRM(code[i+1]);
-              FPUInstrIndex := (code[i] mod 8)*8 + ModRM.RegOp;
-              InstructionName := FPU_A_InstructionSet[FPUInstrIndex].name;
+            if code[i + 1] <= $BF then begin
+              ModRM := LoadModRM(code[i + 1]);
+              FPUInstrIndex := (code[i] mod 8) * 8 + ModRM.RegOp;
+              InstructionName := FPU_A_InstructionSet[FPUInstrIndex].Name;
               if InstructionName = '' then
                 raise EUndefinedOpcodeException.Create('FPU instruction');
 
@@ -826,8 +827,8 @@ begin
               Inc(i); // because of LoadModRM
             end
             else begin
-              InstructionName := FPU_B_InstructionSet[code[i]][code[i+1]].Name;
-              InstructionOperands := FPU_B_InstructionSet[code[i]][code[i+1]].par;
+              InstructionName := FPU_B_InstructionSet[code[i]][code[i + 1]].Name;
+              InstructionOperands := FPU_B_InstructionSet[code[i]][code[i + 1]].par;
               if InstructionName = '' then
                 raise EUndefinedOpcodeException.Create('FPU instruction');
               Inc(i);
@@ -841,7 +842,7 @@ begin
 
               // Group instruction
               itGroup: begin
-                ModRM := LoadModRM(code[i+1]);
+                ModRM := LoadModRM(code[i + 1]);
                 GroupMapIndex := 0;
                 while GroupMapIndex < cTwoByteOpcodeGroupMapSize do begin
                   if TwoByteOpcodeGroupMap[GroupMapIndex].Opcode = code[i] then begin
@@ -873,14 +874,14 @@ begin
                     SIMDInstruction := SIMDInstructionPtr^;
                     Operands := SIMDInstruction.Operands;
                     OperandsCount := SIMDInstruction.OperandsCount;
-                    InstructionName := SIMDInstruction.name;
+                    InstructionName := SIMDInstruction.Name;
                   end;
 
                   // Ordinary group instructions
                   itNormal: begin
                     Operands := GroupInstruction.Operands;
                     OperandsCount := GroupInstruction.OperandsCount;
-                    InstructionName := GroupInstruction.name;
+                    InstructionName := GroupInstruction.Name;
                   end;
 
                   else
@@ -896,13 +897,13 @@ begin
                   simdNone: begin
                     // This nasty hack is required becuase the ModRM.Moder is part of opcode in two special cases
                     if code[i] = $12 then begin
-                      if (code[i+1] and $C0) <> $C0 then
+                      if (code[i + 1] and $C0) <> $C0 then
                         SIMDInstructionPtr := @simd_MOVLPS_a
                       else
                         SIMDInstructionPtr := @simd_MOVHLPS;
                     end
                     else if code[i] = $16 then begin
-                      if (code[i+1] and $C0) <> $C0 then
+                      if (code[i + 1] and $C0) <> $C0 then
                         SIMDInstructionPtr := @simd_MOVHPS_a
                       else
                         SIMDInstructionPtr := @simd_MOVLHPS;
@@ -921,7 +922,7 @@ begin
                 SIMDInstruction := SIMDInstructionPtr^;
                 Operands := SIMDInstruction.Operands;
                 OperandsCount := SIMDInstruction.OperandsCount;
-                InstructionName := SIMDInstruction.name;
+                InstructionName := SIMDInstruction.Name;
               end;
 
               // 3DNow! instruction
@@ -956,12 +957,11 @@ begin
             Operands := OneByteOpcodeInstruction.Operands;
             OperandsCount := OneByteOpcodeInstruction.OperandsCount;
             if not OneByteOpcodeInstruction.AddOp then
-              InstructionName := OneByteOpcodeInstruction.name
+              InstructionName := OneByteOpcodeInstruction.Name
+            else if operand32 then
+              InstructionName := OneByteOpcodeInstruction.Name32
             else
-              if operand32 then
-                InstructionName := OneByteOpcodeInstruction.Name32
-              else
-                InstructionName := OneByteOpcodeInstruction.Name16;
+              InstructionName := OneByteOpcodeInstruction.Name16;
           end;
 
           itUndefined: raise EUndefinedOpcodeException.Create('One byte instruction');
@@ -973,7 +973,7 @@ begin
         FirstCharOfName := InstructionName[1];
 
         // Instructions' parameters processing (except FPU instructions which parameters are already processed now)
-        //
+
         // Function "SpracujParameter" has side effects its second calling depends on.
         // So we must ensure that the first parameter is processed before second.
         // We cannot use "InstructionOperands := SpracujParameter(Operands.p1) + ',' + SpracujParameter(Operands.p2);"
@@ -994,14 +994,11 @@ begin
         end;
 
         //  Block ending instructions
-        if
-          ((FirstCharOfName = 'J') and (InstructionName[2] = 'M')) // JMP, JMPx
-          or
-          ((FirstCharOfName = 'R') and (InstructionName[2] = 'E')) // RET, RETN, RETF
-          or
-          ((FirstCharOfName = 'I') and (InstructionName[2] = 'R')) // IRET, IRETx
+        if ((FirstCharOfName = 'J') and (InstructionName[2] = 'M')) // JMP, JMPx
+          or ((FirstCharOfName = 'R') and (InstructionName[2] = 'E')) // RET, RETN, RETF
+          or ((FirstCharOfName = 'I') and (InstructionName[2] = 'R')) // IRET, IRETx
         then
-          EndBlock := true;
+          EndBlock := True;
 
         // Detection of imported functions calls (CALLN and JMPN instructions)
         if (code[InstrAddress] = $FF) then
@@ -1038,24 +1035,24 @@ begin
         SetLength(Line, ilInstructionMnemonicIndex - 1);
 
         // Address
-        MemAddress:= InstrAddress + fMemOffset;
+        MemAddress := InstrAddress + fMemOffset;
         for HexAddressIndex := 1 to 8 do begin
           Line[9 - HexAddressIndex] := HexDigits[MemAddress and 15];
-          MemAddress:= MemAddress shr 4;
+          MemAddress := MemAddress shr 4;
         end;
 
         // Parsed
         for ParsedIndex := 0 to (i - InstrAddress) do begin
           TheByte := code[InstrAddress + Cardinal(ParsedIndex)];
-          Line[10 + 2*ParsedIndex] := HexDigits[(TheByte shr 4) and 15];
-          Line[10 + 2*ParsedIndex + 1] := HexDigits[TheByte and 15];
+          Line[10 + 2 * ParsedIndex] := HexDigits[(TheByte shr 4) and 15];
+          Line[10 + 2 * ParsedIndex + 1] := HexDigits[TheByte and 15];
         end;
 
         // Spaces
-        for SpaceIndex := 10 + 2*(i - InstrAddress + 1) to LastParsedIndex do
+        for SpaceIndex := 10 + 2 * (i - InstrAddress + 1) to LastParsedIndex do
           Line[SpaceIndex] := ' ';
 
-        LastParsedIndex := 9 + 2*(i - InstrAddress + 1);
+        LastParsedIndex := 9 + 2 * (i - InstrAddress + 1);
 
         // Prefix
         LineIndex := ilInstructionMnemonicIndex;
@@ -1097,12 +1094,12 @@ begin
           i := InstrAddress;
           InstructionPrefix := ''; // ??
           fDisasmMap[InstrAddress] := 0; // ??
-          EndBlock := true;
+          EndBlock := True;
           Logger.Debug('Undefined opcode, message: ' + E.Message);
         end;
         on E: EInstructionTruncated do begin
           i := InstrAddress;
-          EndBlock := true;
+          EndBlock := True;
           Logger.Debug('Instruction truncated, message: ' + E.Message);
         end;
         else
@@ -1113,8 +1110,8 @@ begin
   except
     on E: Exception do begin
       Logger.Fatal(
-        'DisassembleBlock(0x' + IntToHex(start, 8) + ', 0x' + IntToHex(finish, 8) + '): ' +
-        E.Message + ' [InstrAddress = 0x' + IntToHex(InstrAddress, 8) + '; CodeIndex = 0x' + IntToHex(i, 8) + ']'
+        'DisassembleBlock(0x' + IntToHex(start, 8) + ', 0x' + IntToHex(finish, 8) + '): ' + E.Message + ' [InstrAddress = 0x' +
+        IntToHex(InstrAddress, 8) + '; CodeIndex = 0x' + IntToHex(i, 8) + ']'
       );
 
       raise;
@@ -1122,7 +1119,7 @@ begin
   end;
 
   AddBlock(start, i - start);
-  result:=true;
+  Result := True;
 end;
 
 
@@ -1130,81 +1127,80 @@ end;
 function Tx86Disassembler.ProcessOperand(Operand: TOperand): string;
 begin
   case Operand of
-    MODb: result := ProcessModRM(otRMRegMem, os1);
-    MODw: result := ProcessModRM(otRMRegMem, os2);
-    MODv: result := ProcessModRM(otRMRegMem, os2or4);
-    MODd: result := ProcessModRM(otRMRegMem, os4);
-    MODp: result := ProcessModRM(otRMRegMem, os4or6);
-    MODq: result := ProcessModRM(otRMRegMem, os8);
-    MODdq: result := ProcessModRM(otRMRegMem, os16);
+    MODb: Result := ProcessModRM(otRMRegMem, os1);
+    MODw: Result := ProcessModRM(otRMRegMem, os2);
+    MODv: Result := ProcessModRM(otRMRegMem, os2or4);
+    MODd: Result := ProcessModRM(otRMRegMem, os4);
+    MODp: Result := ProcessModRM(otRMRegMem, os4or6);
+    MODq: Result := ProcessModRM(otRMRegMem, os8);
+    MODdq: Result := ProcessModRM(otRMRegMem, os16);
 
-    GREGb: result := ProcessModRM(otRegister, os1);
-    GREGw: result := ProcessModRM(otRegister, os2);
-    GREGv: result := ProcessModRM(otRegister, os2or4);
-    GREGd: result := ProcessModRM(otRegister, os4);
-    GREGq: result := ProcessModRM(otRegister, os8);
-    GREGdq: result := ProcessModRM(otRegister, os16);
+    GREGb: Result := ProcessModRM(otRegister, os1);
+    GREGw: Result := ProcessModRM(otRegister, os2);
+    GREGv: Result := ProcessModRM(otRegister, os2or4);
+    GREGd: Result := ProcessModRM(otRegister, os4);
+    GREGq: Result := ProcessModRM(otRegister, os8);
+    GREGdq: Result := ProcessModRM(otRegister, os16);
 
-    SREGw: result := ProcessModRM(otSegmentReg, os2);
-    CREGd: result := ProcessModRM(otControlReg, os4);
-    DREGd: result := ProcessModRM(otDebugReg, os4);
-    TREGd: result := ProcessModRM(otTestReg, os4);
+    SREGw: Result := ProcessModRM(otSegmentReg, os2);
+    CREGd: Result := ProcessModRM(otControlReg, os4);
+    DREGd: Result := ProcessModRM(otDebugReg, os4);
+    TREGd: Result := ProcessModRM(otTestReg, os4);
 
-    IMMb: result := ProcessImmediate(os1);
-    IMMv: result := ProcessImmediate(os2or4);
-    IMMw: result := ProcessImmediate(os2);
-    IMMp: result := ProcessImmediate(os4or6);
+    IMMb: Result := ProcessImmediate(os1);
+    IMMv: Result := ProcessImmediate(os2or4);
+    IMMw: Result := ProcessImmediate(os2);
+    IMMp: Result := ProcessImmediate(os4or6);
 
-    RELb: result := ProcessRelative(os1);
-    RELv: result := ProcessRelative(os2or4);
-    RELw: result := ProcessRelative(os2);
+    RELb: Result := ProcessRelative(os1);
+    RELv: Result := ProcessRelative(os2or4);
+    RELw: Result := ProcessRelative(os2);
 
-    OFFb, OFFv: result := ProcessOffset;
+    OFFb, OFFv: Result := ProcessOffset;
 
-    ax: result := ProcessGenPurpRegister + 'AX';
-    bx: result := ProcessGenPurpRegister + 'BX';
-    cx: result := ProcessGenPurpRegister + 'CX';
-    dx: result := ProcessGenPurpRegister + 'DX';
-    si: result := ProcessGenPurpRegister + 'SI';
-    di: result := ProcessGenPurpRegister + 'DI';
-    bp: result := ProcessGenPurpRegister + 'BP';
-    sp: result := ProcessGenPurpRegister + 'SP';
+    ax: Result := ProcessGenPurpRegister + 'AX';
+    bx: Result := ProcessGenPurpRegister + 'BX';
+    cx: Result := ProcessGenPurpRegister + 'CX';
+    dx: Result := ProcessGenPurpRegister + 'DX';
+    si: Result := ProcessGenPurpRegister + 'SI';
+    di: Result := ProcessGenPurpRegister + 'DI';
+    bp: Result := ProcessGenPurpRegister + 'BP';
+    sp: Result := ProcessGenPurpRegister + 'SP';
 
-    al: result := 'AL';
-    bl: result := 'BL';
-    cl: result := 'CL';
-    dl: result := 'DL';
-    ah: result := 'AH';
-    bh: result := 'BH';
-    ch: result := 'CH';
-    dh: result := 'DH';
+    al: Result := 'AL';
+    bl: Result := 'BL';
+    cl: Result := 'CL';
+    dl: Result := 'DL';
+    ah: Result := 'AH';
+    bh: Result := 'BH';
+    ch: Result := 'CH';
+    dh: Result := 'DH';
 
-    DS: result := 'DS';
-    ES: result := 'ES';
-    SS: result := 'SS';
-    CS: result := 'CS';
-    statDX: result := 'DX';
+    DS: Result := 'DS';
+    ES: Result := 'ES';
+    SS: Result := 'SS';
+    CS: Result := 'CS';
+    statDX: Result := 'DX';
 
-    MMM: result := ProcessModRM(otRMMem, osNone);
-    M16: result := ProcessModRM(otRMMem, os2);
-    M32: result := ProcessModRM(otRMMem, os4);
-    M64: result := ProcessModRM(otRMMem, os8);
-    M80: result := ProcessModRM(otRMMem, os10);
-    M128: result := ProcessModRM(otRMMem, os16);
-    R32: result := ProcessModRM(otRMReg, os4);
-    R64: result := ProcessModRM(otRMReg, os8);
-    R128: result := ProcessModRM(otRMReg, os16);
-    REG32_M8: result := ProcessModRM(otRMRegMem, osR4_M1);
-    REG32_M16: result := ProcessModRM(otRMRegMem, osR4_M2);
-    MMX_M32: result := ProcessModRM(otRMRegMem, osR8_M4);
-    XMM_M16: result := ProcessModRM(otRMRegMem, osR16_M2);
-    XMM_M32: result := ProcessModRM(otRMRegMem, osR16_M4);
-    XMM_M64: result := ProcessModRM(otRMRegMem, osR16_M8);
+    MMM: Result := ProcessModRM(otRMMem, osNone);
+    M16: Result := ProcessModRM(otRMMem, os2);
+    M32: Result := ProcessModRM(otRMMem, os4);
+    M64: Result := ProcessModRM(otRMMem, os8);
+    M80: Result := ProcessModRM(otRMMem, os10);
+    M128: Result := ProcessModRM(otRMMem, os16);
+    R32: Result := ProcessModRM(otRMReg, os4);
+    R64: Result := ProcessModRM(otRMReg, os8);
+    R128: Result := ProcessModRM(otRMReg, os16);
+    REG32_M8: Result := ProcessModRM(otRMRegMem, osR4_M1);
+    REG32_M16: Result := ProcessModRM(otRMRegMem, osR4_M2);
+    MMX_M32: Result := ProcessModRM(otRMRegMem, osR8_M4);
+    XMM_M16: Result := ProcessModRM(otRMRegMem, osR16_M2);
+    XMM_M32: Result := ProcessModRM(otRMRegMem, osR16_M4);
+    XMM_M64: Result := ProcessModRM(otRMRegMem, osR16_M8);
 
-    n1: result := '1';
+    n1: Result := '1';
   end;
 end;
-
 
 
 

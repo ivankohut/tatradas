@@ -3,14 +3,10 @@ unit AboutBoxUnit;
 interface
 
 uses
-  Forms, ExtCtrls, StdCtrls, Controls, Graphics,
-  //ExtActns,
-  ActnList,
-
-  Classes,
-  SysUtils,
-  INIFiles,
-
+  Classes, SysUtils, IniFiles,
+  Forms, ExtCtrls, StdCtrls, Controls, Graphics, ActnList,
+//  ExtActns,
+  // project units
   procmat,
   TranslatorUnit;
 
@@ -36,7 +32,7 @@ type
     CompilerLabel: TLabel;
     CompilerDataLabel: TLabel;
     procedure OKButtonClick(Sender: TObject);
-    procedure URLLabelMouseMove(Sender: TObject; Shift: TShiftState; X,Y: Integer);
+    procedure URLLabelMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
     procedure URLLabelMouseLeave(Sender: TObject);
     procedure URLLabelClick(Sender: TObject);
     procedure FormActivate(Sender: TObject);

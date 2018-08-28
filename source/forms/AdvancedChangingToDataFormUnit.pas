@@ -7,7 +7,7 @@ uses
   SysUtils,
   Classes,
   IniFiles,
-
+  // project units
   ExceptionsUnit,
   procmat,
   TranslatorUnit,
@@ -60,7 +60,7 @@ type
 var
   AdvancedChangingToDataForm: TAdvancedChangingToDataForm;
 
-  
+
 implementation
 
 
@@ -106,7 +106,7 @@ end;
 procedure TAdvancedChangingToDataForm.FormCreate(Sender: TObject);
 begin
   // Create ItemsCountEdit
-  ItemsBinHexEdit:= TDecimalPositiveEdit.Create(self);
+  ItemsBinHexEdit := TDecimalPositiveEdit.Create(self);
   ItemsBinHexEdit.Parent := PanelForItemsCountEdit;
   ItemsBinHexEdit.Align := alClient;
   ItemsBinHexEdit.Enabled := False;
@@ -132,6 +132,7 @@ begin
   ItemsRadioButton.Checked := True;
   SetSelectedEdit(ItemsBinHexEdit);
 end;
+
 
 
 procedure TAdvancedChangingToDataForm.SetSelectedEdit(AEdit: TPositiveEdit);

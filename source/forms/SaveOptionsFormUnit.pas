@@ -7,7 +7,7 @@ uses
   SysUtils,
   Classes,
   IniFiles,
-
+  // project units
   ExceptionsUnit,
   procmat,
   TranslatorUnit;
@@ -42,13 +42,13 @@ type
   public
     procedure Translate;
     property ExportCustomDASOptions: TExportCustomDASOptions read GetExportCustomDASOptions;
-    property ExportOption: TExportOption read GetExportOption; 
+    property ExportOption: TExportOption read GetExportOption;
   end;
 
 var
   SaveOptionsForm: TSaveOptionsForm;
 
-  
+
 implementation
 
 
@@ -58,23 +58,34 @@ implementation
 function TSaveOptionsForm.GetExportCustomDASOptions: TExportCustomDASOptions;
 begin
   Result := [];
-  if AddressCheckBox.Checked then Result := Result + [soAddress];
-  if ParsedCheckBox.Checked then Result := Result + [soParsed];
-  if DisassembledCheckBox.Checked then Result := Result + [soDisassembled];
-  if JumpCheckBox.Checked then Result := Result + [soJump];
-  if CallCheckBox.Checked then Result := Result + [soCall];
-  if ExportCheckBox.Checked then Result := Result + [soExport];
-  if ImportCheckBox.Checked then Result := Result + [soImport];
-  if EntryPointCheckBox.Checked then Result := Result + [soEntrypoint];
+  if AddressCheckBox.Checked then
+    Result := Result + [soAddress];
+  if ParsedCheckBox.Checked then
+    Result := Result + [soParsed];
+  if DisassembledCheckBox.Checked then
+    Result := Result + [soDisassembled];
+  if JumpCheckBox.Checked then
+    Result := Result + [soJump];
+  if CallCheckBox.Checked then
+    Result := Result + [soCall];
+  if ExportCheckBox.Checked then
+    Result := Result + [soExport];
+  if ImportCheckBox.Checked then
+    Result := Result + [soImport];
+  if EntryPointCheckBox.Checked then
+    Result := Result + [soEntrypoint];
 end;
 
 
 
 function TSaveOptionsForm.GetExportOption: TExportOption;
 begin
-  if DisassemblyRadioButton.Checked then Result := eoDAS
-  else if CustomRadioButton.Checked then Result := eoCustomDAS
-  else if NASMRadioButton.Checked then Result := eoNASM
+  if DisassemblyRadioButton.Checked then
+    Result := eoDAS
+  else if CustomRadioButton.Checked then
+    Result := eoCustomDAS
+  else if NASMRadioButton.Checked then
+    Result := eoNASM
   else
     raise EIllegalState.Create('TSaveOptionsForm.GetExportOption: No radio button selected');
 end;

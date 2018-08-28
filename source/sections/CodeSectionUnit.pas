@@ -35,7 +35,7 @@ uses
   Math,
   StrUtils,
   Types,
-
+  // project units
   GlobalsUnit,
   ExceptionsUnit,
   procmat,
@@ -53,93 +53,93 @@ const
 type
 
   TCodeSection = class(TSection)
-    private
-      fBit32: Boolean;
-      fCodeSize: Cardinal;                  // Velkost kodu tejto sekcie v bajtoch
-      fIsDisassembled: Boolean;
-      fDisassembled: TTatraDASStringList;
+  private
+    fBit32: Boolean;
+    fCodeSize: Cardinal;                  // Velkost kodu tejto sekcie v bajtoch
+    fIsDisassembled: Boolean;
+    fDisassembled: TTatraDASStringList;
 
-      fHasEntryPoint: Boolean;
-      fEntryPointAddress: Cardinal;
+    fHasEntryPoint: Boolean;
+    fEntryPointAddress: Cardinal;
 
-      fFileOffset: Cardinal;
-      fFileSize: Cardinal;
-      fMemOffset: Cardinal;
-      fMemSize: Cardinal;
+    fFileOffset: Cardinal;
+    fFileSize: Cardinal;
+    fMemOffset: Cardinal;
+    fMemSize: Cardinal;
 
-      fCodeSectionIndex: Integer;             // Cislo sekcie v ramci kodovych sekcii
+    fCodeSectionIndex: Integer;             // Cislo sekcie v ramci kodovych sekcii
 
-      InstructionLineCount, DataLineCount, ReferenceLineCount, BlankLineCount: cardinal;
+    InstructionLineCount, DataLineCount, ReferenceLineCount, BlankLineCount: Cardinal;
 //       Statistics: TStatistics;
-      InstructionsCount: cardinal;
-      fLastItem: cardinal;
+    InstructionsCount: Cardinal;
+    fLastItem: Cardinal;
 
-      procedure SetEntryPointAddress(Address: cardinal);
-      function GetMaxAddress: cardinal;
+    procedure SetEntryPointAddress(Address: Cardinal);
+    function GetMaxAddress: Cardinal;
 
-      procedure LoadCode(InputStream: TStream);
+    procedure LoadCode(InputStream: TStream);
 
-    protected
+  protected
     // These methods are in "protected" section so theu are accessible from unit tests
-      procedure SetMemOffset(AMemOffset: Cardinal);
-      procedure SetDisassembled(ADisassembled: TTatraDASStringList);
+    procedure SetMemOffset(AMemOffset: Cardinal);
+    procedure SetDisassembled(ADisassembled: TTatraDASStringList);
 
-      procedure ReplaceLinesInternal(StartLineIndex, StartAddress, ByteCount: Cardinal; NewLines: TStrings);
-      function GetReplacingLines(StartLineIndex, StartAddress, ByteCount: cardinal; NewLines: TStrings; out LastLineIndex: Cardinal): TStrings;
+    procedure ReplaceLinesInternal(StartLineIndex, StartAddress, ByteCount: Cardinal; NewLines: TStrings);
+    function GetReplacingLines(StartLineIndex, StartAddress, ByteCount: Cardinal; NewLines: TStrings; out LastLineIndex: Cardinal): TStrings;
 
-      class function PrepareInnerReplaceLines(const OldStartLineIndex: Integer; OldLines, NewLines: TStrings; out OldLastLineIndex: Cardinal): TStrings;
-      class function ReplaceFirstLastLine(ALine: string; AReplaceAddress: Cardinal; AIsFirst: Boolean): TStrings;
+    class function PrepareInnerReplaceLines(const OldStartLineIndex: Integer; OldLines, NewLines: TStrings; out OldLastLineIndex: Cardinal): TStrings;
+    class function ReplaceFirstLastLine(ALine: string; AReplaceAddress: Cardinal; AIsFirst: Boolean): TStrings;
 
-    public
-      CodeStream: TMyMemoryStream; // 1. way to access code
-      CodeArray: TByteDynArray; // 2. way to access code
-      DisassemblerMap: TByteDynArray;
+  public
+    CodeStream: TMyMemoryStream; // 1. way to access code
+    CodeArray: TByteDynArray; // 2. way to access code
+    DisassemblerMap: TByteDynArray;
 
-      constructor Create(InputStream: TStream; aBit32: boolean; aFileOffset, aFileSize, aMemOffset, aMemSize: cardinal; aCodeSectionIndex: integer; aName: string; aExecFile: TObject); overload;
-      constructor Create(ExecFile: TObject); overload;
-      destructor Destroy; override;
+    constructor Create(InputStream: TStream; aBit32: Boolean; aFileOffset, aFileSize, aMemOffset, aMemSize: Cardinal; aCodeSectionIndex: Integer; aName: string; aExecFile: TObject); overload;
+    constructor Create(ExecFile: TObject); overload;
+    destructor Destroy; override;
 
-      procedure DisassembleAll(Options: TDisassembleOptions);
-      procedure DisassemblePart(Options: TDisassembleOptions);
+    procedure DisassembleAll(Options: TDisassembleOptions);
+    procedure DisassemblePart(Options: TDisassembleOptions);
 
-      function IsInSection(MemAddress: cardinal): boolean;
-      function GetPosition(MemAddress: cardinal): cardinal; // Get position in Disassembled from Address (memory address)
-      function FindAddressableLine(Position: cardinal): cardinal; // forward search, returns $FFFFFFFF if reaches end of Disassembled
-      procedure ClearDisassembled;
+    function IsInSection(MemAddress: Cardinal): Boolean;
+    function GetPosition(MemAddress: Cardinal): Cardinal; // Get position in Disassembled from Address (memory address)
+    function FindAddressableLine(Position: Cardinal): Cardinal; // forward search, returns $FFFFFFFF if reaches end of Disassembled
+    procedure ClearDisassembled;
 
-      procedure ReplaceLines(StartLineIndex, StartAddress, ByteCount: Cardinal; NewLines: TStrings);
+    procedure ReplaceLines(StartLineIndex, StartAddress, ByteCount: Cardinal; NewLines: TStrings);
 
-      procedure SaveToFile(DHF: TStream; var DAS: TextFile); override;
-      procedure LoadFromFile(DHF: TStream; var DAS: TextFile); overload; override;
+    procedure SaveToFile(DHF: TStream; var DAS: TextFile); override;
+    procedure LoadFromFile(DHF: TStream; var DAS: TextFile); overload; override;
 
-      property Bit32: boolean read fBit32;
-      property CodeSize: cardinal read fCodeSize;                  // Velkost kodu tejto sekcie v bajtoch
-      property IsDisassembled: boolean read fIsDisassembled;
-      property Disassembled: TTatraDASStringList read fDisassembled;
+    property Bit32: Boolean read fBit32;
+    property CodeSize: Cardinal read fCodeSize;                  // Velkost kodu tejto sekcie v bajtoch
+    property IsDisassembled: Boolean read fIsDisassembled;
+    property Disassembled: TTatraDASStringList read fDisassembled;
 
-      property FileOffset: cardinal read fFileOffset;
-      property FileSize: cardinal read fFileSize;
-      property MemOffset: cardinal read fMemOffset;
-      property MemSize: cardinal read fMemSize;
-      property MaxAddress: cardinal read GetMaxAddress;
-      property LastItem: cardinal read fLastItem;
-      property CodeSectionIndex: integer read fCodeSectionIndex;
+    property FileOffset: Cardinal read fFileOffset;
+    property FileSize: Cardinal read fFileSize;
+    property MemOffset: Cardinal read fMemOffset;
+    property MemSize: Cardinal read fMemSize;
+    property MaxAddress: Cardinal read GetMaxAddress;
+    property LastItem: Cardinal read fLastItem;
+    property CodeSectionIndex: Integer read fCodeSectionIndex;
 
-      property EntryPointAddress: cardinal read fEntryPointAddress write SetEntryPointAddress; // currently relative to code section
-      property HasEntryPoint: boolean read fHasEntryPoint;
-    end;
+    property EntryPointAddress: Cardinal read fEntryPointAddress write SetEntryPointAddress; // currently relative to code section
+    property HasEntryPoint: Boolean read fHasEntryPoint;
+  end;
 
 
-function GetLineAddress(line: string): cardinal;
-function GetLineBytes(line: string): cardinal;
+function GetLineAddress(line: string): Cardinal;
+function GetLineBytes(line: string): Cardinal;
 function GetLineType(line: string): TLineType;
 function GetLineData(Line: string): TByteDynArray;
-function GetTargetAddress(Line: string; var Address: cardinal): boolean;
+function GetTargetAddress(Line: string; var Address: Cardinal): Boolean;
 function GetNewLinesCount(CodeSize: Cardinal; Options: TDataChangeOptions; StartAddress: Cardinal): Integer;
 function IsCodeInstructionStr(const InstructionStr: string): Boolean;
 
 // StartAddress is memory address
-function GetLineFromDataEx(var InputData; DataType: cardinal; Signed: Boolean; const StartAddress: Cardinal; Count: Integer): TStrings;
+function GetLineFromDataEx(var InputData; DataType: Cardinal; Signed: Boolean; const StartAddress: Cardinal; Count: Integer): TStrings;
 
 
 implementation
@@ -159,18 +159,18 @@ uses
 //******************************************************************************
 
 
-constructor TCodeSection.Create(InputStream: TStream; aBit32: boolean; aFileOffset, aFileSize, aMemOffset, aMemSize: cardinal; aCodeSectionIndex: integer; aName: string; aExecFile: TObject);
+constructor TCodeSection.Create(InputStream: TStream; aBit32: Boolean; aFileOffset, aFileSize, aMemOffset, aMemSize: Cardinal; aCodeSectionIndex: Integer; aName: string; aExecFile: TObject);
 begin
   inherited Create(aName, aExecFile);
   fTyp := stCode;
 
   fBit32 := aBit32;
-  fFileOffset:= aFileOffset;
-  fFileSize:= aFileSize;
-  fMemOffset:= aMemOffset;
-  fMemSize:= aMemSize;
+  fFileOffset := aFileOffset;
+  fFileSize := aFileSize;
+  fMemOffset := aMemOffset;
+  fMemSize := aMemSize;
 
-  fCodeSectionIndex:= aCodeSectionIndex;
+  fCodeSectionIndex := aCodeSectionIndex;
 
   // Set CodeSize
   if aFileSize <> 0 then
@@ -244,17 +244,17 @@ end;
 
 
 
-procedure TCodeSection.SetEntryPointAddress(Address: cardinal);
+procedure TCodeSection.SetEntryPointAddress(Address: Cardinal);
 begin
   fEntryPointAddress := Address;
-  fHasEntryPoint := true;
+  fHasEntryPoint := True;
 end;
 
 
 
-function TCodeSection.GetMaxAddress: cardinal;
+function TCodeSection.GetMaxAddress: Cardinal;
 begin
-  result := MemOffset + MemSize - 1;
+  Result := MemOffset + MemSize - 1;
 end;
 
 
@@ -265,7 +265,7 @@ begin
     Disassembled.Clear;
     FillChar(DisassemblerMap[0], CodeSize, 0);
   end;
-  fIsDisassembled := false;
+  fIsDisassembled := False;
 end;
 
 
@@ -277,11 +277,7 @@ begin
   LineData := GetLineData(ALine);
   if AIsFirst then
     Result := GetLineFromDataEx(
-      LineData[0],
-      dtByte,
-      false,
-      GetLineAddress(ALine),
-      AReplaceAddress - GetLineAddress(ALine)
+      LineData[0], dtByte, False, GetLineAddress(ALine), AReplaceAddress - GetLineAddress(ALine)
     )
   else begin
     if AReplaceAddress = GetLineAddress(ALine) then begin
@@ -292,7 +288,7 @@ begin
       Result := GetLineFromDataEx(
         LineData[AReplaceAddress - GetLineAddress(ALine)],
         dtByte,
-        false,
+        False,
         AReplaceAddress,
         GetLineBytes(ALine) - (AReplaceAddress - GetLineAddress(ALine))
       );
@@ -310,7 +306,8 @@ begin
 end;
 
 
-procedure TCodeSection.ReplaceLines(StartLineIndex, StartAddress, ByteCount: cardinal; NewLines: TStrings);
+
+procedure TCodeSection.ReplaceLines(StartLineIndex, StartAddress, ByteCount: Cardinal; NewLines: TStrings);
 begin
   Disassembled.BeginUpdate;
   ReplaceLinesInternal(StartLineIndex, StartAddress, ByteCount, NewLines);
@@ -363,18 +360,18 @@ end;
 
 procedure TCodeSection.DisassemblePart(Options: TDisassembleOptions);
 var
-  BlockIndex: integer;
-  CodeIndex, StartBlockAddress: cardinal;
-  ReferenceIndex: integer;
+  BlockIndex: Integer;
+  CodeIndex, StartBlockAddress: Cardinal;
+  ReferenceIndex: Integer;
   NewLines: TStrings;
   Disassembler: TDisassembler;
 begin
-  NewLines:= nil;
-  Disassembler:= nil;
+  NewLines := nil;
+  Disassembler := nil;
   try
     // Disassemble
     ProgressManager.StartPhase(ProcessText.Disassembling, fCodeSize);
-    Disassembler:= Tx86Disassembler.Create(CodeArray, DisassemblerMap, MemOffset, Options.Bit32);
+    Disassembler := Tx86Disassembler.Create(CodeArray, DisassemblerMap, MemOffset, Options.Bit32);
     Disassembler.CAJ.Add(Options.Address - MemOffset);
     Disassembler.CAJ.Process(Options.Address - MemOffset + Options.Size);
 
@@ -385,7 +382,7 @@ begin
     ProgressManager.StartPhase(ProcessText.PreparingOutput, Disassembler.BlockCount);
 
     Disassembled.BeginUpdate;
-    NewLines:= TStringList.Create;
+    NewLines := TStringList.Create;
     for BlockIndex := 0 to Disassembler.BlockCount - 1 do begin
       ProgressManager.IncPosition;
       if ProgressData.AbortExecution then
@@ -408,8 +405,8 @@ begin
             end;
 
         // Instruction
-        DisassemblerMap[CodeIndex] := (DisassemblerMap[CodeIndex] AND Byte(255 - dfNewInstr));
-        DisassemblerMap[CodeIndex] := (DisassemblerMap[CodeIndex] OR Byte(dfInstruction));
+        DisassemblerMap[CodeIndex] := (DisassemblerMap[CodeIndex] and Byte(255 - dfNewInstr));
+        DisassemblerMap[CodeIndex] := (DisassemblerMap[CodeIndex] or Byte(dfInstruction));
 
         Newlines.Add(Disassembler.Disassembled[CodeIndex].DisassembledLine);
       end;
@@ -434,25 +431,28 @@ end;
 
 procedure TCodeSection.DisassembleAll(Options: TDisassembleOptions);               // Disasseblovanie, hladanie skokov, spracovanie vystupu...
 var
-  i,j,k,l: integer;
+  i, j, k, l: Integer;
 
   IndexAddressStr: string;
-  IndexAddress: cardinal;
-  CallInstrAddress: cardinal;
+  IndexAddress: Cardinal;
+  CallInstrAddress: Cardinal;
   FunctionFromModul: string; // nazov importovanej funkcie a modulu
 
-  Position: cardinal; // Position of exported function's entry point in Disassembled
+  Position: Cardinal; // Position of exported function's entry point in Disassembled
 
-  ReferenceIndex: integer; // Index of instruction references
-  CodeIndex: cardinal;
+  ReferenceIndex: Integer; // Index of instruction references
+  CodeIndex: Cardinal;
 
   ImportSection: TImportSection;
   ExportSection: TExportSection;
   Disassembler: TDisassembler;
 
-  CodeLineTexts: array of record Count: Integer; Texts: array of string; end;
+  CodeLineTexts: array of record
+    Count: Integer;
+    Texts: array of string;
+  end;
 
-  procedure AddText(const AAddress: cardinal; const AText: string);
+  procedure AddText(const AAddress: Cardinal; const AText: string);
   begin
     with CodeLineTexts[AAddress] do begin
       Inc(Count);
@@ -462,10 +462,10 @@ var
   end;
 
 var
-  ReferencingAddress: cardinal;
+  ReferencingAddress: Cardinal;
   ImportedFunctionStr: string;
-  ImportCandidate: cardinal;
-  UndefinedOpcodeAddress: cardinal;
+  ImportCandidate: Cardinal;
+  UndefinedOpcodeAddress: Cardinal;
 
 begin
   // Empty section is considered already disassembled
@@ -479,16 +479,16 @@ begin
   try
     SetLength(CodeLineTexts, CodeSize);
 
-    ImportSection:= (ExecFile as TExecutableFile).ImportSection;
-    ExportSection:= (ExecFile as TExecutableFile).ExportSection;
+    ImportSection := (ExecFile as TExecutableFile).ImportSection;
+    ExportSection := (ExecFile as TExecutableFile).ExportSection;
 
-    Disassembler:= Tx86Disassembler.Create(CodeArray, DisassemblerMap, MemOffset, Bit32);
+    Disassembler := Tx86Disassembler.Create(CodeArray, DisassemblerMap, MemOffset, Bit32);
 
     if (ExecFile as TExecutableFile).ExeFormat = ffNE then
       if ImportSection <> nil then begin
-        for i:=0 to Integer(ImportSection.ModulCount) - 1 do begin
-          for j:=0 to Integer(ImportSection.Moduls[i].FunctionCount) - 1 do begin
-            for k:=0 to Length(ImportSection.Moduls[i].Functions[j].Occurs)-1 do begin
+        for i := 0 to Integer(ImportSection.ModulCount) - 1 do begin
+          for j := 0 to Integer(ImportSection.Moduls[i].FunctionCount) - 1 do begin
+            for k := 0 to Length(ImportSection.Moduls[i].Functions[j].Occurs) - 1 do begin
               if ImportSection.Moduls[i].Functions[j].Occurs[k].SectionIndex = SectionIndex then begin
                 Disassembler.CAJ.Add(ImportSection.Moduls[i].Functions[j].Occurs[k].Address);
               end;
@@ -499,8 +499,8 @@ begin
 
     // Add exported functions' entry points to Disassembler.CAJ
     if ExportSection <> nil then begin
-      Disassembler.CAJ.Capacity:=Disassembler.CAJ.Capacity + ExportSection.functioncount;
-      for i:=0 to ExportSection.FunctionCount-1 do
+      Disassembler.CAJ.Capacity := Disassembler.CAJ.Capacity + ExportSection.functioncount;
+      for i := 0 to ExportSection.FunctionCount - 1 do
         if SectionIndex = ExportSection.functions[i].section then
           Disassembler.CAJ.Add(ExportSection.functions[i].CodeSectionOffset);
     end;
@@ -536,9 +536,9 @@ begin
           for i := 0 to Disassembler.ImportCandidates.Count - 1 do begin
             ImportCandidate := Disassembler.ImportCandidates[i];
             // Priprava parametrov pre GetModulAndFunction
-            IndexAddressStr:=Disassembler.Disassembled[ImportCandidate].DisassembledLine;
-            IndexAddressStr:=Copy(IndexAddressStr, ilInstructionMnemonicIndex + 3 + 10 + Math.IfThen(Disassembler.Disassembled[ImportCandidate].DisassembledLine[ilInstructionMnemonicIndex] = 'C', 1, 0), 8);
-            IndexAddress:=cardinal(StrToIntDef('$'+IndexAddressStr, 0));
+            IndexAddressStr := Disassembler.Disassembled[ImportCandidate].DisassembledLine;
+            IndexAddressStr := Copy(IndexAddressStr, ilInstructionMnemonicIndex + 3 + 10 + Math.IfThen(Disassembler.Disassembled[ImportCandidate].DisassembledLine[ilInstructionMnemonicIndex] = 'C', 1, 0), 8);
+            IndexAddress := Cardinal(StrToIntDef('$' + IndexAddressStr, 0));
             if IndexAddress = 0 then
               Continue;
 
@@ -553,15 +553,15 @@ begin
                 for j := 0 to ReferencesCount - 1 do begin
                   AddText(References[j].Address, '');
                   AddText(References[j].Address, 'Imported function ''' + FunctionFromModul + ''' used');
-                end
+                end;
             end;
           end;
         end;
 
         ffNE: begin
-          for i:=0 to ImportSection.ModulCount - 1 do begin
-            for j:=0 to integer(ImportSection.Moduls[i].FunctionCount) - 1 do begin
-              for k:=0 to Length(ImportSection.Moduls[i].Functions[j].Occurs) - 1 do begin
+          for i := 0 to ImportSection.ModulCount - 1 do begin
+            for j := 0 to Integer(ImportSection.Moduls[i].FunctionCount) - 1 do begin
+              for k := 0 to Length(ImportSection.Moduls[i].Functions[j].Occurs) - 1 do begin
                 if ImportSection.Moduls[i].Functions[j].Occurs[k].SectionIndex = SectionIndex then begin
 
                   //with Disassembler.Disassembled[ImportSection.Moduls[i].Functions[j].Occurs[k].Address] do begin
@@ -590,13 +590,13 @@ begin
 
     // Process exported functions
     if ExportSection <> nil then begin
-      for i := 0 to ExportSection.FunctionCount-1 do begin
+      for i := 0 to ExportSection.FunctionCount - 1 do begin
         if ExportSection.functions[i].section = SectionIndex then begin
           Position := ExportSection.functions[i].CodeSectionOffset;
 
           AddText(Position, '');
           if (ExportSection.Functions[i].Name <> '') then
-            AddText(Position, 'Exported function ''' + ExportSection.functions[i].name + '''')
+            AddText(Position, 'Exported function ''' + ExportSection.functions[i].Name + '''')
           else
             AddText(Position, 'Exported function ' + 'ordinal: ''0x' + IntToHex(ExportSection.functions[i].ordinal, 8) + '''');
         end;
@@ -624,7 +624,7 @@ begin
 
     Logger.Info('Start: Preparing output');
 
-    for i:= 0 to CodeSize - 1 do begin
+    for i := 0 to CodeSize - 1 do begin
       ProgressManager.IncPosition;
       if ProgressData.AbortExecution then
         Abort;
@@ -659,16 +659,16 @@ begin
     Logger.Info('Finish: Preparing output');
 
     // Compute LastItem
-    CodeIndex:= CodeSize - 1;
+    CodeIndex := CodeSize - 1;
     while (((DisassemblerMap[CodeIndex] and dfInstruction) = 0) and (DisassemblerMap[CodeIndex] <> 0)) do
       Dec(CodeIndex);
-    fLastItem:= CodeIndex;
-    fIsDisassembled:= true;
+    fLastItem := CodeIndex;
+    fIsDisassembled := True;
 
   except
     on E: Exception do begin
       Logger.Fatal('CodeSection.Disassemble: ' + E.Message);
-      fIsDisassembled:= false;
+      fIsDisassembled := False;
       Disassembler.Free;
       raise;
     end;
@@ -687,8 +687,8 @@ end;
 
 procedure TCodeSection.SaveToFile(DHF: TStream; var DAS: TextFile);
 var
-  LineIndex: integer;
-  DisasmCount: cardinal;
+  LineIndex: Integer;
+  DisasmCount: Cardinal;
 begin
   inherited SaveToFile(DHF, DAS);
 
@@ -712,7 +712,7 @@ begin
 //    DHF.Write(Statistics,sizeof(TStatistics));
   DHF.Write(fLastItem, 4);
   DHF.Write(IsDisassembled, 1);
-  DisasmCount:= Disassembled.Count;
+  DisasmCount := Disassembled.Count;
   DHF.Write(DisasmCount, 4);
   DHF.Write(InstructionsCount, 4);
   // Arrays
@@ -724,7 +724,7 @@ begin
   Logger.Info('Start: Saving DAS - code section ' + IntToStr(CodeSectionIndex));
   ProgressManager.StartPhase(ProcessText.SavingDAS + IntToStr(CodeSectionIndex), Disassembled.Count);
   Writeln(DAS, '; ********************************************');
-  Writeln(DAS, '; Code Section Number: '  + IntToStr(CodeSectionIndex));
+  Writeln(DAS, '; Code Section Number: ' + IntToStr(CodeSectionIndex));
   Writeln(DAS, '; ********************************************');
 
   // Standard DAS file
@@ -743,8 +743,8 @@ end;
 procedure TCodeSection.LoadFromFile(DHF: TStream; var DAS: TextFile);
 var
   Line: string;
-  LineIndex: integer;
-  DisasmCount: cardinal;
+  LineIndex: Integer;
+  DisasmCount: Cardinal;
 begin
   inherited LoadFromFile(DHF, DAS);
 
@@ -759,7 +759,7 @@ begin
   DHF.Read(fMemSize, 4);
   DHF.Read(fCodeSize, 4);
   DHF.Read(fHasEntryPoint, 1);
-  DHF.Read(fEntryPointAddress,4);
+  DHF.Read(fEntryPointAddress, 4);
   // Dynamic data
   DHF.Read(InstructionLineCount, 4);
   DHF.Read(DataLineCount, 4);
@@ -775,7 +775,7 @@ begin
   DHF.Read(CodeArray[0], CodeSize);
   SetLength(DisassemblerMap, CodeSize);
   DHF.Read(DisassemblerMap[0], CodeSize);
-  CodeStream:= TMyMemoryStream.Create;
+  CodeStream := TMyMemoryStream.Create;
   CodeStream.SetMemory(Pointer(CodeArray), CodeSize);
 
   // DAS file
@@ -786,8 +786,8 @@ begin
   Readln(DAS);
   Readln(DAS);
 
-  fDisassembled:= TTatraDASStringList.Create;
-  fDisassembled.Capacity:= DisasmCount;
+  fDisassembled := TTatraDASStringList.Create;
+  fDisassembled.Capacity := DisasmCount;
   try
     for LineIndex := 0 to DisasmCount - 1 do begin
       ProgressManager.IncPosition;
@@ -808,60 +808,60 @@ end;
 
 
 // Get position in Disassembled from Address (memory address)
-function TCodeSection.GetPosition(MemAddress: cardinal): cardinal;
+function TCodeSection.GetPosition(MemAddress: Cardinal): Cardinal;
 var
-  Estimate: cardinal;
-  DisIndex: cardinal;
+  Estimate: Cardinal;
+  DisIndex: Cardinal;
 begin
   // Range check of Address
   if (MemAddress < MemOffset) or (MemAddress > MaxAddress) then begin
-    result:= cardinal(-1);
+    Result := Cardinal(-1);
     Exit;
   end;
 
   // Process if Address is in last item
   if MemAddress >= MemOffset + LastItem then begin
-    DisIndex:= Disassembled.Count - 1;
+    DisIndex := Disassembled.Count - 1;
     while (GetLineAddress(Disassembled[DisIndex]) = $FFFFFFFF) do
       Dec(DisIndex);
-    result:= DisIndex;
+    Result := DisIndex;
     Exit;
   end;
 
   // Estimate position
-  Estimate:= Min(Round ( (MemAddress - fMemOffset) / (fMemSize/Disassembled.Count)), Disassembled.Count - 1);
+  Estimate := Min(Round((MemAddress - fMemOffset) / (fMemSize / Disassembled.Count)), Disassembled.Count - 1);
 
   // Find a addressable (e.g. not comment, reference, blank etc.) line close to estimated position
-  DisIndex:= Estimate;
+  DisIndex := Estimate;
 
-    // backwards search
-    while (GetLineAddress(Disassembled[DisIndex]) = $FFFFFFFF) and (DisIndex > 0) do begin
-      Dec(DisIndex);
-    end;
+  // backwards search
+  while (GetLineAddress(Disassembled[DisIndex]) = $FFFFFFFF) and (DisIndex > 0) do begin
+    Dec(DisIndex);
+  end;
 
-    // forward search if backward not succesful
-    if DisIndex = 0 then
-      DisIndex:= Estimate;
-      while (GetLineAddress(Disassembled[DisIndex]) = $FFFFFFFF) do begin
-        Inc(DisIndex);
-      end;
+  // forward search if backward not succesful
+  if DisIndex = 0 then
+    DisIndex := Estimate;
+  while (GetLineAddress(Disassembled[DisIndex]) = $FFFFFFFF) do begin
+    Inc(DisIndex);
+  end;
 
   // Find line with address equal to (or lower than) Address
   if GetLineAddress(Disassembled[DisIndex]) < MemAddress then begin
-    result:= DisIndex;
-    while true do begin
+    Result := DisIndex;
+    while True do begin
       if GetLineAddress(Disassembled[DisIndex]) = $FFFFFFFF then begin
         Inc(DisIndex);
         Continue;
       end;
       case CompareValue(GetLineAddress(Disassembled[DisIndex]), MemAddress) of
         LessThanValue: begin
-          result:= DisIndex;
+          Result := DisIndex;
           Inc(DisIndex);
         end;
 
         EqualsValue: begin
-          result:= DisIndex;
+          Result := DisIndex;
           Break;
         end;
 
@@ -872,110 +872,110 @@ begin
   end
 
   else begin
-    while (MemAddress < GetLineAddress(Disassembled[DisIndex])) or (GetLineAddress(Disassembled[DisIndex])=$FFFFFFFF) do
+    while (MemAddress < GetLineAddress(Disassembled[DisIndex])) or (GetLineAddress(Disassembled[DisIndex]) = $FFFFFFFF) do
       Dec(DisIndex);
-    result:= DisIndex;
+    Result := DisIndex;
   end;
 end;
 
 
 
-function TCodeSection.FindAddressableLine(Position: cardinal): cardinal; // forward search, returns $FFFFFFFF if reaches end of Disassembled
+function TCodeSection.FindAddressableLine(Position: Cardinal): Cardinal; // forward search, returns $FFFFFFFF if reaches end of Disassembled
 begin
-  result:= Position;
-  while result < cardinal(Disassembled.Count) do begin
-    if GetLineType(Disassembled[result]) = ltInstruction then
+  Result := Position;
+  while Result < Cardinal(Disassembled.Count) do begin
+    if GetLineType(Disassembled[Result]) = ltInstruction then
       Exit
     else
-      Inc(result);
+      Inc(Result);
   end;
-  result:= $FFFFFFFF;
+  Result := $FFFFFFFF;
 end;
 
 
 // StartAddress is memory address
 //function TCodeSection.
-function GetLineFromDataEx(var InputData; DataType: cardinal; Signed: boolean; const StartAddress: cardinal; Count: integer): TStrings;
+function GetLineFromDataEx(var InputData; DataType: Cardinal; Signed: Boolean; const StartAddress: Cardinal; Count: Integer): TStrings;
 var
-  Address: cardinal;
-  ItemSize: integer;
+  Address: Cardinal;
+  ItemSize: Integer;
   Line: string;
-  LineIndex: integer;
+  LineIndex: Integer;
   DataPtr, BytePtr: Pointer;
-  i: integer;
+  i: Integer;
 begin
-  ItemSize:= DataTypeSizes[DataType];
-  Address:= StartAddress;
-  DataPtr:= @InputData;
-  result:= TStringList.Create;
+  ItemSize := DataTypeSizes[DataType];
+  Address := StartAddress;
+  DataPtr := @InputData;
+  Result := TStringList.Create;
   if Count < 1 then
     Exit;
-  result.Capacity:= Count;
+  Result.Capacity := Count;
 
-  for LineIndex:= 0 to Count - 1 do begin
+  for LineIndex := 0 to Count - 1 do begin
 //    Address:=  StartAddress + cardinal(LineIndex * ItemSize);
-    Line:= IntToHex(Address, 8) + ' ';
+    Line := IntToHex(Address, 8) + ' ';
 
     // Parsed
 //    DataPtr:= Pointer(cardinal(PData) + cardinal(LineIndex*ItemSize));
-    BytePtr:= DataPtr;
-    for i:= 1 to ItemSize do begin
-      Line:= Line + IntToHex(Byte(BytePtr^), 2);
+    BytePtr := DataPtr;
+    for i := 1 to ItemSize do begin
+      Line := Line + IntToHex(Byte(BytePtr^), 2);
       Inc(PByte(BytePtr));
     end;
-    Line:= StringRightPad(Line, ilInstructionMnemonicIndex - 1);
+    Line := StringRightPad(Line, ilInstructionMnemonicIndex - 1);
 
     // Data
     if Signed then begin
       case DataType of
         dtByte:
-          if Sign(shortint(DataPtr^)) = -1 then
-            Line:= Line + 'byte ' + '-0x' + IntToHex(Abs(shortint(DataPtr^)), 2)
+          if Sign(ShortInt(DataPtr^)) = -1 then
+            Line := Line + 'byte ' + '-0x' + IntToHex(Abs(ShortInt(DataPtr^)), 2)
           else
-            Line:= Line + 'byte ' +  '0x' + IntToHex(byte(DataPtr^), 2);
+            Line := Line + 'byte ' + '0x' + IntToHex(Byte(DataPtr^), 2);
 
         dtWord:
-          if Sign(smallInt(DataPtr^)) = -1 then
-            Line:= Line + 'word ' + '-0x' + IntToHex(Abs(smallInt(DataPtr^)), 4)
+          if Sign(SmallInt(DataPtr^)) = -1 then
+            Line := Line + 'word ' + '-0x' + IntToHex(Abs(SmallInt(DataPtr^)), 4)
           else
-            Line:= Line + 'word ' +  '0x' + IntToHex(word(DataPtr^), 4);
+            Line := Line + 'word ' + '0x' + IntToHex(Word(DataPtr^), 4);
 
         dtDword:
-          if Sign(integer(DataPtr^)) = -1 then
-            Line:= Line + 'dword ' + '-0x' + IntToHex(Abs(integer(DataPtr^)), 8)
+          if Sign(Integer(DataPtr^)) = -1 then
+            Line := Line + 'dword ' + '-0x' + IntToHex(Abs(Integer(DataPtr^)), 8)
           else
-            Line:= Line + 'dword ' +  '0x' + IntToHex(cardinal(DataPtr^), 8);
+            Line := Line + 'dword ' + '0x' + IntToHex(Cardinal(DataPtr^), 8);
 
         dtQword:
           if Sign(Int64(DataPtr^)) = -1 then
-            Line:= Line + 'qword ' + '-0x' + IntToHex(Abs(Int64(DataPtr^)), 16)
+            Line := Line + 'qword ' + '-0x' + IntToHex(Abs(Int64(DataPtr^)), 16)
           else
-            Line:= Line + 'qword ' +  '0x' + IntToHex(Int64(DataPtr^), 16);
+            Line := Line + 'qword ' + '0x' + IntToHex(Int64(DataPtr^), 16);
       end;
     end
 
     else
       try
         case DataType of
-          dtByte: Line:= Line + 'byte 0x' + IntToHex(byte(DataPtr^), 2);
-          dtWord: Line:= Line + 'word 0x' + IntToHex(word(DataPtr^), 4);
-          dtDword: Line:= Line + 'dword 0x' + IntToHex(cardinal(DataPtr^), 8);
-          dtQword: Line:= Line + 'qword 0x' + IntToHex(int64(DataPtr^), 16);
-          dtSingle: Line:= Line + 'single ' + FirstCommaToPoint(FloatToStrF(single(DataPtr^), ffGeneral, 7, 4));
-          dtDouble: Line:= Line + 'double ' + FirstCommaToPoint(FloatToStrF(double(DataPtr^), ffGeneral, 15, 4));
-          dtDoubleEx: Line:= Line + 'extended ' + FirstCommaToPoint(FloatToStrF(extended(DataPtr^), ffGeneral, 18, 4));
+          dtByte: Line := Line + 'byte 0x' + IntToHex(Byte(DataPtr^), 2);
+          dtWord: Line := Line + 'word 0x' + IntToHex(Word(DataPtr^), 4);
+          dtDword: Line := Line + 'dword 0x' + IntToHex(Cardinal(DataPtr^), 8);
+          dtQword: Line := Line + 'qword 0x' + IntToHex(Int64(DataPtr^), 16);
+          dtSingle: Line := Line + 'single ' + FirstCommaToPoint(FloatToStrF(Single(DataPtr^), ffGeneral, 7, 4));
+          dtDouble: Line := Line + 'double ' + FirstCommaToPoint(FloatToStrF(Double(DataPtr^), ffGeneral, 15, 4));
+          dtDoubleEx: Line := Line + 'extended ' + FirstCommaToPoint(FloatToStrF(Extended(DataPtr^), ffGeneral, 18, 4));
         end;
       except
         case DataType of
-          dtSingle: Line:= Line + 'single NAN';
-          dtDouble: Line:= Line + 'double NAN';
-          dtDoubleEx: Line:= Line + 'unsupported extended real number';
+          dtSingle: Line := Line + 'single NAN';
+          dtDouble: Line := Line + 'double NAN';
+          dtDoubleEx: Line := Line + 'unsupported extended real number';
         end;
       end;
 
     if DataType = dtByte then
-      if byte(DataPtr^) >= 32 then
-        Line := Line + ' ''' + Char(byte(DataPtr^)) + '''';
+      if Byte(DataPtr^) >= 32 then
+        Line := Line + ' ''' + Char(Byte(DataPtr^)) + '''';
 
     Result.Add(Line);
 
@@ -994,28 +994,28 @@ end;
 function GetLineType(line: string): TLineType;
 begin
   if length(line) = 0 then begin
-    result:= ltEmpty;
+    Result := ltEmpty;
     Exit;
   end;
   case line[1] of
-    ';': result:=ltComment;
-    'C': if line[3]='l' then
-           result:=ltCallRef
-         else
-           result:=ltInstruction;
+    ';': Result := ltComment;
+    'C': if line[3] = 'l' then
+        Result := ltCallRef
+      else
+        Result := ltInstruction;
 
-    'J': result:=ltJumpRef;
-    'L': result:=ltLoopRef;
-    'I': result:=ltImportRef;
-    'E': if line[2]='x' then
-           result:=ltExportRef
-         else
-           result:=ltInstruction;
+    'J': Result := ltJumpRef;
+    'L': Result := ltLoopRef;
+    'I': Result := ltImportRef;
+    'E': if line[2] = 'x' then
+        Result := ltExportRef
+      else
+        Result := ltInstruction;
 
-    'P': result:=ltEntryPointRef;
+    'P': Result := ltEntryPointRef;
 
     else
-      result:=ltInstruction;
+      Result := ltInstruction;
   end;
 end;
 
@@ -1067,9 +1067,9 @@ function GetTargetAddress(Line: string; var Address: Cardinal): Boolean;
   end;
 
 var
-  Index: integer;
+  Index: Integer;
 begin
-  result:= false;
+  Result := False;
 
   // Este to nie je spravne osetrene!!!
   if Length(Line) < ilInstructionMnemonicIndex + 10 then
@@ -1082,21 +1082,22 @@ begin
     while Line[Index] <> ' ' do
       Inc(Index);
     Inc(Index);
-    result := HexToAddress(Index);
+    Result := HexToAddress(Index);
   end
 
   // CALL - Copy(Line, Index, 4) = 'CALL'
   else if (Cardinal((@(Line[Index]))^)) = $4C4C4143 then begin
     Inc(Index, 5);
-    result := HexToAddress(Index);
+    Result := HexToAddress(Index);
   end
 
   // LOOPxx - Copy(Line, Index, 4) = 'LOOP'
   else if (Cardinal((@(Line[Index]))^)) = $504f4f4c then begin
-    while Line[Index] <> ' ' do Inc(Index);
+    while Line[Index] <> ' ' do
+      Inc(Index);
     Inc(Index);
-    result := HexToAddress(Index);
-  end
+    Result := HexToAddress(Index);
+  end;
 end;
 
 
@@ -1211,7 +1212,7 @@ end;
 }
 function GetNewLinesCount(CodeSize: Cardinal; Options: TDataChangeOptions; StartAddress: Cardinal): Integer;
 var
-  DataTypeSize: byte;
+  DataTypeSize: Byte;
 begin
   if StartAddress >= CodeSize then
     raise EIllegalState.Create('GetNewLinesCount: StartAddress is bigger or equals to CodeSize');
@@ -1222,7 +1223,7 @@ begin
     dcItems: Result := Min(Options.Value, (CodeSize - StartAddress) div DataTypeSize);
     dcBytes: Result := Min(Options.Value, CodeSize - StartAddress) div DataTypeSize;
     dcMaxAddress: Result := (Min(Options.Value, CodeSize) - StartAddress) div DataTypeSize;
-    dcEndSection: result:= (CodeSize - StartAddress) div DataTypeSize;
+    dcEndSection: Result := (CodeSize - StartAddress) div DataTypeSize;
     else
       raise EIllegalState.Create('GetNewLinesCount: Bad dataChangeOptions.options');
   end;

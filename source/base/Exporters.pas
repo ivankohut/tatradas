@@ -28,6 +28,7 @@ uses
   LoggerUnit, CodeSectionUnit, StringUtilities, SectionUnit, DisassemblerTypes, GlobalsUnit;
 
 
+
 class function TExporter.NasmIsReferenceFromCode(const ALine: string): Boolean;
 begin
   Result := GetLineType(ALine) in [ltJumpRef, ltCallRef, ltLoopRef];
@@ -75,13 +76,12 @@ begin
         if (RelativeAddress < -128) or (RelativeAddress > 127) then
           Result := cNasmLineIndent + InsertStr('near _', InstructionStr, InsertIndex)
         // short (-127 .. 128) JMP, Jxx, JxCXZ, LOOP
+        // JMP - must use "short" to use short range JMP
+        else if InstructionStr[2] = 'M' then
+          Result := cNasmLineIndent + InsertStr('short _', InstructionStr, InsertIndex)
+        // Jxx, JxCXZ, LOOP
         else
-          // JMP - must use "short" to use short range JMP
-          if InstructionStr[2] = 'M' then
-            Result := cNasmLineIndent + InsertStr('short _', InstructionStr, InsertIndex)
-          // Jxx, JxCXZ, LOOP
-          else
-            Result := cNasmLineIndent + InsertStr('_', InstructionStr, InsertIndex);
+          Result := cNasmLineIndent + InsertStr('_', InstructionStr, InsertIndex);
       end
 
       // Non-Control flow instruction
@@ -111,7 +111,7 @@ begin
             // Pascal string
             'p': InstructionStr := 'db 0x' + IntToHex(GetLineBytes(ALine) - 1, 2) + ',' + Copy(InstructionStr, 9, 255);
             // C string
-            'c': InstructionStr := 'db '+ Copy(InstructionStr, 9, 255) + ',0x00';
+            'c': InstructionStr := 'db ' + Copy(InstructionStr, 9, 255) + ',0x00';
           end;
         Result := cNasmLineIndent + InstructionStr;
       end;
@@ -123,17 +123,17 @@ end;
 
 class procedure TExporter.ExportSectionToNASM(Disassembled: TStrings; Bit32: Boolean; AStream: TStream);
 var
-  LineIndex: integer;
+  LineIndex: Integer;
   Line: string;
-  IsTargetAddress: boolean;
+  IsTargetAddress: Boolean;
 begin
   case Bit32 of
-    true:  WriteLnToStream(AStream, 'BITS 32');
-    false: WriteLnToStream(AStream, 'BITS 16');
+    True: WriteLnToStream(AStream, 'BITS 32');
+    False: WriteLnToStream(AStream, 'BITS 16');
   end;
   WriteLnToStream(AStream);
 
-  IsTargetAddress := false;
+  IsTargetAddress := False;
   for LineIndex := 0 to Disassembled.Count - 1 do begin
     ProgressManager.IncPosition;
     if ProgressData.AbortExecution then
@@ -147,9 +147,8 @@ begin
         IsTargetAddress := False;
       end;
     end
-    else
-     if NasmIsReferenceFromCode(Line) then
-       IsTargetAddress := True;
+    else if NasmIsReferenceFromCode(Line) then
+      IsTargetAddress := True;
 
     WriteLnToStream(AStream, ExportLineToNASM(Line));
   end;
@@ -178,43 +177,55 @@ type
   TSaveInstruction = (siNone, siAddr, siPar, siDis, siAddr_Par, siPar_Dis, siAddr_Dis, siAll);
 var
   si: TSaveInstruction;
-  LineIndex: integer;
+  LineIndex: Integer;
   Line: string;
 begin
-  si:= siNone;
-  if (soAddress in AExportCustomDASOptions) and (soParsed in AExportCustomDASOptions) and (soDisassembled in AExportCustomDASOptions) then si:=siAll
-  else if (soAddress in AExportCustomDASOptions) and (soParsed in AExportCustomDASOptions) then si:=siAddr_Par
-  else if (soParsed in AExportCustomDASOptions) and (soDisassembled in AExportCustomDASOptions) then si:=siPar_Dis
-  else if (soAddress in AExportCustomDASOptions) and (soDisassembled in AExportCustomDASOptions) then si:=siAddr_Dis
-  else if (soAddress in AExportCustomDASOptions) then si:=siAddr
-  else if (soParsed in AExportCustomDASOptions) then si:=siPar
-  else if (soDisassembled in AExportCustomDASOptions) then si:=siDis;
+  si := siNone;
+  if (soAddress in AExportCustomDASOptions) and (soParsed in AExportCustomDASOptions) and (soDisassembled in AExportCustomDASOptions) then
+    si := siAll
+  else if (soAddress in AExportCustomDASOptions) and (soParsed in AExportCustomDASOptions) then
+    si := siAddr_Par
+  else if (soParsed in AExportCustomDASOptions) and (soDisassembled in AExportCustomDASOptions) then
+    si := siPar_Dis
+  else if (soAddress in AExportCustomDASOptions) and (soDisassembled in AExportCustomDASOptions) then
+    si := siAddr_Dis
+  else if (soAddress in AExportCustomDASOptions) then
+    si := siAddr
+  else if (soParsed in AExportCustomDASOptions) then
+    si := siPar
+  else if (soDisassembled in AExportCustomDASOptions) then
+    si := siDis;
 
   for LineIndex := 0 to Disassembled.Count - 1 do begin
     ProgressManager.IncPosition;
     if ProgressData.AbortExecution then
       Abort;
 
-    Line:= Disassembled[LineIndex];
+    Line := Disassembled[LineIndex];
     if Line = '' then begin
       WriteLnToStream(AStream);
       Continue;
     end;
     case Line[2] of
-      'u': if not (soJump in AExportCustomDASOptions) then Line:= '';
-      'a': if not (soCall in AExportCustomDASOptions) then Line:= '';
-      'x': if not (soExport in AExportCustomDASOptions) then Line:= '';
-      'm': if not (soImport in AExportCustomDASOptions) then Line:= '';
-      'r': if not (soEntryPoint in AExportCustomDASOptions) then Line:= '';
+      'u': if not (soJump in AExportCustomDASOptions) then
+          Line := '';
+      'a': if not (soCall in AExportCustomDASOptions) then
+          Line := '';
+      'x': if not (soExport in AExportCustomDASOptions) then
+          Line := '';
+      'm': if not (soImport in AExportCustomDASOptions) then
+          Line := '';
+      'r': if not (soEntryPoint in AExportCustomDASOptions) then
+          Line := '';
       else begin
         case si of
           siAll: ;
-          siAddr:     Line:= LeftStr(Line, ilAddressLength);
-          siPar:      Line:= TrimRight(Copy(Line, ilParsedIndex, ilMaxParsedLength));
-          siDis:      Line:= Copy(Line, ilInstructionMnemonicIndex, MaxInt);
-          siAddr_Par: Line:= TrimRight(LeftStr(Line, ilInstructionMnemonicIndex - 1));
-          siPar_Dis:  Line:= Copy(Line, ilParsedIndex, MaxInt);
-          siAddr_Dis: Line:= LeftStr(Line, ilAddressLength) + ' ' + Copy(Line, ilInstructionMnemonicIndex, MaxInt);
+          siAddr: Line := LeftStr(Line, ilAddressLength);
+          siPar: Line := TrimRight(Copy(Line, ilParsedIndex, ilMaxParsedLength));
+          siDis: Line := Copy(Line, ilInstructionMnemonicIndex, MaxInt);
+          siAddr_Par: Line := TrimRight(LeftStr(Line, ilInstructionMnemonicIndex - 1));
+          siPar_Dis: Line := Copy(Line, ilParsedIndex, MaxInt);
+          siAddr_Dis: Line := LeftStr(Line, ilAddressLength) + ' ' + Copy(Line, ilInstructionMnemonicIndex, MaxInt);
         end;
       end;
     end;
@@ -242,7 +253,7 @@ begin
         Logger.Info('Start: Exporting code section ' + IntToStr(CodeSection.CodeSectionIndex));
         ProgressManager.StartPhase(ProcessText.SavingDAS + IntToStr(CodeSection.CodeSectionIndex), CodeSection.Disassembled.Count);
         WriteLnToStream(OutStream, '; ********************************************');
-        WriteLnToStream(OutStream, '; Code Section Number: '  + IntToStr(CodeSection.CodeSectionIndex));
+        WriteLnToStream(OutStream, '; Code Section Number: ' + IntToStr(CodeSection.CodeSectionIndex));
         WriteLnToStream(OutStream, '; ********************************************');
         case AExportOption of
           eoDAS: ExportSectionToDAS(CodeSection.Disassembled, OutStream);

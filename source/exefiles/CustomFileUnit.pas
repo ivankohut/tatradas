@@ -11,7 +11,7 @@ interface
 uses
   Classes,
   SysUtils,
-
+  // project units
   procmat,
   StringRes,
   ExecFileUnit,
@@ -22,10 +22,10 @@ type
 
   // Code section parameters
   TCustomFileParameters = record
-    EntrypointOffset: cardinal; // Entry point offset - relative to the beginning of the file
-    FileOffset: cardinal; // Code section file offset - relative to the beginning of the file
-    Size: cardinal; // File or Mem Size, currently the same size
-    Bit32: boolean; // true = 32 bit, false = 16 bit
+    EntrypointOffset: Cardinal; // Entry point offset - relative to the beginning of the file
+    FileOffset: Cardinal; // Code section file offset - relative to the beginning of the file
+    Size: Cardinal; // File or Mem Size, currently the same size
+    Bit32: Boolean; // true = 32 bit, false = 16 bit
   end;
 
 
@@ -40,6 +40,7 @@ type
 
 
 implementation
+
 
 
 constructor TCustomFile.Create(InputFile: TStream; aFileName: TFileName; Parameters: TCustomFileParameters);

@@ -15,8 +15,8 @@ type
   public
     class function DisplayMessage(AMessage: string; AMessageType: TMsgDlgType; AButtons: TMsgDlgButtons): Integer;
   end;
-  
-  function DisplayMessage(AMessage: string; AMessageType: TMsgDlgType; AButtons: TMsgDlgButtons): Integer;
+
+function DisplayMessage(AMessage: string; AMessageType: TMsgDlgType; AButtons: TMsgDlgButtons): Integer;
 
 
 var
@@ -72,8 +72,8 @@ begin
     MessageForm.AddButton(Translator.TranslateControl('Common', 'YesButton'), mrYes);
   if mbNo in AButtons then
     MessageForm.AddButton(Translator.TranslateControl('Common', 'NoButton'), mrNo);
-  if mbOk in AButtons then
-    MessageForm.AddButton(Translator.TranslateControl('Common', 'OKButton'), mrOk);
+  if mbOK in AButtons then
+    MessageForm.AddButton(Translator.TranslateControl('Common', 'OKButton'), mrOK);
   if mbCancel in AButtons then
     MessageForm.AddButton(Translator.TranslateControl('Common', 'CancelButton'), mrCancel);
 

@@ -7,22 +7,22 @@ interface
 uses
   Classes,
   SysUtils,
-
+  // project units
   procmat;
 
 type
   TSectionType = (stCode, stImport, stExport, stRelocation, stResource);
 
   TSection = class
-   private
+  private
     fName: string;
 
-   protected
+  protected
     fExecFile: TObject; // TExecutableFile;
     fTyp: TSectionType;
     fSectionIndex: Integer;  // index in ExecFile's 'Sections' array
 
-   public
+  public
     constructor Create(aName: string; aExecFile: TObject); overload; virtual;
 
     procedure SaveToFile(DHF: TStream; var DAS: TextFile); virtual;
@@ -37,13 +37,13 @@ type
 
 
   TSections = class
-   private
+  private
     fSections: array of TSection;
     fReadOnly: Boolean;
     fCount: Integer;
 
     function GetSection(Index: Integer): TSection;
-   public
+  public
     constructor Create;
     destructor Destroy; override;
 
@@ -64,7 +64,7 @@ type
 
 implementation
 
-uses 
+uses
   ExceptionsUnit,
   CodeSectionUnit;
 
@@ -199,8 +199,8 @@ end;
 
 function TSections.GetSection(Index: Integer): TSection;
 begin
-  if (Index >= 0) and (Index < fCount)  then
-    result := fSections[Index]
+  if (Index >= 0) and (Index < fCount) then
+    Result := fSections[Index]
   else
     raise EIllegalState.Create('Array index out of bounds');
 end;

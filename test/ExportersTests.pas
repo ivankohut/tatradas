@@ -120,7 +120,7 @@ begin
   Check(TExporterChild.ExportLineToNASM('0040E001 836C                     word 0x6C83') = cNasmLineIndent + 'dw 0x6C83');
   Check(TExporterChild.ExportLineToNASM('0040E003 FFFF25BC                 dword 0xBC25FFFF') = cNasmLineIndent + 'dd 0xBC25FFFF');
   Check(TExporterChild.ExportLineToNASM('0040E007 B140008BC007B8B4         qword 0xB4B807C08B0040B1') = cNasmLineIndent + 'dq 0xB4B807C08B0040B1');
-  Check(TExporterChild.ExportLineToNASM('0040E00F 83                       byte -0x7D ''ƒ''') = cNasmLineIndent + 'db -0x7D');
+  Check(TExporterChild.ExportLineToNASM('0040E00F 83                       byte -0x7D ''ï¿½''') = cNasmLineIndent + 'db -0x7D');
   Check(TExporterChild.ExportLineToNASM('0040E010 0C32                     word 0x320C') = cNasmLineIndent + 'dw 0x320C');
   Check(TExporterChild.ExportLineToNASM('0040E012 C8B0ACA8                 dword -0x57534F38') = cNasmLineIndent + 'dd -0x57534F38');
   Check(TExporterChild.ExportLineToNASM('0040E016 A40C32C820A09C98         qword -0x67635FDF37CDF35C') = cNasmLineIndent + 'dq -0x67635FDF37CDF35C');

@@ -9,13 +9,13 @@ const
   cRefreshInterval = 50; // milliseconds
 
 type
-  TShowProgressProc = procedure (APhase: string; AProgress: Double);
+  TShowProgressProc = procedure(APhase: string; AProgress: Double);
 
   TProgressManager = class(TAbstractProgressManager)
   private
     fFinished: Boolean;
     fMaximum: Cardinal;
-    fPhaseName: String;
+    fPhaseName: string;
     fShowProgressProc: TShowProgressProc;
 
     fLock: TCriticalSection;
@@ -29,7 +29,7 @@ type
     procedure StartProgress(AThread: TThread); override;
 
     // Methods supposed to be called from slave thread
-    procedure StartPhase(AName: String; AMaximum: Cardinal); override;
+    procedure StartPhase(AName: string; AMaximum: Cardinal); override;
     procedure Finish(ASuccessful: Boolean); override;
   end;
 
@@ -38,9 +38,10 @@ implementation
 
 
 uses
-  LoggerUnit, 
-  ProgressThreads, 
+  LoggerUnit,
+  ProgressThreads,
   SysUtils;
+
 
 
 constructor TProgressManager.Create(AShowProgressProc: TShowProgressProc);
@@ -108,7 +109,7 @@ end;
 
 
 
-procedure TProgressManager.StartPhase(AName: String; AMaximum: Cardinal);
+procedure TProgressManager.StartPhase(AName: string; AMaximum: Cardinal);
 begin
   FinishPhase;
   fPhaseName := AName;

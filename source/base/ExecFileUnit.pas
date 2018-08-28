@@ -12,7 +12,7 @@ interface
 uses
   Classes,
   SysUtils,
-
+  // project units
   ExceptionsUnit,
   procmat,
   SectionUnit,
@@ -23,7 +23,7 @@ uses
   ExportSectionUnit;
 
 type
-  TExecFileCreateSectionEvent = procedure (ASection: TSection) of object;
+  TExecFileCreateSectionEvent = procedure(ASection: TSection) of object;
 
   TExecFileFormat = (ffUnknown, ffCustom, ffPE, ffMZ, ffCOM, ffNE, LE, LX, ffELF);
 
@@ -33,40 +33,40 @@ var
 type
 
   TMZHeader = record
-    Sign: word;               // "MZ"
-    PageRemainder: word;      // FileSize mod PageSize <=> FileSize mod 512
-    PageCount: word;          // Ceil( FileSize/PageSize )
-    RelocCount: word;         // Number of Relocations
-    HeaderSize: word;
-    MinMem, MaxMem: word;
-    reloSS: word;
-    EXESP: word;
-    CheckSum: word;
-    EXEIP: word;
-    reloCS: word;
-    RelocTableOffset: word;
-    Overlay: word;
-    reserved: array [1..9] of cardinal;
+    Sign: Word;               // "MZ"
+    PageRemainder: Word;      // FileSize mod PageSize <=> FileSize mod 512
+    PageCount: Word;          // Ceil( FileSize/PageSize )
+    RelocCount: Word;         // Number of Relocations
+    HeaderSize: Word;
+    MinMem, MaxMem: Word;
+    reloSS: Word;
+    EXESP: Word;
+    CheckSum: Word;
+    EXEIP: Word;
+    reloCS: Word;
+    RelocTableOffset: Word;
+    Overlay: Word;
+    reserved: array [1..9] of Cardinal;
   end;
 
 
   TExecutableFile = class
-   private
+  private
     fFullPath: TFileName;
     fFileName: TFileName;
-    fFileSize: cardinal;
-    fIsDisassembled: boolean;
+    fFileSize: Cardinal;
+    fIsDisassembled: Boolean;
 
-   protected
+  protected
     fRegions: TRegions;
     fSections: TSections;
     fExecFormat: TExecFileFormat;
-    fCodeSectionsCount: integer;
+    fCodeSectionsCount: Integer;
 
     fImportSection: TImportSection;
     fExportSection: TExportSection;
 
-   public
+  public
     constructor Create; overload; virtual;
     constructor Create(InputFile: TStream; aFileName: TFileName); overload; virtual;
     destructor Destroy; override;
@@ -79,7 +79,7 @@ type
 
     property FileName: TFileName read fFileName;
     property FullPath: TFileName read fFullPath;
-    property FileSize: cardinal read fFileSize;
+    property FileSize: Cardinal read fFileSize;
 
     property ExeFormat: TExecFileFormat read fExecFormat;
     property Regions: TRegions read fRegions;
@@ -87,7 +87,7 @@ type
 
     property ImportSection: TImportSection read fImportSection;
     property ExportSection: TExportSection read fExportSection;
-    property IsDisassembled: boolean read fIsDisassembled;
+    property IsDisassembled: Boolean read fIsDisassembled;
   end;
 
 
@@ -136,7 +136,7 @@ begin
     for SectionIndex := 0 to Sections.Count - 1 do
       if Sections[SectionIndex].Typ = stCode then
         (Sections[SectionIndex] as TCodeSection).ClearDisassembled;
-    fIsDisassembled := false;
+    fIsDisassembled := False;
   end;
 end;
 
@@ -201,15 +201,15 @@ var
   Section: TSection;
 begin
   DHF.Read(fFileSize, 4);
-  fFullPath:= StreamReadAnsiString(DHF);
-  fFileName:= ExtractFileName(fFullpath);
+  fFullPath := StreamReadAnsiString(DHF);
+  fFileName := ExtractFileName(fFullpath);
 
   // Load Regions
-  fRegions:= TRegions.Create(fFileSize);
+  fRegions := TRegions.Create(fFileSize);
   fRegions.LoadFromFile(DHF);
 
   // Load Sections
-  DHF.Read(StreamSectionCount,4);
+  DHF.Read(StreamSectionCount, 4);
   for i := 0 to StreamSectionCount - 1 do begin
     DHF.Read(SectionType, sizeOf(TSectionType));
     case SectionType of

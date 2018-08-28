@@ -3,7 +3,6 @@ unit DisassembledBlocksUnit;
 interface
 
 type
-
   TDisassembledBlock = record
     Address: Cardinal;
     Size: Cardinal;
@@ -28,6 +27,7 @@ implementation
 
 uses
   SysUtils;
+
 
 
 procedure TDisassembledBlocks.Add(Address, Size: Cardinal);

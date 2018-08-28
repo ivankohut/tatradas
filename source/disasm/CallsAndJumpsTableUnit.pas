@@ -7,9 +7,8 @@ uses
   SysUtils,
   Math,
   Types,
-
+  // project units
   DisassemblerTypes;
-
 
 type
 
@@ -59,14 +58,14 @@ end;
 
 function TCallsAndJumps.GetCapacity: Integer;
 begin
-  Result := Length(next);
+  Result := Length(Next);
 end;
 
 
 
 procedure TCallsAndJumps.SetCapacity(aCapacity: Integer);
 begin
-  SetLength(next, aCapacity);
+  SetLength(Next, aCapacity);
 end;
 
 
@@ -86,7 +85,7 @@ begin
   if Capacity <= fNextCount then
     Capacity := Capacity + 10;
 
-  next[fNextCount] := Address;
+  Next[fNextCount] := Address;
   Inc(fNextCount);
 end;
 
@@ -96,53 +95,57 @@ procedure TCallsAndJumps.Process(LastAddress: Cardinal);
 var
   pom: TCardinalDynArray;
 
-  procedure MergeCAS(a1,a2,b1,b2:cardinal);
-  var zac,i,pocet: integer;
+  procedure MergeCAS(a1, a2, b1, b2: Cardinal);
+  var
+    zac, i, pocet: Integer;
   begin
-    zac:=a1;
-    pocet:=0;
+    zac := a1;
+    pocet := 0;
     repeat
-      if next[a1]>next[b1] then begin
-        pom[pocet]:=next[b1];
-        inc(b1);
+      if Next[a1] > Next[b1] then begin
+        pom[pocet] := Next[b1];
+        Inc(b1);
       end
       else begin
-        pom[pocet]:=next[a1];
-        inc(a1);
+        pom[pocet] := Next[a1];
+        Inc(a1);
       end;
-      inc(pocet);
+      Inc(pocet);
     until (a1 > a2) or (b1 > b2);
 
     if a1 > a2 then
-      for i:=b1 to b2 do begin
-        pom[pocet]:=next[i];
-        inc(pocet);
+      for i := b1 to b2 do begin
+        pom[pocet] := Next[i];
+        Inc(pocet);
       end
     else
-      for i:=a1 to a2 do begin
-        pom[pocet]:=next[i];
-        inc(pocet);
+      for i := a1 to a2 do begin
+        pom[pocet] := Next[i];
+        Inc(pocet);
       end;
 
 
   //  if b1 > b2 then  for i:=0 to a2 - a1 do next[b1 - (a2 - a1 + 1) + i]:=next[a1 + i]; // b1 = b2 - 1
 
-    for i:=0 to pocet-1 do next[i+zac]:=pom[i];
+    for i := 0 to pocet - 1 do
+      Next[i + zac] := pom[i];
 
   end;
 
-  procedure MergeSortCAS(zac, kon: cardinal);
-  var stred: cardinal;
+  procedure MergeSortCAS(zac, kon: Cardinal);
+  var
+    stred: Cardinal;
   begin
-    stred:=(zac+kon) div 2;
-    if zac < stred then MergeSortCAS(zac, stred);
-    if (stred+1) < kon then MergeSortCAS(stred+1, kon);
-    MergeCAS(zac, stred, Min(stred+1, kon), kon);
+    stred := (zac + kon) div 2;
+    if zac < stred then
+      MergeSortCAS(zac, stred);
+    if (stred + 1) < kon then
+      MergeSortCAS(stred + 1, kon);
+    MergeCAS(zac, stred, Min(stred + 1, kon), kon);
   end;
 
-
-
-var i,j:integer;
+var
+  i, j: Integer;
 begin
   if fNextCount = 0 then begin
     SetLength(current, 0);
@@ -153,25 +156,23 @@ begin
     SetLength(pom, fNextCount);
     MergeSortCAS(0, fNextCount - 1);
   end;
-  j:=0;
+  j := 0;
   SetLength(current, 1);
-  current[0].start:=next[0];
+  current[0].start := Next[0];
 
-  for i:=1 to fNextCount-1 do begin
-    if next[i] <> next[i-1] then begin
+  for i := 1 to fNextCount - 1 do begin
+    if Next[i] <> Next[i - 1] then begin
       Inc(j);
-      setlength(current, j+1);
-      current[j].start:=next[i];
-      current[j-1].finish:=next[i]-1;
+      setlength(current, j + 1);
+      current[j].start := Next[i];
+      current[j - 1].finish := Next[i] - 1;
     end;
   end;
-  current[j].finish:=lastAddress-1;
-  SetLength(next,0);
-  fNextCount:=0;
-  SetLength(pom,0);
+  current[j].finish := lastAddress - 1;
+  SetLength(Next, 0);
+  fNextCount := 0;
+  SetLength(pom, 0);
 end;
-
-
 
 
 

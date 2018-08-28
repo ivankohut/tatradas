@@ -13,14 +13,12 @@ uses
   ExceptionsUnit,
   ProgressManagerUnit,
   {$IFDEF GUI}
-    SynEditTextBuffer,
+  SynEditTextBuffer,
   {$ELSE}
-    TatraDAS_SynEditStringList,
+  TatraDAS_SynEditStringList,
   {$ENDIF}
   LoggerUnit,
-  StringRes
-  ;
-
+  StringRes;
 
 const
   MaxByte = 255;
@@ -40,7 +38,7 @@ const
   dtCUniCodeStr = 10;
 
   DataTypesCount = 11;
-  DataTypeSizes: array [0..DataTypesCount-1] of Byte = ( (1),(2),(4),(8),(4),(8),(10),(1),(1),(1),(1) );
+  DataTypeSizes: array [0..DataTypesCount - 1] of Byte = ((1), (2), (4), (8), (4), (8), (10), (1), (1), (1), (1));
 
 
   // Exe format descriptions
@@ -52,7 +50,7 @@ const
   fdCustom = 'Custom file format';
 
   // TatraDAS version constants
-  TatraDASVersion: cardinal = $00029900;
+  TatraDASVersion: Cardinal = $00029900;
   TatraDASDate = '1. 8. 2009';
   TatraDASProjectVersion = $00030002;
   ShortTatraDASVersion = '2.9.9';
@@ -82,18 +80,18 @@ type
 
   TDisassembleFormOptions = record
     Option: TDisassembleType;
-    Value: cardinal;
-    Bit32: boolean;
-    Recursive: boolean;
+    Value: Cardinal;
+    Bit32: Boolean;
+    Recursive: Boolean;
   end;
 
   TTatraDASOptions = record
-    AutoFormat: boolean;          // automatic file format selection
-    ProcDetect: boolean;          // procedure detection
-    StringDetect: boolean;        // string detection
-    RemoveJump: boolean;
-    RemoveImport: boolean;
-    RemoveExport: boolean;
+    AutoFormat: Boolean;          // automatic file format selection
+    ProcDetect: Boolean;          // procedure detection
+    StringDetect: Boolean;        // string detection
+    RemoveJump: Boolean;
+    RemoveImport: Boolean;
+    RemoveExport: Boolean;
   end;
 
   TExportOption = (eoDAS, eoCustomDAS, eoNASM);
@@ -104,25 +102,24 @@ type
 
 
 
-
   // NE file format specific
 
   TEntryTableEntryType = (etEmpty, etFixed, etMovable);
 
   TFixedBundle = packed record
-    Flag: byte;
-    Offset: word;
+    Flag: Byte;
+    Offset: Word;
   end;
 
   TMovableBundle = packed record
-    Flag: byte;
-    Int3F: word;
-    Segment: byte;
-    Offset: word;
+    Flag: Byte;
+    Int3F: Word;
+    Segment: Byte;
+    Offset: Word;
   end;
 
   TEntryTableEntry = record
-    count: byte;
+    Count: Byte;
     typ: TEntryTableEntryType;
     Fixed: array of TFixedBundle;
     Movable: array of TMovableBundle;
@@ -152,16 +149,16 @@ var
   ProcessText: TProcessText;
 
 
-procedure ReadStringFromStream(a:TStream; pos:cardinal; var retazec:string);
-function StreamReadAnsiString (AStream: TStream): string;
-Procedure StreamWriteAnsiString (AStream: TStream; AString: String);
+procedure ReadStringFromStream(a: TStream; pos: Cardinal; var retazec: string);
+function StreamReadAnsiString(AStream: TStream): string;
+procedure StreamWriteAnsiString(AStream: TStream; AString: string);
 
-function NonNegative(Number: integer): cardinal;
+function NonNegative(Number: Integer): Cardinal;
 
 function MyIsNan(const AValue: Single): Boolean; overload;
 function MyIsNan(const AValue: Double): Boolean; overload;
 
-function CompareValue(n1, n2: cardinal): integer;
+function CompareValue(n1, n2: Cardinal): Integer;
 
 procedure WriteLnToStream(AStream: TStream); overload;
 procedure WriteLnToStream(AStream: TStream; const ALine: string); overload;
@@ -171,22 +168,25 @@ procedure SM(msg: string);
 {$ENDIF}
 
 type
-  TDisplayMessageProc = procedure (const AMessage: string);
+  TDisplayMessageProc = procedure(const AMessage: string);
 
 procedure ProcessException(E: Exception; DisplayMessageProc: TDisplayMessageProc);
 
 
-Implementation
+implementation
 
 
 {$IFDEF GUI_B}
 uses
   Dialogs;
 
+
+
 procedure SM(msg: string);
 begin
   ShowMessage(msg);
 end;
+
 {$ENDIF}
 
 
@@ -198,21 +198,21 @@ end;
 
 
 
-procedure ReadStringFromStream(a: TStream; pos:cardinal; var retazec:string);
+procedure ReadStringFromStream(a: TStream; pos: Cardinal; var retazec: string);
 var
-  StartPosition, StrLen: cardinal;
+  StartPosition, StrLen: Cardinal;
   TheChar: Char;
 begin
 
   a.Seek(Pos, 0);
-  StartPosition:= a.Position;
+  StartPosition := a.Position;
   try
     repeat
       a.Read(TheChar, 1);
     until TheChar = #0;
   except
   end;
-  StrLen:= a.Position - StartPosition - 1; // minus #0 char.
+  StrLen := a.Position - StartPosition - 1; // minus #0 char.
   if StrLen > 0 then begin
     SetLength(retazec, StrLen);
     a.Seek(Pos, 0);
@@ -223,36 +223,36 @@ end;
 
 
 // From FPC
-Function StreamReadAnsiString(AStream: TStream): String;
-Type
+function StreamReadAnsiString(AStream: TStream): string;
+type
   PByte = ^Byte;
-Var
-  TheSize : Longint;
-  P : PByte ;
+var
+  TheSize: LongInt;
+  P: PByte;
 begin
-  AStream.ReadBuffer (TheSize, SizeOf(TheSize));
+  AStream.ReadBuffer(TheSize, SizeOf(TheSize));
   SetLength(Result, TheSize);
-  if TheSize > 0 then
-   begin
-     AStream.ReadBuffer (Pointer(Result)^,TheSize);
-     {$IFDEF FPC}
-     P:=Pointer(Result) + TheSize;
-     {$ELSE}
-     P:=Ptr(LongInt(Pointer(Result)) + TheSize);
-     {$ENDIF}
-     p^:=0;
-   end;
- end;
+  if TheSize > 0 then begin
+    AStream.ReadBuffer(Pointer(Result)^, TheSize);
+    {$IFDEF FPC}
+    P := Pointer(Result) + TheSize;
+    {$ELSE}
+    P := Ptr(LongInt(Pointer(Result)) + TheSize);
+    {$ENDIF}
+    p^ := 0;
+  end;
+end;
 
 
 
 // From FPC
-Procedure StreamWriteAnsiString (AStream: TStream; AString: String);
-Var L : Longint;
+procedure StreamWriteAnsiString(AStream: TStream; AString: string);
+var
+  L: LongInt;
 begin
-  L:=Length(AString);
-  AStream.WriteBuffer (L,SizeOf(L));
-  AStream.WriteBuffer (Pointer(AString)^,L);
+  L := Length(AString);
+  AStream.WriteBuffer(L, SizeOf(L));
+  AStream.WriteBuffer(Pointer(AString)^, L);
 end;
 
 
@@ -273,23 +273,24 @@ end;
 
 
 
-function NonNegative(Number: integer): cardinal;
+function NonNegative(Number: Integer): Cardinal;
 begin
   if Number < 0 then
-    result:= 0
+    Result := 0
   else
-    result:= Number;
+    Result := Number;
 end;
 
 
-function CompareValue(n1, n2: cardinal): integer;
+
+function CompareValue(n1, n2: Cardinal): Integer;
 begin
   if n1 = n2 then
-    result:= 0
+    Result := 0
   else if n1 < n2 then
-    result:= -1
+    Result := -1
   else
-    result:= 1;
+    Result := 1;
 end;
 
 
@@ -336,9 +337,7 @@ end;
 
 
 initialization
-
   Logger.AddListener(TTextFileLoggerListener.Create(ExpandFileName('disasm.log')));
   Logger.LogLevel := llDebug;
-
 
 end.

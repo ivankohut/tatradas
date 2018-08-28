@@ -16,16 +16,14 @@ uses
   ExtCtrls,
   ComCtrls,
   IniFiles,
-
-
+  Grids,
+  // project units
   TabFrameTemplateUnit,
   TranslatorUnit,
   procmat,
   ExecFileUnit,
   SectionUnit,
-  ExportSectionUnit,
-  Grids;
-
+  ExportSectionUnit;
 
 type
   TExportTabFrame = class(TTabFrameTemplate)
@@ -35,8 +33,8 @@ type
     procedure FunctionStringGridDblClick(Sender: TObject);
 
   private
-    fGotoEnabled: boolean;
-    fValidGotoClick: boolean;
+    fGotoEnabled: Boolean;
+    fValidGotoClick: Boolean;
     fSortColumn: Integer;
     fSection: TExportSection;
 
@@ -66,13 +64,13 @@ uses
 
 constructor TExportTabFrame.Create(AOwner: TComponent; ASection: TSection);
 var
-  FunctionIndex: integer;
+  FunctionIndex: Integer;
 begin
   inherited;
   fSection := ASection as TExportSection;
   Caption := 'Export';
-  fGotoEnabled := false;
-  FunctionStringGrid.DoubleBuffered := true;
+  fGotoEnabled := False;
+  FunctionStringGrid.DoubleBuffered := True;
 
   // Naplnenie gridu
   FunctionStringGrid.RowCount := fSection.FunctionCount + 1;
@@ -93,7 +91,7 @@ end;
 
 function TExportTabFrame.GetSection: TSection;
 begin
-  result:=fSection;
+  Result := fSection;
 end;
 
 
@@ -104,13 +102,14 @@ var
   Address: Cardinal;
   Tab: TTabSheetTemplate;
 begin
-  if not (fGotoEnabled and fValidGotoClick) then Exit;
+  if not (fGotoEnabled and fValidGotoClick) then
+    Exit;
 
   FunctionIndex := Integer(FunctionStringGrid.Objects[0, FunctionStringGrid.Row]);
   Address := fSection.Functions[FunctionIndex].MemOffset;
   SectionIndex := fSection.Functions[FunctionIndex].Section;
 
-  Tab:=MainForm.GetSectionsTabSheet(MainForm.ExecFile.Sections[SectionIndex]);
+  Tab := MainForm.GetSectionsTabSheet(MainForm.ExecFile.Sections[SectionIndex]);
   with (Tab.Frame as TCodeTabFrame) do begin
     GotoPosition(GetPosition(Address), soBeginning);
   end;
@@ -156,11 +155,11 @@ procedure TExportTabFrame.FunctionStringGridSelectCell(Sender: TObject; ACol, AR
 var
   FunctionIndex: Integer;
 begin
-  fGotoEnabled := false;
+  fGotoEnabled := False;
   if (Section.ExeCfile as TExecutableFile).IsDisassembled then begin
     FunctionIndex := Integer(FunctionStringGrid.Objects[0, FunctionStringGrid.Row]);
     if (fSection.Functions[FunctionIndex].Name <> '! INVALID RVA !') and (fSection.Functions[FunctionIndex].Section >= 0) then
-      fGotoEnabled := true;
+      fGotoEnabled := True;
   end;
 end;
 
@@ -181,7 +180,7 @@ end;
 
 function TExportTabFrame.SortGetItem(ItemIndex: Integer): TObject;
 begin
-  result := fSortArray[ItemIndex];
+  Result := fSortArray[ItemIndex];
 end;
 
 
@@ -207,33 +206,30 @@ begin
       Num2 := StrToInt(Copy(Str2, 1, Length(Str2) - 1));
       if num1 > num2 then
         Result := +1
+      else if num1 < num2 then
+        Result := -1
       else
-        if num1 < num2 then
-          Result := -1
-        else
-          Result := 0;
+        Result := 0;
     end;
 
     2: begin
-      Num1:= StrToInt(Str1);
-      Num2:= StrToInt(Str2);
+      Num1 := StrToInt(Str1);
+      Num2 := StrToInt(Str2);
       if num1 > num2 then
         Result := +1
+      else if num1 < num2 then
+        Result := -1
       else
-        if num1 < num2 then
-          Result := -1
-        else
-          Result := 0;
+        Result := 0;
     end;
 
     1, 3, 4, 5: begin
       if str1 > str2 then
-        result:= +1
+        Result := +1
+      else if str1 < str2 then
+        Result := -1
       else
-        if str1 < str2 then
-          Result := -1
-        else
-          Result := 0;
+        Result := 0;
     end;
 
     else

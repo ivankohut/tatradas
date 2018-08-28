@@ -4,8 +4,8 @@ interface
 
 uses
   AbstractProgressManager;
-  
-type  
+
+type
   TProgressData = record
     AbortExecution: Boolean;
     Result: Pointer;

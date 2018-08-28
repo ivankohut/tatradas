@@ -6,7 +6,7 @@ uses
   Classes, SyncObjs;
 
 type
-  TShowProgressProc = procedure (APhase: string; AProgress: Double);
+  TShowProgressProc = procedure(APhase: string; AProgress: Double);
 
   TAbstractProgressManager = class
   private
@@ -16,13 +16,14 @@ type
     procedure StartProgress(AThread: TThread); virtual; abstract;
 
     // Methods supposed to be called from slave thread
-    procedure StartPhase(AName: String; AMaximum: Cardinal); virtual; abstract;
+    procedure StartPhase(AName: string; AMaximum: Cardinal); virtual; abstract;
     procedure Finish(ASuccessful: Boolean); virtual; abstract;
-    procedure IncPosition; 
+    procedure IncPosition;
     property Position: Cardinal read fPosition write fPosition;
-  end;                  
+  end;
 
 implementation
+
 
 
 procedure TAbstractProgressManager.IncPosition;

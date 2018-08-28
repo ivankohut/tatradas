@@ -7,7 +7,7 @@ interface
 uses
   SysUtils,
   Classes,
-
+  // project units
   procmat,
   StringRes,
   ExecFileUnit,
@@ -19,58 +19,58 @@ uses
 type
 
   TPEHeader = record
-    Sign: cardinal;
-    Machine: word;
-    ObjectCount: word;
-    TimeDateStamp: cardinal;
-    res1a: cardinal;
-    res2a: cardinal;
-    NTHDRsize: word;
-    Flags: word;
-    res1b: word;
-    LMajor, LMinor: byte;
+    Sign: Cardinal;
+    Machine: Word;
+    ObjectCount: Word;
+    TimeDateStamp: Cardinal;
+    res1a: Cardinal;
+    res2a: Cardinal;
+    NTHDRsize: Word;
+    Flags: Word;
+    res1b: Word;
+    LMajor, LMinor: Byte;
 //    res2b:word;  - velke zistenie, vdaka freepascalu
-    res2b: cardinal;
-    res3a: cardinal;
-    res4a: cardinal;
-    EntryPoint: cardinal;
-    res5a: cardinal;
-    res6a: cardinal;
-    ImageBase:cardinal;
-    ObjectAlign, FileAlign: cardinal;
-    OsMajor, OsMinor: word;
-    UserMajor, UserMinor:word;
-    SubSysMajor, SubSysMinor: word;
-    res7a: cardinal;
-    Imagesize, HeaderSize: cardinal;
-    FileCheckSum: cardinal;
-    SubSystem,DLLFlags: word;
-    StackReserveSize, StackCommitSize: cardinal;
-    HeapReserveSize, HeapCommitSize: cardinal;
-    res8a: cardinal;
-    InterestingCount: cardinal;
+    res2b: Cardinal;
+    res3a: Cardinal;
+    res4a: Cardinal;
+    EntryPoint: Cardinal;
+    res5a: Cardinal;
+    res6a: Cardinal;
+    ImageBase: Cardinal;
+    ObjectAlign, FileAlign: Cardinal;
+    OsMajor, OsMinor: Word;
+    UserMajor, UserMinor: Word;
+    SubSysMajor, SubSysMinor: Word;
+    res7a: Cardinal;
+    Imagesize, HeaderSize: Cardinal;
+    FileCheckSum: Cardinal;
+    SubSystem, DLLFlags: Word;
+    StackReserveSize, StackCommitSize: Cardinal;
+    HeapReserveSize, HeapCommitSize: Cardinal;
+    res8a: Cardinal;
+    InterestingCount: Cardinal;
   end;
 
   TInterestingRVAs = record
-    ExportTableRVA,      ExportDataSize: cardinal;
-    ImportTableRVA,      ImportDataSize: cardinal;
-    ResourceTableRVA,    ResourceDataSize: cardinal;
-    ExceptionTableRVA,   ExceptionDataSize: cardinal;
-    SecurityTableRVA,    SecurityDataSize: cardinal;
-    FixupTableRVA,       FixupDataSize: cardinal;
-    DebugTableRVA,       DebugDataSize: cardinal;
-    ImageDescriptionRVA, DescriptionSize: cardinal;
-    MachineSpecificRVA,  MachineSpecificSize: cardinal;
-    TLSRVA,              TLSSize: cardinal;
+    ExportTableRVA, ExportDataSize: Cardinal;
+    ImportTableRVA, ImportDataSize: Cardinal;
+    ResourceTableRVA, ResourceDataSize: Cardinal;
+    ExceptionTableRVA, ExceptionDataSize: Cardinal;
+    SecurityTableRVA, SecurityDataSize: Cardinal;
+    FixupTableRVA, FixupDataSize: Cardinal;
+    DebugTableRVA, DebugDataSize: Cardinal;
+    ImageDescriptionRVA, DescriptionSize: Cardinal;
+    MachineSpecificRVA, MachineSpecificSize: Cardinal;
+    TLSRVA, TLSSize: Cardinal;
   end;
 
   TObjectTableEntry = record
-    internal_name: array[1..8] of char;
-    VirtualSize, RVA: cardinal;
-    Size, Offset: cardinal;
-    RelocOffset, LineNumberOffset: cardinal;
-    RelocCount, LineNumberCount: word;
-    Flags: cardinal;
+    internal_name: array[1..8] of Char;
+    VirtualSize, RVA: Cardinal;
+    Size, Offset: Cardinal;
+    RelocOffset, LineNumberOffset: Cardinal;
+    RelocCount, LineNumberCount: Word;
+    Flags: Cardinal;
     Name: string;
   end;
 
@@ -84,9 +84,9 @@ type
     function GetCPUType: TCPUType;
     function GetPEFileType: string;
 
-    function IsObjectExecutable(ObjectIndex: integer): boolean;
-    function GetObjectNumberFromRVA(RVA: cardinal): integer;
-    function GetObjectTableEntry(Index: integer): TObjectTableEntry;
+    function IsObjectExecutable(ObjectIndex: Integer): Boolean;
+    function GetObjectNumberFromRVA(RVA: Cardinal): Integer;
+    function GetObjectTableEntry(Index: Integer): TObjectTableEntry;
 
   // Common fields and methods
   public
@@ -98,9 +98,9 @@ type
 
   // Fields and methods specific to PE File
   public
-    function GetSectionNumberFromRVA(RVA: cardinal): integer;
+    function GetSectionNumberFromRVA(RVA: Cardinal): Integer;
     property Header: TPEHeader read fHeader;
-    property ObjectTable[Index: integer]: TObjectTableEntry read GetObjectTableEntry;
+    property ObjectTable[Index: Integer]: TObjectTableEntry read GetObjectTableEntry;
     property PEFileType: string read GetPEFileType;
     property CPUType: TCPUType read GetCPUType;
   end;
@@ -112,13 +112,14 @@ uses
   ExceptionsUnit;
 
 const
-  c_ExecutableSection =  $20000000;
+  c_ExecutableSection = $20000000;
+
 
 
 constructor TPEFile.Create;
 begin
   inherited;
-  fExecFormat:= ffPE;
+  fExecFormat := ffPE;
 end;
 
 
@@ -132,10 +133,10 @@ end;
 
 constructor TPEFile.Create(InputFile: TStream; aFileName: TFileName);
 var
-  i: integer;
-  PEHeaderOffset: cardinal;
+  i: Integer;
+  PEHeaderOffset: Cardinal;
   CodeSection: TCodeSection;
-  ObjectIndex: integer;
+  ObjectIndex: Integer;
   InterestingRVAs: TInterestingRVAs;
 
 begin
@@ -155,13 +156,13 @@ begin
   SetLength(fObjectTable, header.objectcount);
   for i := 0 to Header.ObjectCount - 1 do begin
     InputFile.Read(fObjectTable[i], 40);
-    fObjectTable[i].Name := Pchar(@fObjectTable[i].internal_name[1]);
+    fObjectTable[i].Name := PChar(@fObjectTable[i].internal_name[1]);
   end;
 
   // Set file regions
   fRegions.Add('MZ header', 0, SizeOf(TMZHeader));
   fRegions.Add('PE header', 60, header.HeaderSize);
-  for ObjectIndex:= 0 to header.ObjectCount - 1 do begin
+  for ObjectIndex := 0 to header.ObjectCount - 1 do begin
     with ObjectTable[ObjectIndex] do
       if size > 0 then
         fRegions.Add(Name, Offset, Size);
@@ -169,7 +170,7 @@ begin
   fRegions.Finish;
 
   // Create code sections
-  for i := 0 to Header.ObjectCount-1 do begin
+  for i := 0 to Header.ObjectCount - 1 do begin
     if IsObjectExecutable(i) then begin
       CodeSection := TCodeSection.Create(InputFile, True, ObjectTable[i].Offset, ObjectTable[i].Size, ObjectTable[i].RVA + Header.ImageBase, ObjectTable[i].VirtualSize, fCodeSectionsCount, ObjectTable[i].Name, self);
       Inc(fCodeSectionsCount);
@@ -190,7 +191,7 @@ begin
   // Create Export section
   if InterestingRVAs.ExportTableRVA <> 0 then begin                // Spracovanie Exportu
     i := GetObjectNumberFromRVA(InterestingRVAs.ExportTableRVA);
-    fExportSection := TExportSection.CreateFromPEFile(InputFile, ObjectTable[i].Offset + (InterestingRVAs.ExportTableRVA - ObjectTable[i].RVA), InterestingRVAs.ExportTableRVA, InterestingRVAs.ExportDataSize, header.ImageBase, ObjectTable[i].name, self);
+    fExportSection := TExportSection.CreateFromPEFile(InputFile, ObjectTable[i].Offset + (InterestingRVAs.ExportTableRVA - ObjectTable[i].RVA), InterestingRVAs.ExportTableRVA, InterestingRVAs.ExportDataSize, header.ImageBase, ObjectTable[i].Name, self);
     Sections.Add(ExportSection);
   end;
 {
@@ -225,13 +226,13 @@ begin
   SetLength(fObjectTable, fHeader.ObjectCount);
   for i := 0 to fHeader.ObjectCount - 1 do begin                             // Object Table
     DHF.Read(fObjectTable[i], SizeOf(TObjectTableEntry) - 4);
-    fObjectTable[i].Name := Pchar(@fObjectTable[i].internal_name[1]);
+    fObjectTable[i].Name := PChar(@fObjectTable[i].internal_name[1]);
   end;
 end;
 
 
 
-function TPEFile.GetSectionNumberFromRVA(RVA: Cardinal): integer;
+function TPEFile.GetSectionNumberFromRVA(RVA: Cardinal): Integer;
 var
   i: Integer;
   Offset: Cardinal;
@@ -261,7 +262,7 @@ end;
 
 function TPEFILE.IsObjectExecutable(ObjectIndex: Integer): Boolean;
 begin
-  Result := (c_ExecutableSection and ObjectTable[ObjectIndex].Flags) > 0
+  Result := (c_ExecutableSection and ObjectTable[ObjectIndex].Flags) > 0;
 end;
 
 
@@ -283,7 +284,7 @@ begin
   if RVA < ObjectTable[ObjectIndex].RVA + ObjectTable[ObjectIndex].VirtualSize then
     Result := ObjectIndex
   else
-    Result := -1
+    Result := -1;
 end;
 
 
@@ -306,9 +307,12 @@ begin
   if fHeader.Flags = 0 then
     Result := 'program'
   else begin
-    if ($0002 and fHeader.Flags) = $0002 then Result := 'executable';
-    if ($0200 and fHeader.Flags) = $0200 then Result := Result + ' fixed';
-    if ($2000 and fHeader.Flags) = $2000 then Result := ' library';
+    if ($0002 and fHeader.Flags) = $0002 then
+      Result := 'executable';
+    if ($0200 and fHeader.Flags) = $0200 then
+      Result := Result + ' fixed';
+    if ($2000 and fHeader.Flags) = $2000 then
+      Result := ' library';
   end;
   if Result = '' then
     Result := 'unknown';

@@ -6,7 +6,7 @@ var
 // Files
   FileNotFoundStr: string = 'Could not find file ';
   CouldNotOpenFileStr: string = 'Could not open file ';
-  CouldNotOpenProjectStr: string ='Could not open project !';
+  CouldNotOpenProjectStr: string = 'Could not open project !';
   CouldNotOpenReadWriteFileStr: string = 'Could not open file for write access';
   CouldNotFindDASFileStr: string = 'Could not find project DAS file';
   ProjectFilterStr: string = 'Disassembled file ';

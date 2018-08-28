@@ -7,7 +7,7 @@ interface
 uses
   {$IFDEF FPC}
     {$IFDEF LINUX}
-      Crt,
+  Crt,
     {$ENDIF}
   {$ENDIF}
 
@@ -21,7 +21,7 @@ uses
 
   Classes,
   SysUtils,
-
+  // project units
   ExceptionsUnit,
   GlobalsUnit,
   StringUtilities,
@@ -29,9 +29,7 @@ uses
   procmat,
   ExecFileManagerUnit,
   ExecFileUnit,
-  ProgressThreads
-  ;
-
+  ProgressThreads;
 
 procedure RunTatraDAS;
 
@@ -39,21 +37,18 @@ procedure RunTatraDAS;
 implementation
 
 uses
-// Temporary
-//  CodeSectionUnit,
   ProgressManagerUnit,
   StrUtils,
   LoggerUnit,
   CustomFileUnit;
 
-
 type
   TRunOptions = record
-    BadParameters: boolean;
+    BadParameters: Boolean;
     ErrorMessage: string;
     InputFileName: string;
     OutputFileName: string;
-    IsCustomFile: boolean;
+    IsCustomFile: Boolean;
     CustomFileParameters: TCustomFileParameters;
     IsOutputProject: Boolean;
     ExportOption: TExportOption;
@@ -76,6 +71,7 @@ const
     '                           nasm - NASM and YASM compilable (usually) file' + sLineBreak;
 
 
+
 function ProcessParameters: TRunOptions;
 type
   TState = (stMain, stCustom);
@@ -86,20 +82,20 @@ var
   InputFileSize: Int64;
 begin
   // Defaults
-  result.IsCustomFile := false;
-  result.IsOutputProject := false;
-  result.ExportOption := eoDAS;
-  result.CustomFileParameters.EntrypointOffset := 0;
-  result.CustomFileParameters.FileOffset := 0;
-  result.CustomFileParameters.Size := $FFFFFFFF;
-  result.CustomFileParameters.Bit32 := true;
+  Result.IsCustomFile := False;
+  Result.IsOutputProject := False;
+  Result.ExportOption := eoDAS;
+  Result.CustomFileParameters.EntrypointOffset := 0;
+  Result.CustomFileParameters.FileOffset := 0;
+  Result.CustomFileParameters.Size := $FFFFFFFF;
+  Result.CustomFileParameters.Bit32 := True;
 
   state := stMain;
   ParamIndex := 0;
-  while true do begin
+  while True do begin
     if ParamCount < ParamIndex + 2 then begin
-      result.BadParameters := true;
-      result.ErrorMessage := 'Not enough parameters';
+      Result.BadParameters := True;
+      Result.ErrorMessage := 'Not enough parameters';
       Exit;
     end;
     Inc(ParamIndex);
@@ -113,12 +109,12 @@ begin
           if ParamValue = 'auto' then
             Continue
           else if ParamValue = 'custom' then begin
-            result.IsCustomFile := true;
+            Result.IsCustomFile := True;
             state := stCustom;
           end
           else begin
-            result.ErrorMessage := 'Bad input file format parameter';
-            result.BadParameters := true;
+            Result.ErrorMessage := 'Bad input file format parameter';
+            Result.BadParameters := True;
             Exit;
           end;
         end
@@ -126,53 +122,53 @@ begin
         // Output format
         else if ParamKey = '-o' then begin
           if ParamValue = 'proj' then
-            result.IsOutputProject := true
+            Result.IsOutputProject := True
           else if ParamValue = 'das' then
-            result.ExportOption := eoDAS
+            Result.ExportOption := eoDAS
           else if ParamValue = 'nasm' then
-            result.ExportOption := eoNASM
+            Result.ExportOption := eoNASM
           else begin
-            result.BadParameters := true;
-            result.ErrorMessage := 'Bad output format';
+            Result.BadParameters := True;
+            Result.ErrorMessage := 'Bad output format';
             Exit;
           end;
         end
 
         // Input and output file names
         else begin
-          result.InputFileName := ExpandFilename(ParamKey);
-          result.OutputFileName := ExpandFilename(ParamValue);
-          if not FileExists(result.InputFileName) then begin
-            result.BadParameters := true;
-            result.ErrorMessage := 'Input file "' + result.InputFileName + '" does not exist';
+          Result.InputFileName := ExpandFilename(ParamKey);
+          Result.OutputFileName := ExpandFilename(ParamValue);
+          if not FileExists(Result.InputFileName) then begin
+            Result.BadParameters := True;
+            Result.ErrorMessage := 'Input file "' + Result.InputFileName + '" does not exist';
             Exit;
           end;
 
           // Check sizes and offsets if custom file
-          if result.IsCustomFile then begin
-            InputFileSize := GetFileSize(result.InputFileName);
-            if result.CustomFileParameters.FileOffset >= InputFileSize then begin
-              result.BadParameters := true;
-              result.ErrorMessage := 'Code section offset out of file';
+          if Result.IsCustomFile then begin
+            InputFileSize := GetFileSize(Result.InputFileName);
+            if Result.CustomFileParameters.FileOffset >= InputFileSize then begin
+              Result.BadParameters := True;
+              Result.ErrorMessage := 'Code section offset out of file';
               Exit;
             end;
-            if result.CustomFileParameters.Size = $FFFFFFFF then
-              result.CustomFileParameters.Size := InputFileSize - result.CustomFileParameters.FileOffset
-            else
-              if (result.CustomFileParameters.FileOffset + result.CustomFileParameters.Size) > InputFileSize then begin
-                result.BadParameters := true;
-                result.ErrorMessage := 'Code section too big';
-                Exit;
-              end;
+            if Result.CustomFileParameters.Size = $FFFFFFFF then
+              Result.CustomFileParameters.Size := InputFileSize - Result.CustomFileParameters.FileOffset
+            else if (Result.CustomFileParameters.FileOffset + Result.CustomFileParameters.Size) > InputFileSize then begin
+              Result.BadParameters := True;
+              Result.ErrorMessage := 'Code section too big';
+              Exit;
+            end;
 
-            if (result.CustomFileParameters.EntryPointOffset < result.CustomFileParameters.FileOffset) or (result.CustomFileParameters.FileOffset >= (result.CustomFileParameters.FileOffset + result.CustomFileParameters.Size)) then begin
-              result.BadParameters := true;
-              result.ErrorMessage := 'Entry point out of code section';
+            if (Result.CustomFileParameters.EntryPointOffset < Result.CustomFileParameters.FileOffset) or
+              (Result.CustomFileParameters.FileOffset >= (Result.CustomFileParameters.FileOffset + Result.CustomFileParameters.Size)) then begin
+              Result.BadParameters := True;
+              Result.ErrorMessage := 'Entry point out of code section';
               Exit;
             end;
           end;
 
-          result.BadParameters := false;
+          Result.BadParameters := False;
           Break;
         end;
 
@@ -180,42 +176,42 @@ begin
         // 16/32 bitness
         if ParamKey = '-b' then begin
           if ParamValue = '16' then
-            result.CustomFileParameters.Bit32 := false
+            Result.CustomFileParameters.Bit32 := False
           else if ParamValue = '32' then
-            result.CustomFileParameters.Bit32 := true
+            Result.CustomFileParameters.Bit32 := True
           else begin
-            result.BadParameters := true;
-            result.ErrorMessage := 'Bad 16/32 bitness';
+            Result.BadParameters := True;
+            Result.ErrorMessage := 'Bad 16/32 bitness';
             Exit;
           end;
         end
         // Code section size
         else if ParamKey = '-s' then begin
-          if StrToIntDef(ParamValue, -1) <> - 1 then
-            result.CustomFileParameters.Size := StrToInt(ParamValue)
+          if StrToIntDef(ParamValue, -1) <> -1 then
+            Result.CustomFileParameters.Size := StrToInt(ParamValue)
           else begin
-            result.BadParameters := true;
-            result.ErrorMessage := 'Incorrect code section size';
+            Result.BadParameters := True;
+            Result.ErrorMessage := 'Incorrect code section size';
             Exit;
           end;
         end
         // Entry point file offset
         else if ParamKey = '-e' then begin
-          if StrToIntDef(ParamValue, -1) <> - 1 then
-            result.CustomFileParameters.EntryPointOffset := StrToInt(ParamValue)
+          if StrToIntDef(ParamValue, -1) <> -1 then
+            Result.CustomFileParameters.EntryPointOffset := StrToInt(ParamValue)
           else begin
-            result.BadParameters := true;
-            result.ErrorMessage := 'Incorrect entry point offset';
+            Result.BadParameters := True;
+            Result.ErrorMessage := 'Incorrect entry point offset';
             Exit;
           end;
         end
         // Code section file offset
         else if ParamKey = '-t' then begin
-          if StrToIntDef(ParamValue, -1) <> - 1 then
-            result.CustomFileParameters.FileOffset := StrToInt(ParamValue)
+          if StrToIntDef(ParamValue, -1) <> -1 then
+            Result.CustomFileParameters.FileOffset := StrToInt(ParamValue)
           else begin
-            result.BadParameters := true;
-            result.ErrorMessage := 'Incorrect file offset';
+            Result.BadParameters := True;
+            Result.ErrorMessage := 'Incorrect file offset';
             Exit;
           end;
         end
@@ -235,24 +231,24 @@ function GetRunOptionsText(const ARunOptions: TRunOptions): string;
 begin
   with ARunOptions do begin
     if BadParameters then
-      result := 'Bad parameters: ' + ErrorMessage
+      Result := 'Bad parameters: ' + ErrorMessage
     else begin
-      result := 'Input file: ' + InputFileName + sLineBreak + 'Output file: ' + OutputFileName;
+      Result := 'Input file: ' + InputFileName + sLineBreak + 'Output file: ' + OutputFileName;
       if IsCustomFile then begin
-        result := result +
+        Result := Result +
           'Custom file.' + sLineBreak +
           'EntryPointOffset: ' + CarToHex(CustomFileParameters.EntryPointOffset, 8) + sLineBreak +
           'FileOffset: ' + CarToHex(CustomFileParameters.FileOffset, 8) + sLineBreak +
           'Size: ' + CarToHex(CustomFileParameters.Size, 8) + sLineBreak +
-          'Bit32: ' + BoolToStr(CustomFileParameters.Bit32, true) + sLineBreak;
+          'Bit32: ' + BoolToStr(CustomFileParameters.Bit32, True) + sLineBreak;
       end;
-      result := result + 'OutputFormat: ';
+      Result := Result + 'OutputFormat: ';
       if IsOutputProject then
-        result := result + 'project' + sLineBreak
+        Result := Result + 'project' + sLineBreak
       else if eoNASM = ExportOption then
-        result := result + 'nasm' + sLineBreak
+        Result := Result + 'nasm' + sLineBreak
       else if eoDAS = ExportOption then
-        result := result + 'das' + sLineBreak
+        Result := Result + 'das' + sLineBreak
       else
         raise ETatraDASException.Create('Internal error');
     end;
@@ -282,31 +278,34 @@ end;
 
 
 
-var CurrentPhaseName: String;
+var
+  CurrentPhaseName: string;
+
+
 
 procedure ConsoleShowProgress(APhase: string; AProgress: Double);
 begin
   {$IFDEF LINUX}
     {$IFDEF FPC}
-    if CurrentPhaseName <> APhase then begin
-      WriteLn;
-      CurrentPhaseName := APhase;
-    end;
+  if CurrentPhaseName <> APhase then begin
+    WriteLn;
+    CurrentPhaseName := APhase;
+  end;
 
-    GotoXY(3, WhereY);
-    Write(
-      StringRightPad(CurrentPhaseName + ':', MaxProgressNameLength + 1) +
-      StringRightPad(DupeString('.', Round(20 * AProgress)), 20 + 1) +
-      IntToStr(Round(100 * AProgress)) + '%'
-    );
+  GotoXY(3, WhereY);
+  Write(
+    StringRightPad(CurrentPhaseName + ':', MaxProgressNameLength + 1) +
+    StringRightPad(DupeString('.', Round(20 * AProgress)), 20 + 1) +
+    IntToStr(Round(100 * AProgress)) + '%'
+  );
     {$ENDIF}
   {$ENDIF}
 
   {$IFDEF MSWINDOWS}
-    if CurrentPhaseName <> APhase then begin
-      CurrentPhaseName := APhase;
-      WriteLn(CurrentPhaseName + ':');
-    end;
+  if CurrentPhaseName <> APhase then begin
+    CurrentPhaseName := APhase;
+    WriteLn(CurrentPhaseName + ':');
+  end;
   {$ENDIF}
 end;
 

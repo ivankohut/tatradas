@@ -7,7 +7,7 @@ interface
 uses
   Classes,
   SysUtils,
-
+  // project units
   LoggerUnit,
   StringUtilities,
   ListsUnit,
@@ -15,9 +15,7 @@ uses
   DisassembledBlocksUnit,
   DisassemblerTypes,
   DisassemblerUtils,
-  StrUtils
-  ;
-
+  StrUtils;
 
 type
 
@@ -65,6 +63,7 @@ type
 implementation
 
 
+
 constructor TDisassembler.Create;
 begin
   fBlocks := TDisassembledBlocks.Create;
@@ -88,7 +87,7 @@ end;
 
 
 
-function TDisassembler.GetBlocksCount: integer;
+function TDisassembler.GetBlocksCount: Integer;
 begin
   Result := fBlocks.Count;
 end;
@@ -110,7 +109,7 @@ begin
   while CAJ.Count > 0 do begin
     for CAJIndex := 0 to CAJ.Count - 1 do begin
 //      if CAJ[CAJIndex].start < CAJ[CAJIndex].finish then
-        DisassembleBlock(CAJ[CAJIndex].start, CAJ[CAJIndex].finish);
+      DisassembleBlock(CAJ[CAJIndex].start, CAJ[CAJIndex].finish);
     end;
     CAJ.Process(fCodeSize);
   end;

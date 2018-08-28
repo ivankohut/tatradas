@@ -13,7 +13,7 @@ interface
 uses
   Classes,
   SysUtils,
-
+  // project units
   StringRes,
   procmat,
   ExecFileUnit,
@@ -28,55 +28,55 @@ const
 
 type
   TNEHeader = record
-    Sign: word;
-    LinkerVersion, LinkerRevision: byte;
-    EntryTableRO: word;
-    EntryTableSize: word;
-    _reserved1: cardinal;
-    Flags: word;
-    AutomaticDataSegmentNumber: word;
-    InitialHeapSize: word;
-    InitialStackSize: word;
-    _IP,_CS: word;
-    _SP,_SS: word;
-    SegmentTableEntryNumber: word;
-    ModuleReferenceTableEntryNumber: word;
-    NonResidentNameTableSize: word;
-    SegmentTableRO: word;
-    ResourceTableRO: word;
-    ResidentNameTableRO: word;
-    ModuleReferenceTableRO: word;
-    ImportedNameTableRO: word;
-    NonResidentNameTableOffset: cardinal;
-    MoveableEntrypointsNumber: word;
-    ShiftCount: word;
-    ResourceSegmentNumber: word;
-    TargetOS: byte;
-    AdditionalInfo: byte;
-    FLAOffset, FLASize: word;
-    _reserved2: word;
-    ExpectedVersionNumber: word
+    Sign: Word;
+    LinkerVersion, LinkerRevision: Byte;
+    EntryTableRO: Word;
+    EntryTableSize: Word;
+    _reserved1: Cardinal;
+    Flags: Word;
+    AutomaticDataSegmentNumber: Word;
+    InitialHeapSize: Word;
+    InitialStackSize: Word;
+    _IP, _CS: Word;
+    _SP, _SS: Word;
+    SegmentTableEntryNumber: Word;
+    ModuleReferenceTableEntryNumber: Word;
+    NonResidentNameTableSize: Word;
+    SegmentTableRO: Word;
+    ResourceTableRO: Word;
+    ResidentNameTableRO: Word;
+    ModuleReferenceTableRO: Word;
+    ImportedNameTableRO: Word;
+    NonResidentNameTableOffset: Cardinal;
+    MoveableEntrypointsNumber: Word;
+    ShiftCount: Word;
+    ResourceSegmentNumber: Word;
+    TargetOS: Byte;
+    AdditionalInfo: Byte;
+    FLAOffset, FLASize: Word;
+    _reserved2: Word;
+    ExpectedVersionNumber: Word
   end;
 
   TSegmentTableEntry = record
-    Offset: word;
-    Size: word;
-    Flags: word;
-    AllocationSize: word;
+    Offset: Word;
+    Size: Word;
+    Flags: Word;
+    AllocationSize: Word;
   end;
 
   TResourceInformationBlock = record
-    TypeID: word;
-    count: word;
-    reserved: cardinal;
+    TypeID: Word;
+    Count: Word;
+    reserved: Cardinal;
   end;
 
   TResourceEntry = record
-    Offset: word;
-    Size: word;
-    Flags: word;
-    resID: word;
-    reserved: cardinal;
+    Offset: Word;
+    Size: Word;
+    Flags: Word;
+    resID: Word;
+    reserved: Cardinal;
   end;
 
 
@@ -84,7 +84,7 @@ type
   private
     fHeader: TNEHeader;
     fSegmentTable: array of TSegmentTableEntry;
-    function GetSegmentTableEntry(Index: integer): TSegmentTableEntry;
+    function GetSegmentTableEntry(Index: Integer): TSegmentTableEntry;
     function GetTargetOS: string;
 
   public
@@ -97,7 +97,7 @@ type
   // Fields and methods specific to PE File
     property Header: TNEHeader read fHeader;
     property TargetOS: string read GetTargetOS;
-    property SegmentTable[Index: integer]: TSegmentTableEntry read GetSegmentTableEntry;
+    property SegmentTable[Index: Integer]: TSegmentTableEntry read GetSegmentTableEntry;
   end;
 
 
@@ -209,13 +209,13 @@ begin
         SetLength(SegmentImports, SegmentImportsCount);
         SegmentImports[SegmentImportsCount - 1].Offset := fSegmentTable[SegmentIndex].offset * SegmentSectorSize + fSegmentTable[SegmentIndex].Size;
         SegmentImports[SegmentImportsCount - 1].SectionIndex := CodeSection.SectionIndex;
-        SegmentImports[SegmentImportsCount - 1].SectionFileOffset := fSegmentTable[SegmentIndex].offset*SegmentSectorSize;
+        SegmentImports[SegmentImportsCount - 1].SectionFileOffset := fSegmentTable[SegmentIndex].offset * SegmentSectorSize;
       end;
     end;
 
   // Read Import section
   if Header.ModuleReferenceTableEntryNumber > 0 then begin
-    fImportSection := TImportSection.CreateFromNEFile(InputFile, NEOffset + Header.ModuleReferenceTableRO, NEOffset + Header.ImportedNameTableRO, Header.ModuleReferenceTableEntryNumber, Header.EntryTableRO-header.ImportedNameTableRO, SegmentImports, '_IMPORT', self);
+    fImportSection := TImportSection.CreateFromNEFile(InputFile, NEOffset + Header.ModuleReferenceTableRO, NEOffset + Header.ImportedNameTableRO, Header.ModuleReferenceTableEntryNumber, Header.EntryTableRO - header.ImportedNameTableRO, SegmentImports, '_IMPORT', self);
     Sections.Add(ImportSection);
   end;
 
@@ -235,7 +235,7 @@ end;
 constructor TNEFile.Create;
 begin
   inherited;
-  fExecFormat:= ffNE;
+  fExecFormat := ffNE;
 end;
 
 
@@ -287,8 +287,8 @@ begin
     2: Result := 'MS Windows';
     3: Result := '_reserved_value_';
     4: Result := '_reserved_value_';
-  else
-    Result := '_undefined_value_';
+    else
+      Result := '_undefined_value_';
   end;
 end;
 

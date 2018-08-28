@@ -2,57 +2,59 @@ unit LXFileUnit;
 
 interface
 
-uses classes, 
-     procmat,
-     ExecFileUnit,
-     SectionUnit,
-     CodeSectionUnit;
+uses
+  Classes,
+  // project units
+  procmat,
+  ExecFileUnit,
+  SectionUnit,
+  CodeSectionUnit;
 
 type
   TLXInfoBlock = record
-    LXSign: word;
-    ByteOrder,WordOrder:byte;
-    ExeFormatLevel:cardinal;
-    CPUType:word;
-    TargetOS:word;
-    ModuleVersion:cardinal;
-    ModyleTypeFlags:cardinal;
-    MemoryPages:cardinal;
-    InitCS,InitEIP,InitSS,InitESP:cardinal;
-    MemPageSize:cardinal;
-    LastPageBytes:cardinal;
-    FixupSize,FixupChecksum:cardinal;
-    LoaderSize,LoaderCheckSum:cardinal;
-    ObjectTableOffset,ObjectTableEntries:cardinal;
-    ObjectPageMapOffset,ObjectIterateDataMapOffset:cardinal;
-    ResourceTableOffset,ResourceTableEntries:cardinal;
-    ResidentNameTableOffset:cardinal;
-    EntryTableOffset:cardinal;
-    ModuleDirectivesTableOffset,ModuleDirectivesEntries:cardinal;
-    FixupPageTableOffset,FixupRecordTableOffset:cardinal;
-    ImportModuleNameTableOffset:cardinal;
-    ImportModulesCount:cardinal;
-    ImportProcNameTableOffset:cardinal;
-    PerpageChecksumTableOffset:cardinal;
-    DataPagesOffsetTop:cardinal;
-    PreloadPageCount:cardinal;
-    NonResidentTableOffsetTop:cardinal;
-    NonResidentNamesTabelLength:cardinal;
-    NonResidentNamesTableChecksum:cardinal;
-    AutomaticDataObject:cardinal;
-    DebugInfoOffset,DebugInfoLength:cardinal;
-    PreloadPageNumber,DemandPageNumber:cardinal;
-    ExtraHeapAllocation:cardinal;
-    Unknown:cardinal;
+    LXSign: Word;
+    ByteOrder, WordOrder: Byte;
+    ExeFormatLevel: Cardinal;
+    CPUType: Word;
+    TargetOS: Word;
+    ModuleVersion: Cardinal;
+    ModyleTypeFlags: Cardinal;
+    MemoryPages: Cardinal;
+    InitCS, InitEIP, InitSS, InitESP: Cardinal;
+    MemPageSize: Cardinal;
+    LastPageBytes: Cardinal;
+    FixupSize, FixupChecksum: Cardinal;
+    LoaderSize, LoaderCheckSum: Cardinal;
+    ObjectTableOffset, ObjectTableEntries: Cardinal;
+    ObjectPageMapOffset, ObjectIterateDataMapOffset: Cardinal;
+    ResourceTableOffset, ResourceTableEntries: Cardinal;
+    ResidentNameTableOffset: Cardinal;
+    EntryTableOffset: Cardinal;
+    ModuleDirectivesTableOffset, ModuleDirectivesEntries: Cardinal;
+    FixupPageTableOffset, FixupRecordTableOffset: Cardinal;
+    ImportModuleNameTableOffset: Cardinal;
+    ImportModulesCount: Cardinal;
+    ImportProcNameTableOffset: Cardinal;
+    PerpageChecksumTableOffset: Cardinal;
+    DataPagesOffsetTop: Cardinal;
+    PreloadPageCount: Cardinal;
+    NonResidentTableOffsetTop: Cardinal;
+    NonResidentNamesTabelLength: Cardinal;
+    NonResidentNamesTableChecksum: Cardinal;
+    AutomaticDataObject: Cardinal;
+    DebugInfoOffset, DebugInfoLength: Cardinal;
+    PreloadPageNumber, DemandPageNumber: Cardinal;
+    ExtraHeapAllocation: Cardinal;
+    Unknown: Cardinal;
   end;
 
   TLEObjectTableEntry = record
-    VirtualSegmentSize:cardinal;
-    RelocationBaseAddress:cardinal;
-    Flags:cardinal;
-    PageMapIndex:cardinal;
-    PageMapEntries:cardinal;
-    Unknown:cardinal;
+    VirtualSegmentSize: Cardinal;
+    RelocationBaseAddress: Cardinal;
+    Flags: Cardinal;
+    PageMapIndex: Cardinal;
+    PageMapEntries: Cardinal;
+    Unknown: Cardinal;
   end;
 {
   TLXFile = class(TExecutableFile)
@@ -65,6 +67,7 @@ type
   end;
 }
 implementation
+
 {
 constructor TLXFile.Create(a:TStream;var b:TSectionInfo);
 begin

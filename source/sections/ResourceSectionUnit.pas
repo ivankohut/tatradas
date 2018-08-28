@@ -22,56 +22,56 @@ type
   TResourceTabSheet = class;
 {$ENDIF}
   TResourceType = (
-    RT_CURSOR=1,
-    RT_BITMAP=2,
-    RT_ICON=3,
-    RT_MENU=4,
-    RT_DIALOG=5,
-    RT_STRING=6,
-    RT_FONTDIR=7,
-    RT_FONT=8,
-    RT_ACCELERATOR=9,
-    RT_RCDATA=10,
-    RT_GROUP_CURSOR=12,
-    RT_GROUP_ICON=14,
+    RT_CURSOR = 1,
+    RT_BITMAP = 2,
+    RT_ICON = 3,
+    RT_MENU = 4,
+    RT_DIALOG = 5,
+    RT_STRING = 6,
+    RT_FONTDIR = 7,
+    RT_FONT = 8,
+    RT_ACCELERATOR = 9,
+    RT_RCDATA = 10,
+    RT_GROUP_CURSOR = 12,
+    RT_GROUP_ICON = 14,
 
-    RT_MESSAGETABLE=11,
-    RT_VERSION=16,
-    RT_DLGINCLUDE=17,
-    RT_PLUGPLAY=19,
-    RT_VXD=20,
-    RT_ANICURSOR=21
+    RT_MESSAGETABLE = 11,
+    RT_VERSION = 16,
+    RT_DLGINCLUDE = 17,
+    RT_PLUGPLAY = 19,
+    RT_VXD = 20,
+    RT_ANICURSOR = 21
   );
 
   TResourceDirectoryTable = record
-    flags:cardinal;
-    TimeDateStamp:cardinal;
-    MajorVersion,MinorVersion:word;
-    NamedEntriesCount, IDEntriesCount:word;
+    flags: Cardinal;
+    TimeDateStamp: Cardinal;
+    MajorVersion, MinorVersion: Word;
+    NamedEntriesCount, IDEntriesCount: Word;
   end;
 
   TResourceDirectoryEntry = record
-    NameRVA: cardinal;      // alebo Resource ID
-    DataEntryRVA: cardinal; // alebo SubDirRVA, bit 31 (t.j. 32.) je 0 pri DataEntryRVA, 1 pri SubDirRVA
+    NameRVA: Cardinal;      // alebo Resource ID
+    DataEntryRVA: Cardinal; // alebo SubDirRVA, bit 31 (t.j. 32.) je 0 pri DataEntryRVA, 1 pri SubDirRVA
   end;
 
   TResourceDataEntry = record
-    DataRVA: cardinal;
-    Size: cardinal;
-    CodePage: cardinal;
-    Reserved: cardinal;
+    DataRVA: Cardinal;
+    Size: Cardinal;
+    CodePage: Cardinal;
+    Reserved: Cardinal;
   end;
 
   PTResourceData = ^TResourceData;
 
   TResourceData = record
-    DataRVA: cardinal;
-    Size: cardinal;
-    CodePage: cardinal;
-    Reserved: cardinal;
-    NamePresent: boolean;
-    name: string; // ak je resource identifikovany menom
-    id: cardinal; // ak je resource identifikovany ID-ckom
+    DataRVA: Cardinal;
+    Size: Cardinal;
+    CodePage: Cardinal;
+    Reserved: Cardinal;
+    NamePresent: Boolean;
+    Name: string; // ak je resource identifikovany menom
+    id: Cardinal; // ak je resource identifikovany ID-ckom
     typ: TResourceType;
     Data: TObject;
 {
@@ -84,13 +84,13 @@ type
   PTResourceDirectory = ^TResourceDirectory;
 
   TResourceDirectory = record
-    flags:cardinal;
-    TimeDateStamp:cardinal;
-    MajorVersion,MinorVersion:word;
-    NamedEntriesCount, IDEntriesCount:word;
-    NamePresent: boolean;
-    name: WideString;
-    ID: cardinal;
+    flags: Cardinal;
+    TimeDateStamp: Cardinal;
+    MajorVersion, MinorVersion: Word;
+    NamedEntriesCount, IDEntriesCount: Word;
+    NamePresent: Boolean;
+    Name: WideString;
+    ID: Cardinal;
     typ: TResourceType;
     Data: array of TResourceData;
     Dir: array of PTResourceDirectory;
@@ -128,12 +128,12 @@ type
 {$IFDEF GUI}
 ///    tab: TResourceTabSheet;
 {$ENDIF}
-    MemOffset: cardinal;
-    Size, LogSize: cardinal;
+    MemOffset: Cardinal;
+    Size, LogSize: Cardinal;
     TypeDir: TResourceDirectory;
 //    constructor Create(Input: TStream; A,ss,RVA: cardinal; ResourceTableRVA: cardinal; efile:TObject); overload;
-    constructor Create(InputStream: TStream; aName: string; aFileOffset, aFileSize, aMemOffset, aMemSize: cardinal; aSectionIndex: integer; ResourceTableRVA: cardinal; aExecFile:TObject); overload;
-    constructor Create(efile:TObject); overload;
+    constructor Create(InputStream: TStream; aName: string; aFileOffset, aFileSize, aMemOffset, aMemSize: Cardinal; aSectionIndex: Integer; ResourceTableRVA: Cardinal; aExecFile: TObject); overload;
+    constructor Create(efile: TObject); overload;
     destructor Destroy; override;
     procedure SaveToFile(DHF: TStream; var DAS: TextFile); override;
     procedure LoadFromFile(DHF: TStream; var DAS: TextFile); overload; override;
@@ -154,11 +154,12 @@ type
     ResLabel, StringLabel: TLabel;
     ImageList: TImageList;
     Section: TResourceSection;
-    constructor Create(AOwner:TComponent; ssection: TResourceSection);
+    constructor Create(AOwner: TComponent; ssection: TResourceSection);
     destructor Destroy; override;
     procedure TreeChange(Sender: TObject; Node: TTreeNode);
     procedure Translate(ini: TMemINIFile; error: string);
   end;
+
 {$ENDIF}
 
 implementation
@@ -168,10 +169,13 @@ implementation
 destructor TResourceSection.Destroy;
 
   procedure FreeDirectory(Directory: PTResourceDirectory);
-  var i:integer;
+  var
+    i: Integer;
   begin
-    for i:=0 to Length(Directory^.Dir)-1 do FreeDirectory(Directory^.Dir[i]);
-    for i:=0 to Length(Directory^.Data)-1 do Directory^.Data[i].Data.Free;
+    for i := 0 to Length(Directory^.Dir) - 1 do
+      FreeDirectory(Directory^.Dir[i]);
+    for i := 0 to Length(Directory^.Data) - 1 do
+      Directory^.Data[i].Data.Free;
   end;
 
 begin
@@ -185,126 +189,139 @@ begin
   inherited;
 end;
 
-constructor TResourceSection.Create(InputStream: TStream; aName: string; aFileOffset, aFileSize, aMemOffset, aMemSize: cardinal; aSectionIndex: integer; ResourceTableRVA: cardinal; aExecFile:TObject);
-//constructor TResourceSection.Create(a:TStream; oo,ss,RVA: cardinal; ResourceTableRVA: cardinal; efile:TObject);
-var b: TMemoryStream;
-    i: integer;
 
-procedure LoadResource(var Resource: TResourceData; address: cardinal);
-var StringLength:word;
+
+constructor TResourceSection.Create(InputStream: TStream; aName: string; aFileOffset, aFileSize, aMemOffset, aMemSize: Cardinal; aSectionIndex: Integer; ResourceTableRVA: Cardinal; aExecFile: TObject);
+//constructor TResourceSection.Create(a:TStream; oo,ss,RVA: cardinal; ResourceTableRVA: cardinal; efile:TObject);
+var
+  b: TMemoryStream;
+  i: Integer;
+
+  procedure LoadResource(var Resource: TResourceData; address: Cardinal);
+  var
+    StringLength: Word;
     wString: WideString;
-    i: integer;
-    StringAddress: cardinal;
-    temp:int64;
-//    temp:integer;
-begin
-  b.Seek(address,0);
-  b.Read(Resource,sizeof(TResourceDataEntry));
-  case Resource.typ of
-    rt_String: begin
-//      StringAddress:=Resource.DataRVA-MemOffset;
-      temp:=integer(Resource.DataRVA-MemOffset);  // toto vychadza niekedy zaporne a potom to blbne
+    i: Integer;
+    StringAddress: Cardinal;
+    temp: Int64;
+//    temp: Integer;
+  begin
+    b.Seek(address, 0);
+    b.Read(Resource, sizeof(TResourceDataEntry));
+    case Resource.typ of
+      rt_String: begin
+//      StringAddress := Resource.DataRVA - MemOffset;
+        temp := Integer(Resource.DataRVA - MemOffset);  // toto vychadza niekedy zaporne a potom to blbne
 //      if temp > maxint then showmessage('asdas');
-      if temp > 0 then StringAddress:=temp;
-      b.Seek(StringAddress,0);
-      Resource.Data:=TStringList.Create;
+        if temp > 0 then
+          StringAddress := temp;
+        b.Seek(StringAddress, 0);
+        Resource.Data := TStringList.Create;
 
       // Tu prejdem cez nuly, ktore sa niekedy nachadzaju na zaciatku (neviem preco), treba to nejak rozumnejsie osetrit
-      i:=0;
-      StringLength:=0;
-      while true do begin
-        while (StringLength=0) and (b.Position+MemOffset < Resource.Size+Resource.DataRVA) do b.Read(StringLength,2);
-        if (b.Position+MemOffset < Resource.Size+Resource.DataRVA) then begin
-          StringAddress:=b.Position-2;
-          inc(i);
-          SetLength(WString,StringLength);
-          b.Read(WString[1],StringLength*2);
-          (Resource.Data as TStringList).Add('String '+IntToStr(i)+', RVA: '+IntToHex(MemOffset+StringAddress,8)+': '+wString);
-          StringLength:=0;
-        end
-        else break;
+        i := 0;
+        StringLength := 0;
+        while True do begin
+          while (StringLength = 0) and (b.Position + MemOffset < Resource.Size + Resource.DataRVA) do
+            b.Read(StringLength, 2);
+          if (b.Position + MemOffset < Resource.Size + Resource.DataRVA) then begin
+            StringAddress := b.Position - 2;
+            Inc(i);
+            SetLength(WString, StringLength);
+            b.Read(WString[1], StringLength * 2);
+            (Resource.Data as TStringList).Add('String ' + IntToStr(i) + ', RVA: ' + IntToHex(MemOffset + StringAddress, 8) + ': ' + wString);
+            StringLength := 0;
+          end
+          else
+            break;
+        end;
       end;
-    end;
-    rt_Icon: begin
+      rt_Icon: begin
 {
       Resource.Icon:=TIcon.Create;
       b.Seek(Resource.DataRVA-MemOffset,0);
       Resource.Icon.LoadFromStream(b);
 } ;
-    end;
-    rt_Bitmap: begin
+      end;
+      rt_Bitmap: begin
 {
       Resource.Obr:=TBitmap.Create;
       b.Seek(Resource.DataRVA-MemOffset,0);
       Resource.Obr.LoadFromStream(b);
 } ;
+      end;
     end;
   end;
-end;
 
-procedure LoadDirectory(Directory: PTResourceDirectory; address: cardinal);
-var i,iDir,iData: integer;
+
+
+  procedure LoadDirectory(Directory: PTResourceDirectory; address: Cardinal);
+  var
+    i, iDir, iData: Integer;
     ResEntry: TResourceDirectoryEntry;
-    NameLength: word;
-begin
-  iDir:=0; iData:=0;
-  b.Seek(address,0);
-  b.Read(Directory^,sizeof(TResourceDirectoryTable));
-  SetLength(Directory^.Dir,Directory^.NamedEntriesCount+Directory^.IDEntriesCount);
-  SetLength(Directory^.Data,Directory^.NamedEntriesCount+Directory^.IDEntriesCount);
-  for i:=0 to Directory^.NamedEntriesCount-1 do begin
-    b.Seek(address+SizeOf(TResourceDirectoryTable)+i*SizeOf(TResourceDirectoryEntry),0);
-    b.Read(ResEntry,SizeOf(TResourceDirectoryEntry));
-    if (ResEntry.DataEntryRVA and $80000000)<>0 then begin// SubDirectory
-      New(Directory^.Dir[iDir]);
-      Directory^.Dir[iDir]^.typ:=Directory^.typ;
-      Directory^.Dir[iDir]^.NamePresent:=true;
-      b.Seek(ResEntry.NameRVA and $7FFFFFFF,0);
-      b.Read(NameLength,2);
-      SetLength(Directory^.Dir[iDir]^.name,NameLength);
-      b.Read(Directory^.Dir[iDir]^.name[1],NameLength);
-      LoadDirectory(Directory^.Dir[iDir], (ResEntry.DataEntryRVA and $7FFFFFFF){-MemOffset});
-      inc(iDir);
-    end
-    else begin // Data
-      Directory^.Data[iData].typ:=Directory^.typ;
-      b.Seek(ResEntry.DataEntryRVA,0);
-      Directory^.Data[iData].NamePresent:=true;
-      b.Read(NameLength,2);
-      SetLength(Directory^.Data[iData].name,NameLength);
-      b.Read(Directory^.Data[iData].name[1],NameLength);
-      LoadResource(Directory^.Data[iData], (ResEntry.DataEntryRVA and $7FFFFFFF){-MemOffset});
-      inc(iData);
+    NameLength: Word;
+  begin
+    iDir := 0;
+    iData := 0;
+    b.Seek(address, 0);
+    b.Read(Directory^, sizeof(TResourceDirectoryTable));
+    SetLength(Directory^.Dir, Directory^.NamedEntriesCount + Directory^.IDEntriesCount);
+    SetLength(Directory^.Data, Directory^.NamedEntriesCount + Directory^.IDEntriesCount);
+    for i := 0 to Directory^.NamedEntriesCount - 1 do begin
+      b.Seek(address + SizeOf(TResourceDirectoryTable) + i * SizeOf(TResourceDirectoryEntry), 0);
+      b.Read(ResEntry, SizeOf(TResourceDirectoryEntry));
+      if (ResEntry.DataEntryRVA and $80000000) <> 0 then begin// SubDirectory
+        New(Directory^.Dir[iDir]);
+        Directory^.Dir[iDir]^.typ := Directory^.typ;
+        Directory^.Dir[iDir]^.NamePresent := True;
+        b.Seek(ResEntry.NameRVA and $7FFFFFFF, 0);
+        b.Read(NameLength, 2);
+        SetLength(Directory^.Dir[iDir]^.Name, NameLength);
+        b.Read(Directory^.Dir[iDir]^.Name[1], NameLength);
+        LoadDirectory(Directory^.Dir[iDir], (ResEntry.DataEntryRVA and $7FFFFFFF){-MemOffset});
+        Inc(iDir);
+      end
+      else begin // Data
+        Directory^.Data[iData].typ := Directory^.typ;
+        b.Seek(ResEntry.DataEntryRVA, 0);
+        Directory^.Data[iData].NamePresent := True;
+        b.Read(NameLength, 2);
+        SetLength(Directory^.Data[iData].Name, NameLength);
+        b.Read(Directory^.Data[iData].Name[1], NameLength);
+        LoadResource(Directory^.Data[iData], (ResEntry.DataEntryRVA and $7FFFFFFF){-MemOffset});
+        Inc(iData);
+      end;
     end;
-  end;
 
-  for i:= Directory^.NamedEntriesCount to Directory^.NamedEntriesCount+Directory^.IDEntriesCount-1 do begin
-    b.Seek(address+SizeOf(TResourceDirectoryTable)+i*SizeOf(TResourceDirectoryEntry),0);
-    b.Read(ResEntry,SizeOf(TResourceDirectoryEntry));
-    if (ResEntry.DataEntryRVA and $80000000)<>0 then begin// SubDirectory
-      New(Directory^.Dir[iDir]);
-      if Directory=@TypeDir then Directory^.Dir[iDir]^.typ:=TResourceType(ResEntry.NameRVA)
-      else Directory^.Dir[iDir]^.typ:=Directory^.typ;
-      Directory^.Dir[iDir]^.NamePresent:=false;
-      Directory^.Dir[iDir]^.ID:=ResEntry.NameRVA and $7FFFFFFF;
-      LoadDirectory(Directory^.Dir[iDir], (ResEntry.DataEntryRVA and $7FFFFFFF){-MemOffset});
-      inc(iDir);
-    end
-    else begin // Data
-      Directory^.Data[iData].NamePresent:=false;
-      Directory^.Data[iData].ID:=ResEntry.NameRVA and $7FFFFFFF;
-      Directory^.Data[iData].typ:=Directory^.typ;
-      LoadResource(Directory^.Data[iData], (ResEntry.DataEntryRVA and $7FFFFFFF){-MemOffset});
-//      Directory^.Data[iData].NamePresent:=true;
-//      Directory^.Data[iData].Name:='RVA: '+IntToHex(Directory^.Data[iData].DataRVA,8)+' Size: '+Inttohex(Directory^.Data[iData].Size,8);
-      inc(iData);
+    for i := Directory^.NamedEntriesCount to Directory^.NamedEntriesCount + Directory^.IDEntriesCount - 1 do begin
+      b.Seek(address + SizeOf(TResourceDirectoryTable) + i * SizeOf(TResourceDirectoryEntry), 0);
+      b.Read(ResEntry, SizeOf(TResourceDirectoryEntry));
+      if (ResEntry.DataEntryRVA and $80000000) <> 0 then begin// SubDirectory
+        New(Directory^.Dir[iDir]);
+        if Directory = @TypeDir then
+          Directory^.Dir[iDir]^.typ := TResourceType(ResEntry.NameRVA)
+        else
+          Directory^.Dir[iDir]^.typ := Directory^.typ;
+        Directory^.Dir[iDir]^.NamePresent := False;
+        Directory^.Dir[iDir]^.ID := ResEntry.NameRVA and $7FFFFFFF;
+        LoadDirectory(Directory^.Dir[iDir], (ResEntry.DataEntryRVA and $7FFFFFFF){-MemOffset});
+        Inc(iDir);
+      end
+      else begin // Data
+        Directory^.Data[iData].NamePresent := False;
+        Directory^.Data[iData].ID := ResEntry.NameRVA and $7FFFFFFF;
+        Directory^.Data[iData].typ := Directory^.typ;
+        LoadResource(Directory^.Data[iData], (ResEntry.DataEntryRVA and $7FFFFFFF){-MemOffset});
+//      Directory^.Data[iData].NamePresent := True;
+//      Directory^.Data[iData].Name := 'RVA: '+ IntToHex(Directory^.Data[iData].DataRVA,8)+' Size: '+Inttohex(Directory^.Data[iData].Size,8);
+        Inc(iData);
+      end;
     end;
+
+    SetLength(Directory^.Dir, iDir);
+    SetLength(Directory^.Data, iData);
+
   end;
-
-  SetLength(Directory^.Dir,iDir);
-  SetLength(Directory^.Data,iData);
-
-end;
 
 begin
 {
@@ -346,16 +363,22 @@ begin
 }
 end;
 
-constructor TResourceSection.Create(efile:TObject);
+
+
+constructor TResourceSection.Create(efile: TObject);
 begin
-  fTyp:=stResource;
-  fExecFile:=efile;
+  fTyp := stResource;
+  fExecFile := efile;
 end;
+
+
 
 procedure TResourceSection.SaveToFile(DHF: TStream; var DAS: TextFile);
 begin
   inherited SaveToFile(DHF, DAS);
 end;
+
+
 
 procedure TResourceSection.LoadFromFile(DHF: TStream; var DAS: TextFile);
 begin
@@ -367,58 +390,65 @@ end;
 //============================================================================================================
 
 {$IFDEF GUI}
-constructor TResourceTabSheet.Create(AOwner:TComponent; ssection: TResourceSection);
+constructor TResourceTabSheet.Create(AOwner: TComponent; ssection: TResourceSection);
 
-procedure DisplayTree(Directory: TResourceDirectory; Node: TTreeNode);
-var TreeNode: TTreeNode;
-    i: integer;
-begin
-  for i:=0 to Length(Directory.Dir)-1 do begin
-    if Directory.Dir[i]^.NamePresent then TreeNode:=Tree.Items.AddChild(Node,Directory.Dir[i]^.name)
-    else TreeNode:=Tree.Items.AddChild(Node,IntToStr(Directory.Dir[i]^.ID));
+  procedure DisplayTree(Directory: TResourceDirectory; Node: TTreeNode);
+  var
+    TreeNode: TTreeNode;
+    i: Integer;
+  begin
+    for i := 0 to Length(Directory.Dir) - 1 do begin
+      if Directory.Dir[i]^.NamePresent then
+        TreeNode := Tree.Items.AddChild(Node, Directory.Dir[i]^.Name)
+      else
+        TreeNode := Tree.Items.AddChild(Node, IntToStr(Directory.Dir[i]^.ID));
 //    TreeNode.ImageIndex:=0;
 //    TreeNode.SelectedIndex:=1;
-    DisplayTree(Directory.Dir[i]^, TreeNode)
+      DisplayTree(Directory.Dir[i]^, TreeNode);
+    end;
+    for i := 0 to Length(Directory.Data) - 1 do begin
+      if Directory.Data[i].NamePresent then
+        TreeNode := Tree.Items.AddChild(Node, Directory.Data[i].Name)
+      else
+        TreeNode := Tree.Items.AddChild(Node, IntToStr(Directory.Data[i].ID));
+      TreeNode.Data := @Directory.Data[i];
+    end;
   end;
-  for i:=0 to Length(Directory.Data)-1 do begin
-    if Directory.Data[i].NamePresent then TreeNode:= Tree.Items.AddChild(Node,Directory.Data[i].name)
-    else TreeNode:= Tree.Items.AddChild(Node,IntToStr(Directory.Data[i].ID));
-    TreeNode.Data:=@Directory.Data[i];
-  end;
-end;
-   var iii:ticon;
+
+var
+  iii: ticon;
 begin
   inherited Create(AOwner);
-  parent:=(AOwner as TPageControl);
-  PageControl:=(AOwner as TPageControl);
-  self.Section:=sSection;
+  parent := (AOwner as TPageControl);
+  PageControl := (AOwner as TPageControl);
+  self.Section := sSection;
 
-  Panel:= TPanel.Create(self);
-  Panel.Parent:=self;
-  Panel.Left:=8;
-  Panel.Top:=8;
-  Panel.Width:=self.Width-16;
-  Panel.Height:=self.Height-16;
-  Panel.Anchors:=[akLeft,akRight,akTop,akBottom];
-  Panel.BevelInner:=bvRaised;
-  Panel.BevelOuter:=bvLowered;
+  Panel := TPanel.Create(self);
+  Panel.Parent := self;
+  Panel.Left := 8;
+  Panel.Top := 8;
+  Panel.Width := self.Width - 16;
+  Panel.Height := self.Height - 16;
+  Panel.Anchors := [akLeft, akRight, akTop, akBottom];
+  Panel.BevelInner := bvRaised;
+  Panel.BevelOuter := bvLowered;
 
-  ImageList:=TImageList.Create(Panel);
+  ImageList := TImageList.Create(Panel);
 
 //  ImageList.ResourceLoad(rtBitmap,'open1',clWhite);
-  ImageList.GetResource(rtIcon,'dir2',16,[lrDefaultSize],clWhite);
+  ImageList.GetResource(rtIcon, 'dir2', 16, [lrDefaultSize], clWhite);
 //  iii:=ticon.Create;
 
-  Tree:= TTreeView.Create(Panel);
-  Tree.Parent:=Panel;
-  Tree.Top:=16;
-  Tree.Left:=16;
-  Tree.Height:=Panel.Height-64;
-  Tree.Width:=240;
-  Tree.Anchors:=[akLeft,akRight,akTop,akBottom];
-  Tree.OnChange:=TreeChange;
+  Tree := TTreeView.Create(Panel);
+  Tree.Parent := Panel;
+  Tree.Top := 16;
+  Tree.Left := 16;
+  Tree.Height := Panel.Height - 64;
+  Tree.Width := 240;
+  Tree.Anchors := [akLeft, akRight, akTop, akBottom];
+  Tree.OnChange := TreeChange;
 //  Tree.Images:=ImageList;
-  DisplayTree(Section.TypeDir,Tree.Items.Add(nil,'Resources'));
+  DisplayTree(Section.TypeDir, Tree.Items.Add(nil, 'Resources'));
 //  Tree.Items[0].ImageIndex:=1;
 {
   Memo:=TMemo.Create(Panel);
@@ -432,34 +462,36 @@ begin
   Memo.ScrollBars:=ssBoth;
   Memo.Enabled:=false;
 }
-  StringBox:=TListBox.Create(Panel);
-  StringBox.Parent:=Panel;
-  StringBox.Left:=272;
-  StringBox.Top:=16;
-  StringBox.Width:=Panel.Width-256-16-16;
-  StringBox.Height:=Panel.Height-32;
-  StringBox.Anchors:=[akRight,akTop,akBottom];
+  StringBox := TListBox.Create(Panel);
+  StringBox.Parent := Panel;
+  StringBox.Left := 272;
+  StringBox.Top := 16;
+  StringBox.Width := Panel.Width - 256 - 16 - 16;
+  StringBox.Height := Panel.Height - 32;
+  StringBox.Anchors := [akRight, akTop, akBottom];
 //  StringBox.ScrollWidth:=500;
-  StringBox.Visible:=false;
-  StringBox.Enabled:=false;
+  StringBox.Visible := False;
+  StringBox.Enabled := False;
 
-  Image:= TImage.Create(Panel);
-  Image.Parent:=Panel;
-  Image.Left:=StringBox.Left;
-  Image.Top:=StringBox.Top;
-  Image.Visible:=false;
+  Image := TImage.Create(Panel);
+  Image.Parent := Panel;
+  Image.Left := StringBox.Left;
+  Image.Top := StringBox.Top;
+  Image.Visible := False;
 
-  ResLabel:=TLabel.Create(Panel);
-  ResLabel.Parent:=Panel;
-  ResLabel.Left:=16;
-  ResLabel.Top:=Panel.Height-32;
-  ResLabel.Anchors:=[akLeft,akBottom];
+  ResLabel := TLabel.Create(Panel);
+  ResLabel.Parent := Panel;
+  ResLabel.Left := 16;
+  ResLabel.Top := Panel.Height - 32;
+  ResLabel.Anchors := [akLeft, akBottom];
 //  ResLabel
 {
   StringLabel:=TLabel.Create(Panel);
   StringLabel.Parent:=Panel;
 }
 end;
+
+
 
 destructor TResourceTabSheet.Destroy;
 begin
@@ -472,37 +504,42 @@ begin
   inherited;
 end;
 
+
+
 procedure TResourceTabSheet.TreeChange(Sender: TObject; Node: TTreeNode);
 begin
-  if Node.HasChildren then Exit;
+  if Node.HasChildren then
+    Exit;
   with TResourceData(Node.Data^) do begin
     case Typ of
       rt_String: begin
-        Image.Visible:=false;
-        StringBox.Items:=Data as TStringList;
-        StringBox.Visible:=true;
+        Image.Visible := False;
+        StringBox.Items := Data as TStringList;
+        StringBox.Visible := True;
 
-        StringBox.Enabled:=true;
+        StringBox.Enabled := True;
       end;
       rt_Icon: begin
-        StringBox.Visible:=false;
+        StringBox.Visible := False;
 //        Image.Canvas.Draw(0,0,Icon);//:=Icon.Canvas;
-        Image.Visible:=true;
+        Image.Visible := True;
       end;
       rt_Bitmap: begin
-        StringBox.Visible:=false;
+        StringBox.Visible := False;
 //        Image.Canvas.Draw(0,0,Obr);//:=Icon.Canvas;
-        Image.Visible:=true;
+        Image.Visible := True;
       end;
     end;
 
-    ResLabel.Caption:='RVA: '+IntToHex(DataRVA,8)+'       Size: '+IntToHex(Size,8);
+    ResLabel.Caption := 'RVA: ' + IntToHex(DataRVA, 8) + '       Size: ' + IntToHex(Size, 8);
   end;
 end;
 
+
+
 procedure TResourceTabSheet.Translate(ini: TMemINIFile; error: string);
 begin
-  Caption:=ini.ReadString('Resource','Caption',error);
+  Caption := ini.ReadString('Resource', 'Caption', error);
 end;
 
 {$ENDIF}

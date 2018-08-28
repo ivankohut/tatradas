@@ -12,7 +12,7 @@ uses
   ExtCtrls,
   ComCtrls,
   IniFiles,
-
+  // project units
   procmat,
   TranslatorUnit,
   SectionUnit,
@@ -43,15 +43,15 @@ type
   TTabFrameTemplateClass = class of TTabFrameTemplate;
 
   TTabSheetTemplate = class(TTabSheet)
-   private
-     function GetPageType: TPageType;
-   public
+  private
+    function GetPageType: TPageType;
+  public
     Frame: TTabFrameTemplate;
-    constructor CreateFileTab(aExecFile: TExecutableFile); 
+    constructor CreateFileTab(aExecFile: TExecutableFile);
     constructor Create(ASection: TSection); reintroduce; overload;
     destructor Destroy; override;
     procedure Translate;
-    function IsHavingSection(ASection: TSection): boolean; 
+    function IsHavingSection(ASection: TSection): Boolean;
     property PageType: TPageType read GetPageType;
   end;
 
@@ -100,14 +100,14 @@ begin
   PageControl := MainForm.MainPageControl;
 //  PageIndex := 0; - Lazarus BUG
   case aExecFile.ExeFormat of
-    ffCOM: Frame:= TCOMFileTabFrame.Create(MainForm, aExecFile);
-    ffMZ: Frame:= TMZFileTabFrame.Create(MainForm, aExecFile);
-    ffNE: Frame:= TNEFileTabFrame.Create(MainForm, aExecFile);
-    ffPE: Frame:= TPEFileTabFrame.Create(MainForm, aExecFile);
-    ffELF: Frame:= TELFFileTabFrame.Create(MainForm, aExecFile);
-    ffCustom: Frame:= TCustomFileTabFrame.Create(MainForm, aExecFile);
+    ffCOM: Frame := TCOMFileTabFrame.Create(MainForm, aExecFile);
+    ffMZ: Frame := TMZFileTabFrame.Create(MainForm, aExecFile);
+    ffNE: Frame := TNEFileTabFrame.Create(MainForm, aExecFile);
+    ffPE: Frame := TPEFileTabFrame.Create(MainForm, aExecFile);
+    ffELF: Frame := TELFFileTabFrame.Create(MainForm, aExecFile);
+    ffCustom: Frame := TCustomFileTabFrame.Create(MainForm, aExecFile);
     else
-      Frame:= TFileTabFrame.Create(MainForm, aExecFile);
+      Frame := TFileTabFrame.Create(MainForm, aExecFile);
   end;
   Frame.Parent := self;
   Caption := Frame.Caption;
@@ -139,9 +139,9 @@ end;
 
 
 
-function TTabSheetTemplate.IsHavingSection(ASection: TSection): boolean;
+function TTabSheetTemplate.IsHavingSection(ASection: TSection): Boolean;
 begin
-  result:= (Frame.Section = ASection);
+  Result := (Frame.Section = ASection);
 end;
 
 
@@ -173,7 +173,7 @@ begin
       else
         raise EIllegalState.Create('Bad section type');
     end;
-  end;  
+  end;
 end;
 
 

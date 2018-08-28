@@ -31,7 +31,7 @@ type
     p1, p2, p3: TOperand;
   end;
 
-  TFpuOperand =  (
+  TFpuOperand = (
     st1, //st(0),st(0)..st(0),st(7)
     st2, //st(0),st(0)..st(7),st(0)
     st3, //st(0)..st(7)
@@ -44,15 +44,15 @@ type
 
 
   TModRM = record
-    FullModRM: byte;
-    Moder, RegOp, RM: byte;
-    Loaded: boolean;
+    FullModRM: Byte;
+    Moder, RegOp, RM: Byte;
+    Loaded: Boolean;
   end;
 
 
   TSIB = record
-    FullSIB: byte;
-    Scale, Index, Base: byte;
+    FullSIB: Byte;
+    Scale, Index, Base: Byte;
   end;
 
 

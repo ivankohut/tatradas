@@ -11,7 +11,7 @@ interface
 uses
   SysUtils,
   Classes,
-
+  // project units
   ExceptionsUnit,
   procmat,
   ExecFileUnit,
@@ -31,22 +31,22 @@ const
   c_ELFLowID = $457F;
   c_ELFHighID = $464C;
 
-  c_PESign =  $4550;
-  c_NESign =  $454E;
-  c_LESign =  $454C;
-  c_LXSign =  $4558;
+  c_PESign = $4550;
+  c_NESign = $454E;
+  c_LESign = $454C;
+  c_LXSign = $4558;
 
 type
 
 //  TFileError = (errNone, errOpen, errUnknownFormat, errBadFormat, errDASNotFound, errBadProjectVersion, errSave, errCanceled);
 
   TExecFileManager = class
-   private
+  private
 //    fError: TFileError;
     function GetExecFileFormat(AFileStream: TFileStream): TExecFileFormat;
 
-   public
-    function LoadExecFileFromFile(AProjectFileName: TFileName) : TExecutableFile;    // uses TextFile
+  public
+    function LoadExecFileFromFile(AProjectFileName: TFileName): TExecutableFile;    // uses TextFile
     procedure SaveExecFileToFile(ExecFile: TExecutableFile; AFileName: TFileName);
     function CreateNewExecFile(AFileName: TFileName): TExecutableFile;
     function CreateNewCustomExecFile(AFileName: TFileName; AParameters: TCustomFileParameters): TExecutableFile;
@@ -139,13 +139,13 @@ begin
     Result := nil;
     FileFormat := GetExecFileFormat(InputFile);
     case FileFormat of
-      ffPE:  Result := TPEFile.Create(InputFile, aFileName);
+      ffPE: Result := TPEFile.Create(InputFile, aFileName);
       ffCOM: Result := TCOMFile.Create(InputFile, aFileName);
-      ffMZ:  Result := TMZFile.Create(InputFile, aFileName);
-      ffNE:  Result := TNEFile.Create(InputFile, aFileName);
+      ffMZ: Result := TMZFile.Create(InputFile, aFileName);
+      ffNE: Result := TNEFile.Create(InputFile, aFileName);
       ffELF: Result := TELFFile.Create(InputFile, aFileName);
-      // LE: result:=TLEFile.Create(InputFile, aFileName)
-      // LX: result:=TLXFile.Create(InputFile, aFileName)
+      // LE: result := TLEFile.Create(InputFile, aFileName)
+      // LX: result := TLXFile.Create(InputFile, aFileName)
       ffUnknown: Result := nil;
       else
         raise EIllegalState.Create('Bad file format');
@@ -182,10 +182,10 @@ var
   DHF: TFileStream;
   DHF_FileName: string;
   DAS_FileName: string;
-  Version: cardinal;
+  Version: Cardinal;
 begin
   // Initialize DHF project file
-  DHF_FileName := ChangeFileExt(aFileName, '.dhf');;
+  DHF_FileName := ChangeFileExt(aFileName, '.dhf');
   DHF := TFileStream.Create(DHF_FileName, fmCreate);
   try
     // Save project file version
@@ -238,9 +238,9 @@ begin
         DHF.Read(ProjectExecFileFormat, SizeOf(TExecFileFormat));
         case ProjectExecFileFormat of
           ffCOM: Result := TCOMFile.Create;
-          ffMZ:  Result := TMZFile.Create;
-          ffNE:  Result := TNEFile.Create;
-          ffPE:  Result := TPEFile.Create;
+          ffMZ: Result := TMZFile.Create;
+          ffNE: Result := TNEFile.Create;
+          ffPE: Result := TPEFile.Create;
           ffELF: Result := TELFFile.Create;
           ffCustom: Result := TCustomFile.Create;
           else
@@ -249,14 +249,15 @@ begin
 
         AssignFile(DAS, DAS_FileName);
         Reset(DAS);
-        try try
-          Readln(DAS);
-          Readln(DAS);
-          Result.LoadFromFile(DHF, DAS);
-        except
-          FreeAndNil(Result);
-          raise;
-        end;
+        try
+          try
+            Readln(DAS);
+            Readln(DAS);
+            Result.LoadFromFile(DHF, DAS);
+          except
+            FreeAndNil(Result);
+            raise;
+          end;
         finally
           CloseFile(DAS);
         end;
@@ -274,6 +275,7 @@ end;
 
 initialization
   ExecFileManager := TExecFileManager.Create;
+
 finalization
   ExecFileManager.Free;
 

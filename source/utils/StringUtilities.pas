@@ -13,7 +13,7 @@ function CarToStr(AValue: Cardinal): string;
 // Convert Value to hex string using at least Digits digits
 function CarToHex(Value: Cardinal; Digits: Integer): string;
 
-function IsHexNumber(HexNumber: string): boolean;
+function IsHexNumber(HexNumber: string): Boolean;
 
 // Same as StringLeftPad(AString, Size, PadChar) using space as PadChar
 function StringLeftPad(AString: string; Size: Integer): string; overload;
@@ -29,15 +29,16 @@ function StringRightPad(AString: string; Size: Integer): string; overload;
 // Returns AString if it's length is Size or more
 function StringRightPad(AString: string; Size: Integer; PadChar: Char): string; overload;
 
-function IntToSignedHex(Value: integer; Digits: Integer): string;
-function InsertStr(const Source: string; const Dest: string; Index: integer): string;
+function IntToSignedHex(Value: Integer; Digits: Integer): string;
+function InsertStr(const Source: string; const Dest: string; Index: Integer): string;
 
-function FirstCommaToPoint(AText: string):string;
+function FirstCommaToPoint(AText: string): string;
 
 function InjectStr(const AString: string; AValues: array of string; const AReplaceMark: string = '%s'): string;
 
 
 implementation
+
 
 
 function StringLeftPad(AString: string; Size: Integer): string;
@@ -49,8 +50,8 @@ end;
 
 function StringLeftPad(AString: string; Size: Integer; PadChar: Char): string;
 var
-  i: integer;
-  PadCharCount: integer;
+  i: Integer;
+  PadCharCount: Integer;
 begin
   if Length(AString) >= Size then
     Result := AString
@@ -68,7 +69,7 @@ end;
 
 function StringRightPad(AString: string; Size: Integer): string;
 begin
-  result:= StringRightPad(AString, Size, ' ');
+  Result := StringRightPad(AString, Size, ' ');
 end;
 
 
@@ -106,17 +107,17 @@ end;
 
 
 
-function CarToHex(Value: cardinal; Digits: integer): string;
+function CarToHex(Value: Cardinal; Digits: Integer): string;
 begin
   if Value = 0 then
-    result := '0'
+    Result := '0'
   else begin
-    result := '';
+    Result := '';
     while Value <> 0 do begin
-      result := result + IntToHex(Value mod 16, 1);
-      Value := value div 16;
+      Result := Result + IntToHex(Value mod 16, 1);
+      Value := Value div 16;
     end;
-    result := ReverseString(result);
+    Result := ReverseString(Result);
   end;
   if Length(Result) < Digits then
     Result := StringLeftPad(Result, Digits, '0');
@@ -124,77 +125,73 @@ end;
 
 
 
-function IsHexNumber(HexNumber: string): boolean;
+function IsHexNumber(HexNumber: string): Boolean;
 var
-  Index: integer;
+  Index: Integer;
 begin
-  result:= false;
-  for Index:= 1 to Length(HexNumber) do
-    if not (HexNumber[Index] in ['0'..'9','A'..'F','a'..'f']) then
+  Result := False;
+  for Index := 1 to Length(HexNumber) do
+    if not (HexNumber[Index] in ['0'..'9', 'A'..'F', 'a'..'f']) then
       Exit;
-  result:= true;
+  Result := True;
 end;
 
 
 
-
-function IntToSignedHex(Value: integer; Digits: Integer): string;
+function IntToSignedHex(Value: Integer; Digits: Integer): string;
 begin
   if Value >= 0 then
-    result:= IntToHex(Value, Digits)
+    Result := IntToHex(Value, Digits)
   else begin
-    Value:= Abs(Value);
-    result:= '-' + IntToHex(Value, Digits);
+    Value := Abs(Value);
+    Result := '-' + IntToHex(Value, Digits);
   end;
 end;
 
 
 
-function InsertStr(const Source: string; const Dest: string; Index: integer): string;
+function InsertStr(const Source: string; const Dest: string; Index: Integer): string;
 var
   s: string;
 begin
-  s:= dest;
+  s := dest;
   Insert(Source, s, Index);
-  result:= s;
+  Result := s;
 end;
 
 
 
 function FirstCommaToPoint(AText: string): string;
-var i: integer;
+var
+  i: Integer;
 begin
-  for i:=1 to Length(AText) do
-    if AText[i]=',' then begin
-      AText[i]:='.';
+  for i := 1 to Length(AText) do
+    if AText[i] = ',' then begin
+      AText[i] := '.';
       break;
     end;
-  result:=AText;
+  Result := AText;
 end;
 
 // PosEx was added in Delphi 7 so in case of Delphi 6 we need this:
 {$IFDEF VER140}
 function PosEx(const SubStr, S: string; Offset: Cardinal = 1): Integer;
 var
-  I,X: Integer;
+  I, X: Integer;
   Len, LenSubStr: Integer;
 begin
   if Offset = 1 then
     Result := Pos(SubStr, S)
-  else
-  begin
+  else begin
     I := Offset;
     LenSubStr := Length(SubStr);
     Len := Length(S) - LenSubStr + 1;
-    while I <= Len do
-    begin
-      if S[I] = SubStr[1] then
-      begin
+    while I <= Len do begin
+      if S[I] = SubStr[1] then begin
         X := 1;
         while (X < LenSubStr) and (S[I + X] = SubStr[X + 1]) do
           Inc(X);
-        if (X = LenSubStr) then
-        begin
+        if (X = LenSubStr) then begin
           Result := I;
           exit;
         end;
@@ -205,6 +202,8 @@ begin
   end;
 end;
 {$ENDIF}
+
+
 
 function InjectStr(const AString: string; AValues: array of string; const AReplaceMark: string = '%s'): string;
 var

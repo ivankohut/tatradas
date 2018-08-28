@@ -7,7 +7,7 @@ interface
 uses
   Classes,
   SysUtils,
-
+  // project units
   procmat,
   ExecFileUnit,
   CodeSectionUnit;
@@ -15,8 +15,8 @@ uses
 type
 
   TRelocationEntry = record
-    Offset: word;
-    Segment: word;
+    Offset: Word;
+    Segment: Word;
   end;
 
 
@@ -75,7 +75,7 @@ begin
 
   // Code section
   if CodeSize > 0 then begin
-    CodeSection := TCodeSection.Create(InputFile, false, fHeader.HeaderSize * 16, CodeSize, fHeader.HeaderSize * 16, CodeSize, 0, 'N/A', self);
+    CodeSection := TCodeSection.Create(InputFile, False, fHeader.HeaderSize * 16, CodeSize, fHeader.HeaderSize * 16, CodeSize, 0, 'N/A', self);
     CodeSection.EntryPointAddress := Word(fHeader.ReloCS * 16 + fHeader.EXEIP);
     Sections.Add(CodeSection);
   end;
@@ -116,7 +116,7 @@ end;
 
 
 
-function TMZFile.GetRelocationEntry(Index: integer): TRelocationEntry;
+function TMZFile.GetRelocationEntry(Index: Integer): TRelocationEntry;
 begin
   if (Index < 0) or (Index >= Length(fRelocations)) then begin
     Result.Offset := 0;

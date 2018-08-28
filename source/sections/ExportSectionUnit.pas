@@ -8,7 +8,7 @@ uses
   Classes,
   SysUtils,
   INIFiles,
-
+  // project units
   procmat,
   SectionUnit;
 
@@ -41,7 +41,7 @@ type
     function GetFunction(Index: Integer): TExportFunction;
   public
     constructor Create(ExecFile: TObject); overload;
-    constructor CreateFromPEFile(InputFile: TStream; FileOffset, ExportRVA, ExportDataSize, ImageBase: cardinal; aName: string; aExecFile: TObject);
+    constructor CreateFromPEFile(InputFile: TStream; FileOffset, ExportRVA, ExportDataSize, ImageBase: Cardinal; aName: string; aExecFile: TObject);
     constructor CreateFromNEFile(InputFile: TStream; ResidentTableOffset, NonResidentTableOffset, NonResidentTableSize: Cardinal; EntryTable: array of TEntryTableEntry; aName: string; aExecFile: TObject); overload;
 
     destructor Destroy; override;
@@ -95,7 +95,7 @@ var
 
 begin
   inherited Create(aName, aExecFile);
-  fTyp:= stExport;
+  fTyp := stExport;
 
   PEFile := ExecFile as TPEFile;
 
@@ -122,7 +122,7 @@ begin
 
   // Read fFunctions' names
   for i := 0 to Integer(ExportDirTable.NamePointersCount) - 1 do
-    ReadStringFromStream(ExportStream, NamePointersTable[i] - ExportRVA, fFunctions[OrdinalTable[i]].name);
+    ReadStringFromStream(ExportStream, NamePointersTable[i] - ExportRVA, fFunctions[OrdinalTable[i]].Name);
     // this should be correct according to PE specification !
     // ReadStringFromStream(ExportStream, NamePointersTable[i] - ExportRVA, fFunctions[OrdinalTable[i] - DirTable.OrdinalBase].name);
 
@@ -169,7 +169,7 @@ constructor TExportSection.CreateFromNEFile(InputFile: TStream; ResidentTableOff
     i := 0;
     with (ExecFile as TNEFile) do
       while i < Length(EntryTable) do begin
-        if Ordinal <= EntryTable[i].count then begin
+        if Ordinal <= EntryTable[i].Count then begin
           case EntryTable[i].typ of
             etFixed: begin
               Address := EntryTable[i].Fixed[Ordinal - 1].Offset;
@@ -182,10 +182,11 @@ constructor TExportSection.CreateFromNEFile(InputFile: TStream; ResidentTableOff
           end;
           Exit;
         end;
-        Dec(Ordinal, EntryTable[i].count);
+        Dec(Ordinal, EntryTable[i].Count);
         Inc(i);
       end;
   end;
+
 
 
   procedure ReadNameTable(const TableOffset: Cardinal; var FirstName: string);
@@ -203,12 +204,12 @@ constructor TExportSection.CreateFromNEFile(InputFile: TStream; ResidentTableOff
 
     InputFile.Read(FunNameLength, 1);
     while FunNameLength > 1 do begin
-      SetLength(fFunctions, FunIndex+1);
+      SetLength(fFunctions, FunIndex + 1);
       SetLength(fFunctions[FunIndex].Name, FunNameLength);
       InputFile.Read(fFunctions[FunIndex].Name[1], FunNameLength);
       InputFile.Read(fFunctions[FunIndex].Ordinal, 2);
       FindEntryPoint(fFunctions[FunIndex].Ordinal, fFunctions[FunIndex].Section, fFunctions[FunIndex].CodeSectionOffset);
-      fFunctions[FunIndex].MemOffset:= fFunctions[FunIndex].CodeSectionOffset;
+      fFunctions[FunIndex].MemOffset := fFunctions[FunIndex].CodeSectionOffset;
       InputFile.Read(FunNameLength, 1);
       Inc(FunIndex);
     end;
@@ -239,7 +240,7 @@ begin
   DHF.Write(fFunctionCount, 4);
   for FunctionIndex := 0 to fFunctionCount - 1 do begin
     DHF.Write(fFunctions[FunctionIndex], SizeOf(TExportFunction) - 4);
-    StreamWriteAnsiString(DHF, fFunctions[FunctionIndex].name);
+    StreamWriteAnsiString(DHF, fFunctions[FunctionIndex].Name);
   end;
 end;
 
@@ -254,7 +255,7 @@ begin
   SetLength(fFunctions, fFunctionCount);
   for FunctionIndex := 0 to fFunctionCount - 1 do begin
     DHF.Read(fFunctions[FunctionIndex], SizeOf(TExportFunction) - 4);
-    fFunctions[FunctionIndex].name:= StreamReadAnsiString(DHF);
+    fFunctions[FunctionIndex].Name := StreamReadAnsiString(DHF);
   end;
 end;
 

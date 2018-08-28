@@ -21,7 +21,7 @@ uses
   StdCtrls,
   ExtCtrls,
   Buttons,
-
+  // project units
   procmat,
   myedits,
   StringRes,
@@ -57,7 +57,7 @@ type
 
     procedure Translate;
   private
-    Changing: boolean;
+    Changing: Boolean;
     DataBuffer: Int64;
     Operation: TCalcOperation;
 
@@ -95,22 +95,31 @@ begin
 }
 end;
 
+
+
 procedure TCalculator.EditChange(Sender: TObject);
-var ChangedEdit: TPositiveEdit;
+var
+  ChangedEdit: TPositiveEdit;
 begin
   inherited;
-  ChangedEdit:=(Sender as TPositiveEdit);
+  ChangedEdit := (Sender as TPositiveEdit);
 
-  if ChangedEdit.Text='' then exit;
-  if ChangedEdit.Text='$' then exit;
-  if ChangedEdit.Text='-' then exit;
+  if ChangedEdit.Text = '' then
+    exit;
+  if ChangedEdit.Text = '$' then
+    exit;
+  if ChangedEdit.Text = '-' then
+    exit;
 
-  if Changing then Exit;
-  Changing:=true;
+  if Changing then
+    Exit;
+  Changing := True;
 
-  if DecEdit <> ChangedEdit then DecEdit.AsCardinal:=ChangedEdit.AsCardinal;
+  if DecEdit <> ChangedEdit then
+    DecEdit.AsCardinal := ChangedEdit.AsCardinal;
   Application.ProcessMessages;
-  if HexEdit <> ChangedEdit then HexEdit.AsCardinal:=ChangedEdit.AsCardinal;
+  if HexEdit <> ChangedEdit then
+    HexEdit.AsCardinal := ChangedEdit.AsCardinal;
   Application.ProcessMessages;
 {
   if BinEdit <> ChangedEdit then BinEdit.AsInteger:=ChangedEdit.AsInteger;
@@ -118,26 +127,28 @@ begin
   if OctEdit <> ChangedEdit then OctEdit.AsInteger:=ChangedEdit.AsInteger;
   Application.ProcessMessages;
 }
-  Changing:=false;
+  Changing := False;
 end;
+
+
 
 procedure TCalculator.FormCreate(Sender: TObject);
 begin
-  DecEdit:= TDecimalPositiveEdit.Create(Panel1);
-  DecEdit.Parent:=Panel1;
-  DecEdit.Align:=alClient;
+  DecEdit := TDecimalPositiveEdit.Create(Panel1);
+  DecEdit.Parent := Panel1;
+  DecEdit.Align := alClient;
 //  DecEdit.BaseFormat:=Number;
-  DecEdit.OnChange:=EditChange;
-  DecEdit.OnEnter:=EditEnter;
-  DecEdit.OnKeyDown:=EditKeyDown;
+  DecEdit.OnChange := EditChange;
+  DecEdit.OnEnter := EditEnter;
+  DecEdit.OnKeyDown := EditKeyDown;
 
-  HexEdit:=THexPositiveEdit.Create(Panel2);
-  HexEdit.Parent:=Panel2;
-  HexEdit.Align:=alClient;
+  HexEdit := THexPositiveEdit.Create(Panel2);
+  HexEdit.Parent := Panel2;
+  HexEdit.Align := alClient;
 //  HexEdit.BaseFormat:=Hexadecimal;
-  HexEdit.OnChange:=EditChange;
-  HexEdit.OnEnter:=EditEnter;
-  HexEdit.OnKeyDown:=EditKeyDown;
+  HexEdit.OnChange := EditChange;
+  HexEdit.OnEnter := EditEnter;
+  HexEdit.OnKeyDown := EditKeyDown;
 {
   BinEdit:=TPBBinHexEdit.Create(Panel3);
   BinEdit.Parent:=Panel3;
@@ -155,14 +166,18 @@ begin
   OctEdit.OnEnter:=EditEnter;
   OctEdit.OnKeyDown:=EditKeyDown;
 }
-  DataBuffer:=0;
-  CurrentEdit:=DecEdit;
+  DataBuffer := 0;
+  CurrentEdit := DecEdit;
 end;
+
+
 
 procedure TCalculator.EditEnter(Sender: TObject);
 begin
-  CurrentEdit:=Sender as TPositiveEdit;
+  CurrentEdit := Sender as TPositiveEdit;
 end;
+
+
 
 procedure TCalculator.EqualButtonClick(Sender: TObject);
 begin
@@ -184,6 +199,8 @@ begin
 }
 end;
 
+
+
 procedure TCalculator.PlusButtonClick(Sender: TObject);
 begin
 {
@@ -193,6 +210,8 @@ begin
   CurrentEdit.SelectAll;
 }
 end;
+
+
 
 procedure TCalculator.MinusButtonClick(Sender: TObject);
 begin
@@ -206,41 +225,45 @@ begin
 }
 end;
 
+
+
 procedure TCalculator.ModButtonClick(Sender: TObject);
 begin
-  Operation:=coMod;
+  Operation := coMod;
 //  DataBuffer:=CurrentEdit.AsInteger;
   CurrentEdit.SetFocus;
   CurrentEdit.SelectAll;
 end;
+
+
 
 procedure TCalculator.MulButtonClick(Sender: TObject);
 begin
-  Operation:=coMul;
+  Operation := coMul;
 //  DataBuffer:=CurrentEdit.AsInteger;
   CurrentEdit.SetFocus;
   CurrentEdit.SelectAll;
 end;
+
+
 
 procedure TCalculator.DivButtonClick(Sender: TObject);
 begin
-  Operation:=coDiv;
+  Operation := coDiv;
 //  DataBuffer:=CurrentEdit.AsInteger;
   CurrentEdit.SetFocus;
   CurrentEdit.SelectAll;
 end;
 
+
+
 procedure TCalculator.Translate;
 begin
-  Caption:= Translator.TranslateControl('CalculatorForm', 'Caption');
-  DecimalLabel.Caption:= Translator.TranslateControl('CalculatorForm', 'DecimalLabel');
-  HexadecimalLabel.Caption:= Translator.TranslateControl('CalculatorForm', 'HexadecimalLabel');
-  BinaryLabel.Caption:= Translator.TranslateControl('CalculatorForm', 'BinaryLabel');
-  OctalLabel.Caption:= Translator.TranslateControl('CalculatorForm', 'OctalLabel');
+  Caption := Translator.TranslateControl('CalculatorForm', 'Caption');
+  DecimalLabel.Caption := Translator.TranslateControl('CalculatorForm', 'DecimalLabel');
+  HexadecimalLabel.Caption := Translator.TranslateControl('CalculatorForm', 'HexadecimalLabel');
+  BinaryLabel.Caption := Translator.TranslateControl('CalculatorForm', 'BinaryLabel');
+  OctalLabel.Caption := Translator.TranslateControl('CalculatorForm', 'OctalLabel');
 end;
 
 end.
-
-
-
-

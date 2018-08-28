@@ -4,9 +4,9 @@ interface
 
 uses
   {$IFDEF MSWINDOWS}
-    Windows,
+  Windows,
   {$ELSE}
-    LCLType,
+  LCLType,
   {$ENDIF}
 
   SysUtils, StdCtrls, Classes, StrUtils;
@@ -16,21 +16,21 @@ type
 
   TPositiveEdit = class(TEdit)
   private
-    fValue: cardinal;
-    fMaxValue: cardinal;
-    function GetAsCardinal: cardinal;
-    procedure SetAsCardinal(AValue: cardinal);
+    fValue: Cardinal;
+    fMaxValue: Cardinal;
+    function GetAsCardinal: Cardinal;
+    procedure SetAsCardinal(AValue: Cardinal);
   public
 //    procedure Change(Sender: TObject); virtual; abstract;
-    property AsCardinal: cardinal read GetAsCardinal write SetAsCardinal;
-    property MaxValue: cardinal read fMaxValue write fMaxValue;
+    property AsCardinal: Cardinal read GetAsCardinal write SetAsCardinal;
+    property MaxValue: Cardinal read fMaxValue write fMaxValue;
   end;
 
 
 const
   HEX_PREFIX = '0x';
   HEX_FONT = 'Courier New';
-  HEX_DIGITS = ['0'..'9','A'..'F'];
+  HEX_DIGITS = ['0'..'9', 'A'..'F'];
 
 type
   THexPositiveEdit = class(TPositiveEdit)
@@ -58,18 +58,18 @@ implementation
 
 uses
   Math,
-  StringUtilities
-  ;
+  StringUtilities;
 
 
-function TPositiveEdit.GetAsCardinal: cardinal;
+
+function TPositiveEdit.GetAsCardinal: Cardinal;
 begin
-  result := fValue;
+  Result := fValue;
 end;
 
 
 
-procedure TPositiveEdit.SetAsCardinal(AValue: cardinal);
+procedure TPositiveEdit.SetAsCardinal(AValue: Cardinal);
 begin
   fValue := AValue;
 end;
@@ -135,11 +135,12 @@ begin
 end;
 
 
+
 procedure THexPositiveEdit.Change;
 var
-  CandidateValue: cardinal;
+  CandidateValue: Cardinal;
   CaretPositionAfterChange: Integer;
-  NewCaretPosition: integer;
+  NewCaretPosition: Integer;
 begin
   // During creation Parent is not set => we can not use SelStart
   if Parent = nil then begin
@@ -153,7 +154,7 @@ begin
 
   if Text = HEX_PREFIX then begin
     fValue := 0;
-    NewCaretPosition := 2;      
+    NewCaretPosition := 2;
   end
   else begin
 //    NewCaretPosition := Max(2, SelStart - 1);
@@ -221,7 +222,7 @@ end;
 
 procedure TDecimalPositiveEdit.Change;
 var
-  CandidateValue: cardinal;
+  CandidateValue: Cardinal;
   CaretPositionAfterChange: Integer;
 begin
   if Text <> '' then begin

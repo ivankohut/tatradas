@@ -11,30 +11,31 @@ type
 
   TVersion = class
   private
-    fMajor: integer;
-    fMinor: integer;
-    fFix: integer;
+    fMajor: Integer;
+    fMinor: Integer;
+    fFix: Integer;
   public
     constructor Create(AVersion: string); overload;
-    constructor Create(Maj, Min, Fix: integer); overload;
+    constructor Create(Maj, Min, Fix: Integer); overload;
 
     function Compare(AVersion: string): TValueRelationship; overload;
     function Compare(AVersion: TVersion): TValueRelationship; overload;
 
-    property Major: integer read fMajor;
-    property Minor: integer read fMinor;
-    property Fix: integer read fFix;
+    property Major: Integer read fMajor;
+    property Minor: Integer read fMinor;
+    property Fix: Integer read fFix;
   end;
 
 
 implementation
 
 
-constructor TVersion.Create(Maj, Min, Fix: integer);
+
+constructor TVersion.Create(Maj, Min, Fix: Integer);
 begin
-  fMajor:= Maj;
-  fMinor:= Min;
-  fFix:= Fix;
+  fMajor := Maj;
+  fMinor := Min;
+  fFix := Fix;
 end;
 
 
@@ -53,7 +54,8 @@ begin
 
   // Read major version number
   while Index <= Length(AVersion) do begin
-    if AVersion[Index] = '.' then Break;
+    if AVersion[Index] = '.' then
+      Break;
     MajorVerStr := MajorVerStr + AVersion[Index];
     Inc(Index);
   end;
@@ -62,7 +64,8 @@ begin
 
   // Read minor version number
   while Index <= Length(AVersion) do begin
-    if AVersion[Index] = '.' then Break;
+    if AVersion[Index] = '.' then
+      Break;
     MinorVerStr := MinorVerStr + AVersion[Index];
     Inc(Index);
   end;
@@ -80,10 +83,11 @@ end;
 
 
 function TVersion.Compare(AVersion: string): TValueRelationship;
-var Version: TVersion;
+var
+  Version: TVersion;
 begin
-  Version:= TVersion.Create(AVersion);
-  result:= self.Compare(Version);
+  Version := TVersion.Create(AVersion);
+  Result := self.Compare(Version);
   Version.Free;
 end;
 
@@ -91,11 +95,11 @@ end;
 
 function TVersion.Compare(AVersion: TVersion): TValueRelationship;
 begin
-  result:=CompareValue(AVersion.Major, self.Major);
-  if result = EqualsValue then
-    result:=CompareValue(AVersion.Minor, self.Minor);
-    if result = EqualsValue then
-      result:=CompareValue(AVersion.Fix, self.Fix);
+  Result := CompareValue(AVersion.Major, self.Major);
+  if Result = EqualsValue then
+    Result := CompareValue(AVersion.Minor, self.Minor);
+  if Result = EqualsValue then
+    Result := CompareValue(AVersion.Fix, self.Fix);
 end;
 
 

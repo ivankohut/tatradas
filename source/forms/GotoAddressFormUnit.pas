@@ -3,13 +3,13 @@ unit GotoAddressFormUnit;
 interface
 
 uses
-    Forms, StdCtrls, Controls, ExtCtrls, Dialogs,
-    SysUtils,
-    Classes,
-    INIFiles,
-
-    procmat,
-    myedits;
+  Forms, StdCtrls, Controls, ExtCtrls, Dialogs,
+  SysUtils,
+  Classes,
+  INIFiles,
+  // project units
+  procmat,
+  myedits;
 
 type
   TGoToAddressForm = class(TForm, ITranslatable)
@@ -25,8 +25,8 @@ type
   private
     fMinAddress: Cardinal;
     GotoAddressEdit: THexPositiveEdit;
-    procedure SetMaxAddress(MaxAddress: cardinal);
-    function GetAddress: cardinal;
+    procedure SetMaxAddress(MaxAddress: Cardinal);
+    function GetAddress: Cardinal;
     procedure RefreshOKButtonState;
     procedure GotoAddressEditChange(Sender: TObject);
   public
@@ -46,14 +46,14 @@ uses
 
 {$R *.lfm}
 
-procedure TGoToAddressForm.SetMaxAddress(MaxAddress: cardinal);
+procedure TGoToAddressForm.SetMaxAddress(MaxAddress: Cardinal);
 begin
   GotoAddressEdit.MaxValue := MaxAddress;
 end;
 
 
 
-function TGoToAddressForm.GetAddress: cardinal;
+function TGoToAddressForm.GetAddress: Cardinal;
 begin
   Result := GotoAddressEdit.AsCardinal;
 end;

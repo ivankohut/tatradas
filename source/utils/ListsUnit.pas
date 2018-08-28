@@ -22,6 +22,7 @@ type
 implementation
 
 
+
 constructor TCardinalList.Create;
 begin
   SetLength(fItems, 10);
@@ -38,7 +39,7 @@ end;
 
 
 
-procedure TCardinalList.SetItem(Index: Integer; Value: cardinal);
+procedure TCardinalList.SetItem(Index: Integer; Value: Cardinal);
 begin
   fItems[Index] := Value;
 end;

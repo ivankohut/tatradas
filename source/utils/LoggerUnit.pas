@@ -5,7 +5,6 @@ interface
 uses
   Classes, SysUtils, Contnrs;
 
-
 const
   LoggerTimeStampFormat = 'yyyy-mm-dd hh:nn:ss:zzz';
 
@@ -54,6 +53,7 @@ var
 
 
 implementation
+
 
 
 constructor TLogger.Create;
@@ -114,24 +114,24 @@ end;
 
 procedure TLogger.Log(Level: TLogLevel; Msg: string);
 var
-  ListenerIndex: integer;
+  ListenerIndex: Integer;
   LogMessage, TimeStampStr: string;
 begin
   if Level < fLogLevel then
     Exit;
 
   case Level of
-    llTrace:   LogMessage := 'TRACE - ' + Msg;
-    llDebug:   LogMessage := 'DEBUG - ' + Msg;
-    llInfo:    LogMessage := 'INFO  - ' + Msg;
+    llTrace: LogMessage := 'TRACE - ' + Msg;
+    llDebug: LogMessage := 'DEBUG - ' + Msg;
+    llInfo: LogMessage := 'INFO  - ' + Msg;
     llWarning: LogMessage := 'WARN  - ' + Msg;
-    llError:   LogMessage := 'ERROR - ' + Msg;
-    llFatal:   LogMessage := 'FATAL - ' + Msg;
+    llError: LogMessage := 'ERROR - ' + Msg;
+    llFatal: LogMessage := 'FATAL - ' + Msg;
   end;
   DateTimeToString(TimeStampStr, LoggerTimeStampFormat, Now);
   LogMessage := '[' + TimeStampStr + ']   ' + LogMessage;
 
-  for ListenerIndex:= 0 to fListeners.Count - 1 do
+  for ListenerIndex := 0 to fListeners.Count - 1 do
     (fListeners[ListenerIndex] as TLoggerListener).WriteMessage(LogMessage);
 end;
 
@@ -187,7 +187,7 @@ end;
 
 
 initialization
-  Logger:= TLogger.Create;
+  Logger := TLogger.Create;
 
 finalization
   Logger.Free;

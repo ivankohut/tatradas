@@ -9,7 +9,7 @@ uses
   SysUtils,
   Classes,
   Contnrs,
-
+  // project units
   procmat;
 
 type
@@ -18,14 +18,14 @@ type
     Name: string;
     Offset: Cardinal;
     Size: Cardinal;
-    constructor Create(AName: string; AOffset, ASize: cardinal);
+    constructor Create(AName: string; AOffset, ASize: Cardinal);
   end;
 
   TRegions = class
   private
-    fFileSize: cardinal;
+    fFileSize: Cardinal;
     fRegions: TObjectList;
-    fFinished: boolean;
+    fFinished: Boolean;
     function GetRegion(Index: Integer): TRegion;
     function GetCount: Integer;
   public
@@ -55,7 +55,7 @@ uses
 //******************************************************************************
 
 
-constructor TRegion.Create(AName: string; AOffset, ASize: cardinal);
+constructor TRegion.Create(AName: string; AOffset, ASize: Cardinal);
 begin
   Name := AName;
   Offset := AOffset;
@@ -153,14 +153,14 @@ begin
     Name := StreamReadAnsiString(DHF);
     Offset := DHF.Read(Offset, 4);
     Size := DHF.Read(Size, 4);
-    fRegions.Add(TRegion.Create(Name, Offset, Size))
-  end;          
+    fRegions.Add(TRegion.Create(Name, Offset, Size));
+  end;
   fFinished := True;
 end;
 
 
 
-function TRegions.GetIndexFromOffset(Offset: Cardinal): integer;
+function TRegions.GetIndexFromOffset(Offset: Cardinal): Integer;
 var
   RegionIndex: Integer;
 begin
@@ -172,10 +172,10 @@ begin
   if Offset < fFileSize then begin
     while Offset < (fRegions[RegionIndex] as TRegion).Offset do
       Dec(RegionIndex);
-    if Offset <  (fRegions[RegionIndex] as TRegion).Offset + (fRegions[RegionIndex] as TRegion).Size then
+    if Offset < (fRegions[RegionIndex] as TRegion).Offset + (fRegions[RegionIndex] as TRegion).Size then
       Result := RegionIndex
     else
-      Result := -1
+      Result := -1;
   end
   else
     raise EIllegalState.Create('Offset higher than file size');

@@ -13,7 +13,7 @@ uses
   StdCtrls,
   ComCtrls,
   ExtCtrls,
-
+  // project units
   procmat,
   SectionUnit,
   TabFrameTemplateUnit,
@@ -104,13 +104,13 @@ uses
 constructor TFileTabFrame.Create(AOwner: TComponent; aExecFile: TExecutableFile);
 begin
   inherited Create(AOwner);
-  Caption:= 'File info';
+  Caption := 'File info';
   ObjectListView.Columns.Clear;
 
   // Standard ExecFile file information (FileOverviewGroupBox subitems)
-  FileNameEdit.Text:= aExecFile.filename;
-  FullPathEdit.Text:= aExecFile.fullpath;
-  FileSizeEdit.Text:= IntToStr(aExecFile.FileSize);
+  FileNameEdit.Text := aExecFile.filename;
+  FullPathEdit.Text := aExecFile.fullpath;
+  FileSizeEdit.Text := IntToStr(aExecFile.FileSize);
 end;
 
 
@@ -119,11 +119,11 @@ procedure TFileTabFrame.AddAdvancedInfo(InfoName, InfoValue: string);
 begin
   with AdvancedInfoGrid do begin
     // Increase number of rows only if we add non-first pair of information (there always one row in grid in the beginning)
-    if AdvancedInfoGrid.Cells[0,0] <> '' then
+    if AdvancedInfoGrid.Cells[0, 0] <> '' then
       RowCount := RowCount + 1;
 
-    Cells[0, RowCount - 1]:= InfoName;
-    Cells[1, RowCount - 1]:= InfoValue;
+    Cells[0, RowCount - 1] := InfoName;
+    Cells[1, RowCount - 1] := InfoValue;
   end;
 end;
 
@@ -131,24 +131,24 @@ end;
 
 procedure TFileTabFrame.Translate;
 begin
-  (Parent as TTabSheet).Caption:= Translator.TranslateControl('File','Caption');
+  (Parent as TTabSheet).Caption := Translator.TranslateControl('File', 'Caption');
 
   // Translate FileOverviewGroupBox and its subitems
-  FileOverviewGroupBox.Caption:=Translator.TranslateControl('File','FileOverview');
-  FilenameLabel.Caption:=Translator.TranslateControl('File','Filename');
-  FilesizeLabel.Caption:=Translator.TranslateControl('File','Filesize');
-  FileformatLabel.Caption:=Translator.TranslateControl('File','Fileformat');
-  FullpathLabel.Caption:=Translator.TranslateControl('File','Fullpath');
-  BytesLabel.Caption:=Translator.TranslateControl('File','Bytes');
+  FileOverviewGroupBox.Caption := Translator.TranslateControl('File', 'FileOverview');
+  FilenameLabel.Caption := Translator.TranslateControl('File', 'Filename');
+  FilesizeLabel.Caption := Translator.TranslateControl('File', 'Filesize');
+  FileformatLabel.Caption := Translator.TranslateControl('File', 'Fileformat');
+  FullpathLabel.Caption := Translator.TranslateControl('File', 'Fullpath');
+  BytesLabel.Caption := Translator.TranslateControl('File', 'Bytes');
 
-  MoreInfoLabel.Caption:= Translator.TranslateControl('File', 'MoreInformation');
+  MoreInfoLabel.Caption := Translator.TranslateControl('File', 'MoreInformation');
 end;
 
 
 
 function TFileTabFrame.GetSection: TSection;
 begin
-  result:=nil;
+  Result := nil;
 end;
 
 
@@ -156,8 +156,8 @@ end;
 procedure TFileTabFrame.HideAddvancedInfoPanel;
 begin
   // prerobit, nefunguje dobre
-  AdvancedInfoPanel.Align:= alNone;
-  AdvancedInfoPanel.Width:= 0;
+  AdvancedInfoPanel.Align := alNone;
+  AdvancedInfoPanel.Width := 0;
 end;
 
 
@@ -169,8 +169,8 @@ end;
 constructor TCOMFileTabFrame.Create(AOwner: TComponent; aExecFile: TExecutableFile);
 begin
   inherited;
-  FileFormatEdit.Text:= fdCOM;
-  ObjectListView.Visible:= false;
+  FileFormatEdit.Text := fdCOM;
+  ObjectListView.Visible := False;
   HideAddvancedInfoPanel;
 end;
 
@@ -183,12 +183,12 @@ end;
 constructor TMZFileTabFrame.Create(AOwner: TComponent; aExecFile: TExecutableFile);
 var
   ExecFile: TMZFile;
-  RelocIndex: integer;
+  RelocIndex: Integer;
 begin
   inherited;
-  ExecFile:= aExecFile as TMZFile;
-  FileFormatEdit.Text:= fdMZ;
-  ObjectListView.Visible:= false;
+  ExecFile := aExecFile as TMZFile;
+  FileFormatEdit.Text := fdMZ;
+  ObjectListView.Visible := False;
 
   with ExecFile do begin
     AddAdvancedInfo('Page remainder:', IntToHex(Header.PageRemainder, 4));
@@ -204,7 +204,7 @@ begin
 
     // Relocations
     AddAdvancedInfo('', '');
-    for RelocIndex:= 0 to RelocationsCount - 1 do
+    for RelocIndex := 0 to RelocationsCount - 1 do
       AddAdvancedInfo('Relocation ' + IntToStr(RelocIndex), IntToHex(Relocations[RelocIndex].Segment, 4) + ':' + IntToHex(Relocations[RelocIndex].Offset, 4));
   end;
 end;
@@ -218,36 +218,36 @@ end;
 constructor TNEFileTabFrame.Create(AOwner: TComponent; aExecFile: TExecutableFile);
 var
   ExecFile: TNEFile;
-  RowIndex, ColIndex: integer;
+  RowIndex, ColIndex: Integer;
   ListItem: TListItem;
   ListColumn: TListColumn;
 begin
   inherited;
-  ExecFile:= aExecFile as TNEFile;
-  FileFormatEdit.Text:= fdNE;
+  ExecFile := aExecFile as TNEFile;
+  FileFormatEdit.Text := fdNE;
 
   // Segment table
 
   // Prepare ObjectListView's columns
-  for ColIndex:= 0 to 4 do begin
-    ListColumn:= ObjectListView.Columns.Add;
+  for ColIndex := 0 to 4 do begin
+    ListColumn := ObjectListView.Columns.Add;
     if ColIndex = 0 then
-      ListColumn.Width:= 50
+      ListColumn.Width := 50
     else
-      ListColumn.Width:= 100;
+      ListColumn.Width := 100;
   end;
   // Fill data
-  for RowIndex:= 0 to ExecFile.Header.SegmentTableEntryNumber - 1 do begin
-    ListItem:= ObjectListView.Items.Add;
-    ListItem.Caption:= IntToStr(RowIndex + 1) + '.';
+  for RowIndex := 0 to ExecFile.Header.SegmentTableEntryNumber - 1 do begin
+    ListItem := ObjectListView.Items.Add;
+    ListItem.Caption := IntToStr(RowIndex + 1) + '.';
     with ExecFile.SegmentTable[RowIndex] do begin
-      ListItem.SubItems.Add(IntToHex(Offset*16, 8));
+      ListItem.SubItems.Add(IntToHex(Offset * 16, 8));
       ListItem.SubItems.Add(IntToHex(Size, 4));
       ListItem.SubItems.Add(IntToHex(AllocationSize, 4));
       ListItem.SubItems.Add(IntToHex(Flags, 4));
     end;
   end;
-  ObjectListView.Visible:= true;
+  ObjectListView.Visible := True;
 
   // Advanced information
   with ExecFile do begin
@@ -263,15 +263,16 @@ begin
 end;
 
 
+
 procedure TNEFileTabFrame.Translate;
 begin
   inherited;
   // ObjectListView column captions
-  ObjectListView.Columns[0].Caption:= Translator.TranslateControl('File','SectionIndex');
-  ObjectListView.Columns[1].Caption:= Translator.TranslateControl('File','NESectionOffset');
-  ObjectListView.Columns[2].Caption:= Translator.TranslateControl('File','NESectionSize');
-  ObjectListView.Columns[3].Caption:= Translator.TranslateControl('File','NESectionAllocationSize');
-  ObjectListView.Columns[4].Caption:= Translator.TranslateControl('File','NESectionFlags');
+  ObjectListView.Columns[0].Caption := Translator.TranslateControl('File', 'SectionIndex');
+  ObjectListView.Columns[1].Caption := Translator.TranslateControl('File', 'NESectionOffset');
+  ObjectListView.Columns[2].Caption := Translator.TranslateControl('File', 'NESectionSize');
+  ObjectListView.Columns[3].Caption := Translator.TranslateControl('File', 'NESectionAllocationSize');
+  ObjectListView.Columns[4].Caption := Translator.TranslateControl('File', 'NESectionFlags');
 end;
 
 //******************************************************************************
@@ -281,32 +282,32 @@ end;
 
 constructor TPEFileTabFrame.Create(AOwner: TComponent; aExecFile: TExecutableFile);
 var
-  RowIndex, ColIndex: integer;
+  RowIndex, ColIndex: Integer;
   ListItem: TListItem;
   ExecFile: TPEFile;
   ListColumn: TListColumn;
   CPUTypeStr: string;
 begin
   inherited Create(AOwner, aExecFile);
-  ExecFile:= aExecFile as TPEFile;
-  FileFormatEdit.Text:= fdPE;
+  ExecFile := aExecFile as TPEFile;
+  FileFormatEdit.Text := fdPE;
 
 
   // Object table
 
   // Prepare ObjectListView's columns
   ObjectListView.Columns.Clear;
-  for ColIndex:= 0 to 7 do begin
-    ListColumn:= ObjectListView.Columns.Add;
+  for ColIndex := 0 to 7 do begin
+    ListColumn := ObjectListView.Columns.Add;
     if ColIndex = 0 then
-      ListColumn.Width:= 50
+      ListColumn.Width := 50
     else
-      ListColumn.Width:= 100;
+      ListColumn.Width := 100;
   end;
   // Fill data
-  for RowIndex:=0 to ExecFile.Header.ObjectCount - 1 do begin
-    ListItem:= ObjectListView.Items.Add;
-    ListItem.Caption:= IntToStr(RowIndex + 1) + '.';
+  for RowIndex := 0 to ExecFile.Header.ObjectCount - 1 do begin
+    ListItem := ObjectListView.Items.Add;
+    ListItem.Caption := IntToStr(RowIndex + 1) + '.';
     with ExecFile.ObjectTable[RowIndex] do begin
       ListItem.SubItems.Add(Name);
       ListItem.SubItems.Add(IntToHex(Offset, 8));
@@ -317,7 +318,7 @@ begin
       ListItem.SubItems.Add(IntToHex(Flags, 8));
     end;
   end;
-  ObjectListView.Visible:= true;
+  ObjectListView.Visible := True;
 
   // Advanced information
   with ExecFile do begin
@@ -348,14 +349,14 @@ procedure TPEFileTabFrame.Translate;
 begin
   inherited;
   // ObjectListView column captions
-  ObjectListView.Columns[0].Caption:= Translator.TranslateControl('File','SectionIndex');
-  ObjectListView.Columns[1].Caption:= Translator.TranslateControl('File','PESectionName');
-  ObjectListView.Columns[2].Caption:= Translator.TranslateControl('File','PESectionFileOffset');
-  ObjectListView.Columns[3].Caption:= Translator.TranslateControl('File','PESectionFileSize');
-  ObjectListView.Columns[4].Caption:= Translator.TranslateControl('File','PESectionRVA');
-  ObjectListView.Columns[5].Caption:= Translator.TranslateControl('File','PESectionMemAddress');
-  ObjectListView.Columns[6].Caption:= Translator.TranslateControl('File','PESectionMemSize');
-  ObjectListView.Columns[7].Caption:= Translator.TranslateControl('File','PESectionFlags');
+  ObjectListView.Columns[0].Caption := Translator.TranslateControl('File', 'SectionIndex');
+  ObjectListView.Columns[1].Caption := Translator.TranslateControl('File', 'PESectionName');
+  ObjectListView.Columns[2].Caption := Translator.TranslateControl('File', 'PESectionFileOffset');
+  ObjectListView.Columns[3].Caption := Translator.TranslateControl('File', 'PESectionFileSize');
+  ObjectListView.Columns[4].Caption := Translator.TranslateControl('File', 'PESectionRVA');
+  ObjectListView.Columns[5].Caption := Translator.TranslateControl('File', 'PESectionMemAddress');
+  ObjectListView.Columns[6].Caption := Translator.TranslateControl('File', 'PESectionMemSize');
+  ObjectListView.Columns[7].Caption := Translator.TranslateControl('File', 'PESectionFlags');
 
 end;
 
@@ -368,9 +369,9 @@ end;
 constructor TELFFileTabFrame.Create(AOwner: TComponent; aExecFile: TExecutableFile);
 begin
   inherited;
-  FileFormatEdit.Text:= fdELF;
-  ObjectListView.Visible:= false;
-  HideAddvancedInfoPanel
+  FileFormatEdit.Text := fdELF;
+  ObjectListView.Visible := False;
+  HideAddvancedInfoPanel;
 end;
 
 
@@ -382,9 +383,9 @@ end;
 constructor TCustomFileTabFrame.Create(AOwner: TComponent; aExecFile: TExecutableFile);
 begin
   inherited;
-  FileFormatEdit.Text:= fdCustom;
+  FileFormatEdit.Text := fdCustom;
 
-  ObjectListView.Visible:= false;
+  ObjectListView.Visible := False;
 
   with aExecFile do begin
     AddAdvancedInfo('Code section offset', IntToHex((Sections[0] as TCodeSection).FileOffset, 8));
@@ -398,15 +399,12 @@ begin
 end;
 
 
+
 procedure TFileTabFrame.AdvancedInfoPanelResize(Sender: TObject);
 begin
   inherited;
-  AdvancedInfoGrid.ColWidths[0]:= AdvancedInfoGrid.Width div 2;
-  AdvancedInfoGrid.ColWidths[1]:= AdvancedInfoGrid.Width div 2;
+  AdvancedInfoGrid.ColWidths[0] := AdvancedInfoGrid.Width div 2;
+  AdvancedInfoGrid.ColWidths[1] := AdvancedInfoGrid.Width div 2;
 end;
 
 end.
-
-
-
-

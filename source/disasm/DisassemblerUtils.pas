@@ -14,11 +14,11 @@ implementation
 uses
   SysUtils;
 
-
 type
   TArrayOfByte = array of Byte;
 
-  
+
+
 function DataToHex(var Data; Count: Integer): string;
 var
   DataIndex: Integer;
@@ -57,7 +57,7 @@ begin
   if AValue <= 127 then
     Result := '+0x' + IntToHex(AValue, 2)
   else
-    Result := '-0x' + IntToHex(Abs(Shortint(AValue)), 2);
+    Result := '-0x' + IntToHex(Abs(ShortInt(AValue)), 2);
 end;
 
 

@@ -5,7 +5,7 @@ interface
 uses
   Classes,
   SysUtils,
-
+  // project units
   procmat,
   DisassemblerTypes,
   CodeSectionUnit,
@@ -89,7 +89,7 @@ type
 implementation
 
 uses
-  GlobalsUnit, 
+  GlobalsUnit,
   Exporters;
 
 

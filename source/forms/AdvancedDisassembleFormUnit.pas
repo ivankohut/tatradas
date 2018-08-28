@@ -3,15 +3,15 @@ unit AdvancedDisassembleFormUnit;
 interface
 
 uses
-  Controls, Forms, Dialogs, StdCtrls,
+  Controls, Forms, Dialogs, StdCtrls, ExtCtrls,
   SysUtils,
   Classes,
-  myedits,
   IniFiles,
-
+  // project units
+  myedits,
   ExceptionsUnit,
   procmat,
-  TranslatorUnit, ExtCtrls;
+  TranslatorUnit;
 
 type
   TAdvancedDisassembleForm = class(TForm, ITranslatable)
@@ -128,7 +128,7 @@ begin
   BytesBinHexEdit := TDecimalPositiveEdit.Create(self);
   BytesBinHexEdit.Parent := PanelForBytesCountEdit;
   BytesBinHexEdit.Align := alClient;
-  BytesBinHexEdit.Enabled := false;
+  BytesBinHexEdit.Enabled := False;
   BytesBinHexEdit.MaxValue := $FFFFFFFF;
 
   MaxAddressBinHexEdit := THexPositiveEdit.Create(self);

@@ -5,11 +5,10 @@ interface
 uses
   SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, StdCtrls,
-
+  // project units
   procmat,
   StringRes,
   myedits, ExtCtrls;
-
 
 type
   TGotoLineForm = class(TForm, ITranslatable)
@@ -38,7 +37,7 @@ var
 implementation
 
 uses
-  TranslatorUnit; 
+  TranslatorUnit;
 
 {$R *.lfm}
 

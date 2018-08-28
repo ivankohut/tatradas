@@ -10,9 +10,8 @@ uses
   Classes,
   IniFiles,
   StrUtils,
-
   MPHexEditor,
-
+  // project units
   procmat,
   StringUtilities,
   StringRes,
@@ -73,7 +72,7 @@ begin
     HexEdit.LoadFromFile(aFileName);
   except
     on EFOpenError do
-      DisplayMessage(CouldNotOpenReadWriteFileStr, mtError, [mbOk]);
+      DisplayMessage(CouldNotOpenReadWriteFileStr, mtError, [mbOK]);
     else
       raise;
   end;
@@ -107,20 +106,20 @@ begin
   UnsignedDwordDataLabel.Caption := IntToHex(Buffer, 8);
   SignedByteDataLabel.Caption := IntToSignedHex(ShortInt(Buffer), 2);
   SignedWordDataLabel.Caption := IntToSignedHex(SmallInt(Buffer), 4);
-  SignedDwordDataLabel.Caption := IntToSignedHex(integer(Buffer), 8);
+  SignedDwordDataLabel.Caption := IntToSignedHex(Integer(Buffer), 8);
   StatusBar1.Panels[0].Text := FileOffsetStr + ': ' + HexEdit.GetOffsetString(HexEdit.GetCursorPos);
   if MainForm.ExecFile <> nil then
     if MainForm.ExecFile.FullPath = HexEdit.FileName then begin
-       RegionIndex := MainForm.ExecFile.Regions.GetIndexFromOffset(HexEdit.GetCursorPos);
-       if RegionIndex <> -1 then begin
-         RegionOffset:= cardinal(HexEdit.GetCursorPos) - MainForm.ExecFile.Regions[RegionIndex].Offset;
-         StatusBar1.Panels[1].Text := SectionStr + ': ' + MainForm.ExecFile.Regions[RegionIndex].Name;
-         StatusBar1.Panels[2].Text := SectionOffsetStr + ': ' + IntToHex(RegionOffset, 8);
-       end
-       else begin
-         StatusBar1.Panels[1].Text := SectionStr + ': ' + UnusedSpaceStr;
-         StatusBar1.Panels[2].Text := SectionOffsetStr + ': ';
-       end;
+      RegionIndex := MainForm.ExecFile.Regions.GetIndexFromOffset(HexEdit.GetCursorPos);
+      if RegionIndex <> -1 then begin
+        RegionOffset := Cardinal(HexEdit.GetCursorPos) - MainForm.ExecFile.Regions[RegionIndex].Offset;
+        StatusBar1.Panels[1].Text := SectionStr + ': ' + MainForm.ExecFile.Regions[RegionIndex].Name;
+        StatusBar1.Panels[2].Text := SectionOffsetStr + ': ' + IntToHex(RegionOffset, 8);
+      end
+      else begin
+        StatusBar1.Panels[1].Text := SectionStr + ': ' + UnusedSpaceStr;
+        StatusBar1.Panels[2].Text := SectionOffsetStr + ': ';
+      end;
     end;
 end;
 
@@ -182,7 +181,6 @@ begin
   HexEdit.Free;
   HexEdit := nil;
 end;
-
 
 
 

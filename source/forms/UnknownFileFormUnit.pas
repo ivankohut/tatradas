@@ -1,4 +1,5 @@
 unit UnknownFileFormUnit;
+
 {
   Formular na zadanie potrebnych informacii o subore neznameho formatu.
   Uzivatel musi zadat zaciatocnu adresu v subore, na ktorej moze neskor zacat
@@ -11,8 +12,8 @@ uses
   ComCtrls, StdCtrls, ExtCtrls, Forms, Dialogs, Controls,
   SysUtils,
   Classes,
-  INIFiles,
-
+  IniFiles,
+  // project units
   procmat,
   CustomFileUnit,
   StringRes,
@@ -52,14 +53,14 @@ type
     EntrypointEdit: THexPositiveEdit;
     SizeEdit: THexPositiveEdit;
 
-    StartOffset: cardinal;
-    Entrypoint: cardinal;
-    Size: cardinal;
-    Bit32: boolean;
+    StartOffset: Cardinal;
+    Entrypoint: Cardinal;
+    Size: Cardinal;
+    Bit32: Boolean;
     function GetParameters: TCustomFileParameters;
   public
     FileName: string;
-    FileSize: cardinal;
+    FileSize: Cardinal;
     procedure Translate;
     property Parameters: TCustomFileParameters read GetParameters;
   end;
@@ -81,35 +82,41 @@ uses MessageFormUnit;
   16 alebo 32 bitovu interpretaciu suboru.
 }
 procedure TUnknownFileFormatForm.OKButtonClick(Sender: TObject);
-var error: string;
+var
+  error: string;
 begin
-  StartOffset:=StartOffsetEdit.AsCardinal;
-  if (StartOffset>FileSize) then error:= InvalidStartOffsetStr
+  StartOffset := StartOffsetEdit.AsCardinal;
+  if (StartOffset > FileSize) then
+    error := InvalidStartOffsetStr
   else begin
-    Size:=SizeEdit.AsCardinal;
+    Size := SizeEdit.AsCardinal;
     if SizeRadioButton.Checked then       // velkost kodovej sekcie
-      if (Size > (FileSize - StartOffset)) then  error:=InvalidSizeStr
+      if (Size > (FileSize - StartOffset)) then
+        error := InvalidSizeStr
       else begin
-        EntryPoint:=EntrypointEdit.AsCardinal;
-        if (Entrypoint < StartOffset) or (Entrypoint > (StartOffset+Size)) then error:=InvalidEntrypointStr
+        EntryPoint := EntrypointEdit.AsCardinal;
+        if (Entrypoint < StartOffset) or (Entrypoint > (StartOffset + Size)) then
+          error := InvalidEntrypointStr
         else begin
-          Bit32:=Bit32RadioButton.Checked;
-          ModalResult:=mrOK;
+          Bit32 := Bit32RadioButton.Checked;
+          ModalResult := mrOK;
           Exit;
         end;
       end
     else                                 // koniec kodovej sekcie
-      if (Size > FileSize) then  error:=InvalidSizeStr
+    if (Size > FileSize) then
+      error := InvalidSizeStr
+    else begin
+      EntryPoint := EntrypointEdit.AsCardinal;
+      if (Entrypoint < StartOffset) or (Entrypoint > Size) then
+        error := InvalidEntrypointStr
       else begin
-        EntryPoint:=EntrypointEdit.AsCardinal;
-        if (Entrypoint < StartOffset) or (Entrypoint > Size) then error:=InvalidEntrypointStr
-        else begin
-          Size:=Size-StartOffset;
-          Bit32:=Bit32RadioButton.Checked;
-          ModalResult:=mrOK;
-          Exit;
-        end;
+        Size := Size - StartOffset;
+        Bit32 := Bit32RadioButton.Checked;
+        ModalResult := mrOK;
+        Exit;
       end;
+    end;
   end;
   DisplayMessage(error, mtWarning, [mbOK]);
   StartOffsetEdit.SetFocus;
@@ -119,16 +126,17 @@ end;
   Po otvoreni formularu sa nastavi focus na komponent sluziaci na zadanie
   zaciatocnej adresy pre disassemblovanie
 }
+
 procedure TUnknownFileFormatForm.FormActivate(Sender: TObject);
 begin
-  FileNameDataLabel.Left:=FileNameLabel.Left + FileNameLabel.Width + 10;
-  FileSizeDataLabel.Left:=FileSizeLabel.Left + FileSizeLabel.Width + 10;
-  FileNameDataLabel.Caption:=FileName;
-  FileSizeDataLabel.Caption:=IntToHex(FileSize,8);
-  StartOffsetEdit.MaxValue:=FileSize;
-  EntrypointEdit.MaxValue:=FileSize;
-  SizeEdit.MaxValue:=Filesize;
-  SizeEdit.AsCardinal:=FileSize;
+  FileNameDataLabel.Left := FileNameLabel.Left + FileNameLabel.Width + 10;
+  FileSizeDataLabel.Left := FileSizeLabel.Left + FileSizeLabel.Width + 10;
+  FileNameDataLabel.Caption := FileName;
+  FileSizeDataLabel.Caption := IntToHex(FileSize, 8);
+  StartOffsetEdit.MaxValue := FileSize;
+  EntrypointEdit.MaxValue := FileSize;
+  SizeEdit.MaxValue := Filesize;
+  SizeEdit.AsCardinal := FileSize;
   StartOffsetEdit.SetFocus;
 end;
 
@@ -152,6 +160,7 @@ begin
   HexNoteLabel.Caption := Translator.TranslateControl('UnknownFileFormatForm', 'HexNoteLabel');
   CancelButton.Caption := Translator.TranslateControl('Common', 'CancelButton');
 end;
+
 
 
 procedure TUnknownFileFormatForm.FormCreate(Sender: TObject);
