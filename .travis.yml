@@ -9,10 +9,14 @@ env:
 - LAZ_VER=1.8.4
 
 install:
+# Upgrade of binutils package because FPC installed by travis-lazarus script
+# requires binutils (linker - /usr/bin/ld) newer than 2.24 available in Ubuntu 14.04 (trusty)
 - sudo add-apt-repository ppa:jonathonf/binutils -y
 - sudo apt-get update -y
 - sudo apt-get install binutils -y
+# Installation of FPC & Lazarus, see https://github.com/nielsAD/travis-lazarus
 - ./travis-lazarus/.travis.install.py
 
 script:
-- lazbuild source/TatraDAS.lpi
+# Build & test
+- ./build.sh

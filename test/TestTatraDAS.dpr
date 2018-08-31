@@ -110,7 +110,7 @@ uses
   ResourceSectionUnit in '..\source\sections\ResourceSectionUnit.pas';
 
 
-{$R *.res}
+//{$R *.res}
 
 {$IFDEF FPC}
 type
