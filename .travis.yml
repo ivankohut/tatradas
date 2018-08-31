@@ -1,6 +1,6 @@
 language: generic
 sudo: required
-dist: xenial
+dist: trusty
 
 os:
 - linux
@@ -8,7 +8,11 @@ os:
 env:
 - LAZ_VER=1.8.4
 
-install: ./travis-lazarus/.travis.install.py
+install:
+- sudo add-apt-repository ppa:jonathonf/binutils -y
+- sudo apt-get update -y
+- sudo apt-get install binutils -y
+- ./travis-lazarus/.travis.install.py
 
 script:
 - lazbuild source/TatraDAS.lpi
