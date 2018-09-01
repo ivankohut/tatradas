@@ -436,7 +436,7 @@ begin
   ImageList := TImageList.Create(Panel);
 
 //  ImageList.ResourceLoad(rtBitmap,'open1',clWhite);
-  ImageList.GetResource(rtIcon, 'dir2', 16, [lrDefaultSize], clWhite);
+//  ImageList.GetResource(rtIcon, 'dir2', 16, [lrDefaultSize], clWhite);
 //  iii:=ticon.Create;
 
   Tree := TTreeView.Create(Panel);

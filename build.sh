@@ -28,7 +28,7 @@ lazbuild source/TatraDAS.lpi
 # Build unit tests project
 echo "Building unit tests..."
 mkdir -p target/test
-(cd test && fpc -Sd -FE"../target/test" -O3 -vm3175,3177 TestTatraDAS.dpr)
+(cd test && fpc -Sd -Fi"../source" -FE"../target/test" -O3 -vm3175,3177 TestTatraDAS.dpr)
 
 # Run unit tests
 echo "Running unit tests..."

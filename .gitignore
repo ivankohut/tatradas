@@ -2,3 +2,5 @@
 **/backup
 /.idea
 *.iml
+*.lps
+*.res
