@@ -4,7 +4,7 @@ interface
 
 uses
   SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls, FileUtil, LResources;
+  Dialogs, StdCtrls, FileUtil;
 
 type
   TMessageForm = class(TForm)

@@ -8,7 +8,6 @@ uses
   Classes,
   IniFiles,
   // project units
-  LResources,
   procmat,
   TranslatorUnit;
 

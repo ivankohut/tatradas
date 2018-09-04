@@ -3,17 +3,7 @@ program TatraDAS;
 {$INCLUDE 'delver.inc'}
 
 {%File 'TatraDASHighlighter.msg'}
-{%File 'res\tatradas.rc'}
-
-{$IFDEF LCL}
-  {$IFDEF MSWINDOWS}
-    {$R 'res\tatradas.res' 'res\tatradas.rc'}
-  {$ENDIF}
-{$ENDIF}
-
-{$IFDEF LCL}
-  {$DEFINE GUI}
-{$ENDIF}
+{%File 'TatraDAS.rc'}
 
 uses
   {$IFDEF FPC}
@@ -28,7 +18,6 @@ uses
 
   {$IFDEF GUI}
   Interfaces, // this includes the LCL widgetset
-  LResources,
   Forms,
   Dialogs,
   {$ENDIF}
@@ -119,10 +108,10 @@ uses
 
 {$IFDEF GUI}
 
-//{$IFDEF WINDOWS}{$R TatraDAS.rc}{$ENDIF}
+{$R images.rc}
+{$R TatraDAS.res}
 
 begin
-//  {$I TatraDAS.lrs}
   Application.Initialize;
 //  Application.Icon.Handle := LoadIcon(hinstance, 'mainicon');
   Application.CreateForm(TMainForm, MainForm);

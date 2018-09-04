@@ -1,3 +1,6 @@
+- images.rc contains platform specific separator character
+
+
 TO DO list (TatraDAS)
 
 3.x
