@@ -59,7 +59,7 @@ const
   CopyrightStr = 'Ivan Kohut (c) 2009';
   DASFileFirstLine = ';DisASsembled file, Original file: %s  ' + TatraDASFullNameVersion + ', ' + CopyrightStr;
   DASFileExtension = '.das';
-
+  TatraDASWebSiteURL = 'http://tatradas.sourceforge.net/';
   MaxProgressNameLength = 25;
 
 
@@ -171,7 +171,7 @@ type
   TDisplayMessageProc = procedure(const AMessage: string);
 
 procedure ProcessException(E: Exception; DisplayMessageProc: TDisplayMessageProc);
-
+function GetCompilerNameAndVersion: string;
 
 implementation
 
@@ -333,6 +333,23 @@ begin
 
   if ErrorMessage <> '' then
     DisplayMessageProc(ErrorMessage);
+end;
+
+
+
+function GetCompilerNameAndVersion: string;
+var
+  Name: string;
+  Version: string;
+begin
+  {$IFDEF FPC}
+  Name := 'Free Pascal Compiler';
+  Version := {$I %FPCVERSION%};
+  {$ELSE}
+  Name := 'Delphi Compiler';
+  Version := CompilerVersion;
+  {$ENDIF}
+  Result := Name + ' ver. ' + Version;
 end;
 
 

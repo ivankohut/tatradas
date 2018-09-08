@@ -5,7 +5,6 @@ interface
 uses
   Classes, SysUtils, IniFiles,
   Forms, ExtCtrls, StdCtrls, Controls, Graphics, ActnList,
-//  ExtActns,
   // project units
   procmat,
   TranslatorUnit;
@@ -18,8 +17,6 @@ type
     LicenseLabel: TLabel;
     OKButton: TButton;
     ProgrammingLabel: TLabel;
-    ActionList1: TActionList;
-//    BrowseURL1: TBrowseURL;
     Panel2: TPanel;
     Image1: TImage;
     Panel3: TPanel;
@@ -46,7 +43,7 @@ var
 
 implementation
 
-uses MainFormUnit;
+uses LCLIntf;
 
 {$R *.lfm}
 
@@ -73,7 +70,7 @@ end;
 
 procedure TAboutBox.URLLabelClick(Sender: TObject);
 begin
-  ActionList1.Actions[0].Execute;
+  OpenURL(URLLabel.Caption);
 end;
 
 
@@ -101,13 +98,9 @@ end;
 
 
 procedure TAboutBox.FormCreate(Sender: TObject);
-var
-  DecSepar: Char;
 begin
-  DecSepar := DecimalSeparator;
-  DecimalSeparator := '.';
-//  CompilerDataLabel.Caption := CompilerDataLabel.Caption + ' ' + FloatToStrF(CompilerVersion, ffFixed, 5, 1);
-  DecimalSeparator := DecSepar;
+  CompilerDataLabel.Caption := GetCompilerNameAndVersion;
+  URLLabel.Caption := TatraDASWebSiteURL;
 end;
 
 

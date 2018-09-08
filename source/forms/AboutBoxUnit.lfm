@@ -1,165 +1,184 @@
 object AboutBox: TAboutBox
   Left = 438
-  Top = 142
+  Height = 381
+  Top = 140
+  Width = 239
   BorderStyle = bsDialog
   Caption = 'About'
-  ClientHeight = 448
-  ClientWidth = 225
+  ClientHeight = 381
+  ClientWidth = 239
   Color = clBtnFace
-  Font.Charset = DEFAULT_CHARSET
+  DesignTimePPI = 94
   Font.Color = clWindowText
   Font.Height = -11
   Font.Name = 'MS Sans Serif'
-  Font.Style = []
-  OldCreateOrder = True
-  Position = poScreenCenter
   OnActivate = FormActivate
   OnCreate = FormCreate
-  PixelsPerInch = 96
-
+  Position = poScreenCenter
+  LCLVersion = '1.8.2.0'
   object Panel1: TPanel
     Left = 8
+    Height = 187
     Top = 8
-    Width = 209
-    Height = 241
+    Width = 223
+    Anchors = [akTop, akLeft, akRight]
     BevelInner = bvRaised
     BevelOuter = bvLowered
-    ParentColor = True
+    ClientHeight = 187
+    ClientWidth = 223
     TabOrder = 0
     object ProductName: TLabel
-      Left = 5
-      Top = 10
-      Width = 200
-      Height = 20
+      Left = 2
+      Height = 19
+      Top = 2
+      Width = 219
+      Align = alTop
+      Alignment = taCenter
       Caption = 'TatraDAS disassembler'
-      Font.Charset = DEFAULT_CHARSET
       Font.Color = clActiveCaption
       Font.Height = -16
       Font.Name = 'MS Sans Serif'
       Font.Style = [fsBold]
+      ParentColor = False
       ParentFont = False
     end
     object VersionLabel: TLabel
-      Left = 26
-      Top = 48
-      Width = 80
-      Height = 13
+      Left = 2
+      Height = 14
+      Top = 21
+      Width = 219
+      Align = alTop
       Alignment = taCenter
       Caption = 'Version: 2.9.4'
-      Font.Charset = DEFAULT_CHARSET
       Font.Color = clGreen
       Font.Height = -11
       Font.Name = 'MS Sans Serif'
       Font.Style = [fsBold]
-      ParentFont = False
       Layout = tlCenter
+      ParentColor = False
+      ParentFont = False
     end
     object LicenseLabel: TLabel
-      Left = 16
-      Top = 160
-      Width = 46
-      Height = 13
+      Left = 13
+      Height = 14
+      Top = 112
+      Width = 54
       Caption = 'License:  '
-      Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -11
       Font.Name = 'MS Sans Serif'
-      Font.Style = []
+      ParentColor = False
       ParentFont = False
     end
     object ProgrammingLabel: TLabel
-      Left = 16
-      Top = 112
-      Width = 54
-      Height = 13
+      Left = 13
+      Height = 14
+      Top = 64
+      Width = 66
       Caption = 'Created by:'
+      ParentColor = False
     end
     object GraphicsLabel: TLabel
-      Left = 16
-      Top = 136
-      Width = 59
-      Height = 13
+      Left = 13
+      Height = 14
+      Top = 88
+      Width = 71
       Caption = 'Graphics by:'
+      ParentColor = False
     end
     object ProgrammingDataLabel: TLabel
-      Left = 112
-      Top = 112
-      Width = 52
-      Height = 13
+      Left = 109
+      Height = 14
+      Top = 64
+      Width = 59
       Caption = 'Ivan Kohut'
+      ParentColor = False
     end
     object GraphicsDataLabel: TLabel
-      Left = 112
-      Top = 136
-      Width = 60
-      Height = 13
+      Left = 109
+      Height = 14
+      Top = 88
+      Width = 69
       Caption = 'Maros Kohut'
+      ParentColor = False
     end
     object LicenseDataLabel: TLabel
-      Left = 112
-      Top = 160
-      Width = 63
-      Height = 13
+      Left = 109
+      Height = 14
+      Top = 112
+      Width = 69
       Caption = 'GNU GPL v2'
+      ParentColor = False
     end
     object ReleaseDateLabel: TLabel
-      Left = 40
-      Top = 80
-      Width = 89
-      Height = 13
+      Left = 2
+      Height = 14
+      Top = 35
+      Width = 219
+      Align = alTop
       Alignment = taCenter
       Caption = 'Date:  March 2004'
-      Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -11
       Font.Name = 'MS Sans Serif'
-      Font.Style = []
-      ParentFont = False
       Layout = tlCenter
+      ParentColor = False
+      ParentFont = False
     end
     object CompilerLabel: TLabel
-      Left = 16
-      Top = 208
-      Width = 60
-      Height = 13
-      Caption = 'Compiled by:'
+      Left = 13
+      Height = 14
+      Top = 152
+      Width = 55
+      Caption = 'Compiler:'
+      ParentColor = False
     end
     object CompilerDataLabel: TLabel
-      Left = 112
-      Top = 200
-      Width = 89
-      Height = 33
+      Left = 109
+      Height = 41
+      Top = 136
+      Width = 104
+      Anchors = [akTop, akLeft, akRight]
       AutoSize = False
-      Caption = 'Borland Delphi Compiler ver.'
+      Caption = 'Compiler name and version'
+      Layout = tlCenter
+      ParentColor = False
       WordWrap = True
     end
   end
   object OKButton: TButton
-    Left = 79
-    Top = 412
-    Width = 75
-    Height = 25
+    Left = 73
+    Height = 26
+    Top = 344
+    Width = 95
+    Anchors = [akLeft, akRight, akBottom]
     Cancel = True
     Caption = 'OK'
     Default = True
     ModalResult = 1
-    TabOrder = 1
     OnClick = OKButtonClick
+    TabOrder = 1
   end
   object Panel2: TPanel
     Left = 8
-    Top = 256
-    Width = 209
     Height = 89
+    Top = 199
+    Width = 223
+    Anchors = [akTop, akLeft, akRight]
     BevelInner = bvRaised
     BevelOuter = bvLowered
     Caption = 'Panel2'
+    ClientHeight = 89
+    ClientWidth = 223
     TabOrder = 2
     object Image1: TImage
-      Left = 4
-      Top = 4
-      Width = 205
-      Height = 81
+      Left = 2
+      Height = 85
+      Top = 2
+      Width = 219
+      Align = alClient
+      AutoSize = True
+      Center = True
       Picture.Data = {
         07544269746D617006B70000424D06B70000000000003600000028000000C800
         00004E0000000100180000000000D0B60000C40E0000C40E0000000000000000
@@ -1625,41 +1644,44 @@ object AboutBox: TAboutBox
         0000000000000000000000000000000000000000000000000000000000000000
         0000000000000000000000000000000000000000000000000000000000000000
         0000000000000000000000000000000000000000000000000000000000000000
-        000000000000000000000000000000000000}
+        000000000000000000000000000000000000
+      }
     end
   end
   object Panel3: TPanel
     Left = 8
-    Top = 352
-    Width = 209
     Height = 41
+    Top = 292
+    Width = 223
+    Anchors = [akTop, akLeft, akRight]
     BevelInner = bvRaised
     BevelOuter = bvLowered
     Caption = 'Panel3'
+    ClientHeight = 41
+    ClientWidth = 223
     TabOrder = 3
     object URLLabel: TLabel
-      Left = 31
-      Top = 13
-      Width = 146
-      Height = 13
       Cursor = crHandPoint
-      Hint = '|Nav'#353't'#237'vi'#357' web str'#225'nku TatraDAS-u'
-      Caption = 'http://tatradas.sourceforge.net'
+      Left = 2
+      Height = 37
+      Hint = '|Navštíviť web stránku TatraDAS-u'
+      Top = 2
+      Width = 219
+      Align = alClient
+      Alignment = taCenter
+      Anchors = []
+      Caption = 'website URL'
       Color = clInactiveBorder
-      Font.Charset = DEFAULT_CHARSET
       Font.Color = clBlue
       Font.Height = -11
       Font.Name = 'MS Sans Serif'
-      Font.Style = []
+      Layout = tlCenter
       ParentColor = False
       ParentFont = False
+      Transparent = False
       OnClick = URLLabelClick
-      OnMouseMove = URLLabelMouseMove
       OnMouseLeave = URLLabelMouseLeave
+      OnMouseMove = URLLabelMouseMove
     end
-  end
-  object ActionList1: TActionList
-    Left = 8
-    Top = 376
   end
 end
