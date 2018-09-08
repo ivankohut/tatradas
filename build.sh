@@ -15,11 +15,14 @@
 #   optimization group 3 (safe optimizations)
 # -o
 #   output executable file name
-# -vm3175,3177 
-#   do not display warnings 3175 ('Some fields coming before "xxx" were not initialized') and 3177 ('Some fields coming after "xxx" were not initialized') 
+# -vm3175,3177
+#   do not display warnings 3175 ('Some fields coming before "xxx" were not initialized') and 3177 ('Some fields coming after "xxx" were not initialized')
+
+echo "Cleaning/creating output directory"
+rm -rf target/
+mkdir -p target
 
 echo "Building console version..."
-mkdir -p target
 (cd source && fpc -Sd -B -FE"../target" -O3 -o"tdascon" -vm3175,3177 TatraDAS.dpr)
 
 echo "Building GUI version..."
@@ -39,7 +42,7 @@ mkdir -p target/test-report
 echo "Checking unit tests result..."
 (cd target/test-report && cat plain.txt | grep "Number of errors:    0" && cat plain.txt | grep "Number of failures:  0")
 UNIT_TESTS_RESULT=$?
-if [ ${UNIT_TESTS_RESULT} -ne 0 ]; then 
+if [ ${UNIT_TESTS_RESULT} -ne 0 ]; then
     echo "!!! Unit tests failed:"
     cat target/test-report/plain.txt
     exit 1
