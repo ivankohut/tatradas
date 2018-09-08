@@ -1,15 +1,10 @@
 unit MainFormUnit;
 
-{$INCLUDE 'delver.inc'}
-
 interface
 
 uses
-{$IFDEF MSWINDOWS}
-  Windows, Messages, ShellAPI,
-{$ENDIF}
   Controls, Forms, Dialogs, ActnList,
-  Graphics, StdCtrls, ComCtrls, ImgList, Menus, ExtCtrls, Grids,
+  Graphics, StdCtrls, ComCtrls, ImgList, Menus, ExtCtrls, Grids, Buttons,
   SysUtils,
   Classes,
   IniFiles,
@@ -19,7 +14,6 @@ uses
   SynEdit,
   ExceptionsUnit,
   GlobalsUnit,
-//  ButtonsX,
   FilesUnit,
   TranslatorUnit,
   StringRes,
@@ -36,6 +30,8 @@ uses
   ProgressThreads;
 
 type
+
+  { TMainForm }
 
   TMainForm = class(TForm, ITranslatable)
     OpenFileOpenDialog: TOpenDialog;
@@ -147,6 +143,7 @@ type
     SaveProject1: TMenuItem;
 
     procedure DisassembleClick(Sender: TObject);
+    procedure FormDropFiles(Sender: TObject; const FileNames: array of String);
     procedure OpenProjectClick(Sender: TObject);
     procedure ExportClick(Sender: TObject);
     procedure CloseFileClick(Sender: TObject);
@@ -205,28 +202,14 @@ type
     procedure DoCloseProject;
     function DoSaveProject: Boolean;
     function AskToSaveAndCloseProject: Boolean;
-  {$IFDEF DELPHI}
-  private
-    fOriginalWndProcOfMainPageControl: TWndMethod;
-    procedure MainPageControlSubClassWndProc(var AMessage: TMessage);
-  {$ENDIF}
   public
     ExecFile: TExecutableFile;
 
-  public
-  {
-    OpenMyButton: TIvanSpeedButton;
-    DisassembleMyButton: TIvanSpeedButton;
-    ProjectMyButton: TIvanSpeedButton;
-    SaveMyButton: TIvanSpeedButton;
-    //HelpMyButton: TIvanSpeedButton;
-  }
-    OpenMyButton: TButton;
-    DisassembleMyButton: TButton;
-    ProjectMyButton: TButton;
-    SaveMyButton: TButton;
-    //HelpMyButton: TButton;
-
+    OpenMyButton: TSpeedButton;
+    DisassembleMyButton: TSpeedButton;
+    ProjectMyButton: TSpeedButton;
+    SaveMyButton: TSpeedButton;
+//    HelpMyButton: TSpeedButton;
 
     sINI: TMemINIFile;
 
@@ -367,6 +350,14 @@ begin
         TTabSheetTemplate.Create(ExecFile.Sections[SectionIndex]);
         ((MainPageControl.Pages[MainPageControl.PageCount - 1] as TTabSheetTemplate).Frame as TCodeTabFrame).OnChangeDisassembled := ProjectModified;
       end;
+end;
+
+
+
+procedure TMainForm.FormDropFiles(Sender: TObject; const FileNames: array of string);
+begin
+  if Length(FileNames) = 1 then
+    DoOpenFile(FileNames[0]);
 end;
 
 
@@ -616,84 +607,42 @@ procedure TMainForm.FormCreate(Sender: TObject);
     end;
   end;
 
+  function CreateSpeedButton(ButtonIndex: Integer; Action: TBasicAction; ResourceName: string): TSpeedButton;
+  const
+    Size: Integer = 72;
+  begin
+    Result := TSpeedButton.Create(self);
+    Result.Parent := self;
+    Result.Left := ButtonIndex * Size;
+    Result.Width := Size;
+    Result.Height := Size;
+    Result.Action := Action;
+    Result.Layout := blGlyphTop;
+    Result.Flat := True;
+    Result.Glyph.LoadFromResourceName(hinstance, ResourceName);
+  end;
+
 begin
   DoubleBuffered := True;
 
   Image1.Picture.Bitmap.LoadFromResourceName(hinstance, 'buttons_background');
-{
-  OpenMyButton:= TIvanSpeedButton.Create(self);
-  OpenMyButton.Parent:=self;
-  OpenMyButton.ObrMimo.LoadFromResourceName(hinstance,'open1');
-  OpenMyButton.ObrNad.LoadFromResourceName(hinstance,'open2');
-  OpenMyButton.Left:=0;
-  OpenMyButton.Action := actOpen;
-  OpenMyButton.Glyph := OpenMyButton.ObrMimo;
 
-  DisassembleMyButton:= TIvanSpeedButton.Create(self);
-  DisassembleMyButton.Parent:=self;
-  DisassembleMyButton.ObrMimo.LoadFromResourceName(hinstance,'disassemble1');
-  DisassembleMyButton.ObrNad.LoadFromResourceName(hinstance,'disassemble2');
-  DisassembleMyButton.Left:=72;
-  DisassembleMyButton.OnClick:=DisassembleClick;
-  DisassembleMyButton.Glyph:=DisassembleMyButton.ObrMimo;
-  DisassembleMyButton.Enabled:=false;
+  OpenMyButton := CreateSpeedButton(0, actOpen, 'open1');
 
-
-  ProjectMyButton:= TIvanSpeedButton.Create(self);
-  ProjectMyButton.Parent:=self;
-  ProjectMyButton.ObrMimo.LoadFromResourceName(hinstance,'project1');
-  ProjectMyButton.ObrNad.LoadFromResourceName(hinstance,'project2');
-  ProjectMyButton.Left:=220;
-  ProjectMyButton.Action := actOpenProject;
-  ProjectMyButton.Glyph:=ProjectMyButton.ObrMimo;
-
-  SaveMyButton:= TIvanSpeedButton.Create(self);
-  SaveMyButton.Parent:=self;
-  SaveMyButton.ObrMimo.LoadFromResourceName(hinstance,'save1');
-  SaveMyButton.ObrNad.LoadFromResourceName(hinstance,'save2');
-  SaveMyButton.Left:=295;
-  SaveMyButton.OnClick := SaveProjectClick;
-  SaveMyButton.Glyph := SaveMyButton.ObrMimo;
-  SaveMyButton.Enabled := False;
-}
-{ Keep commented until english documentation becomes available
-  HelpMyButton:=TIvanSpeedButton.Create(self);
-  HelpMyButton.Parent:=self;
-  HelpMyButton.ObrMimo.LoadFromResourceName(hinstance,'help1');
-  HelpMyButton.ObrNad.LoadFromResourceName(hinstance,'help2');
-  HelpMyButton.Left:=400;
-  HelpMyButton.OnClick:=Help2Click;
-  HelpMyButton.Glyph:=HelpMyButton.ObrMimo;
-}
-  OpenMyButton := TButton.Create(self);
-  OpenMyButton.Parent := self;
-  OpenMyButton.Left := 0;
-  OpenMyButton.Action := actOpen;
-
-  DisassembleMyButton := TButton.Create(self);
-  DisassembleMyButton.Parent := self;
-  DisassembleMyButton.Left := 72;
+  DisassembleMyButton := CreateSpeedButton(1, nil, 'disassemble1');
   DisassembleMyButton.OnClick := DisassembleClick;
   DisassembleMyButton.Enabled := False;
 
-  ProjectMyButton := TButton.Create(self);
-  ProjectMyButton.Parent := self;
-  ProjectMyButton.Left := 220;
-  ProjectMyButton.Action := actOpenProject;
+  ProjectMyButton := CreateSpeedButton(2, actOpenProject, 'project1');
+  ProjectMyButton.Enabled := False;
 
-  SaveMyButton := TButton.Create(self);
-  SaveMyButton.Parent := self;
-  SaveMyButton.Left := 295;
-  SaveMyButton.OnClick := SaveProjectClick;
+  SaveMyButton := CreateSpeedButton(3, nil, 'save1');
   SaveMyButton.Enabled := False;
+  SaveMyButton.OnClick := SaveProjectClick;
 
-
-  {$IFDEF DELPHI}
-  // Drag & drop opening files
-  fOriginalWndProcOfMainPageControl := MainPageControl.WindowProc;
-  MainPageControl.WindowProc := MainPageControlSubClassWndProc;
-  DragAcceptFiles(MainPageControl.Handle, True);
-  {$ENDIF}
+{ Keep commented until english documentation becomes available
+  HelpMyButton := CreateSpeedButton(4, actOpen, 'help1');
+  HelpMyButton.OnClick := Help2Click; }
 
   Caption := TatraDASFullNameVersion;
   StatusBar2.Panels[1].Text := TatraDASFullNameVersion;
@@ -755,19 +704,12 @@ var
 begin
 // Zmena popisov komponent
 
-  //  [ButtonCaption]
-{
-  OpenMyButton.ChangeCaption(Translator.TranslateControl('ButtonCaption', 'OpenFile'));
-  ProjectMyButton.ChangeCaption(Translator.TranslateControl('ButtonCaption','OpenDisasm'));
-  DisassembleMyButton.ChangeCaption(Translator.TranslateControl('ButtonCaption','Disassemble'));
-  SaveMyButton.ChangeCaption(Translator.TranslateControl('ButtonCaption','SaveDisasm'));
-  //HelpMyButton.ChangeCaption(Translator.TranslateControl('ButtonCaption','Help'));
-}
+  // [ButtonCaption]
   OpenMyButton.Caption := Translator.TranslateControl('ButtonCaption', 'OpenFile');
   ProjectMyButton.Caption := Translator.TranslateControl('ButtonCaption', 'OpenDisasm');
   DisassembleMyButton.Caption := Translator.TranslateControl('ButtonCaption', 'Disassemble');
   SaveMyButton.Caption := Translator.TranslateControl('ButtonCaption', 'SaveDisasm');
-  //HelpMyButton.Caption := Translator.TranslateControl('ButtonCaption','Help');
+//  HelpMyButton.Caption := Translator.TranslateControl('ButtonCaption', 'Help');
 
   // [MenuCaption]
   File1.Caption := Translator.TranslateControl('MenuCaption', 'file');
@@ -1132,29 +1074,6 @@ begin
   else
     Caption := TatraDASFullNameVersion;
 end;
-
-
-{$IFDEF DELPHI}
-procedure TMainForm.MainPageControlSubClassWndProc(var AMessage: TMessage);
-const
-  MaxFileNameLength = 255;
-var
-  DroppedFilesCount: Integer;
-  DroppedFileName: array [0..MaxFileNameLength] of Char;
-begin
-  // If one file dropped then open it
-  if AMessage.Msg = WM_DROPFILES then begin
-    DroppedFilesCount := DragQueryFile(AMessage.WParam, $FFFFFFFF, DroppedFileName, MaxFileNameLength);
-    if DroppedFilesCount = 1 then begin
-      DragQueryFile(AMessage.WParam, 0, DroppedFileName, MaxFileNameLength);
-      DoOpenFile(DroppedFileName);
-    end;
-    DragFinish(AMessage.WParam);
-  end
-  else
-    fOriginalWndProcOfMainPageControl(AMessage);
-end;
-{$ENDIF}
 
 
 
