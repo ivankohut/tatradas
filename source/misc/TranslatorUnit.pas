@@ -17,11 +17,11 @@ uses
   // project units
   procmat,
   VersionUnit,
-  StringRes;
+  StringRes,
+  Translatables;
 
 const
   LangFileSectionCount = 26;
-  DefaultString = '- error -';
   LanguagesFolder = 'languages';
 
 type
@@ -37,24 +37,27 @@ type
     destructor Destroy; override;
   end;
 
+  { TTranslator }
 
   TTranslator = class
   private
     fLanguages: TObjectList; //TLanguageInfo;
     fActiveLanguageIndex: Cardinal;
     fINI: TMemINIFile;
+    FSectionsOfStrings: TSectionsOfStrings;
     function CheckLangFile(filename: string): Boolean; overload;
     function CheckLangFile(testINI: TCustomINIFile): Boolean; overload;
     function GetLanguageInfo(Index: Integer): TLanguageInfo;
     function GetActiveLanguageInfo: TLanguageInfo;
     procedure Translate;
     function GetLanguagesCount: Integer;
+    function TranslateControl(Category: string; Name: string): string; overload;
   public
     constructor Create;
     destructor Destroy; override;
     function ChangeLanguage(Index: Integer): Boolean; overload;
     function ChangeLanguage(LanguageShortCut: string): Boolean; overload;
-    function TranslateControl(Category: string; Name: string): string; overload;
+    procedure TranslateComponent(AComponent: TComponent);
     property AvailableLanguages[Index: Integer]: TLanguageInfo read GetLanguageInfo;
     property AvailableLanguagesCount: Integer read GetLanguagesCount;
     property ActiveLanguage: TLanguageInfo read GetActiveLanguageInfo;
@@ -224,6 +227,7 @@ begin
   end;
   fINI.Free;
   fINI := INI;
+  FSectionsOfStrings := TSectionsOfStrings.Create(INI);
   Translate;
   fActiveLanguageIndex := Index;
   Result := True;
@@ -231,18 +235,19 @@ end;
 
 
 
+procedure TTranslator.TranslateComponent(AComponent: TComponent);
+var
+  i: Integer;
+begin
+  if Supports(AComponent, ITranslatable) then
+    (AComponent as ITranslatable).Translatable.Translate(FSectionsOfStrings);
+  for i := 0 to AComponent.ComponentCount - 1 do
+    TranslateComponent(AComponent.Components[i]);
+end;
+
+
+
 procedure TTranslator.Translate;
-
-  procedure TranslateComponent(AComponent: TComponent);
-  var
-    i: Integer;
-  begin
-    if Supports(AComponent, ITranslatable) then
-      (AComponent as ITranslatable).Translate;
-    for i := 0 to AComponent.ComponentCount - 1 do
-      TranslateComponent(AComponent.Components[i]);
-  end;
-
 begin
   TranslateStringResStrings;
   TranslateComponent(Application);

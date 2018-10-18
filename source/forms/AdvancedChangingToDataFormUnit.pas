@@ -10,10 +10,13 @@ uses
   // project units
   ExceptionsUnit,
   procmat,
-  TranslatorUnit,
+  Translatables,
   myedits;
 
 type
+
+  { TAdvancedChangingToDataForm }
+
   TAdvancedChangingToDataForm = class(TForm, ITranslatable)
     OKButton: TButton;
     CancelButton: TButton;
@@ -51,7 +54,7 @@ type
     function GetOptions: TDataChangeOptions;
     procedure SetSelectedEdit(AEdit: TPositiveEdit);
   public
-    procedure Translate;
+    function Translatable: TTranslatable;
     procedure SetMaxAdressMaxValue(AValue: Cardinal);
     procedure SetMaxAdressMinValue(AValue: Cardinal);
     property Options: TDataChangeOptions read GetOptions;
@@ -219,21 +222,25 @@ end;
 
 
 
-procedure TAdvancedChangingToDataForm.Translate;
+function TAdvancedChangingToDataForm.Translatable: TTranslatable;
 begin
-  Caption := Translator.TranslateControl('AdvancedChangingToDataForm', 'Caption');
-  OptionsGroupBox.Caption := Translator.TranslateControl('AdvancedChangingToDataForm', 'Options');
-  ItemsRadioButton.Caption := Translator.TranslateControl('AdvancedChangingToDataForm', 'Items');
-  BytesRadioButton.Caption := Translator.TranslateControl('AdvancedChangingToDataForm', 'Bytes');
-  MaxRadioButton.Caption := Translator.TranslateControl('AdvancedChangingToDataForm', 'Max');
-  EndSectionRadioButton.Caption := Translator.TranslateControl('AdvancedChangingToDataForm', 'EndSection');
-  CodeRadioButton.Caption := Translator.TranslateControl('AdvancedChangingToDataForm', 'Code');
-  SignGroupBox.Caption := Translator.TranslateControl('AdvancedChangingToDataForm', 'Sign');
-  UnsignedRadioButton.Caption := Translator.TranslateControl('AdvancedChangingToDataForm', 'Unsigned');
-  SignedRadioButton.Caption := Translator.TranslateControl('AdvancedChangingToDataForm', 'Signed');
-  DataTypeGroupBox.Caption := Translator.TranslateControl('AdvancedChangingToDataForm', 'DataType');
-  OKButton.Caption := Translator.TranslateControl('Common', 'OKButton');
-  CancelButton.Caption := Translator.TranslateControl('Common', 'CancelButton');
+  Result := TTranslatableSimpleForm.Create(
+    self,
+    'AdvancedChangingToDataForm',
+    [
+      TTranslatableCaption.Create(OptionsGroupBox, 'Options'),
+      TTranslatableCaption.Create(ItemsRadioButton, 'Items'),
+      TTranslatableCaption.Create(BytesRadioButton, 'Bytes'),
+      TTranslatableCaption.Create(MaxRadioButton, 'Max'),
+      TTranslatableCaption.Create(EndSectionRadioButton, 'EndSection'),
+      TTranslatableCaption.Create(CodeRadioButton, 'Code'),
+      TTranslatableCaption.Create(SignGroupBox, 'Sign'),
+      TTranslatableCaption.Create(UnsignedRadioButton, 'Unsigned'),
+      TTranslatableCaption.Create(SignedRadioButton, 'Signed'),
+      TTranslatableCaption.Create(DataTypeGroupBox, 'DataType')
+    ],
+    [OKButton, CancelButton]
+  );
 end;
 
 

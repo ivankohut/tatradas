@@ -14,7 +14,7 @@ uses
   IniFiles,
   // project units
   procmat,
-  TranslatorUnit,
+  Translatables,
   SectionUnit,
   CodeSectionUnit,
   ImportSectionUnit,
@@ -34,7 +34,7 @@ type
     property Section: TSection read GetSection;
   public
     constructor Create(AOwner: TComponent; ASection: TSection); overload; virtual; //abstract;
-    procedure Translate; virtual; abstract;
+    function Translatable: TTranslatable; virtual; abstract;
 //    procedure SaveToStream(AStream: TStream); virtual; abstract;
     property TypeName: string read fTypeName;
     property PageType: TPageType read GetPageType;
@@ -50,7 +50,7 @@ type
     constructor CreateFileTab(aExecFile: TExecutableFile);
     constructor Create(ASection: TSection); reintroduce; overload;
     destructor Destroy; override;
-    procedure Translate;
+    //procedure Translate;
     function IsHavingSection(ASection: TSection): Boolean;
     property PageType: TPageType read GetPageType;
   end;
@@ -64,7 +64,9 @@ uses
   FileTabFrameUnit,
   ImportTabFrameUnit,
   ExportTabFrameUnit,
-  CodeTabFrameUnit, ExceptionsUnit;
+  CodeTabFrameUnit,
+  ExceptionsUnit,
+  TranslatorUnit;
 
 
 //******************************************************************************
@@ -89,7 +91,7 @@ begin
   end;
   Frame.Parent := self;
   Caption := Frame.Caption;
-  Frame.Translate;
+  Translator.TranslateComponent(Frame);
 end;
 
 
@@ -111,7 +113,7 @@ begin
   end;
   Frame.Parent := self;
   Caption := Frame.Caption;
-  Frame.Translate;
+  Translator.TranslateComponent(Frame);
 end;
 
 
@@ -131,11 +133,11 @@ end;
 
 
 
-procedure TTabSheetTemplate.Translate;
-begin
-  Caption := Translator.TranslateControl(Frame.TypeName, 'Caption');
-  Frame.Translate;
-end;
+//procedure TTabSheetTemplate.Translate;
+//begin
+//  Caption := Translator.TranslateControl(Frame.TypeName, 'Caption');
+//  Translator.TranslateComponent(Frame);
+//end;
 
 
 

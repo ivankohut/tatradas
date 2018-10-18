@@ -7,7 +7,7 @@ uses
   Forms, ExtCtrls, StdCtrls, Controls, Graphics, ActnList,
   // project units
   procmat,
-  TranslatorUnit;
+  Translatables;
 
 type
 
@@ -37,8 +37,8 @@ type
     procedure URLLabelMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
     procedure URLLabelMouseLeave(Sender: TObject);
     procedure URLLabelClick(Sender: TObject);
-    procedure Translate;
     procedure FormCreate(Sender: TObject);
+    function Translatable: TTranslatable;
   end;
 
 var
@@ -78,16 +78,22 @@ end;
 
 
 
-procedure TAboutBox.Translate;
+function TAboutBox.Translatable: TTranslatable;
 begin
-  Caption := Translator.TranslateControl('AboutBoxForm', 'Caption');
-  ProgrammingLabel.Caption := Translator.TranslateControl('AboutBoxForm', 'ProgrammingLabel');
-  GraphicsLabel.Caption := Translator.TranslateControl('AboutBoxForm', 'GraphicsLabel');
-  VersionLabel.Caption := Translator.TranslateControl('AboutBoxForm', 'VersionLabel') + ' ' + ShortTatraDASVersion;
-  ReleaseDateLabel.Caption := Translator.TranslateControl('AboutBoxForm', 'ReleaseDateLabel') + ' ' + TatraDASDate + ' (DMY)'; // + ' (DD.MM.YYYY)';
-  LicenseLabel.Caption := Translator.TranslateControl('AboutBoxForm', 'LicenseLabel');
-  URLLabel.Hint := Translator.TranslateControl('AboutBoxForm', 'URLLabelHint');
-  CompilerLabel.Caption := Translator.TranslateControl('AboutBoxForm', 'CompilerLabel');
+  Result := TTranslatableSimpleForm.Create(
+    self,
+    'AboutBoxForm',
+    [
+      TTranslatableCaption.Create(ProgrammingLabel),
+      TTranslatableCaption.Create(GraphicsLabel),
+      TTranslatableCaption.Create(VersionLabel),
+      TTranslatableCaption.Create(ReleaseDateLabel),
+      TTranslatableCaption.Create(LicenseLabel),
+      TTranslatableCaption.Create(CompilerLabel),
+      TTranslatableHint.Create(URLLabel)
+    ],
+    []
+  );
 end;
 
 

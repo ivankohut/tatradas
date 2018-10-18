@@ -19,13 +19,16 @@ uses
   Grids,
   // project units
   TabFrameTemplateUnit,
-  TranslatorUnit,
+  Translatables,
   procmat,
   ExecFileUnit,
   SectionUnit,
   ExportSectionUnit;
 
 type
+
+  { TExportTabFrame }
+
   TExportTabFrame = class(TTabFrameTemplate)
     FunctionStringGrid: TStringGrid;
     procedure FunctionStringGridMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
@@ -47,7 +50,7 @@ type
     function GetSection: TSection; override;
   public
     constructor Create(AOwner: TComponent; ASection: TSection); override;
-    procedure Translate; override;
+    function Translatable: TTranslatable; override;
   end;
 
 
@@ -165,15 +168,24 @@ end;
 
 
 
-procedure TExportTabFrame.Translate;
+function TExportTabFrame.Translatable: TTranslatable;
 begin
-  Caption := Translator.TranslateControl('Export', 'Caption');
-  FunctionStringGrid.Cells[0, 0] := Translator.TranslateControl('Export', 'FunctionListNumber');
-  FunctionStringGrid.Cells[1, 0] := Translator.TranslateControl('Export', 'FunctionListName');
-  FunctionStringGrid.Cells[2, 0] := Translator.TranslateControl('Export', 'FunctionListSection');
-  FunctionStringGrid.Cells[3, 0] := Translator.TranslateControl('Export', 'FunctionListOffset');
-  FunctionStringGrid.Cells[4, 0] := Translator.TranslateControl('Export', 'FunctionListAddress');
-  FunctionStringGrid.Cells[5, 0] := Translator.TranslateControl('Export', 'FunctionListOrdinal');
+  Result := TTranslatableGroups.Create([
+    TTranslatableGroup.Create(
+      'Export',
+      [
+        TTranslatableCaption.Create(self, 'Caption')
+      ]
+    ),
+    TTranslatableStrings.Create('Export', FunctionStringGrid.Rows[0], [
+      'FunctionListNumber',
+      'FunctionListName',
+      'FunctionListSection',
+      'FunctionListOffset',
+      'FunctionListAddress',
+      'FunctionListOrdinal'
+    ])
+  ]);
 end;
 
 

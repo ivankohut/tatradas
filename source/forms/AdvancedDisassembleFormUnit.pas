@@ -11,9 +11,12 @@ uses
   myedits,
   ExceptionsUnit,
   procmat,
-  TranslatorUnit;
+  Translatables;
 
 type
+
+  { TAdvancedDisassembleForm }
+
   TAdvancedDisassembleForm = class(TForm, ITranslatable)
     OptionsGroupBox: TGroupBox;
     BytesRadioButton: TRadioButton;
@@ -42,7 +45,7 @@ type
     procedure SetSelectedEdit(AEdit: TPositiveEdit);
   public
     property Options: TDisassembleFormOptions read GetOptions;
-    procedure Translate;
+    function Translatable: TTranslatable;
     procedure SetMaxAddressMaxValue(AValue: Cardinal);
   end;
 
@@ -153,20 +156,21 @@ end;
 
 
 
-procedure TAdvancedDisassembleForm.Translate;
+function TAdvancedDisassembleForm.Translatable: TTranslatable;
 begin
-  Caption := Translator.TranslateControl('AdvancedDisassembleForm', 'Caption');
-  OptionsGroupBox.Caption := Translator.TranslateControl('AdvancedDisassembleForm', 'Options');
-  BytesRadioButton.Caption := Translator.TranslateControl('AdvancedDisassembleForm', 'Bytes');
-  MaxRadioButton.Caption := Translator.TranslateControl('AdvancedDisassembleForm', 'Max');
-  NormalRadioButton.Caption := Translator.TranslateControl('AdvancedDisassembleForm', 'Normal');
-  Bit1632GroupBox.Caption := Translator.TranslateControl('AdvancedDisassembleForm', 'Bit1632GroupBox');
-//  bit16Radiobutton.Caption := Translator.TranslateControl('AdvancedDisassembleForm', '');
-//  bit32Radiobutton.Caption := Translator.TranslateControl('AdvancedDisassembleForm', '');
-  RecursiveCheckBox.Caption := Translator.TranslateControl('AdvancedDisassembleForm', 'Recursive');
-
-  OKButton.Caption := Translator.TranslateControl('Common', 'OKButton');
-  CancelButton.Caption := Translator.TranslateControl('Common', 'CancelButton');
+  Result := TTranslatableSimpleForm.Create(
+    self,
+    'AdvancedDisassembleForm',
+    [
+      TTranslatableCaption.Create(OptionsGroupBox, 'Options'),
+      TTranslatableCaption.Create(BytesRadioButton, 'Bytes'),
+      TTranslatableCaption.Create(MaxRadioButton, 'Max'),
+      TTranslatableCaption.Create(NormalRadioButton, 'Normal'),
+      TTranslatableCaption.Create(Bit1632GroupBox, 'Bit1632GroupBox'),
+      TTranslatableCaption.Create(RecursiveCheckBox, 'Recursive')
+    ],
+    [OKButton, CancelButton]
+  );
 end;
 
 

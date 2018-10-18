@@ -10,9 +10,12 @@ uses
   // project units
   ExceptionsUnit,
   procmat,
-  TranslatorUnit;
+  Translatables;
 
 type
+
+  { TSaveOptionsForm }
+
   TSaveOptionsForm = class(TForm, ITranslatable)
     OKButton: TButton;
     CancelButton: TButton;
@@ -40,7 +43,7 @@ type
     function GetExportCustomDASOptions: TExportCustomDASOptions;
     function GetExportOption: TExportOption;
   public
-    procedure Translate;
+    function Translatable: TTranslatable;
     property ExportCustomDASOptions: TExportCustomDASOptions read GetExportCustomDASOptions;
     property ExportOption: TExportOption read GetExportOption;
   end;
@@ -143,28 +146,32 @@ end;
 
 
 
-procedure TSaveOptionsForm.Translate;
+function TSaveOptionsForm.Translatable: TTranslatable;
 begin
-  Caption := Translator.TranslateControl('SaveOptionsForm', 'Caption');
+  Result := TTranslatableSimpleForm.Create(
+    self,
+    'SaveOptionsForm',
+    [
+      TTranslatableCaption.Create(MainGroupBox),
+      TTranslatableCaption.Create(ReferencesGroupBox),
+      TTranslatableCaption.Create(InstructionGroupBox),
 
-  MainGroupBox.Caption := Translator.TranslateControl('SaveOptionsForm', 'MainGroupBox');
-  ReferencesGroupBox.Caption := Translator.TranslateControl('SaveOptionsForm', 'ReferencesGroupBox');
-  InstructionGroupBox.Caption := Translator.TranslateControl('SaveOptionsForm', 'InstructionGroupBox');
-
-  DisassemblyRadioButton.Caption := Translator.TranslateControl('SaveOptionsForm', 'DisassemblyRadioButton');
-  CustomRadioButton.Caption := Translator.TranslateControl('SaveOptionsForm', 'CustomRadioButton');
-  NASMRadioButton.Caption := Translator.TranslateControl('SaveOptionsForm', 'NASMRadioButton');
-  AddressCheckBox.Caption := Translator.TranslateControl('SaveOptionsForm', 'AddressCheckBox');
-  ParsedCheckBox.Caption := Translator.TranslateControl('SaveOptionsForm', 'ParsedCheckBox');
-  DisassembledCheckBox.Caption := Translator.TranslateControl('SaveOptionsForm', 'DisassembledCheckBox');
-  JumpCheckBox.Caption := Translator.TranslateControl('SaveOptionsForm', 'JumpCheckBox');
-  CallCheckBox.Caption := Translator.TranslateControl('SaveOptionsForm', 'CallCheckBox');
-  ExportCheckBox.Caption := Translator.TranslateControl('SaveOptionsForm', 'ExportCheckBox');
-  ImportCheckBox.Caption := Translator.TranslateControl('SaveOptionsForm', 'ImportCheckBox');
-  EntryPointCheckBox.Caption := Translator.TranslateControl('SaveOptionsForm', 'EntryPointCheckBox');
-
-  CancelButton.Caption := Translator.TranslateControl('Common', 'CancelButton');
+      TTranslatableCaption.Create(DisassemblyRadioButton),
+      TTranslatableCaption.Create(CustomRadioButton),
+      TTranslatableCaption.Create(NASMRadioButton),
+      TTranslatableCaption.Create(AddressCheckBox),
+      TTranslatableCaption.Create(ParsedCheckBox),
+      TTranslatableCaption.Create(DisassembledCheckBox),
+      TTranslatableCaption.Create(JumpCheckBox),
+      TTranslatableCaption.Create(CallCheckBox),
+      TTranslatableCaption.Create(ExportCheckBox),
+      TTranslatableCaption.Create(ImportCheckBox),
+      TTranslatableCaption.Create(EntryPointCheckBox)
+    ],
+    [CancelButton]
+  );
 end;
+
 
 
 end.

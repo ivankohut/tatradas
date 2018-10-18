@@ -9,7 +9,7 @@ uses
   IniFiles,
   // project units
   procmat,
-  TranslatorUnit;
+  Translatables;
 
 type
   TInsertCommentForm = class(TForm, ITranslatable)
@@ -21,7 +21,7 @@ type
     procedure CancelButtonClick(Sender: TObject);
     procedure FormActivate(Sender: TObject);
   public
-    procedure Translate;
+    function Translatable: TTranslatable;
   end;
 
 var
@@ -55,11 +55,9 @@ end;
 
 
 
-procedure TInsertCommentForm.Translate;
+function TInsertCommentForm.Translatable: TTranslatable;
 begin
-  Caption := Translator.TranslateControl('InsertCommentForm', 'Caption');
-  InsertCommentLabel.Caption := Translator.TranslateControl('InsertCommentForm', 'InsertCommentLabel');
-  CancelButton.Caption := Translator.TranslateControl('Common', 'CancelButton');
+  Result := TTranslatableSimpleForm.Create(self, 'InsertCommentForm', [TTranslatableCaption.Create(InsertCommentLabel)], [CancelButton]);
 end;
 
 

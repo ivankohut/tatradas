@@ -9,9 +9,13 @@ uses
   INIFiles,
   // project units
   procmat,
-  myedits;
+  myedits,
+  Translatables;
 
 type
+
+  { TGoToAddressForm }
+
   TGoToAddressForm = class(TForm, ITranslatable)
     OKButton: TButton;
     CancelButton: TButton;
@@ -30,7 +34,7 @@ type
     procedure RefreshOKButtonState;
     procedure GotoAddressEditChange(Sender: TObject);
   public
-    procedure Translate;
+    function Translatable: TTranslatable;
     property MaxAddress: Cardinal write SetMaxAddress;
     property MinAddress: Cardinal write fMinAddress;
     property Address: Cardinal read GetAddress;
@@ -40,9 +44,6 @@ var
   GoToAddressForm: TGoToAddressForm;
 
 implementation
-
-uses
-  TranslatorUnit;
 
 {$R *.lfm}
 
@@ -106,11 +107,9 @@ end;
 
 
 
-procedure TGoToAddressForm.Translate;
+function TGoToAddressForm.Translatable: TTranslatable;
 begin
-  Caption := Translator.TranslateControl('GotoAddressForm', 'Caption');
-  GotoAddressLabel.Caption := Translator.TranslateControl('GotoAddressForm', 'GotoAddressLabel');
-  CancelButton.Caption := Translator.TranslateControl('Common', 'CancelButton');
+  Result := TTranslatableSimpleForm.Create(self, 'GotoAddressForm', [TTranslatableCaption.Create(GotoAddressLabel)], [CancelButton])
 end;
 
 

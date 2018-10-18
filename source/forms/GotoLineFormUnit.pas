@@ -4,13 +4,17 @@ interface
 
 uses
   SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls,
+  Dialogs, StdCtrls, ExtCtrls,
   // project units
   procmat,
   StringRes,
-  myedits, ExtCtrls;
+  Translatables,
+  myedits;
 
 type
+
+  { TGotoLineForm }
+
   TGotoLineForm = class(TForm, ITranslatable)
     GotoLineLabel: TLabel;
     CancelButton: TButton;
@@ -26,7 +30,7 @@ type
     procedure SetMaxLineIndex(MaxLineIndex: Cardinal);
     function GetLineIndex: Cardinal;
   public
-    procedure Translate;
+    function Translatable: TTranslatable;
     property MaxLineIndex: Cardinal write SetMaxLineIndex;
     property LineIndex: Cardinal read GetLineIndex;
   end;
@@ -36,11 +40,7 @@ var
 
 implementation
 
-uses
-  TranslatorUnit;
-
 {$R *.lfm}
-
 
 procedure TGotoLineForm.SetMaxLineIndex(MaxLineIndex: Cardinal);
 begin
@@ -85,11 +85,9 @@ end;
 
 
 
-procedure TGotoLineForm.Translate;
+function TGotoLineForm.Translatable: TTranslatable;
 begin
-  Caption := Translator.TranslateControl('GotoLineForm', 'Caption');
-  GotoLineLabel.Caption := Translator.TranslateControl('GotoLineForm', 'GotoLineLabel');
-  CancelButton.Caption := Translator.TranslateControl('Common', 'CancelButton');
+  Result := TTranslatableSimpleForm.Create(self, 'GotoLineForm', [TTranslatableCaption.Create(GotoLineLabel)], [CancelButton]);
 end;
 
 

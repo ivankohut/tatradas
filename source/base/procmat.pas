@@ -139,12 +139,6 @@ type
   TPhaseFinishedProc = procedure;
 
 
-  ITranslatable = interface
-    ['{E293B4CE-B91A-42FE-884A-27F54EEAD8DD}']
-    procedure Translate;
-  end;
-
-
 var
   ProcessText: TProcessText;
 

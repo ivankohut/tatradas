@@ -4,19 +4,27 @@ interface
 
 uses
   SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls, FileUtil;
+  Dialogs, StdCtrls, FileUtil,
+  // project units
+  Translatables;
 
 type
-  TMessageForm = class(TForm)
+
+  { TMessageForm }
+
+  TMessageForm = class(TForm, ITranslatable)
     MessageLabel: TLabel;
   private
+    FTranslatableWidgets: TTranslatableWidgetArray;
+    procedure AddTranslatableWidget(Control: TControl; Name: string);
     procedure ButtonClick(Sender: TObject);
-    procedure AddButton(AButtonCaption: string; AResultValue: Integer);
+    procedure AddButton(CaptionKey: string; ModalResult: Integer);
+    procedure Initialize(Message: string; MessageType: TMsgDlgType; Buttons: TMsgDlgButtons);
   public
-    class function DisplayMessage(AMessage: string; AMessageType: TMsgDlgType; AButtons: TMsgDlgButtons): Integer;
+    function Translatable: TTranslatable;
   end;
 
-function DisplayMessage(AMessage: string; AMessageType: TMsgDlgType; AButtons: TMsgDlgButtons): Integer;
+function DisplayMessage(Message: string; MessageType: TMsgDlgType; Buttons: TMsgDlgButtons): Integer;
 
 
 var
@@ -25,32 +33,76 @@ var
 implementation
 
 uses
-  TranslatorUnit, ExceptionsUnit;
+  ExceptionsUnit, TranslatorUnit;
 
 {$R *.lfm}
 
-
-function DisplayMessage(AMessage: string; AMessageType: TMsgDlgType; AButtons: TMsgDlgButtons): Integer;
+function DisplayMessage(Message: string; MessageType: TMsgDlgType; Buttons: TMsgDlgButtons): Integer;
 begin
-  Result := TMessageForm.DisplayMessage(AMessage, AMessageType, AButtons);
+  Application.CreateForm(TMessageForm, MessageForm);
+  MessageForm.Initialize(Message, MessageType, Buttons);
+  Translator.TranslateComponent(MessageForm);
+  Result := MessageForm.ShowModal;
+  MessageForm.Release;
 end;
 
 
 
-procedure TMessageForm.AddButton(AButtonCaption: string; AResultValue: Integer);
+procedure TMessageForm.Initialize(Message: string; MessageType: TMsgDlgType; Buttons: TMsgDlgButtons);
+var
+  CaptionKey: string;
+begin
+  MessageForm.MessageLabel.Caption := Message;
+  if mbYes in Buttons then
+    MessageForm.AddButton('YesButton', mrYes);
+  if mbNo in Buttons then
+    MessageForm.AddButton('NoButton', mrNo);
+  if mbOK in Buttons then
+    MessageForm.AddButton('OKButton', mrOK);
+  if mbCancel in Buttons then
+    MessageForm.AddButton('CancelButton', mrCancel);
+
+  case MessageType of
+    mtConfirmation: CaptionKey := 'Confirmation';
+    mtWarning: CaptionKey := 'Warning';
+    mtError: CaptionKey := 'Error';
+    mtInformation: CaptionKey := 'Information';
+    mtCustom: raise EIllegalState.Create('TMessageForm.DisplayMessage: Unsupported message type');
+  end;
+  AddTranslatableWidget(self, CaptionKey);
+end;
+
+
+
+procedure TMessageForm.AddButton(CaptionKey: string; ModalResult: Integer);
 var
   Button: TButton;
 begin
-  Button := TButton.Create(MessageForm);
-  Button.Parent := MessageForm;
-  Button.Caption := AButtonCaption;
-  Button.Left := MessageForm.Width;
+  Button := TButton.Create(self);
+  Button.Parent := self;
+  Button.Left := self.Width;
   Button.Top := 56;
   Button.Width := 75;
   Button.Height := 25;
   Button.OnClick := ButtonClick;
-  Button.Tag := AResultValue;
+  Button.Tag := ModalResult;
   Width := Width + Button.Width + 16;
+  AddTranslatableWidget(Button, CaptionKey);
+end;
+
+
+
+procedure TMessageForm.AddTranslatableWidget(Control: TControl; Name: string);
+begin
+  SetLength(FTranslatableWidgets, Length(FTranslatableWidgets) + 1);
+  FTranslatableWidgets[Length(FTranslatableWidgets) - 1] := TTranslatableCaption.Create(Control, Name);
+end;
+
+
+
+function TMessageForm.Translatable: TTranslatable;
+begin
+  Result := TTranslatableGroup.Create('Common', FTranslatableWidgets);
 end;
 
 
@@ -60,35 +112,6 @@ begin
   ModalResult := (Sender as TButton).Tag;
 end;
 
-
-
-class function TMessageForm.DisplayMessage(AMessage: string; AMessageType: TMsgDlgType; AButtons: TMsgDlgButtons): Integer;
-begin
-  Application.CreateForm(TMessageForm, MessageForm);
-
-  MessageForm.MessageLabel.Caption := AMessage;
-
-  if mbYes in AButtons then
-    MessageForm.AddButton(Translator.TranslateControl('Common', 'YesButton'), mrYes);
-  if mbNo in AButtons then
-    MessageForm.AddButton(Translator.TranslateControl('Common', 'NoButton'), mrNo);
-  if mbOK in AButtons then
-    MessageForm.AddButton(Translator.TranslateControl('Common', 'OKButton'), mrOK);
-  if mbCancel in AButtons then
-    MessageForm.AddButton(Translator.TranslateControl('Common', 'CancelButton'), mrCancel);
-
-  case AMessageType of
-    mtConfirmation: MessageForm.Caption := Translator.TranslateControl('Common', 'Confirmation');
-    mtWarning: MessageForm.Caption := Translator.TranslateControl('Common', 'Warning');
-    mtError: MessageForm.Caption := Translator.TranslateControl('Common', 'Error');
-    mtInformation: MessageForm.Caption := Translator.TranslateControl('Common', 'Information');
-    mtCustom: raise EIllegalState.Create('TMessageForm.DisplayMessage: Unsupported message type');
-  end;
-
-  Result := MessageForm.ShowModal;
-
-  MessageForm.Release;
-end;
 
 
 end.

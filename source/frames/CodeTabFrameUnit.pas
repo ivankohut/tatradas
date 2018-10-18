@@ -27,7 +27,7 @@ uses
   TatraDASHighlighter,
   // project units
   MessageFormUnit,
-  TranslatorUnit,
+  Translatables,
   TabFrameTemplateUnit,
   GotoAddressFormUnit,
   AdvancedChangingToDataFormUnit,
@@ -44,6 +44,9 @@ uses
   LoggerUnit;
 
 type
+
+  { TCodeTabFrame }
+
   TCodeTabFrame = class(TTabFrameTemplate)
   published
     plocha: TSynEdit;
@@ -157,12 +160,9 @@ type
     procedure FindString(SearchText: string; Options: TFindOptions);
     function GetPosition(Address: Cardinal): Cardinal; // Get position in Disassembled from Address (memory address)
     procedure GotoPosition(Offset: LongInt; Origin: TSeekOrigin); // Offset zacina od 0
-
-    procedure Translate; override;
-
+    function Translatable: TTranslatable; override;
   protected
     function GetSection: TSection; override;
-
   published
     property OnChangeDisassembled: TNotifyEvent read fOnChangeDisassembled write fOnChangeDisassembled;
   end;
@@ -374,64 +374,59 @@ end;
 
 
 
-procedure TCodeTabFrame.Translate;
-var
-  i: Integer;
+function TCodeTabFrame.Translatable: TTranslatable;
 begin
-  (Parent as TTabSheet).Caption := Translator.TranslateControl('Code', 'Caption') + IntToStr(fSection.CodeSectionIndex);
-
-  // Buttons - translated trough actions
-
-  // Popisky Label
+  // Note: Buttons are translated trough actions
 {
   BytesperInstructionLabel.Caption:=Translator.TranslateControl('Code','BytesperInstructionLabel');
   InstructionCountLabel.Caption:=Translator.TranslateControl('Code','InstructionCountLabel');
 }
-  LineLabel.Caption := Translator.TranslateControl('Code', 'LineLabel');
 
-  // Hinty
-  GotoEntrypointButton.Hint := Translator.TranslateControl('Code', 'GotoEntrypointButtonHint');
-  GotoAddressButton.Hint := Translator.TranslateControl('Code', 'GotoAddressButtonHint');
-  FollowButton.Hint := Translator.TranslateControl('Code', 'FollowButtonHint');
-  ReturnButton.Hint := Translator.TranslateControl('Code', 'ReturnButtonHint');
-
-  // Popup menu
-  CodePopupMenu.Items[0].Caption := Translator.TranslateControl('Code', 'ToggleBookmark');
-  CodePopupMenu.Items[0].Hint := Translator.TranslateControl('Code', 'MainToggleBookmarkHint');
-  for i := 0 to CodePopupMenu.Items[0].Count - 1 do begin
-    CodePopupMenu.Items[0].Items[i].Caption := Translator.TranslateControl('Code', 'Bookmark') + ' ' + IntToStr(i);
-    CodePopupMenu.Items[0].Items[i].Hint := Translator.TranslateControl('Code', 'ToggleBookmarkHint') + ' ' + IntToStr(i);
-  end;
-  CodePopupMenu.Items[1].Caption := Translator.TranslateControl('Code', 'GotoBookmark');
-  CodePopupMenu.Items[1].Hint := Translator.TranslateControl('Code', 'MainGotoBookmarkHint');
-  for i := 0 to CodePopupMenu.Items[1].Count - 1 do begin
-    CodePopupMenu.Items[1].Items[i].Caption := Translator.TranslateControl('Code', 'Bookmark') + ' ' + IntToStr(i);
-    CodePopupMenu.Items[1].Items[i].Hint := Translator.TranslateControl('Code', 'GotoBookmarkHint') + ' ' + IntToStr(i);
-  end;
-  CodePopupMenu.Items[3].Caption := Translator.TranslateControl('Code', 'ChangeToUnsigned');
-  CodePopupMenu.Items[3].Items[0].Caption := Translator.TranslateControl('Code', 'ChangeByte');
-  CodePopupMenu.Items[3].Items[1].Caption := Translator.TranslateControl('Code', 'ChangeWord');
-  CodePopupMenu.Items[3].Items[2].Caption := Translator.TranslateControl('Code', 'ChangeDword');
-  CodePopupMenu.Items[3].Items[3].Caption := Translator.TranslateControl('Code', 'ChangeQword');
-  CodePopupMenu.Items[4].Caption := Translator.TranslateControl('Code', 'ChangeToSigned');
-  CodePopupMenu.Items[4].Items[0].Caption := Translator.TranslateControl('Code', 'ChangeByte');
-  CodePopupMenu.Items[4].Items[1].Caption := Translator.TranslateControl('Code', 'ChangeWord');
-  CodePopupMenu.Items[4].Items[2].Caption := Translator.TranslateControl('Code', 'ChangeDword');
-  CodePopupMenu.Items[4].Items[3].Caption := Translator.TranslateControl('Code', 'ChangeQword');
-  CodePopupMenu.Items[5].Caption := Translator.TranslateControl('Code', 'ChangeToFloat');
-  CodePopupMenu.Items[5].Items[0].Caption := Translator.TranslateControl('Code', 'ChangeSingle');
-  CodePopupMenu.Items[5].Items[1].Caption := Translator.TranslateControl('Code', 'ChangeDouble');
-  CodePopupMenu.Items[5].Items[2].Caption := Translator.TranslateControl('Code', 'ChangeExtended');
-  CodePopupMenu.Items[6].Caption := Translator.TranslateControl('Code', 'ChangeToString');
-  CodePopupMenu.Items[6].Items[0].Caption := Translator.TranslateControl('Code', 'ChangePascal');
-  CodePopupMenu.Items[6].Items[1].Caption := Translator.TranslateControl('Code', 'ChangeC');
-  CodePopupMenu.Items[7].Caption := Translator.TranslateControl('Code', 'AdvancedDataChange');
-  CodePopupMenu.Items[9].Caption := Translator.TranslateControl('Code', 'Disassemble');
-  CodePopupMenu.Items[10].Caption := Translator.TranslateControl('Code', 'AdvancedDisassemble');
-  CodePopupMenu.Items[12].Caption := Translator.TranslateControl('Code', 'Insert');
-  CodePopupMenu.Items[12].Items[0].Caption := Translator.TranslateControl('Code', 'InsertComment');
-  CodePopupMenu.Items[12].Items[1].Caption := Translator.TranslateControl('Code', 'InsertEmpty');
-  CodePopupMenu.Items[13].Caption := Translator.TranslateControl('Code', 'Remove');
+  Result := TTranslatableGroups.Create([
+    TTranslatableGroup.Create(
+      'Code',
+      [
+        TTranslatableCaptionWithSuffix.Create(Parent, 'Caption', IntToStr(fSection.CodeSectionIndex)),
+        TTranslatableCaption.Create(LineLabel),
+        TTranslatableHint.Create(GotoEntrypointButton),
+        TTranslatableHint.Create(GotoAddressButton),
+        TTranslatableHint.Create(FollowButton),
+        TTranslatableHint.Create(ReturnButton)
+      ]
+    ),
+    // Popup menu
+    TTranslatableBookmarks.Create('Code', CodePopupMenu.Items[0], 'Toggle'),
+    TTranslatableBookmarks.Create('Code', CodePopupMenu.Items[1], 'Goto'),
+    TTranslatableGroup.Create(
+      'Code',
+      [
+        TTranslatableMenuItem.Create(CodePopupMenu.Items[3], 'ChangeToUnsigned'),
+        TTranslatableMenuItem.Create(CodePopupMenu.Items[3].Items[0], 'ChangeByte'),
+        TTranslatableMenuItem.Create(CodePopupMenu.Items[3].Items[1], 'ChangeWord'),
+        TTranslatableMenuItem.Create(CodePopupMenu.Items[3].Items[2], 'ChangeDword'),
+        TTranslatableMenuItem.Create(CodePopupMenu.Items[3].Items[3], 'ChangeQword'),
+        TTranslatableMenuItem.Create(CodePopupMenu.Items[4], 'ChangeToSigned'),
+        TTranslatableMenuItem.Create(CodePopupMenu.Items[4].Items[0], 'ChangeByte'),
+        TTranslatableMenuItem.Create(CodePopupMenu.Items[4].Items[1], 'ChangeWord'),
+        TTranslatableMenuItem.Create(CodePopupMenu.Items[4].Items[2], 'ChangeDword'),
+        TTranslatableMenuItem.Create(CodePopupMenu.Items[4].Items[3], 'ChangeQword'),
+        TTranslatableMenuItem.Create(CodePopupMenu.Items[5], 'ChangeToFloat'),
+        TTranslatableMenuItem.Create(CodePopupMenu.Items[5].Items[0], 'ChangeSingle'),
+        TTranslatableMenuItem.Create(CodePopupMenu.Items[5].Items[1], 'ChangeDouble'),
+        TTranslatableMenuItem.Create(CodePopupMenu.Items[5].Items[2], 'ChangeExtended'),
+        TTranslatableMenuItem.Create(CodePopupMenu.Items[6], 'ChangeToString'),
+        TTranslatableMenuItem.Create(CodePopupMenu.Items[6].Items[0], 'ChangePascal'),
+        TTranslatableMenuItem.Create(CodePopupMenu.Items[6].Items[1], 'ChangeC'),
+        TTranslatableMenuItem.Create(CodePopupMenu.Items[7], 'AdvancedDataChange'),
+        TTranslatableMenuItem.Create(CodePopupMenu.Items[9], 'Disassemble'),
+        TTranslatableMenuItem.Create(CodePopupMenu.Items[10], 'AdvancedDisassemble'),
+        TTranslatableMenuItem.Create(CodePopupMenu.Items[12], 'Insert'),
+        TTranslatableMenuItem.Create(CodePopupMenu.Items[12].Items[0], 'InsertComment'),
+        TTranslatableMenuItem.Create(CodePopupMenu.Items[12].Items[1], 'InsertEmpty'),
+        TTranslatableMenuItem.Create(CodePopupMenu.Items[13], 'Remove')
+      ]
+    )
+  ]);
 end;
 
 

@@ -31,7 +31,7 @@ type
 
   TCalcOperation = (coPlus, coMinus, coMul, coDiv, coMod);
 
-  TCalculator = class(TForm, ITranslatable)
+  TCalculator = class(TForm)
     Panel1: TPanel;
     Panel2: TPanel;
     Panel3: TPanel;
@@ -55,7 +55,7 @@ type
     procedure MulButtonClick(Sender: TObject);
     procedure DivButtonClick(Sender: TObject);
 
-    procedure Translate;
+    //procedure Translate;
   private
     Changing: Boolean;
     DataBuffer: Int64;
@@ -257,13 +257,13 @@ end;
 
 
 
-procedure TCalculator.Translate;
-begin
-  Caption := Translator.TranslateControl('CalculatorForm', 'Caption');
-  DecimalLabel.Caption := Translator.TranslateControl('CalculatorForm', 'DecimalLabel');
-  HexadecimalLabel.Caption := Translator.TranslateControl('CalculatorForm', 'HexadecimalLabel');
-  BinaryLabel.Caption := Translator.TranslateControl('CalculatorForm', 'BinaryLabel');
-  OctalLabel.Caption := Translator.TranslateControl('CalculatorForm', 'OctalLabel');
-end;
+//procedure TCalculator.Translate;
+//begin
+  //Caption := Translator.TranslateControl('CalculatorForm', 'Caption');
+  //DecimalLabel.Caption := Translator.TranslateControl('CalculatorForm', 'DecimalLabel');
+  //HexadecimalLabel.Caption := Translator.TranslateControl('CalculatorForm', 'HexadecimalLabel');
+  //BinaryLabel.Caption := Translator.TranslateControl('CalculatorForm', 'BinaryLabel');
+  //OctalLabel.Caption := Translator.TranslateControl('CalculatorForm', 'OctalLabel');
+//end;
 
 end.

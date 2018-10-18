@@ -12,10 +12,12 @@ uses
   ComCtrls,
   // project units
   procmat,
-  TranslatorUnit,
+  Translatables,
   ProgressThreads;
 
 type
+
+  { TProgressForm }
 
   TProgressForm = class(TForm, ITranslatable)
     CancelButton: TButton;
@@ -31,7 +33,7 @@ type
     fCurrentPhaseName: string;
   public
     procedure Execute(AThread: TProgressThread);
-    procedure Translate;
+    function Translatable: TTranslatable;
   end;
 
 var
@@ -110,14 +112,19 @@ end;
 
 
 
-procedure TProgressForm.Translate;
+function TProgressForm.Translatable: TTranslatable;
 begin
-  Caption := Translator.TranslateControl('ProgressForm', 'Caption');
-  PauseStr := Translator.TranslateControl('ProgressForm', 'Pause');
-  ResumeStr := Translator.TranslateControl('ProgressForm', 'Resume');
-  CancelButton.Caption := Translator.TranslateControl('Common', 'CancelButton');
-  // Set PauseButton caption (PauseButton is in pause state during translating)
-  PauseButton.Caption := PauseStr;
+  Result := TTranslatableSimpleForm.Create(
+    self,
+    'ProgressForm',
+    [
+      TTranslatableString.Create(PauseStr, 'Pause'),
+      TTranslatableString.Create(ResumeStr, 'Resume'),
+      // PauseButton is in pause state during translating
+      TTranslatableCaption.Create(PauseButton, 'Pause')
+    ],
+    [CancelButton]
+  );
 end;
 
 

@@ -17,10 +17,13 @@ uses
   procmat,
   CustomFileUnit,
   StringRes,
-  TranslatorUnit,
+  Translatables,
   myedits;
 
 type
+
+  { TUnknownFileFormatForm }
+
   TUnknownFileFormatForm = class(TForm, ITranslatable)
     OKButton: TButton;
     CancelButton: TButton;
@@ -61,7 +64,7 @@ type
   public
     FileName: string;
     FileSize: Cardinal;
-    procedure Translate;
+    function Translatable: TTranslatable;
     property Parameters: TCustomFileParameters read GetParameters;
   end;
 
@@ -142,23 +145,26 @@ end;
 
 
 
-procedure TUnknownFileFormatForm.Translate;
+function TUnknownFileFormatForm.Translatable: TTranslatable;
 begin
-  Caption := Translator.TranslateControl('UnknownFileFormatForm', 'Caption');
-  UnknownInfoLabel.Caption := Translator.TranslateControl('UnknownFileFormatForm', 'UnknownInfoLabel');
-  FileNameLabel.Caption := Translator.TranslateControl('UnknownFileFormatForm', 'FileNameLabel');
-  FileSizeLabel.Caption := Translator.TranslateControl('UnknownFileFormatForm', 'FileSizeLabel');
-
-  OffsetLabel.Caption := Translator.TranslateControl('UnknownFileFormatForm', 'OffsetLabel');
-  EntryPointLabel.Caption := Translator.TranslateControl('UnknownFileFormatForm', 'EntryPointLabel');
-  SizeLabel.Caption := Translator.TranslateControl('UnknownFileFormatForm', 'SizeLabel');
-
-  Bit1632GroupBox.Caption := Translator.TranslateControl('UnknownFileFormatForm', 'Bit1632GroupBox');
-  SizeEndOffsetGroupBox.Caption := Translator.TranslateControl('UnknownFileFormatForm', 'SizeEndOffsetGroupBox');
-  SizeRadioButton.Caption := Translator.TranslateControl('UnknownFileFormatForm', 'SizeRadioButton');
-  EndOffsetRadioButton.Caption := Translator.TranslateControl('UnknownFileFormatForm', 'EndOffsetRadioButton');
-  HexNoteLabel.Caption := Translator.TranslateControl('UnknownFileFormatForm', 'HexNoteLabel');
-  CancelButton.Caption := Translator.TranslateControl('Common', 'CancelButton');
+  Result := TTranslatableSimpleForm.Create(
+    self,
+    'UnknownFileFormatForm',
+    [
+      TTranslatableCaption.Create(UnknownInfoLabel),
+      TTranslatableCaption.Create(FileNameLabel),
+      TTranslatableCaption.Create(FileSizeLabel),
+      TTranslatableCaption.Create(OffsetLabel),
+      TTranslatableCaption.Create(EntryPointLabel),
+      TTranslatableCaption.Create(SizeLabel),
+      TTranslatableCaption.Create(Bit1632GroupBox),
+      TTranslatableCaption.Create(SizeEndOffsetGroupBox),
+      TTranslatableCaption.Create(SizeRadioButton),
+      TTranslatableCaption.Create(EndOffsetRadioButton),
+      TTranslatableCaption.Create(HexNoteLabel)
+    ],
+    [CancelButton]
+  );
 end;
 
 

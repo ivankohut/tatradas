@@ -35,7 +35,7 @@
         <PackageName Value="LCL"/>
       </Item2>
     </RequiredPackages>
-    <Units Count="61">
+    <Units Count="62">
       <Unit0>
         <Filename Value="TatraDAS.dpr"/>
         <IsPartOfProject Value="True"/>
@@ -300,6 +300,10 @@
         <IsPartOfProject Value="True"/>
         <HasResources Value="True"/>
       </Unit60>
+      <Unit61>
+        <Filename Value="base/Translatables.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit61>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

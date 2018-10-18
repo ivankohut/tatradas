@@ -18,9 +18,12 @@ uses
   ExecFileUnit,
   ImportSectionUnit,
   TabFrameTemplateUnit,
-  TranslatorUnit;
+  Translatables;
 
 type
+
+  { TImportTabFrame }
+
   TImportTabFrame = class(TTabFrameTemplate)
     OccurHintLabel: TLabel;
     Panel1: TPanel;
@@ -44,7 +47,7 @@ type
     function GetSection: TSection; override;
   public
     constructor Create(AOwner: TComponent; ASection: TSection); overload; override;
-    procedure Translate; override;
+    function Translatable: TTranslatable; override;
   end;
 
 var
@@ -177,20 +180,25 @@ end;
 
 
 
-procedure TImportTabFrame.Translate;
+function TImportTabFrame.Translatable: TTranslatable;
 begin
-  inherited;
-  Caption := Translator.TranslateControl('Import', 'Caption');
-  ModulLabel.Caption := Translator.TranslateControl('Import', 'ModulLabel');
-  FunctionLabel.Caption := Translator.TranslateControl('Import', 'FunctionLabel');
-  FunctionCallsLabel.Caption := Translator.TranslateControl('Import', 'FunctionCallsLabel');
-  OccurHintLabel.Caption := Translator.TranslateControl('Import', 'OccurHintLabel');
-
-  FunctionListView.Columns.Items[0].Caption := Translator.TranslateControl('Import', 'FunctionListNumber');
-  FunctionListView.Columns.Items[1].Caption := Translator.TranslateControl('Import', 'FunctionListName');
-  FunctionListView.Columns.Items[2].Caption := Translator.TranslateControl('Import', 'FunctionListAddress');
-  FunctionListView.Columns.Items[3].Caption := Translator.TranslateControl('Import', 'FunctionListOrdinal');
-  FunctionListView.Columns.Items[4].Caption := Translator.TranslateControl('Import', 'FunctionListHint');
+  Result := TTranslatableGroups.Create([
+    TTranslatableGroup.Create(
+      'Import',
+      [
+        TTranslatableCaption.Create(self, 'Caption'),
+        TTranslatableCaption.Create(ModulLabel),
+        TTranslatableCaption.Create(FunctionLabel),
+        TTranslatableCaption.Create(FunctionCallsLabel),
+        TTranslatableCaption.Create(OccurHintLabel)
+      ]
+    ),
+    TTranslatableListColumns.Create(
+      'Import',
+      FunctionListView.Columns,
+      ['FunctionListNumber', 'FunctionListName', 'FunctionListAddress', 'FunctionListOrdinal', 'FunctionListHint']
+    )
+  ]);
 end;
 
 

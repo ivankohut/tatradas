@@ -17,7 +17,7 @@ uses
   procmat,
   SectionUnit,
   TabFrameTemplateUnit,
-  TranslatorUnit,
+  Translatables,
   ExecFileUnit;
 
 type
@@ -48,43 +48,39 @@ type
     procedure AddAdvancedInfo(InfoName, InfoValue: string);
   public
     constructor Create(AOwner: TComponent; aExecFile: TExecutableFile);
-    procedure Translate; override;
+    function Translatable: TTranslatable; override;
   end;
 
 
   TCOMFileTabFrame = class(TFileTabFrame)
     constructor Create(AOwner: TComponent; aExecFile: TExecutableFile);
-//    procedure Translate(Translator: TTatraDASLanguages); override;
   end;
 
 
   TMZFileTabFrame = class(TFileTabFrame)
     constructor Create(AOwner: TComponent; aExecFile: TExecutableFile);
-//    procedure Translate(Translator: TTatraDASLanguages); override;
   end;
 
 
   TNEFileTabFrame = class(TFileTabFrame)
     constructor Create(AOwner: TComponent; aExecFile: TExecutableFile);
-    procedure Translate; override;
+    function Translatable: TTranslatable; override;
   end;
 
 
   TPEFileTabFrame = class(TFileTabFrame)
     constructor Create(AOwner: TComponent; aExecFile: TExecutableFile);
-    procedure Translate; override;
+    function Translatable: TTranslatable; override;
   end;
 
 
   TELFFileTabFrame = class(TFileTabFrame)
     constructor Create(AOwner: TComponent; aExecFile: TExecutableFile);
-//    procedure Translate(Translator: TTatraDASLanguages); override;
   end;
 
 
   TCustomFileTabFrame = class(TFileTabFrame)
     constructor Create(AOwner: TComponent; aExecFile: TExecutableFile);
-//    procedure Translate(Translator: TTatraDASLanguages); override;
   end;
 
 
@@ -129,19 +125,24 @@ end;
 
 
 
-procedure TFileTabFrame.Translate;
+function TFileTabFrame.Translatable: TTranslatable;
 begin
-  (Parent as TTabSheet).Caption := Translator.TranslateControl('File', 'Caption');
+  Result := TTranslatableGroup.Create(
+    'File',
+    [
+      TTranslatableCaption.Create(Parent as TTabSheet, 'Caption'),
 
-  // Translate FileOverviewGroupBox and its subitems
-  FileOverviewGroupBox.Caption := Translator.TranslateControl('File', 'FileOverview');
-  FilenameLabel.Caption := Translator.TranslateControl('File', 'Filename');
-  FilesizeLabel.Caption := Translator.TranslateControl('File', 'Filesize');
-  FileformatLabel.Caption := Translator.TranslateControl('File', 'Fileformat');
-  FullpathLabel.Caption := Translator.TranslateControl('File', 'Fullpath');
-  BytesLabel.Caption := Translator.TranslateControl('File', 'Bytes');
+      // FileOverviewGroupBox and its subitems
+      TTranslatableCaption.Create(FileOverviewGroupBox, 'FileOverview'),
+      TTranslatableCaption.Create(FilenameLabel, 'Filename'),
+      TTranslatableCaption.Create(FilesizeLabel, 'Filesize'),
+      TTranslatableCaption.Create(FileformatLabel, 'Fileformat'),
+      TTranslatableCaption.Create(FullpathLabel, 'Fullpath'),
+      TTranslatableCaption.Create(BytesLabel, 'Bytes'),
 
-  MoreInfoLabel.Caption := Translator.TranslateControl('File', 'MoreInformation');
+      TTranslatableCaption.Create(MoreInfoLabel, 'MoreInformation')
+    ]
+  );
 end;
 
 
@@ -264,15 +265,16 @@ end;
 
 
 
-procedure TNEFileTabFrame.Translate;
+function TNEFileTabFrame.Translatable: TTranslatable;
 begin
-  inherited;
-  // ObjectListView column captions
-  ObjectListView.Columns[0].Caption := Translator.TranslateControl('File', 'SectionIndex');
-  ObjectListView.Columns[1].Caption := Translator.TranslateControl('File', 'NESectionOffset');
-  ObjectListView.Columns[2].Caption := Translator.TranslateControl('File', 'NESectionSize');
-  ObjectListView.Columns[3].Caption := Translator.TranslateControl('File', 'NESectionAllocationSize');
-  ObjectListView.Columns[4].Caption := Translator.TranslateControl('File', 'NESectionFlags');
+  Result := TTranslatables.Create([
+    inherited,
+    TTranslatableGroups.Create([TTranslatableListColumns.Create(
+      'File',
+      ObjectListView.Columns,
+      [ 'SectionIndex', 'NESectionOffset', 'NESectionSize', 'NESectionAllocationSize', 'NESectionFlags' ]
+    )])
+  ]);
 end;
 
 //******************************************************************************
@@ -345,20 +347,21 @@ end;
 
 
 
-procedure TPEFileTabFrame.Translate;
+function TPEFileTabFrame.Translatable: TTranslatable;
+var
+  Columns: TListColumns;
 begin
-  inherited;
-  // ObjectListView column captions
-  ObjectListView.Columns[0].Caption := Translator.TranslateControl('File', 'SectionIndex');
-  ObjectListView.Columns[1].Caption := Translator.TranslateControl('File', 'PESectionName');
-  ObjectListView.Columns[2].Caption := Translator.TranslateControl('File', 'PESectionFileOffset');
-  ObjectListView.Columns[3].Caption := Translator.TranslateControl('File', 'PESectionFileSize');
-  ObjectListView.Columns[4].Caption := Translator.TranslateControl('File', 'PESectionRVA');
-  ObjectListView.Columns[5].Caption := Translator.TranslateControl('File', 'PESectionMemAddress');
-  ObjectListView.Columns[6].Caption := Translator.TranslateControl('File', 'PESectionMemSize');
-  ObjectListView.Columns[7].Caption := Translator.TranslateControl('File', 'PESectionFlags');
-
+  Columns := ObjectListView.Columns;
+  Result := TTranslatables.Create([
+    inherited,
+    TTranslatableGroups.Create([TTranslatableListColumns.Create(
+      'File',
+      ObjectListView.Columns,
+      ['SectionIndex', 'SectionIndex', 'PESectionFileOffset', 'PESectionFileSize', 'PESectionRVA', 'PESectionMemAddress', 'PESectionMemSize', 'PESectionFlags']
+    )])
+  ]);
 end;
+
 
 
 //******************************************************************************

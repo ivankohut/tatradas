@@ -15,7 +15,7 @@ uses
   ExceptionsUnit,
   GlobalsUnit,
   FilesUnit,
-  TranslatorUnit,
+  Translatables,
   StringRes,
   procmat,
   SectionUnit,
@@ -158,7 +158,7 @@ type
     procedure FindText1Click(Sender: TObject);
     procedure Help2Click(Sender: TObject);
 
-    procedure Translate;
+    function Translatable: TTranslatable;
 
     procedure FindDialog1Find(Sender: TObject);
     procedure MainPageControlChange(Sender: TObject);
@@ -249,7 +249,8 @@ uses
   OptionsFormUnit,
   ProgressFormUnit,
   UnknownFileFormUnit,
-  MessageFormUnit;
+  MessageFormUnit,
+  TranslatorUnit;
 
 {$R *.lfm}
 
@@ -698,138 +699,118 @@ end;
 
 
 
-procedure TMainForm.Translate;    // Zmena jazyka prostredia
+function TMainForm.Translatable: TTranslatable;
 var
   BookMarkIndex: Integer;
 begin
-// Zmena popisov komponent
+  Result := TTranslatableGroups.Create([
+    TTranslatableGroup.Create(
+      'ButtonCaption',
+      [
+        TTranslatableCaption.Create(OpenMyButton, 'OpenFile'),
+        TTranslatableCaption.Create(ProjectMyButton, 'OpenDisasm'),
+        TTranslatableCaption.Create(DisassembleMyButton, 'Disassemble'),
+        TTranslatableCaption.Create(SaveMyButton, 'SaveDisasm')
+      ]
+    ),
+    TTranslatableGroup.Create(
+      'ButtonHint',
+      [
+        TTranslatableHint.Create(OpenMyButton, 'OpenFile'),
+        TTranslatableHint.Create(ProjectMyButton, 'OpenDisasm'),
+        TTranslatableHint.Create(DisassembleMyButton, 'Disassemble'),
+        TTranslatableHint.Create(SaveMyButton, 'SaveDisasm')
+      ]
+    ),
+    TTranslatableGroup.Create(
+      'MenuCaption',
+      [
+        TTranslatableMenuItem.Create(File1, 'file'),
+        TTranslatableMenuItem.Create(Edit1, 'edit'),
+        TTranslatableMenuItem.Create(Search1, 'search'),
+        TTranslatableMenuItem.Create(Goto1, 'goto'),
+        TTranslatableMenuItem.Create(Tools1, 'tools'),
+        TTranslatableMenuItem.Create(Settings1, 'settings'),
+        TTranslatableMenuItem.Create(Help1, 'help'),
+        TTranslatableMenuItem.Create(OpenFile1, 'OpenFile'),
+        TTranslatableMenuItem.Create(OpenProject1, 'OpenProject'),
+        TTranslatableMenuItem.Create(Disassemble1, 'Disassemble'),
+        TTranslatableMenuItem.Create(SaveProject1, 'SaveProject'),
+        TTranslatableMenuItem.Create(Export1, 'Export'),
+        TTranslatableMenuItem.Create(Closefile1, 'CloseFile'),
+        TTranslatableMenuItem.Create(Exit1, 'Exit'),
+        TTranslatableMenuItem.Create(FindText1, 'FindText'),
+        TTranslatableMenuItem.Create(SearchAgain1, 'SearchAgain'),
+        TTranslatableMenuItem.Create(Calculator1, 'Calculator'),
+        TTranslatableMenuItem.Create(LanguagesMenuItem, 'Language'),
+        TTranslatableMenuItem.Create(Help2, 'HelpTopic'),
+        TTranslatableMenuItem.Create(About1, 'About')
+      ]
+    ),
+    TTranslatableGroup.Create(
+      'MenuHint',
+      [
+        TTranslatableMenuItemHint.Create(OpenFile1, 'OpenFile'),
+        TTranslatableMenuItemHint.Create(OpenProject1, 'OpenProject'),
+        TTranslatableMenuItemHint.Create(Disassemble1, 'Disassemble'),
+        TTranslatableMenuItemHint.Create(SaveProject1, 'SaveProject'),
+        TTranslatableMenuItemHint.Create(Export1, 'Export'),
+        TTranslatableMenuItemHint.Create(Closefile1, 'CloseFile'),
+        TTranslatableMenuItemHint.Create(Exit1, 'Exit'),
+        TTranslatableMenuItemHint.Create(FindText1, 'FindText'),
+        TTranslatableMenuItemHint.Create(SearchAgain1, 'SearchAgain'),
+        TTranslatableMenuItemHint.Create(Calculator1, 'Calculator'),
+        TTranslatableMenuItemHint.Create(HexEditor1, 'HexEditor'),
+        TTranslatableMenuItemHint.Create(LanguagesMenuItem, 'Language'),
+        TTranslatableMenuItemHint.Create(Help2, 'HelpTopic'),
+        TTranslatableMenuItemHint.Create(About1, 'About')
+      ]
+    ),
+    TTranslatableGroup.Create(
+      'Code',
+      [
+        TTranslatableAction.Create(actGoToEntryPoint, 'EntrypointButton'),
+        TTranslatableAction.Create(actGoToAddress, 'GotoAddressButton'),
+        TTranslatableAction.Create(actGoToLine, 'GotoLineButton'),
+        TTranslatableAction.Create(actReturnJump, 'ReturnButton'),
+        TTranslatableAction.Create(actFollowJump, 'FollowButton'),
+        TTranslatableMenuItem.Create(ChangeToUnsigned, 'ChangeToUnsigned'),
+        TTranslatableMenuItem.Create(UByte, 'ChangeByte'),
+        TTranslatableMenuItem.Create(UWord, 'ChangeWord'),
+        TTranslatableMenuItem.Create(UDword, 'ChangeDword'),
+        TTranslatableMenuItem.Create(UQword, 'ChangeQword'),
+        TTranslatableMenuItem.Create(ChangeToSigned, 'ChangeToSigned'),
+        TTranslatableMenuItem.Create(SByte, 'ChangeByte'),
+        TTranslatableMenuItem.Create(SWord, 'ChangeWord'),
+        TTranslatableMenuItem.Create(SDword, 'ChangeDword'),
+        TTranslatableMenuItem.Create(SQword, 'ChangeQword'),
+        TTranslatableMenuItem.Create(ChangeToFloat, 'ChangeToFloat'),
+        TTranslatableMenuItem.Create(FSingle, 'ChangeSingle'),
+        TTranslatableMenuItem.Create(FDouble, 'ChangeDouble'),
+        TTranslatableMenuItem.Create(FExtended, 'ChangeExtended'),
+        TTranslatableMenuItem.Create(ChangeToString, 'ChangeToString'),
+        TTranslatableMenuItem.Create(StringPascal, 'ChangePascal'),
+        TTranslatableMenuItem.Create(StringC, 'ChangeC'),
+        TTranslatableMenuItem.Create(AdvancedDataChange, 'AdvancedDataChange'),
+        TTranslatableMenuItem.Create(Disassemble2, 'Disassemble'),
+        TTranslatableMenuItem.Create(AdvancedDisassemble, 'AdvancedDisassemble'),
+        TTranslatableMenuItem.Create(Insert1, 'Insert'),
+        TTranslatableMenuItem.Create(InsertComment, 'InsertComment'),
+        TTranslatableMenuItem.Create(EmptyLine, 'InsertEmpty'),
+        TTranslatableMenuItem.Create(RemoveLine, 'Remove'),
+        TTranslatableMenuItem.Create(GotoEntrypoint1, 'EntrypointButtonHint'),
+        TTranslatableMenuItem.Create(GotoAddress1, 'GotoAddressButtonHint'),
+        TTranslatableMenuItem.Create(FollowJUMPCALL1, 'FollowButtonHint'),
+        TTranslatableMenuItem.Create(ReturnFromJUMPCALL1, 'ReturnButtonHint')
+      ]
+    ),
+    TTranslatableProcessText.Create('LabelCaption', ProcessText),
+    TTranslatableBookmarks.Create('Code', ToggleBookmarks, 'Toggle'),
+    TTranslatableBookmarks.Create('Code', GotoBookmarks, 'Goto')
+  ]);
 
-  // [ButtonCaption]
-  OpenMyButton.Caption := Translator.TranslateControl('ButtonCaption', 'OpenFile');
-  ProjectMyButton.Caption := Translator.TranslateControl('ButtonCaption', 'OpenDisasm');
-  DisassembleMyButton.Caption := Translator.TranslateControl('ButtonCaption', 'Disassemble');
-  SaveMyButton.Caption := Translator.TranslateControl('ButtonCaption', 'SaveDisasm');
-//  HelpMyButton.Caption := Translator.TranslateControl('ButtonCaption', 'Help');
-
-  // [MenuCaption]
-  File1.Caption := Translator.TranslateControl('MenuCaption', 'file');
-  Edit1.Caption := Translator.TranslateControl('MenuCaption', 'edit');
-  Search1.Caption := Translator.TranslateControl('MenuCaption', 'search');
-  Goto1.Caption := Translator.TranslateControl('MenuCaption', 'goto');
-  Tools1.Caption := Translator.TranslateControl('MenuCaption', 'tools');
-  Settings1.Caption := Translator.TranslateControl('MenuCaption', 'settings');
-  Help1.Caption := Translator.TranslateControl('MenuCaption', 'help');
-
-  OpenFile1.Caption := Translator.TranslateControl('MenuCaption', 'Openfile');
-  OpenProject1.Caption := Translator.TranslateControl('MenuCaption', 'OpenProject');
-  Disassemble1.Caption := Translator.TranslateControl('MenuCaption', 'Disassemble');
-  SaveProject1.Caption := Translator.TranslateControl('MenuCaption', 'Save');
-  Export1.Caption := Translator.TranslateControl('MenuCaption', 'Export');
-
-  Closefile1.Caption := Translator.TranslateControl('MenuCaption', 'Closefile');
-  Exit1.Caption := Translator.TranslateControl('MenuCaption', 'Exit');
-  FindText1.Caption := Translator.TranslateControl('MenuCaption', 'Findtext');
-  SearchAgain1.Caption := Translator.TranslateControl('MenuCaption', 'SearchAgain');
-  Calculator1.Caption := Translator.TranslateControl('MenuCaption', 'Calculator');
-  LanguagesMenuItem.Caption := Translator.TranslateControl('MenuCaption', 'Language');
-  Options1.Caption := Translator.TranslateControl('MenuCaption', 'Options');
-  Help2.Caption := Translator.TranslateControl('MenuCaption', 'HelpTopic');
-  About1.Caption := Translator.TranslateControl('MenuCaption', 'About');
-
-  actGoToEntryPoint.Caption := Translator.TranslateControl('Code', 'EntrypointButton');
-  actGoToAddress.Caption := Translator.TranslateControl('Code', 'GotoAddressButton');
-  actGoToLine.Caption := Translator.TranslateControl('Code', 'GotoLineButton');
-  actReturnJump.Caption := Translator.TranslateControl('Code', 'ReturnButton');
-  actFollowJump.Caption := Translator.TranslateControl('Code', 'FollowButton');
-
-  ToggleBookmarks.Caption := Translator.TranslateControl('Code', 'ToggleBookmark');
-  ToggleBookmarks.Hint := Translator.TranslateControl('Code', 'MainToggleBookmarkHint');
-  for BookMarkIndex := 0 to 9 do begin
-    ToggleBookmarks.Items[BookMarkIndex].Caption := Translator.TranslateControl('Code', 'Bookmark') + ' ' + IntToStr(BookMarkIndex);
-    ToggleBookmarks.Items[BookMarkIndex].Hint := Translator.TranslateControl('Code', 'ToggleBookmarkHint') + ' ' + IntToStr(BookMarkIndex);
-  end;
-  GotoBookmarks.Caption := Translator.TranslateControl('Code', 'GotoBookmark');
-  GotoBookmarks.Hint := Translator.TranslateControl('Code', 'MainGotoBookmarkHint');
-  for BookMarkIndex := 0 to 9 do begin
-    GotoBookmarks.Items[BookMarkIndex].Caption := Translator.TranslateControl('Code', 'Bookmark') + ' ' + IntToStr(BookMarkIndex);
-    GotoBookmarks.Items[BookMarkIndex].Hint := Translator.TranslateControl('Code', 'GotoBookmarkHint') + ' ' + IntToStr(BookMarkIndex);
-  end;
-
-  ChangeToUnsigned.Caption := Translator.TranslateControl('Code', 'ChangeToUnsigned');
-  UByte.Caption := Translator.TranslateControl('Code', 'ChangeByte');
-  UWord.Caption := Translator.TranslateControl('Code', 'ChangeWord');
-  UDword.Caption := Translator.TranslateControl('Code', 'ChangeDword');
-  UQword.Caption := Translator.TranslateControl('Code', 'ChangeQword');
-  ChangeToSigned.Caption := Translator.TranslateControl('Code', 'ChangeToSigned');
-  SByte.Caption := Translator.TranslateControl('Code', 'ChangeByte');
-  SWord.Caption := Translator.TranslateControl('Code', 'ChangeWord');
-  SDword.Caption := Translator.TranslateControl('Code', 'ChangeDword');
-  SQword.Caption := Translator.TranslateControl('Code', 'ChangeQword');
-  ChangeToFloat.Caption := Translator.TranslateControl('Code', 'ChangeToFloat');
-  FSingle.Caption := Translator.TranslateControl('Code', 'ChangeSingle');
-  FDouble.Caption := Translator.TranslateControl('Code', 'ChangeDouble');
-  FExtended.Caption := Translator.TranslateControl('Code', 'ChangeExtended');
-  ChangeToString.Caption := Translator.TranslateControl('Code', 'ChangeToString');
-  StringPascal.Caption := Translator.TranslateControl('Code', 'ChangePascal');
-  StringC.Caption := Translator.TranslateControl('Code', 'ChangeC');
-  AdvancedDataChange.Caption := Translator.TranslateControl('Code', 'AdvancedDataChange');
-  Disassemble2.Caption := Translator.TranslateControl('Code', 'Disassemble');
-  AdvancedDisassemble.Caption := Translator.TranslateControl('Code', 'AdvancedDisassemble');
-  Insert1.Caption := Translator.TranslateControl('Code', 'Insert');
-  InsertComment.Caption := Translator.TranslateControl('Code', 'InsertComment');
-  EmptyLine.Caption := Translator.TranslateControl('Code', 'InsertEmpty');
-  RemoveLine.Caption := Translator.TranslateControl('Code', 'Remove');
-
-
-
-  // [LabelCaption]
-
-  ProcessText.Disassembling := Translator.TranslateControl('LabelCaption', 'Disassembling');
-  ProcessText.PreparingOutput := Translator.TranslateControl('LabelCaption', 'Preparingoutput');
-  ProcessText.LoadingDAS := Translator.TranslateControl('LabelCaption', 'LoadingDAS');
-  ProcessText.LoadingDHF := Translator.TranslateControl('LabelCaption', 'LoadingDHF');
-  ProcessText.SavingDAS := Translator.TranslateControl('LabelCaption', 'SavingDAS');
-  ProcessText.SavingDHF := Translator.TranslateControl('LabelCaption', 'SavingDHF');
-
-
-// Zmena hintov
-
-//[ButtonHint]
-  OpenMyButton.Hint := Translator.TranslateControl('ButtonHint', 'OpenFile');
-  ProjectMyButton.Hint := Translator.TranslateControl('ButtonHint', 'OpenDisasm');
-  DisassembleMyButton.Hint := Translator.TranslateControl('ButtonHint', 'Disassemble');
-  SaveMyButton.Hint := Translator.TranslateControl('ButtonHint', 'SaveDisasm');
-  //HelpMyButton.Hint:= Translator.TranslateControl('ButtonHint','Help');
-//  StopMyButton.Hint:= Translator.TranslateControl('ButtonHint','StopDisasm');
-
-//[MenuHint]
-  OpenFile1.Hint := Translator.TranslateControl('MenuHint', 'Openfile');
-  OpenProject1.Hint := Translator.TranslateControl('MenuHint', 'Opendisassembled');
-  Disassemble1.Hint := Translator.TranslateControl('MenuHint', 'Disassemble');
-  SaveProject1.Hint := Translator.TranslateControl('MenuHint', 'SaveProject');
-  Export1.Hint := Translator.TranslateControl('MenuHint', 'ExportDisassembled');
-  Closefile1.Hint := Translator.TranslateControl('MenuHint', 'Closefile');
-  Exit1.Hint := Translator.TranslateControl('MenuHint', 'Exit');
-
-  FindText1.Hint := Translator.TranslateControl('MenuHint', 'Findtext');
-  SearchAgain1.Hint := Translator.TranslateControl('MenuHint', 'SearchAgain');
-
-//  Language1.Hint:= Translator.TranslateControl('MenuHint','Language');
-//  Language1.Hint:= Translator.TranslateControl('MenuHint','Language');
-
-  GotoEntrypoint1.Hint := Translator.TranslateControl('Code', 'EntrypointButtonHint');
-  GotoAddress1.Hint := Translator.TranslateControl('Code', 'GotoAddressButtonHint');
-  FollowJUMPCALL1.Hint := Translator.TranslateControl('Code', 'FollowButtonHint');
-  ReturnFromJUMPCALL1.Hint := Translator.TranslateControl('Code', 'ReturnButtonHint');
-
-  Calculator1.Hint := Translator.TranslateControl('MenuHint', 'Calculator');
-  HexEditor1.Hint := Translator.TranslateControl('MenuHint', 'HexEditor');
-
-  LanguagesMenuItem.Hint := Translator.TranslateControl('MenuHint', 'Language');
-//  Options1.Hint:= Translator.TranslateControl('MenuHint','Options');
-
-  Help2.Hint := Translator.TranslateControl('MenuHint', 'Help');
-  About1.Hint := Translator.TranslateControl('MenuHint', 'About');
+  // HelpMyButton.Hint:= Translator.TranslateControl('ButtonHint','Help');
+  // StopMyButton.Hint:= Translator.TranslateControl('ButtonHint','StopDisasm');
 end;
 
 

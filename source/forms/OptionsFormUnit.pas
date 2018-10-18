@@ -12,7 +12,7 @@ uses
   TranslatorUnit;
 
 type
-  TOptionsForm = class(TForm, ITranslatable)
+  TOptionsForm = class(TForm)
     DisassemblerGroupBox: TGroupBox;
     DisasmCheckBox: TCheckBox;
     DetectStringCheckBox: TCheckBox;
@@ -32,7 +32,7 @@ type
   private
     Options: TTatraDASOptions;
   public
-    procedure Translate;
+    //procedure Translate;
     procedure SaveSettings(ini: TMemINIFile);
     procedure LoadSettings(ini: TMemINIFile);
   end;
@@ -101,26 +101,26 @@ end;
 
 
 
-procedure TOptionsForm.Translate;
-begin
-  Caption := Translator.TranslateControl('OptionsForm', 'Caption');
-  OpeningGroupBox.Caption := Translator.TranslateControl('OptionsForm', 'OpeningGroupBox');
-  DisassemblerGroupBox.Caption := Translator.TranslateControl('OptionsForm', 'DisassemblerGroupBox');
-  ToDataChangeGroupBox.Caption := Translator.TranslateControl('OptionsForm', 'ToDataChangeGroupBox');
-
-  UserRadioButton.Caption := Translator.TranslateControl('OptionsForm', 'UserRadioButton');
-  AutomaticRadioButton.Caption := Translator.TranslateControl('OptionsForm', 'AutomaticRadioButton');
-
-  DisasmCheckBox.Caption := Translator.TranslateControl('OptionsForm', 'DisasmCheckBox');
-  DetectStringCheckBox.Caption := Translator.TranslateControl('OptionsForm', 'DetectStringCheckBox');
-
-  RemoveJumpRefCheckBox.Caption := Translator.TranslateControl('OptionsForm', 'RemoveJumpRefCheckBox');
-  RemoveImportRefCheckBox.Caption := Translator.TranslateControl('OptionsForm', 'RemoveImportRefCheckBox');
-  RemoveExportRefCheckBox.Caption := Translator.TranslateControl('OptionsForm', 'RemoveExportRefCheckBox');
-
-  OKButton.Caption := Translator.TranslateControl('Common', 'OKButton');
-  CancelButton.Caption := Translator.TranslateControl('Common', 'CancelButton');
-end;
+//procedure TOptionsForm.Translate;
+//begin
+  //Caption := Translator.TranslateControl('OptionsForm', 'Caption');
+  //OpeningGroupBox.Caption := Translator.TranslateControl('OptionsForm', 'OpeningGroupBox');
+  //DisassemblerGroupBox.Caption := Translator.TranslateControl('OptionsForm', 'DisassemblerGroupBox');
+  //ToDataChangeGroupBox.Caption := Translator.TranslateControl('OptionsForm', 'ToDataChangeGroupBox');
+  //
+  //UserRadioButton.Caption := Translator.TranslateControl('OptionsForm', 'UserRadioButton');
+  //AutomaticRadioButton.Caption := Translator.TranslateControl('OptionsForm', 'AutomaticRadioButton');
+  //
+  //DisasmCheckBox.Caption := Translator.TranslateControl('OptionsForm', 'DisasmCheckBox');
+  //DetectStringCheckBox.Caption := Translator.TranslateControl('OptionsForm', 'DetectStringCheckBox');
+  //
+  //RemoveJumpRefCheckBox.Caption := Translator.TranslateControl('OptionsForm', 'RemoveJumpRefCheckBox');
+  //RemoveImportRefCheckBox.Caption := Translator.TranslateControl('OptionsForm', 'RemoveImportRefCheckBox');
+  //RemoveExportRefCheckBox.Caption := Translator.TranslateControl('OptionsForm', 'RemoveExportRefCheckBox');
+  //
+  //OKButton.Caption := Translator.TranslateControl('Common', 'OKButton');
+  //CancelButton.Caption := Translator.TranslateControl('Common', 'CancelButton');
+//end;
 
 
 end.
