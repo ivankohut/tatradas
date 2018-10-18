@@ -217,9 +217,9 @@ type
 
     function GetSectionsTabSheet(ASection: TSection): TTabSheetTemplate;
 
-    procedure SetOpenFilePath(path: string);
-    procedure SetOpenProjectPath(path: string);
-    procedure SetSaveProjectPath(path: string);
+    procedure SetOpenFilePath(Path: string);
+    procedure SetOpenProjectPath(Path: string);
+    procedure SetSaveProjectPath(Path: string);
 
     procedure GuiProcessException(Sender: TObject; E: Exception);
 
@@ -911,29 +911,29 @@ end;
 
 
 
-procedure TMainform.SetOpenFilePath(path: string);
+procedure TMainForm.SetOpenFilePath(Path: string);
 begin
-  sINI.WriteString('Paths', 'OpenFile', path);
+  sINI.WriteString('Paths', 'OpenFile', Path);
   sINI.UpdateFile;
-  fOpenFilePath := path;
+  fOpenFilePath := Path;
 end;
 
 
 
-procedure TMainform.SetOpenProjectPath(path: string);
+procedure TMainForm.SetOpenProjectPath(Path: string);
 begin
-  sINI.WriteString('Paths', 'OpenProject', path);
+  sINI.WriteString('Paths', 'OpenProject', Path);
   sINI.UpdateFile;
-  fOpenProjectPath := path;
+  fOpenProjectPath := Path;
 end;
 
 
 
-procedure TMainform.SetSaveProjectPath(path: string);
+procedure TMainForm.SetSaveProjectPath(Path: string);
 begin
-  sINI.WriteString('Paths', 'SaveProject', path);
+  sINI.WriteString('Paths', 'SaveProject', Path);
   sINI.UpdateFile;
-  fSaveProjectPath := path;
+  fSaveProjectPath := Path;
 end;
 
 

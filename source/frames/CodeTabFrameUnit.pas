@@ -154,7 +154,7 @@ type
 
   public
     procedure UpdateActions;
-    procedure FindString(SearchText: string; options: TFindOptions);
+    procedure FindString(SearchText: string; Options: TFindOptions);
     function GetPosition(Address: Cardinal): Cardinal; // Get position in Disassembled from Address (memory address)
     procedure GotoPosition(Offset: LongInt; Origin: TSeekOrigin); // Offset zacina od 0
 
@@ -438,7 +438,7 @@ end;
 // Navigation events
 
 
-procedure TCodeTabFrame.GotoEntrypointButtonClick(Sender: TObject);     // Premiestnenie na Entrypoint
+procedure TCodeTabFrame.GotoEntryPointButtonClick(Sender: TObject);     // Premiestnenie na Entrypoint
 begin
   GotoPosition(fSection.GetPosition(fSection.EntryPointAddress + fSection.MemOffset), soBeginning);
   plocha.SetFocus;
@@ -500,7 +500,7 @@ end;
 
 
 
-procedure TCodeTabFrame.ToggleBookMarkClick(Sender: TObject);
+procedure TCodeTabFrame.ToggleBookmarkClick(Sender: TObject);
 var
   Column, Row: Integer;
   BookmarkIndex: Integer;
