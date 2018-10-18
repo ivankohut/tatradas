@@ -1,7 +1,7 @@
 object AboutBox: TAboutBox
-  Left = 438
+  Left = 788
   Height = 381
-  Top = 140
+  Top = 254
   Width = 239
   BorderStyle = bsDialog
   Caption = 'About'
@@ -12,10 +12,9 @@ object AboutBox: TAboutBox
   Font.Color = clWindowText
   Font.Height = -11
   Font.Name = 'MS Sans Serif'
-  OnActivate = FormActivate
   OnCreate = FormCreate
   Position = poScreenCenter
-  LCLVersion = '1.8.2.0'
+  LCLVersion = '1.8.4.0'
   object Panel1: TPanel
     Left = 8
     Height = 187
@@ -43,13 +42,13 @@ object AboutBox: TAboutBox
       ParentFont = False
     end
     object VersionLabel: TLabel
-      Left = 2
+      Left = 13
       Height = 14
       Top = 21
-      Width = 219
-      Align = alTop
-      Alignment = taCenter
-      Caption = 'Version: 2.9.4'
+      Width = 92
+      Alignment = taRightJustify
+      AutoSize = False
+      Caption = 'Version:'
       Font.Color = clGreen
       Font.Height = -11
       Font.Name = 'MS Sans Serif'
@@ -111,13 +110,13 @@ object AboutBox: TAboutBox
       ParentColor = False
     end
     object ReleaseDateLabel: TLabel
-      Left = 2
+      Left = 13
       Height = 14
       Top = 35
-      Width = 219
-      Align = alTop
-      Alignment = taCenter
-      Caption = 'Date:  March 2004'
+      Width = 92
+      Alignment = taRightJustify
+      AutoSize = False
+      Caption = 'Date:'
       Font.Color = clWindowText
       Font.Height = -11
       Font.Name = 'MS Sans Serif'
@@ -144,6 +143,27 @@ object AboutBox: TAboutBox
       Layout = tlCenter
       ParentColor = False
       WordWrap = True
+    end
+    object ReleaseDateDataLabel: TLabel
+      Left = 109
+      Height = 14
+      Top = 35
+      Width = 66
+      Caption = 'March 2004'
+      ParentColor = False
+    end
+    object VersionDataLabel: TLabel
+      Left = 109
+      Height = 14
+      Top = 21
+      Width = 32
+      Caption = '2.9.4'
+      Font.Color = clGreen
+      Font.Height = -11
+      Font.Name = 'MS Sans Serif'
+      Font.Style = [fsBold]
+      ParentColor = False
+      ParentFont = False
     end
   end
   object OKButton: TButton

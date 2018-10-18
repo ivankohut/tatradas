@@ -51,7 +51,7 @@ const
 
   // TatraDAS version constants
   TatraDASVersion: Cardinal = $00029900;
-  TatraDASDate = '1. 8. 2009';
+  TatraDASDate = '2009-08-01';
   TatraDASProjectVersion = $00030002;
   ShortTatraDASVersion = '2.9.9';
   TatraDASFullName = 'TatraDAS disassembler';

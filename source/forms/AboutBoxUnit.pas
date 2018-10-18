@@ -10,7 +10,12 @@ uses
   TranslatorUnit;
 
 type
+
+  { TAboutBox }
+
   TAboutBox = class(TForm, ITranslatable)
+    VersionDataLabel: TLabel;
+    ReleaseDateDataLabel: TLabel;
     Panel1: TPanel;
     ProductName: TLabel;
     VersionLabel: TLabel;
@@ -32,8 +37,6 @@ type
     procedure URLLabelMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
     procedure URLLabelMouseLeave(Sender: TObject);
     procedure URLLabelClick(Sender: TObject);
-    procedure FormActivate(Sender: TObject);
-
     procedure Translate;
     procedure FormCreate(Sender: TObject);
   end;
@@ -89,16 +92,10 @@ end;
 
 
 
-procedure TAboutBox.FormActivate(Sender: TObject);
-begin
-  VersionLabel.Left := (Panel1.Width - VersionLabel.Width) div 2;
-  ReleaseDateLabel.Left := (Panel1.Width - ReleaseDateLabel.Width) div 2;
-end;
-
-
-
 procedure TAboutBox.FormCreate(Sender: TObject);
 begin
+  VersionDataLabel.Caption := ShortTatraDASVersion;
+  ReleaseDateDataLabel.Caption := TatraDASDate;
   CompilerDataLabel.Caption := GetCompilerNameAndVersion;
   URLLabel.Caption := TatraDASWebSiteURL;
 end;
