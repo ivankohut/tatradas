@@ -74,6 +74,7 @@ uses
   TatraDASHighlighter in 'res\TatraDASHighlighter.pas',
 //  ButtonsX in 'misc\ButtonsX.pas',
   myedits in 'misc\myedits.pas',
+  Translatables in 'base\Translatables.pas',
   TranslatorUnit in 'misc\TranslatorUnit.pas',
   VersionUnit in 'utils\VersionUnit.pas',
 
