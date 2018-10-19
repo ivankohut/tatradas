@@ -1,6 +1,27 @@
+# Build
 /target
-**/backup
-/.idea
-*.iml
-*.lps
+*.o
+*.ppu
+*.dcu
+*.obj
+*.exe
+*.dll
+*.lrs
 *.res
+TatraDAS
+
+# Run
+*.log
+
+# IDE files
+*.iml
+/.idea
+*.lps
+**/backup
+
+# Third party components
+/third
+
+# Other
+/tests
+/dfm_cleaner
